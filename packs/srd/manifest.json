@@ -5,7 +5,7 @@
     "feat": 327,
     "item": 1866,
     "race": 7,
-    "skill": 40,
+    "skill": 36,
     "spell": 696,
     "spelllist": 45
   },
@@ -28,5 +28,5 @@
     "spells-3.json",
     "spells-4.json"
   ],
-  "srdRev": 1
+  "srdRev": 2
 }

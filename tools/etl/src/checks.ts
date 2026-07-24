@@ -53,7 +53,9 @@ export function runChecks(manifest: Manifest, entities: Map<string, Entity>): vo
 
   // Counts
   const skills = byKind("skill");
-  assert(skills.length === 40, `40 Skills erwartet, ${skills.length} gefunden`);
+  // 40 Zeilen im Dump − 4 psionische (Autohypnosis, Psicraft, Use Psionic
+  // Device, Concentration-Duplikat) = 36.
+  assert(skills.length === 36, `36 nicht-psionische Skills erwartet, ${skills.length} gefunden`);
 
   // 53 Klassen im Dump − 13 psionische (4 base + 9 prestige) = 40.
   const classes = byKind("class");

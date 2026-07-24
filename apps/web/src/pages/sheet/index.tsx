@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import type { Character, DerivedSheet, StatValue } from "@codex35/core";
+import { displayName } from "@codex35/core";
 import { S } from "../../strings.js";
 import { CharacterRepo } from "../../db/repo.js";
-import { useCharacter, useSheet } from "../../lib/hooks.js";
+import { useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
 import { useDiceStore } from "../../lib/diceStore.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { Chip, GhostButton, fmtMod } from "../../ui/bits.js";
@@ -26,6 +27,7 @@ export function CharacterSheetPage() {
   const navigate = useNavigate();
   const character = useCharacter(charId);
   const sheet = useSheet(character);
+  const compendium = useCompendium();
   const [tab, setTab] = useState<TabKey>("stats");
   const [breakdown, setBreakdown] = useState<{
     title: string;
@@ -80,19 +82,63 @@ export function CharacterSheetPage() {
               </Link>
             )}
           </p>
-          {/* HP-Leiste: Anpassung in maximal zwei Taps. */}
-          <div className="mt-1 flex items-center gap-2">
-            <span className="text-sm font-semibold">
+          {/* HP-Leiste: Anpassung in maximal zwei Taps, Farbindikator nach Zustand. */}
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <span
+              className={`text-base font-bold tabular-nums ${
+                sheet.hp.current <= 0
+                  ? "text-red-500"
+                  : sheet.hp.current <= sheet.hp.max / 4
+                    ? "text-red-400"
+                    : sheet.hp.current <= sheet.hp.max / 2
+                      ? "text-amber-400"
+                      : "text-emerald-400"
+              }`}
+            >
               {S.sheet.hp} {sheet.hp.current}/{sheet.hp.max}
               {sheet.hp.temp > 0 && <span className="text-sky-400"> +{sheet.hp.temp}</span>}
             </span>
-            <GhostButton onClick={() => save((c) => void (c.hp.damage += 1))}>−1</GhostButton>
-            <GhostButton onClick={() => save((c) => void (c.hp.damage += 5))}>−5</GhostButton>
-            <GhostButton onClick={() => save((c) => void (c.hp.damage = Math.max(0, c.hp.damage - 1)))}>
+            <button
+              onClick={() => save((c) => void (c.hp.damage += 1))}
+              className="rounded-lg border border-red-800 bg-red-950/60 px-3 py-1.5 text-sm font-semibold text-red-300 active:bg-red-900"
+            >
+              −1
+            </button>
+            <button
+              onClick={() => save((c) => void (c.hp.damage += 5))}
+              className="rounded-lg border border-red-800 bg-red-950/60 px-3 py-1.5 text-sm font-semibold text-red-300 active:bg-red-900"
+            >
+              −5
+            </button>
+            <button
+              onClick={() => save((c) => void (c.hp.damage = Math.max(0, c.hp.damage - 1)))}
+              className="rounded-lg border border-emerald-800 bg-emerald-950/60 px-3 py-1.5 text-sm font-semibold text-emerald-300 active:bg-emerald-900"
+            >
               +1
-            </GhostButton>
-            <GhostButton onClick={() => save((c) => void (c.hp.damage = 0))}>voll</GhostButton>
+            </button>
+            <button
+              onClick={() => save((c) => void (c.hp.damage = 0))}
+              className="rounded-lg border border-emerald-800 bg-emerald-950/60 px-3 py-1.5 text-sm font-semibold text-emerald-300 active:bg-emerald-900"
+            >
+              voll
+            </button>
           </div>
+          {/* Aktive Zustände immer im Blick — Verwaltung im Notizen-Tab. */}
+          {character.conditionIds.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {character.conditionIds.map((id) => {
+                const condition = compendium?.get(id);
+                return (
+                  <span
+                    key={id}
+                    className="rounded-full border border-amber-700 bg-amber-950/60 px-2 py-0.5 text-[11px] font-medium text-amber-300"
+                  >
+                    {condition ? displayName(condition) : id}
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
         <GhostButton danger onClick={() => void remove()}>
           🗑

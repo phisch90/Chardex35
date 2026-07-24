@@ -170,7 +170,8 @@ function main(): void {
 
   writeFileSync(
     join(PACKS_DIR, "manifest.json"),
-    `${canonicalJson({ srdRev: 1, files, counts: sortedCounts })}\n`,
+    // srdRev 2: psionische Skills entfernt — Clients reseeden beim nächsten Start.
+    `${canonicalJson({ srdRev: 2, files, counts: sortedCounts })}\n`,
   );
   console.log(`  manifest.json: ${files.length} Dateien, counts=${JSON.stringify(sortedCounts)}`);
 

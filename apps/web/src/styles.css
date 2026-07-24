@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
-/* Codex35-Grundstimmung: dunkel fürs Spieltisch-Licht, hell möglich. */
+/*
+ * Chardex35 ist bewusst DUNKEL — fürs Licht am Spieltisch und weil alle
+ * Komponenten darauf abgestimmt sind. Ein System-Hellmodus würde sonst zu
+ * unlesbaren Hybrid-Darstellungen führen (helle Fläche, dunkle Karten).
+ */
 :root {
-  color-scheme: dark light;
+  color-scheme: dark;
 }
 
 html,
@@ -13,12 +17,6 @@ body,
 
 body {
   @apply bg-slate-950 text-slate-100 antialiased;
-}
-
-@media (prefers-color-scheme: light) {
-  body {
-    @apply bg-slate-100 text-slate-900;
-  }
 }
 
 /* Breite Tabellen scrollen im eigenen Container, nie die Seite. */

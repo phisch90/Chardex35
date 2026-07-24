@@ -47,8 +47,8 @@ export const S = {
     nonlethal: "Nichttödlich",
     temp: "Temp. TP",
     ac: "RK",
-    touch: "Berührung",
-    flatFooted: "Auf dem falschen Fuß",
+    touch: "Touch",
+    flatFooted: "Flat-Footed",
     init: "Initiative",
     speed: "Bewegung",
     bab: "GAB",
@@ -101,6 +101,8 @@ export const S = {
     hpRoll: "TP-Wurf",
     pointsLeft: "Punkte übrig",
     slotsLeft: "Slots übrig",
+    standardArray: "Standardreihe (15/14/13/12/10/8)",
+    rollAll: "🎲 Alle würfeln (4W6, niedrigster fällt)",
   },
 
   settings: {

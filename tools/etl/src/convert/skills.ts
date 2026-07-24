@@ -45,16 +45,13 @@ const SYNERGIES: Record<string, SynergyDef[]> = {
     { to: "survival", condition: "with 5 ranks in Knowledge (nature), in aboveground natural environments" },
     { to: "diplomacy", condition: "with 5 ranks in Knowledge (nobility and royalty)" },
     { to: "survival", condition: "with 5 ranks in Knowledge (the planes), when on other planes" },
-    { to: "psicraft", condition: "with 5 ranks in Knowledge (psionics)" },
   ],
-  psicraft: [{ to: "use-psionic-device", condition: "involving power stones" }],
   search: [{ to: "survival", condition: "when following tracks" }],
   "sense-motive": [{ to: "diplomacy" }],
   spellcraft: [{ to: "use-magic-device", condition: "involving scrolls" }],
   survival: [{ to: "knowledge", condition: "on Knowledge (nature) checks" }],
   tumble: [{ to: "balance" }, { to: "jump" }],
   "use-magic-device": [{ to: "spellcraft", condition: "to decipher spells on scrolls" }],
-  "use-psionic-device": [{ to: "psicraft", condition: "to address power stones" }],
   "use-rope": [
     { to: "climb", condition: "involving ropes" },
     { to: "escape-artist", condition: "involving rope bonds" },
@@ -76,10 +73,12 @@ export function convertSkills(ctx: ConvertContext): SkillEntity[] {
   for (const row of rows) {
     const name = row.name ?? "";
     const psionic = row.psionic === "Yes";
+    // Psionik ist außerhalb des Scopes (wie Klassen/Feats/Powers) — die
+    // psionischen Skills erzeugten u.a. ein doppeltes "Concentration" in der UI.
+    if (psionic) continue;
     let slug = slugify(name);
     if (usedSlugs.has(slug)) {
-      // Andargor führt Concentration doppelt (normal + psionische Nutzung).
-      slug = `${slug}${psionic ? "-psionic" : "-2"}`;
+      slug = `${slug}-2`;
       ctx.warnings.add(`skill: Namenskollision "${name}" → Slug ${slug}`);
     }
     usedSlugs.add(slug);

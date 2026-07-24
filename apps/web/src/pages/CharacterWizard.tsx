@@ -121,6 +121,41 @@ export function CharacterWizardPage() {
 
       {step === 1 && (
         <Card>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <Chip
+              onClick={() =>
+                setDraft({
+                  ...draft,
+                  base: { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 },
+                })
+              }
+            >
+              {S.wizard.standardArray}
+            </Chip>
+            <Chip
+              onClick={() => {
+                // 4W6, niedrigster fällt — je Attribut.
+                const rollScore = () => {
+                  const dice = Array.from({ length: 4 }, () => 1 + Math.floor(Math.random() * 6));
+                  dice.sort((a, b) => a - b);
+                  return dice[1]! + dice[2]! + dice[3]!;
+                };
+                setDraft({
+                  ...draft,
+                  base: {
+                    str: rollScore(),
+                    dex: rollScore(),
+                    con: rollScore(),
+                    int: rollScore(),
+                    wis: rollScore(),
+                    cha: rollScore(),
+                  },
+                });
+              }}
+            >
+              {S.wizard.rollAll}
+            </Chip>
+          </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {ABILITIES.map((ability) => (
               <label key={ability} className="flex flex-col gap-1">
