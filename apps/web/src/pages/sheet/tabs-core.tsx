@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { ABILITIES } from "@codex35/core";
 import { Link } from "@tanstack/react-router";
 import { S } from "../../strings.js";
-import { Card, GhostButton, SectionTitle, StatButton, fmtMod } from "../../ui/bits.js";
+import { Card, Chip, GhostButton, SectionTitle, StatButton, fmtMod } from "../../ui/bits.js";
 import { useDiceStore } from "../../lib/diceStore.js";
 import type { TabProps } from "./index.js";
 
@@ -18,7 +19,8 @@ export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
                 key={ability}
                 big
                 label={S.abilities[ability] ?? ability}
-                value={`${block.score.total} (${fmtMod(block.mod)})`}
+                value={fmtMod(block.mod)}
+                sub={`${block.score.total}`}
                 onClick={() =>
                   openBreakdown(`${S.abilityNames[ability]}`, block.score, false)
                 }
@@ -213,8 +215,18 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
 
 export function SkillsTab({ character, sheet, save, openBreakdown }: TabProps) {
   const roll = useDiceStore((s) => s.roll);
+  // Standardansicht ist zum WÜRFELN da — Ränge editieren nur im Bearbeiten-Modus.
+  const [editMode, setEditMode] = useState(false);
   return (
     <Card>
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-xs text-slate-500">
+          Punkte: {sheet.skillPoints.spent}/{sheet.skillPoints.available}
+        </span>
+        <Chip active={editMode} onClick={() => setEditMode(!editMode)}>
+          ✎ {S.actions.edit}
+        </Chip>
+      </div>
       <ul className="divide-y divide-slate-800">
         {sheet.skills.map((skill) => {
           const overMax = skill.ranks > skill.maxRanks;
@@ -228,54 +240,60 @@ export function SkillsTab({ character, sheet, save, openBreakdown }: TabProps) {
                   {skill.name}
                   {skill.isClassSkill && <span className="ml-1 text-[10px] text-amber-400">●</span>}
                 </span>
-                <span className="ml-2 text-xs text-slate-500">
-                  {S.sheet.ranks} {skill.ranks}
-                  <span className={overMax ? "text-red-400" : ""}>/{skill.maxRanks}</span>
-                </span>
+                {(editMode || skill.ranks > 0) && (
+                  <span className="ml-2 text-xs text-slate-500">
+                    {S.sheet.ranks} {skill.ranks}
+                    <span className={overMax ? "text-red-400" : ""}>/{skill.maxRanks}</span>
+                  </span>
+                )}
               </button>
-              <span className="w-10 text-right font-mono font-semibold">
+              <span className="w-10 shrink-0 text-right font-mono font-semibold">
                 {skill.usable ? fmtMod(skill.total.total) : "—"}
               </span>
-              <GhostButton
-                onClick={() =>
-                  save((c) => {
-                    const current = c.skillRanks[skill.skillId] ?? 0;
-                    const next = current - (skill.isClassSkill ? 1 : 0.5);
-                    if (next <= 0) delete c.skillRanks[skill.skillId];
-                    else c.skillRanks[skill.skillId] = next;
-                  })
-                }
-              >
-                −
-              </GhostButton>
-              <GhostButton
-                onClick={() =>
-                  save((c) => {
-                    const current = c.skillRanks[skill.skillId] ?? 0;
-                    c.skillRanks[skill.skillId] = current + (skill.isClassSkill ? 1 : 0.5);
-                  })
-                }
-              >
-                +
-              </GhostButton>
-              <GhostButton
-                disabled={!skill.usable}
-                onClick={() =>
-                  roll(
-                    `1d20${skill.total.total >= 0 ? "+" : ""}${skill.total.total}`,
-                    `${character.name}: ${skill.name}`,
-                  )
-                }
-              >
-                🎲
-              </GhostButton>
+              {editMode ? (
+                <>
+                  <GhostButton
+                    onClick={() =>
+                      save((c) => {
+                        const current = c.skillRanks[skill.skillId] ?? 0;
+                        const next = current - (skill.isClassSkill ? 1 : 0.5);
+                        if (next <= 0) delete c.skillRanks[skill.skillId];
+                        else c.skillRanks[skill.skillId] = next;
+                      })
+                    }
+                  >
+                    −
+                  </GhostButton>
+                  <GhostButton
+                    onClick={() =>
+                      save((c) => {
+                        const current = c.skillRanks[skill.skillId] ?? 0;
+                        c.skillRanks[skill.skillId] = current + (skill.isClassSkill ? 1 : 0.5);
+                      })
+                    }
+                  >
+                    +
+                  </GhostButton>
+                </>
+              ) : (
+                <GhostButton
+                  disabled={!skill.usable}
+                  onClick={() =>
+                    roll(
+                      `1d20${skill.total.total >= 0 ? "+" : ""}${skill.total.total}`,
+                      `${character.name}: ${skill.name}`,
+                    )
+                  }
+                >
+                  🎲
+                </GhostButton>
+              )}
             </li>
           );
         })}
       </ul>
       <p className="mt-2 text-xs text-slate-500">
-        Fertigkeitspunkte: {sheet.skillPoints.spent}/{sheet.skillPoints.available} · ● ={" "}
-        {S.sheet.classSkill} · klassenfremde Ränge kosten 2 Punkte (halbe Ränge)
+        ● = {S.sheet.classSkill} · klassenfremde Ränge kosten 2 Punkte (halbe Ränge)
       </p>
     </Card>
   );

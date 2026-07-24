@@ -25,20 +25,25 @@ export function fmtMod(value: number): string {
 /**
  * Antippbarer Wert — das zentrale Interaktionsmuster des Bogens:
  * kurzer Tap öffnet den Breakdown, „Würfeln"-Knopf daneben rollt 1d20+X.
+ * `sub` erlaubt eine kleine Zweitangabe (z.B. der Attributswert neben dem Mod).
  */
 export function StatButton(props: {
   label: string;
   value: string;
+  sub?: string;
   onClick?: () => void;
   big?: boolean;
 }) {
   return (
     <button
       onClick={props.onClick}
-      className="flex min-w-16 flex-col items-center rounded-lg border border-slate-700/60 bg-slate-800/60 px-2 py-1.5 text-center transition-colors active:bg-slate-700"
+      className="flex min-w-16 flex-col items-center rounded-lg border border-slate-700/60 bg-slate-800/60 px-2 py-1.5 text-center text-slate-100 transition-colors active:bg-slate-700"
     >
-      <span className={props.big ? "text-2xl font-bold" : "text-lg font-semibold"}>
-        {props.value}
+      <span className="flex items-baseline gap-1">
+        <span className={props.big ? "text-2xl font-bold" : "text-lg font-semibold"}>
+          {props.value}
+        </span>
+        {props.sub && <span className="text-xs text-slate-400">{props.sub}</span>}
       </span>
       <span className="text-[10px] uppercase tracking-wide text-slate-400">{props.label}</span>
     </button>
