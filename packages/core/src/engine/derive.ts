@@ -155,8 +155,10 @@ export function deriveSheetValues(
     armorAcpSum += armor.acp;
     if (armor.kind === "medium" || armor.kind === "heavy") armorIsMediumOrHeavy = true;
   }
-  const loadLimit =
-    loadLevel === "medium"
+  // Hausregel „ohne Gewicht": die Last schränkt nichts ein.
+  const loadLimit = houseRules.ignoreEncumbrance
+    ? null
+    : loadLevel === "medium"
       ? LOAD_LIMITS.medium
       : loadLevel === "heavy" || loadLevel === "overloaded"
         ? LOAD_LIMITS.heavy
@@ -246,7 +248,9 @@ export function deriveSheetValues(
   const speedValue = stackPaths(buckets, ["speed.land"], [
     baseContribution(race ? displayName(race) : "Basis", baseSpeed),
   ]);
-  const speedReducedBy = armorIsMediumOrHeavy || loadLevel === "medium" || loadLevel === "heavy";
+  const speedReducedBy =
+    armorIsMediumOrHeavy ||
+    (!houseRules.ignoreEncumbrance && (loadLevel === "medium" || loadLevel === "heavy"));
   let speedFt: StatValue = speedValue;
   if (speedReducedBy && speedValue.total > 0) {
     const reduced = reducedSpeed(speedValue.total);
@@ -266,7 +270,7 @@ export function deriveSheetValues(
       };
     }
   }
-  if (loadLevel === "overloaded") {
+  if (loadLevel === "overloaded" && !houseRules.ignoreEncumbrance) {
     issues.push({
       severity: "warning",
       code: "overloaded",
@@ -508,6 +512,7 @@ export function deriveSheetValues(
       slots,
       spellsKnown: row.spellsKnown,
       spellListId: casting.spellListId,
+      usesSpellbook: casting.spellbook,
     });
   }
 

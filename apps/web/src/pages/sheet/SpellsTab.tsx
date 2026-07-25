@@ -7,7 +7,7 @@ import {
   type SpellcastingBlock,
 } from "@codex35/core";
 import { S } from "../../strings.js";
-import { useCompendium } from "../../lib/hooks.js";
+import { useAppSettings, useCompendium } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import type { TabProps } from "./index.js";
 
@@ -42,9 +42,10 @@ function CasterBlock({
   const state = character.spellState[block.classId] ?? emptySpellState();
   const knownSet = new Set(state.known);
   const isPrepared = block.model === "prepared";
-  // „Zauberbuch"-Filter nur anbieten, wenn der vorbereitende Caster überhaupt
-  // eine Merkliste pflegt (Wizard); Cleric/Druide kennen die ganze Liste.
-  const spellbookActive = isPrepared && state.known.length > 0 && onlySpellbook;
+  // Nur Magier (und Assassine) führen ein Zauberbuch — Kleriker, Druiden,
+  // Paladine und Waldläufer kennen ihre gesamte Klassenliste (3.5-Regeln).
+  const usesSpellbook = block.usesSpellbook;
+  const spellbookActive = usesSpellbook && state.known.length > 0 && onlySpellbook;
 
   const nameOf = (spellId: string): string => {
     const spell = compendium?.get(spellId);
@@ -280,7 +281,7 @@ function CasterBlock({
               {S.spells.level} {level}
             </Chip>
           ))}
-          {isPrepared && state.known.length > 0 && (
+          {usesSpellbook && state.known.length > 0 && (
             <Chip active={onlySpellbook} onClick={() => setOnlySpellbook(!onlySpellbook)}>
               📖 {S.spells.onlySpellbook}
             </Chip>
@@ -305,19 +306,21 @@ function CasterBlock({
               </Link>
               {isPrepared && (
                 <>
-                  <GhostButton
-                    onClick={() =>
-                      mutate((s) => {
-                        if (s.known.includes(entry.spellId)) {
-                          s.known = s.known.filter((id) => id !== entry.spellId);
-                        } else {
-                          s.known.push(entry.spellId);
-                        }
-                      })
-                    }
-                  >
-                    {knownSet.has(entry.spellId) ? "📖✓" : "📖"}
-                  </GhostButton>
+                  {usesSpellbook && (
+                    <GhostButton
+                      onClick={() =>
+                        mutate((s) => {
+                          if (s.known.includes(entry.spellId)) {
+                            s.known = s.known.filter((id) => id !== entry.spellId);
+                          } else {
+                            s.known.push(entry.spellId);
+                          }
+                        })
+                      }
+                    >
+                      {knownSet.has(entry.spellId) ? "📖✓" : "📖"}
+                    </GhostButton>
+                  )}
                   <GhostButton
                     disabled={!canPrepareAt(entry.level)}
                     onClick={() =>

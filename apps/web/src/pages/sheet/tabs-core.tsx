@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { S } from "../../strings.js";
 import { Card, Chip, GhostButton, SectionTitle, StatButton, fmtMod } from "../../ui/bits.js";
 import { useDiceStore } from "../../lib/diceStore.js";
+import { useAppSettings, useHouseRules } from "../../lib/hooks.js";
 import type { TabProps } from "./index.js";
 
 export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
@@ -105,6 +106,8 @@ export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
 
 export function CombatTab({ sheet, openBreakdown }: TabProps) {
   const roll = useDiceStore((s) => s.roll);
+  const { diceEnabled } = useAppSettings();
+  const { ignoreEncumbrance } = useHouseRules();
   return (
     <div className="space-y-3">
       <Card>
@@ -169,18 +172,24 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
                     </div>
                   ))}
                 </button>
-                <GhostButton
-                  onClick={() => {
-                    const mod = attack.bonuses[0] ?? 0;
-                    roll(`1d20${mod >= 0 ? "+" : ""}${mod}`, attack.label);
-                  }}
-                >
-                  🎲
-                </GhostButton>
-                {attack.damageText !== "—" && (
-                  <GhostButton onClick={() => roll(attack.damageText, `${attack.label} — ${S.sheet.damage2}`)}>
-                    ⚔️
-                  </GhostButton>
+                {diceEnabled && (
+                  <>
+                    <GhostButton
+                      onClick={() => {
+                        const mod = attack.bonuses[0] ?? 0;
+                        roll(`1d20${mod >= 0 ? "+" : ""}${mod}`, attack.label);
+                      }}
+                    >
+                      🎲
+                    </GhostButton>
+                    {attack.damageText !== "—" && (
+                      <GhostButton
+                        onClick={() => roll(attack.damageText, `${attack.label} — ${S.sheet.damage2}`)}
+                      >
+                        ⚔️
+                      </GhostButton>
+                    )}
+                  </>
                 )}
               </div>
             </li>
@@ -188,6 +197,7 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
         </ul>
       </Card>
 
+      {!ignoreEncumbrance && (
       <Card>
         <SectionTitle>Traglast</SectionTitle>
         <p className="text-sm">
@@ -209,12 +219,14 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
           {sheet.encumbrance.heavyMaxLb}
         </p>
       </Card>
+      )}
     </div>
   );
 }
 
 export function SkillsTab({ character, sheet, save, openBreakdown }: TabProps) {
   const roll = useDiceStore((s) => s.roll);
+  const { diceEnabled } = useAppSettings();
   // Standardansicht ist zum WÜRFELN da — Ränge editieren nur im Bearbeiten-Modus.
   const [editMode, setEditMode] = useState(false);
   return (
@@ -276,17 +288,19 @@ export function SkillsTab({ character, sheet, save, openBreakdown }: TabProps) {
                   </GhostButton>
                 </>
               ) : (
-                <GhostButton
-                  disabled={!skill.usable}
-                  onClick={() =>
-                    roll(
-                      `1d20${skill.total.total >= 0 ? "+" : ""}${skill.total.total}`,
-                      `${character.name}: ${skill.name}`,
-                    )
-                  }
-                >
-                  🎲
-                </GhostButton>
+                diceEnabled && (
+                  <GhostButton
+                    disabled={!skill.usable}
+                    onClick={() =>
+                      roll(
+                        `1d20${skill.total.total >= 0 ? "+" : ""}${skill.total.total}`,
+                        `${character.name}: ${skill.name}`,
+                      )
+                    }
+                  >
+                    🎲
+                  </GhostButton>
+                )
               )}
             </li>
           );

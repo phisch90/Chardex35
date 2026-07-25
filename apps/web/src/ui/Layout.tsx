@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { S } from "../strings.js";
 import { ensureSeeded, requestPersistentStorage } from "../db/seed.js";
+import { useAppSettings } from "../lib/hooks.js";
 import { DiceResultSheet } from "./DiceSheet.js";
 
 const NAV = [
@@ -14,6 +15,9 @@ const NAV = [
 export function Layout() {
   const [seedMessage, setSeedMessage] = useState<string | null>(S.misc.seedRunning);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { diceEnabled } = useAppSettings();
+  // Würfeln abgeschaltet → der Reiter verschwindet ganz aus der Navigation.
+  const visibleNav = NAV.filter((item) => diceEnabled || item.to !== "/wuerfel");
 
   useEffect(() => {
     void requestPersistentStorage();
@@ -34,7 +38,7 @@ export function Layout() {
         <div className="mb-4 px-2 text-lg font-bold tracking-tight text-amber-400">
           {S.appName}
         </div>
-        {NAV.map((item) => (
+        {visibleNav.map((item) => (
           <Link
             key={item.to}
             to={item.to}
@@ -60,8 +64,8 @@ export function Layout() {
       </main>
 
       {/* Bottom-Tabs mobil */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-slate-800 bg-slate-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-        {NAV.map((item) => (
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-[calc(3.5rem+env(safe-area-inset-bottom))] border-t border-slate-800 bg-slate-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+        {visibleNav.map((item) => (
           <Link
             key={item.to}
             to={item.to}
@@ -75,7 +79,7 @@ export function Layout() {
         ))}
       </nav>
 
-      <DiceResultSheet />
+      {diceEnabled && <DiceResultSheet />}
     </div>
   );
 }

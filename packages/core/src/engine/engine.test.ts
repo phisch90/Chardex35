@@ -642,6 +642,54 @@ describe("deriveSheet — Robustheit & Validierung", () => {
     expect(sheet.speedFt.total).toBe(15);
   });
 
+  it("Hausregel ohne Gewicht: Last bremst weder Bewegung noch Geschicklichkeit", () => {
+    const c = fighterDwarf4({
+      abilities: { base: { str: 10, dex: 16, con: 14, int: 10, wis: 12, cha: 8 } },
+      inventory: [{ id: "i1", itemId: "test:item:full-plate", equipped: true, qty: 2 }],
+    });
+    // Mit Traglast: schwere Last → Speed 15, MaxGE 1.
+    const strict = deriveSheet(c, COMPENDIUM, HOUSE);
+    expect(strict.speedFt.total).toBe(15);
+    expect(strict.issues.some((i) => i.code === "overloaded")).toBe(false);
+
+    const relaxed = deriveSheet(
+      c,
+      COMPENDIUM,
+      houseRulesSchema.parse({ ignoreEncumbrance: true }),
+    );
+    // Bewegung wird nur noch von der RÜSTUNG reduziert (Vollplatte), nicht von der Last.
+    expect(relaxed.speedFt.total).toBe(15);
+    // Die Rüstung klemmt GE weiter auf MaxGE 1 — die Last tut es nicht mehr.
+    expect(relaxed.ac.total.total).toBe(10 + 8 + 1);
+    expect(relaxed.encumbrance.loadLb).toBe(100); // Anzeige bleibt korrekt
+  });
+
+  it("Hausregel ohne Gewicht: keine Überladungs-Warnung", () => {
+    const c = fighterDwarf4({
+      abilities: { base: { str: 8, dex: 13, con: 14, int: 10, wis: 12, cha: 8 } },
+      inventory: [{ id: "i1", itemId: "test:item:full-plate", equipped: false, qty: 5 }],
+    });
+    expect(deriveSheet(c, COMPENDIUM, HOUSE).issues.some((i) => i.code === "overloaded")).toBe(true);
+    expect(
+      deriveSheet(c, COMPENDIUM, houseRulesSchema.parse({ ignoreEncumbrance: true })).issues.some(
+        (i) => i.code === "overloaded",
+      ),
+    ).toBe(false);
+  });
+
+  it("Zauberbuch ist ein Klassenmerkmal, kein Standard für alle Vorbereiter", () => {
+    const wizard5 = C({
+      id: "char-book",
+      name: "Buchmagier",
+      raceId: "test:race:human",
+      abilities: { base: { str: 8, dex: 14, con: 12, int: 16, wis: 12, cha: 10 } },
+      levels: Array.from({ length: 5 }, () => ({ classId: "test:class:wizard", hpRoll: "avg" as const })),
+    });
+    // Die Testklasse setzt spellbook nicht → Default false (nur der SRD-Magier
+    // trägt das Merkmal, siehe golden-srd.test.ts).
+    expect(deriveSheet(wizard5, COMPENDIUM, HOUSE).spellcasting[0]?.usesSpellbook).toBe(false);
+  });
+
   it("Homebrew-Override verdeckt den SRD-Eintrag (Shadowing)", () => {
     const houseDodge = entitySchema.parse({
       id: "hb-1",

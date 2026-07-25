@@ -170,8 +170,8 @@ function main(): void {
 
   writeFileSync(
     join(PACKS_DIR, "manifest.json"),
-    // srdRev 2: psionische Skills entfernt — Clients reseeden beim nächsten Start.
-    `${canonicalJson({ srdRev: 2, files, counts: sortedCounts })}\n`,
+    // srdRev 3: Zauberbuch-Merkmal je Klasse ergänzt (nur Magier).
+    `${canonicalJson({ srdRev: 3, files, counts: sortedCounts })}\n`,
   );
   console.log(`  manifest.json: ${files.length} Dateien, counts=${JSON.stringify(sortedCounts)}`);
 

@@ -128,6 +128,12 @@ export const classDataSchema = z.object({
       spellListId: z.string(),
       bonusSlots: z.boolean().default(true),
       armorFailure: z.boolean().default(false),
+      /**
+       * Nur Magier und Assassine führen ein Zauberbuch und können ausschließlich
+       * daraus vorbereiten. Kleriker, Druiden, Paladine und Waldläufer kennen
+       * ihre gesamte Klassenliste.
+       */
+      spellbook: z.boolean().default(false),
     })
     .optional(),
   /** Freitext: Waffen-/Rüstungsvertrautheit. */

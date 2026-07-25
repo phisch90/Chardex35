@@ -18,6 +18,12 @@ export const houseRulesSchema = z.object({
   multiclassXpPenalty: z.boolean().default(false),
   deathAt: z.enum(["minus10", "negCon"]).default("minus10"),
   pointBuyBudget: z.number().int().optional(),
+  /**
+   * Traglast komplett ignorieren („wir spielen ohne Gewicht"): keine
+   * Bewegungsreduktion, kein Max-GE und kein Rüstungsmalus AUS DER LAST.
+   * Die Rüstung selbst wirkt unverändert weiter.
+   */
+  ignoreEncumbrance: z.boolean().default(false),
 });
 export type HouseRules = z.infer<typeof houseRulesSchema>;
 export const DEFAULT_HOUSE_RULES: HouseRules = houseRulesSchema.parse({});

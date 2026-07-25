@@ -161,6 +161,26 @@ describe.skipIf(!packsAvailable)("Golden-Tests gegen die SRD-Packs", () => {
     expect(list.data.spells["srd:spell:fireball"]).toBe(3);
   });
 
+  it("Zauberbuch: nur der Magier führt eines", () => {
+    const withBook: string[] = [];
+    const withoutBook: string[] = [];
+    for (const id of [
+      "srd:class:wizard",
+      "srd:class:cleric",
+      "srd:class:druid",
+      "srd:class:sorcerer",
+      "srd:class:bard",
+      "srd:class:paladin",
+      "srd:class:ranger",
+    ]) {
+      const cls = get(id);
+      if (cls.kind !== "class" || !cls.data.spellcasting) continue;
+      (cls.data.spellcasting.spellbook ? withBook : withoutBook).push(id);
+    }
+    expect(withBook).toEqual(["srd:class:wizard"]);
+    expect(withoutBook).toHaveLength(6);
+  });
+
   it("Zauber-Daten: Fireball (Evocation, Sor/Wiz 3, Ref halbiert)", () => {
     const fireball = get("srd:spell:fireball");
     if (fireball.kind !== "spell") throw new Error("kind");

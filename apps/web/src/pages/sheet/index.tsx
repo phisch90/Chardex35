@@ -22,6 +22,16 @@ export interface TabProps {
 
 type TabKey = keyof typeof S.sheet.tabs;
 
+const TAB_ICONS: Record<TabKey, string> = {
+  stats: "📊",
+  combat: "⚔️",
+  skills: "🎯",
+  spells: "✨",
+  inventory: "🎒",
+  feats: "⭐",
+  notes: "📝",
+};
+
 export function CharacterSheetPage() {
   const { charId } = useParams({ strict: false }) as { charId: string };
   const navigate = useNavigate();
@@ -61,7 +71,8 @@ export function CharacterSheetPage() {
   };
 
   return (
-    <div className="space-y-3">
+    // Extra Platz unten, damit die mobile Reiter-Leiste nichts überdeckt.
+    <div className="space-y-3 pb-14 md:pb-0">
       <header className="flex items-start gap-3">
         {character.portrait && (
           <img src={character.portrait} alt="" className="h-16 w-16 rounded-xl object-cover" />
@@ -145,7 +156,8 @@ export function CharacterSheetPage() {
         </GhostButton>
       </header>
 
-      <div className="flex flex-wrap gap-1">
+      {/* Auf Desktop bleiben die Reiter oben; mobil sitzen sie unten am Daumen. */}
+      <div className="hidden flex-wrap gap-1 md:flex">
         {tabs.map((key) => (
           <Chip key={key} active={tab === key} onClick={() => setTab(key)}>
             {S.sheet.tabs[key]}
@@ -160,6 +172,26 @@ export function CharacterSheetPage() {
       {tab === "inventory" && <InventoryTab {...tabProps} />}
       {tab === "feats" && <FeatsTab {...tabProps} />}
       {tab === "notes" && <NotesTab {...tabProps} />}
+
+      {/*
+        Mobile Reiter-Leiste: direkt über der Hauptnavigation, in Daumenreichweite.
+        Icons + Kurzlabel, damit alle sieben Reiter nebeneinander passen.
+      */}
+      <nav className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 flex border-t border-slate-800 bg-slate-900/95 backdrop-blur md:hidden">
+        {tabs.map((key) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[9px] font-medium leading-none ${
+              tab === key ? "text-amber-400" : "text-slate-400"
+            }`}
+          >
+            <span className="text-base leading-none">{TAB_ICONS[key]}</span>
+            {S.sheet.tabsShort[key]}
+            {tab === key && <span className="mt-0.5 h-0.5 w-6 rounded-full bg-amber-400" />}
+          </button>
+        ))}
+      </nav>
 
       <BreakdownSheet
         open={breakdown !== null}
