@@ -61,6 +61,13 @@ export const CharacterRepo = {
     return character;
   },
 
+  /** Fertig gebauten Charakter übernehmen (Import) — ID bleibt erhalten. */
+  async insert(character: Character): Promise<Character> {
+    const next = { ...character, updatedAt: now() };
+    await db.characters.put(next);
+    return next;
+  },
+
   /**
    * Mutation gegen den FRISCHEN DB-Stand in einer Transaktion — verhindert
    * Lost Updates bei schnellen Doppel-Taps (HP −1/−1, Slot-Pips), die sonst
@@ -85,6 +92,14 @@ export const CharacterRepo = {
 };
 
 export const CompendiumRepo = {
+  /** Fertig gebauten Homebrew-Eintrag übernehmen (Import) — ID bleibt erhalten. */
+  async insertHomebrew(entity: Entity): Promise<Entity> {
+    if (entity.source !== "homebrew") throw new Error("Nur Homebrew-Einträge können importiert werden.");
+    const next = { ...entity, updatedAt: now() };
+    await db.entities.put(next);
+    return next;
+  },
+
   async saveHomebrew(entity: Entity): Promise<Entity> {
     if (entity.source !== "homebrew") throw new Error("SRD-Einträge sind unveränderlich — nutze Überschreiben.");
     const next = { ...entity, rev: entity.rev + 1, updatedAt: now() };

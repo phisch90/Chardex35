@@ -28,11 +28,15 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-        env:
-          # Muss der EXAKTEN Schreibweise des Repo-Namens entsprechen —
-          # GitHub Pages ist im Pfadsegment case-sensitiv.
-          PAGES_BASE: /chardex35/
+        # Basis-Pfad IMMER aus dem echten Repo-Namen ableiten: GitHub Pages ist
+        # im Pfadsegment case-sensitiv, und so übersteht das Deployment jede
+        # weitere Umbenennung ohne Handarbeit.
+      - name: Build (Pages-Basis aus dem Repo-Namen)
+        run: PAGES_BASE="/${GITHUB_REPOSITORY#*/}/" pnpm build
+        # Deep-Links (…/wuerfel, …/charaktere/<id>) treffen auf Pages keine echte
+        # Datei — die 404-Seite liefert deshalb die App aus, der Router übernimmt.
+      - name: SPA-Fallback für Deep-Links
+        run: cp apps/web/dist/index.html apps/web/dist/404.html
       - uses: actions/configure-pages@v5
         with:
           enablement: true

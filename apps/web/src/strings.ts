@@ -163,6 +163,24 @@ export const S = {
     knownLimit: (have: number, max: string) => `${have}/${max} bekannt`,
   },
 
+  import: {
+    title: "Aus Fight Club importieren",
+    pick: "Fight-Club-XML wählen…",
+    hint: "Exportiere in Fight Club deinen Charakter als XML und wähle die Datei hier aus. Die App rekonstruiert Volk, Klassen, Attribute, Ränge, Talente und Waffen; RK und Rettungswürfe werden per sichtbarem Ausgleichs-Modifikator auf die Originalwerte gebracht (fehlende Ausrüstung).",
+    found: (n: number) => (n === 1 ? "1 Charakter gefunden" : `${n} Charaktere gefunden`),
+    apply: "Übernehmen",
+    applied: (n: number) => `${n} Charakter(e) übernommen.`,
+    comparison: "Abgleich mit dem Original",
+    matchLabel: "stimmt",
+    reconciled: "ausgeglichen",
+    reportedOnly: "weicht ab",
+    matches: "Alle Werte stimmen mit dem Original überein.",
+    noValues: "Der Export enthält keine Vergleichswerte (RK, Rettungswürfe, GAB) — nichts zu prüfen.",
+    notes: "Hinweise",
+    failed: "Datei konnte nicht gelesen werden",
+    nothing: "Keine Charaktere in der Datei gefunden.",
+  },
+
   levelUp: {
     title: "Stufenaufstieg",
     ready: "⬆ Bereit zum Aufstieg!",
