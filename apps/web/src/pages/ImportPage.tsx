@@ -23,7 +23,10 @@ export function ImportPage() {
   const onFile = async (file: File) => {
     setError(null);
     setResults(null);
-    if (!compendium) return;
+    if (!compendium) {
+      setError("Das Kompendium wird noch geladen — bitte gleich noch einmal versuchen.");
+      return;
+    }
     try {
       const xml = await file.text();
       const { results: parsed, issues } = importFightClubXml(xml, compendium, {

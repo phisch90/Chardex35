@@ -93,6 +93,26 @@ function tagNumber(block: string, tag: string): number | undefined {
   return match ? Number(match[0]) : undefined;
 }
 
+/**
+ * Trennt eine Komma-Liste, ohne Kommas INNERHALB von Klammern zu zerreißen:
+ * „Weapon Focus (Sword, short), Dodge" → 2 Einträge, nicht 3.
+ */
+function splitList(list: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const char of list) {
+    if (char === "(" || char === "[") depth++;
+    else if (char === ")" || char === "]") depth = Math.max(0, depth - 1);
+    if (char === "," && depth === 0) {
+      out.push(current);
+      current = "";
+    } else current += char;
+  }
+  out.push(current);
+  return out.map((entry) => entry.trim()).filter((entry) => entry !== "");
+}
+
 /** Zerlegt „Bluff (1) +1" — Skill-Namen dürfen selbst Klammern enthalten. */
 function parseSkillToken(token: string): { name: string; ranks: number; total: number | undefined } | null {
   const match = /^(.+?)\s*\((\d+(?:[.,]\d+)?)\)\s*([+-]\s*\d+)?/.exec(token.trim());
@@ -128,23 +148,23 @@ export function parseFightClubXml(xml: string): { pcs: FightClubPc[]; issues: Im
   }
 
   const pcs = pcBlocks.map((block): FightClubPc => {
+    // Aktionen zuerst herausnehmen: sie enthalten ein eigenes <name>, das sonst
+    // (bei ungewöhnlicher Feld-Reihenfolge) als Charaktername gelesen würde.
+    const head = block.replace(/<action(?:\s[^>]*)?>[\s\S]*?<\/action>/gi, "");
+
     const abilities: Partial<Record<Ability, number>> = {};
     for (const ability of ABILITIES) {
-      const value = tagNumber(block, ability);
+      const value = tagNumber(head, ability);
       if (value !== undefined) abilities[ability] = value;
     }
 
-    const hpText = tagText(block, "hp");
+    const hpText = tagText(head, "hp");
     const hpMatch = hpText ? /(\d+)\s*\/\s*(\d+)/.exec(hpText) : null;
     const hpSingle = hpText && !hpMatch ? /(\d+)/.exec(hpText) : null;
 
-    const featTokens = (tagText(block, "feats") ?? "")
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t !== "");
+    const featTokens = splitList(tagText(head, "feats") ?? "");
 
-    const skills = (tagText(block, "skills") ?? "")
-      .split(",")
+    const skills = splitList(tagText(head, "skills") ?? "")
       .map(parseSkillToken)
       .filter((s): s is NonNullable<typeof s> => s !== null);
 
@@ -156,27 +176,27 @@ export function parseFightClubXml(xml: string): { pcs: FightClubPc[]; issues: Im
     }));
 
     return {
-      name: tagText(block, "name") ?? "Unbenannt",
-      raceClass: tagText(block, "raceClass") ?? "",
-      size: tagText(block, "size"),
+      name: tagText(head, "name") ?? "Unbenannt",
+      raceClass: tagText(head, "raceClass") ?? "",
+      size: tagText(head, "size"),
       abilities,
       hp: hpMatch
         ? { current: Number(hpMatch[1]), max: Number(hpMatch[2]) }
         : hpSingle
           ? { current: Number(hpSingle[1]), max: Number(hpSingle[1]) }
           : undefined,
-      ac: tagNumber(block, "ac"),
-      touch: tagNumber(block, "touch"),
-      flatFooted: tagNumber(block, "flat"),
-      init: tagNumber(block, "init"),
-      bab: tagNumber(block, "bab"),
-      grapple: tagNumber(block, "grapple"),
+      ac: tagNumber(head, "ac"),
+      touch: tagNumber(head, "touch"),
+      flatFooted: tagNumber(head, "flat"),
+      init: tagNumber(head, "init"),
+      bab: tagNumber(head, "bab"),
+      grapple: tagNumber(head, "grapple"),
       saves: {
-        fort: tagNumber(block, "fort"),
-        ref: tagNumber(block, "ref"),
-        will: tagNumber(block, "will"),
+        fort: tagNumber(head, "fort"),
+        ref: tagNumber(head, "ref"),
+        will: tagNumber(head, "will"),
       },
-      speed: tagText(block, "speed"),
+      speed: tagText(head, "speed"),
       featTokens,
       skills,
       actions: actions.filter((a) => a.name !== ""),
@@ -381,6 +401,8 @@ export function mapFightClubPc(
   const skillIndex = buildIndex(compendium, "skill");
   const skillRanks: Record<string, number> = {};
   const skillTotals = new Map<string, number>();
+  /** Wie viele Export-Zeilen auf denselben App-Skill fielen (Teilgebiete). */
+  const skillSources = new Map<string, number>();
   for (const entry of pc.skills) {
     const hit = matchName(skillIndex, entry.name);
     if (!hit) {
@@ -399,6 +421,7 @@ export function mapFightClubPc(
       });
     }
     skillRanks[hit.id] = (skillRanks[hit.id] ?? 0) + entry.ranks;
+    skillSources.set(hit.id, (skillSources.get(hit.id) ?? 0) + 1);
     if (entry.total !== undefined) skillTotals.set(hit.id, entry.total);
   }
 
@@ -527,6 +550,9 @@ export function mapFightClubPc(
     hint: `Die App zählt Talent-Boni wie „Improved Initiative" mit; Fight Club listet hier oft nur den GE-Modifikator.`,
   });
   for (const [skillId, total] of skillTotals) {
+    // Auf einen Skill zusammengelegte Teilgebiete (Knowledge (Religion) +
+    // Knowledge (Arcana)) sind nicht vergleichbar — die Ränge wurden addiert.
+    if ((skillSources.get(skillId) ?? 1) > 1) continue;
     const line = sheet.skills.find((s) => s.skillId === skillId);
     if (line) report(line.name, total, line.total.total);
   }

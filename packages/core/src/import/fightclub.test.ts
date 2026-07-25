@@ -110,6 +110,44 @@ describe("parseFightClubXml", () => {
     expect(parsed.skills[0]).toEqual({ name: "Knowledge (Religion)", ranks: 2, total: 3 });
   });
 
+  it("zerreißt Kommas INNERHALB von Klammern nicht", () => {
+    // SRD-Waffennamen enthalten Kommas („Sword, short") und tauchen in
+    // Talent-Auswahlen auf — naives Splitten an ',' würde sie zerlegen.
+    const xml = `<characters version="3"><pc><name>X</name><raceClass>Human Fighter 1</raceClass>
+      <feats>Weapon Focus (Sword, short), Dodge</feats>
+      <skills>Craft (armor, light) (2) +4, Bluff (1) +1</skills></pc></characters>`;
+    const parsed = parseFightClubXml(xml).pcs[0]!;
+    expect(parsed.featTokens).toEqual(["Weapon Focus (Sword, short)", "Dodge"]);
+    expect(parsed.skills.map((s) => s.name)).toEqual(["Craft (armor, light)", "Bluff"]);
+  });
+
+  it("verwechselt Aktions-Namen nicht mit dem Charakternamen", () => {
+    // Hier steht <action> VOR den Kopfdaten.
+    const xml = `<characters version="3"><pc>
+      <action><name>Dagger</name><damage>1d4</damage></action>
+      <name>Echter Name</name><raceClass>Human Rogue 1</raceClass><ac>15</ac>
+      </pc></characters>`;
+    const parsed = parseFightClubXml(xml).pcs[0]!;
+    expect(parsed.name).toBe("Echter Name");
+    expect(parsed.ac).toBe(15);
+    expect(parsed.actions.map((a) => a.name)).toEqual(["Dagger"]);
+  });
+
+  it("liest auch NSC-Blöcke", () => {
+    const xml = `<characters version="3"><npc><name>Ork-Wache</name>
+      <raceClass>Half-Orc Fighter 2</raceClass><hp>17</hp></npc></characters>`;
+    const parsed = parseFightClubXml(xml).pcs;
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]!.name).toBe("Ork-Wache");
+    expect(parsed[0]!.hp).toEqual({ current: 17, max: 17 });
+  });
+
+  it("dekodiert XML-Entities (Namen mit & und Anführungszeichen)", () => {
+    const xml = `<characters version="3"><pc><name>Bob &amp; Sons &quot;Der Kühne&quot;</name>
+      <raceClass>Human Bard 1</raceClass></pc></characters>`;
+    expect(parseFightClubXml(xml).pcs[0]!.name).toBe('Bob & Sons "Der Kühne"');
+  });
+
   it("verkraftet halbe Ränge und fehlende Summen", () => {
     const xml = `<characters version="3"><pc><name>X</name><raceClass>Elf Rogue 1</raceClass>
       <skills>Hide (0.5), Spot (2) +4</skills></pc></characters>`;
