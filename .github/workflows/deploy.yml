@@ -30,7 +30,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
         env:
-          PAGES_BASE: /chardex35/
+          # Exakte Schreibweise des Repo-Namens — GitHub Pages ist im
+          # Pfadsegment case-sensitiv (Repo "Chardex35" → /Chardex35/).
+          PAGES_BASE: /Chardex35/
       - uses: actions/configure-pages@v5
         with:
           enablement: true
