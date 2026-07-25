@@ -1,4 +1,4 @@
-import { ABILITIES, type Ability } from "../schema/common.js";
+import { ABILITIES, type Ability, type Size } from "../schema/common.js";
 import {
   CURRENT_SCHEMA_VERSION,
   characterSchema,
@@ -56,6 +56,8 @@ export interface FightClubPc {
   speed?: string | undefined;
   featTokens: string[];
   skills: { name: string; ranks: number; total: number | undefined }[];
+  /** Zeilen, die keiner Fertigkeit zuzuordnen waren — gehen nie stillschweigend verloren. */
+  unparsedSkills: string[];
   actions: FightClubAction[];
 }
 
@@ -113,16 +115,31 @@ function splitList(list: string): string[] {
   return out.map((entry) => entry.trim()).filter((entry) => entry !== "");
 }
 
-/** Zerlegt „Bluff (1) +1" — Skill-Namen dürfen selbst Klammern enthalten. */
+/**
+ * Zerlegt „Bluff (1) +1" — Skill-Namen dürfen selbst Klammern enthalten.
+ * Fight Club lässt die Rangangabe weg, wenn keine Ränge investiert sind
+ * („Listen +11"); solche Zeilen dürfen NICHT verloren gehen.
+ */
 function parseSkillToken(token: string): { name: string; ranks: number; total: number | undefined } | null {
-  const match = /^(.+?)\s*\((\d+(?:[.,]\d+)?)\)\s*([+-]\s*\d+)?/.exec(token.trim());
-  if (!match) return null;
-  const totalText = match[3]?.replace(/\s+/g, "");
-  return {
-    name: (match[1] ?? "").trim(),
-    ranks: Number((match[2] ?? "0").replace(",", ".")),
-    total: totalText ? Number(totalText) : undefined,
-  };
+  const trimmed = token.trim();
+  const withRanks = /^(.+?)\s*\((\d+(?:[.,]\d+)?)\)\s*([+-]\s*\d+)?$/.exec(trimmed);
+  if (withRanks) {
+    const totalText = withRanks[3]?.replace(/\s+/g, "");
+    return {
+      name: (withRanks[1] ?? "").trim(),
+      ranks: Number((withRanks[2] ?? "0").replace(",", ".")),
+      total: totalText ? Number(totalText) : undefined,
+    };
+  }
+  const withoutRanks = /^(.+?)\s*([+-]\s*\d+)$/.exec(trimmed);
+  if (withoutRanks) {
+    return {
+      name: (withoutRanks[1] ?? "").trim(),
+      ranks: 0,
+      total: Number((withoutRanks[2] ?? "0").replace(/\s+/g, "")),
+    };
+  }
+  return null;
 }
 
 export function parseFightClubXml(xml: string): { pcs: FightClubPc[]; issues: ImportIssue[] } {
@@ -158,15 +175,19 @@ export function parseFightClubXml(xml: string): { pcs: FightClubPc[]; issues: Im
       if (value !== undefined) abilities[ability] = value;
     }
 
+    // Vorzeichen erlauben: bei sterbenden Charakteren sind die aktuellen TP
+    // negativ („-3/62"), und genau diesen Zustand soll der Import erhalten.
     const hpText = tagText(head, "hp");
-    const hpMatch = hpText ? /(\d+)\s*\/\s*(\d+)/.exec(hpText) : null;
-    const hpSingle = hpText && !hpMatch ? /(\d+)/.exec(hpText) : null;
+    const hpMatch = hpText ? /(-?\d+)\s*\/\s*(\d+)/.exec(hpText) : null;
+    const hpSingle = hpText && !hpMatch ? /(-?\d+)/.exec(hpText) : null;
 
     const featTokens = splitList(tagText(head, "feats") ?? "");
 
-    const skills = splitList(tagText(head, "skills") ?? "")
+    const skillTokens = splitList(tagText(head, "skills") ?? "");
+    const skills = skillTokens
       .map(parseSkillToken)
       .filter((s): s is NonNullable<typeof s> => s !== null);
+    const unparsedSkills = skillTokens.filter((t) => parseSkillToken(t) === null);
 
     const actions = blocks(block, "action").map((actionBlock) => ({
       name: tagText(actionBlock, "name") ?? "",
@@ -199,6 +220,7 @@ export function parseFightClubXml(xml: string): { pcs: FightClubPc[]; issues: Im
       speed: tagText(head, "speed"),
       featTokens,
       skills,
+      unparsedSkills,
       actions: actions.filter((a) => a.name !== ""),
     };
   });
@@ -257,12 +279,18 @@ function matchName(index: NameIndex, raw: string): { id: string; rest: string } 
   return null;
 }
 
-/** „Human Fighter 3/Cleric 4" → Volk + Klassenstufen. */
+/**
+ * „Human Fighter 3/Cleric 4" → Volk + Klassenstufen.
+ * Ist das Volk unbekannt (Nicht-SRD-Rasse, Monster-NSC wie „Ogre Barbarian 2"),
+ * wird sein Name als `unknownRace` zurückgegeben, damit der Import daraus ein
+ * Platzhalter-Volk anlegen kann.
+ */
 export function parseRaceClass(
   raceClass: string,
   compendium: Map<string, Entity>,
 ): {
   raceId: string | null;
+  unknownRace: string | null;
   classLevels: { classId: string; level: number }[];
   unmatched: string[];
 } {
@@ -287,18 +315,83 @@ export function parseRaceClass(
   }
 
   const classLevels: { classId: string; level: number }[] = [];
-  for (const part of rest.split("/")) {
+  let unknownRace: string | null = null;
+  const segments = rest.split("/");
+  segments.forEach((part, index) => {
     const token = part.trim();
-    if (token === "") continue;
+    if (token === "") return;
     const match = /^(.*?)\s+(\d+)$/.exec(token);
-    const className = (match?.[1] ?? token).trim();
+    const namePart = (match?.[1] ?? token).trim();
     const level = match ? Number(match[2]) : 1;
-    const hit = matchName(classIndex, className);
-    if (hit && hit.rest === "") classLevels.push({ classId: hit.id, level });
-    else unmatched.push(token);
-  }
 
-  return { raceId, classLevels, unmatched };
+    const direct = matchName(classIndex, namePart);
+    if (direct && direct.rest === "") {
+      classLevels.push({ classId: direct.id, level });
+      return;
+    }
+
+    // Unbekanntes Volk klebt am ersten Segment („Ogre Barbarian 2"): den
+    // Klassennamen von rechts wachsen lassen, der Vorlauf ist der Volksname.
+    if (raceId === null && index === 0) {
+      const words = namePart.split(/\s+/);
+      for (let start = 1; start < words.length; start++) {
+        const candidate = matchName(classIndex, words.slice(start).join(" "));
+        if (candidate && candidate.rest === "") {
+          unknownRace = words.slice(0, start).join(" ");
+          classLevels.push({ classId: candidate.id, level });
+          return;
+        }
+      }
+    }
+    unmatched.push(token);
+  });
+
+  return { raceId, unknownRace, classLevels, unmatched };
+}
+
+const FC_SIZE_MAP: Record<string, Size> = {
+  F: "fine",
+  D: "diminutive",
+  T: "tiny",
+  S: "small",
+  M: "medium",
+  L: "large",
+  H: "huge",
+  G: "gargantuan",
+  C: "colossal",
+};
+
+/**
+ * Platzhalter-Volk für Nicht-SRD-Rassen: übernimmt Größe und Bewegung aus dem
+ * Export, aber KEINE Attributsmodifikatoren — die stecken schon in den
+ * exportierten Endwerten. Wird als normales Homebrew-Volk gespeichert und ist
+ * damit später editierbar.
+ */
+function buildPlaceholderRace(name: string, pc: FightClubPc, id: string): Entity {
+  const speed = pc.speed ? /(\d+)/.exec(pc.speed)?.[1] : undefined;
+  return {
+    id,
+    kind: "race",
+    name,
+    source: "homebrew",
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    rev: 1,
+    updatedAt: "",
+    tags: ["import", "platzhalter"],
+    description:
+      `Platzhalter aus dem Fight-Club-Import („${pc.raceClass}"). Attributsmodifikatoren sind ` +
+      "bewusst leer, weil sie in den importierten Attributswerten bereits enthalten sind. " +
+      "Trage Volksmerkmale hier nach, sobald du sie brauchst.",
+    effects: [],
+    data: {
+      size: (pc.size ? FC_SIZE_MAP[pc.size.trim().toUpperCase()] : undefined) ?? "medium",
+      speedFt: speed ? Number(speed) : 30,
+      abilityMods: {},
+      favoredClassId: "any",
+      traits: [],
+      la: 0,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -309,6 +402,8 @@ export interface ImportComparison {
   label: string;
   imported: number;
   derived: number;
+  /** true = absoluter Wert (RK), false = Modifikator (Saves, GAB, …). */
+  absolute?: boolean | undefined;
   /**
    * `match` – App rechnet denselben Wert (Vertrauensbeweis),
    * `reconciled` – Differenz per sichtbarem Modifikator angeglichen,
@@ -320,6 +415,8 @@ export interface ImportComparison {
 
 export interface ImportResultPc {
   character: Character;
+  /** Beim Import erzeugte Homebrew-Einträge (z.B. Platzhalter-Völker). */
+  entities: Entity[];
   issues: ImportIssue[];
   comparisons: ImportComparison[];
 }
@@ -336,8 +433,22 @@ export function mapFightClubPc(
   const issues: ImportIssue[] = [];
   const { idFactory } = options;
 
-  const { raceId, classLevels, unmatched } = parseRaceClass(pc.raceClass, compendium);
-  if (raceId === null) {
+  const { raceId, unknownRace, classLevels, unmatched } = parseRaceClass(pc.raceClass, compendium);
+  const entities: Entity[] = [];
+  let effectiveRaceId = raceId;
+
+  if (raceId === null && unknownRace !== null) {
+    // Kein SRD-Volk, aber der Name ist erkennbar → Platzhalter-Volk anlegen,
+    // damit der Bogen vollständig rechnet und später editierbar bleibt.
+    const placeholderId = idFactory();
+    entities.push(buildPlaceholderRace(unknownRace, pc, placeholderId));
+    effectiveRaceId = placeholderId;
+    issues.push({
+      severity: "info",
+      code: "race-placeholder",
+      message: `„${unknownRace}" ist kein SRD-Volk — als Homebrew-Platzhalter angelegt (Größe und Bewegung aus dem Export übernommen, Volksmerkmale kannst du später nachtragen).`,
+    });
+  } else if (raceId === null) {
     issues.push({
       severity: "error",
       code: "race-unmatched",
@@ -360,7 +471,7 @@ export function mapFightClubPc(
   }
 
   // Attribute: der Export nennt ENDWERTE, unser Modell speichert Basiswerte.
-  const race = raceId ? compendium.get(raceId) : undefined;
+  const race = raceId ? compendium.get(raceId) : undefined;  // Platzhalter: keine Mods
   const racialMods = race?.kind === "race" ? race.data.abilityMods : {};
   const base: Record<Ability, number> = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
   for (const ability of ABILITIES) {
@@ -413,16 +524,33 @@ export function mapFightClubPc(
       });
       continue;
     }
+    const previous = skillRanks[hit.id];
     if (hit.rest !== "") {
       issues.push({
         severity: "info",
         code: "skill-subtype",
-        message: `„${entry.name}": Teilgebiet „${hit.rest}" wird von der App noch nicht getrennt geführt — Ränge auf ${hit.id.split(":")[2]} addiert.`,
+        message:
+          previous === undefined
+            ? `„${entry.name}": Teilgebiete führt die App noch nicht getrennt — die Ränge liegen auf der Grundfertigkeit.`
+            : `„${entry.name}" trifft auf dieselbe Fertigkeit wie ein anderes Teilgebiet — es gilt der höchste Rangwert (${Math.max(previous, entry.ranks)}), alle Originalwerte stehen in den Notizen.`,
       });
     }
-    skillRanks[hit.id] = (skillRanks[hit.id] ?? 0) + entry.ranks;
+    // Teilgebiete NICHT summieren: 8 Ränge Knowledge (Arkana) + 5 Ränge
+    // Knowledge (Religion) sind regeltechnisch zwei Fertigkeiten, niemals 13
+    // Ränge auf einer. Das Maximum kommt der Wahrheit am nächsten und sprengt
+    // das Rangmaximum nicht.
+    skillRanks[hit.id] = Math.max(previous ?? 0, entry.ranks);
     skillSources.set(hit.id, (skillSources.get(hit.id) ?? 0) + 1);
-    if (entry.total !== undefined) skillTotals.set(hit.id, entry.total);
+    if (entry.total !== undefined && (previous === undefined || entry.ranks >= previous)) {
+      skillTotals.set(hit.id, entry.total);
+    }
+  }
+  for (const token of pc.unparsedSkills) {
+    issues.push({
+      severity: "warning",
+      code: "skill-unparsed",
+      message: `Fertigkeitszeile „${token}" war nicht lesbar — bitte im Bogen nachtragen.`,
+    });
   }
 
   // Waffen aus den Aktionszeilen ins Inventar (angelegt → Angriffszeilen).
@@ -458,6 +586,7 @@ export function mapFightClubPc(
 
   const notesLines = [
     "Aus Fight Club importiert.",
+    ...(pc.skills.length > 0 ? [`Fertigkeiten im Original: ${pc.skills.map((s) => `${s.name} (${s.ranks})${s.total !== undefined ? ` ${s.total >= 0 ? "+" : ""}${s.total}` : ""}`).join(", ")}`] : []),
     `Original: ${pc.raceClass}${pc.speed ? ` · ${pc.speed}` : ""}`,
     ...(unmatchedFeats.length > 0 ? [`Nicht zugeordnete Talente: ${unmatchedFeats.join(", ")}`] : []),
     ...pc.actions
@@ -471,7 +600,7 @@ export function mapFightClubPc(
     rev: 1,
     updatedAt: "",
     name: pc.name,
-    raceId: raceId ?? "",
+    raceId: effectiveRaceId ?? "",
     abilities: { method: "rolled", base, levelUps: [] },
     levels,
     skillRanks,
@@ -489,22 +618,32 @@ export function mapFightClubPc(
   const miscModifiers: Character["miscModifiers"] = [];
 
   /**
-   * Ausgleich für Werte, in denen typischerweise die NICHT exportierte
-   * Ausrüstung steckt. Bonustyp bewusst typisiert statt „untyped":
-   * - `armor` bleibt korrekt aus der Berührungs-RK heraus und wird später von
-   *   echter Rüstung überdeckt statt addiert (3.5-Stacking).
-   * - `resistance` wird später von einem echten Resistenz-Umhang überdeckt.
+   * Ausgleich NUR wenn Volk und Klassen sauber zugeordnet wurden. Sonst wäre
+   * die Differenz keine fehlende Ausrüstung, sondern die fehlende halbe Klasse —
+   * ein Modifikator würde den Fehler zudecken statt ihn zu zeigen.
    */
+  const mappingBroken = issues.some((i) => i.severity === "error");
+
   const reconcile = (
     label: string,
     imported: number | undefined,
     derived: number,
-    target: "ac" | "save.fort" | "save.ref" | "save.will",
+    target: "save.fort" | "save.ref" | "save.will",
   ) => {
     if (imported === undefined) return;
     const delta = imported - derived;
     if (delta === 0) {
       comparisons.push({ label, imported, derived, status: "match" });
+      return;
+    }
+    if (mappingBroken) {
+      comparisons.push({
+        label,
+        imported,
+        derived,
+        status: "reported",
+        hint: "Kein Ausgleich, solange Volk oder Klassen nicht zugeordnet sind.",
+      });
       return;
     }
     comparisons.push({
@@ -517,13 +656,65 @@ export function mapFightClubPc(
     miscModifiers.push({
       id: idFactory(),
       target,
-      bonusType: target === "ac" ? "armor" : "resistance",
+      // `resistance` wird später von einem echten Resistenz-Umhang überdeckt
+      // statt addiert (3.5-Stacking).
+      bonusType: "resistance",
       value: delta,
       note: "Fight-Club-Import (fehlende Ausrüstung)",
     });
   };
 
-  reconcile("RK", pc.ac, sheet.ac.total.total, "ac");
+  /**
+   * Die RK wird über die Berührungs-RK aufgeteilt: was auch gegen Berührung
+   * zählt (Ablenkung, Klassenboni wie beim Mönch), kommt als `deflection`, der
+   * Rest als `armor`. So stimmen RK UND Berührungs-RK — und echte Rüstung
+   * überdeckt den Platzhalter später, statt sich zu addieren.
+   */
+  if (pc.ac !== undefined) {
+    const acDelta = pc.ac - sheet.ac.total.total;
+    if (acDelta === 0) {
+      comparisons.push({ label: "RK", imported: pc.ac, derived: sheet.ac.total.total, status: "match", absolute: true });
+    } else if (mappingBroken) {
+      comparisons.push({
+        label: "RK",
+        imported: pc.ac,
+        derived: sheet.ac.total.total,
+        status: "reported",
+        absolute: true,
+        hint: "Kein Ausgleich, solange Volk oder Klassen nicht zugeordnet sind.",
+      });
+    } else {
+      const touchDelta =
+        pc.touch !== undefined ? Math.max(0, Math.min(acDelta, pc.touch - sheet.ac.touch)) : 0;
+      const armorDelta = acDelta - touchDelta;
+      comparisons.push({
+        label: "RK",
+        imported: pc.ac,
+        derived: sheet.ac.total.total,
+        status: "reconciled",
+        absolute: true,
+        hint: `Ausrüstung steckt nicht im Export — als „Sonstiges"-Modifikator eingetragen und jederzeit löschbar.`,
+      });
+      if (armorDelta !== 0) {
+        miscModifiers.push({
+          id: idFactory(),
+          target: "ac",
+          bonusType: "armor",
+          value: armorDelta,
+          note: "Fight-Club-Import (Rüstung/Schild)",
+        });
+      }
+      if (touchDelta !== 0) {
+        miscModifiers.push({
+          id: idFactory(),
+          target: "ac",
+          bonusType: "deflection",
+          value: touchDelta,
+          note: "Fight-Club-Import (gilt auch gegen Berührung)",
+        });
+      }
+    }
+  }
   reconcile("Fortitude", pc.saves.fort, sheet.saves.fort.total, "save.fort");
   reconcile("Reflex", pc.saves.ref, sheet.saves.ref.total, "save.ref");
   reconcile("Will", pc.saves.will, sheet.saves.will.total, "save.will");
@@ -557,11 +748,11 @@ export function mapFightClubPc(
     if (line) report(line.name, total, line.total.total);
   }
 
-  if (pc.touch !== undefined || pc.flatFooted !== undefined) {
+  if (pc.flatFooted !== undefined) {
     issues.push({
       severity: "info",
-      code: "ac-variants",
-      message: `Berührungs-RK${pc.touch !== undefined ? ` (${pc.touch})` : ""} und RK auf dem falschen Fuß${pc.flatFooted !== undefined ? ` (${pc.flatFooted})` : ""} lassen sich nicht rekonstruieren — sie ergeben sich in der App aus der eingetragenen Ausrüstung.`,
+      code: "ac-flatfooted",
+      message: `RK auf dem falschen Fuß im Original: ${pc.flatFooted}. Die App rechnet sie selbst aus (Fight Club zählt dort teils situative Boni wie Ausweichen mit, die wir bewusst nur situativ führen).`,
     });
   }
 
@@ -576,7 +767,7 @@ export function mapFightClubPc(
     });
   }
 
-  return { character, issues, comparisons };
+  return { character, entities, issues, comparisons };
 }
 
 /** Komfort: komplette Datei → Charaktere mit Bericht. */

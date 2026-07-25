@@ -7,7 +7,7 @@ import {
   type ImportResultPc,
 } from "@codex35/core";
 import { S } from "../strings.js";
-import { CharacterRepo } from "../db/repo.js";
+import { CharacterRepo, CompendiumRepo } from "../db/repo.js";
 import { useCompendium, useHouseRules } from "../lib/hooks.js";
 import { Card, GhostButton, PrimaryButton, SectionTitle, fmtMod } from "../ui/bits.js";
 
@@ -23,8 +23,12 @@ export function ImportPage() {
   const onFile = async (file: File) => {
     setError(null);
     setResults(null);
-    if (!compendium) {
-      setError("Das Kompendium wird noch geladen — bitte gleich noch einmal versuchen.");
+    // Achtung: eine LEERE Map ist truthy — ohne Größenprüfung entstünde ein
+    // Charakter, dem alle Zuordnungen fehlen (Volk, Klassen, Talente).
+    if (!compendium || compendium.size === 0) {
+      setError(
+        "Das Regelwerk ist noch nicht geladen. Warte einen Moment und versuche es erneut — ohne Kompendium ließen sich Volk, Klassen und Talente nicht zuordnen.",
+      );
       return;
     }
     try {
@@ -43,7 +47,17 @@ export function ImportPage() {
   const apply = async () => {
     if (!results || results.length === 0) return;
     setBusy(true);
-    for (const result of results) await CharacterRepo.insert(result.character);
+    try {
+      for (const result of results) {
+        // Platzhalter-Völker zuerst: der Bogen referenziert sie.
+        for (const entity of result.entities) await CompendiumRepo.insertHomebrew(entity);
+        await CharacterRepo.insert(result.character);
+      }
+    } catch (err) {
+      setBusy(false);
+      setError(err instanceof Error ? err.message : String(err));
+      return;
+    }
     setBusy(false);
     if (results.length === 1) {
       void navigate({ to: "/charaktere/$charId", params: { charId: results[0]!.character.id } });
@@ -156,7 +170,8 @@ function ImportPreview({ result }: { result: ImportResultPc }) {
 
       <SectionTitle>{S.import.comparison}</SectionTitle>
       {comparisons.length === 0 ? (
-        <p className="text-xs text-emerald-400">{S.import.matches}</p>
+        // Leer heißt „keine Vergleichswerte im Export", nicht „alles korrekt".
+        <p className="text-xs text-slate-400">{S.import.noValues}</p>
       ) : (
         <ul className="space-y-1 text-xs">
           {comparisons.map((c, i) => (
@@ -164,8 +179,8 @@ function ImportPreview({ result }: { result: ImportResultPc }) {
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-slate-300">{c.label}</span>
                 <span className="font-mono text-slate-500">
-                  {fmtMod(c.imported)}
-                  {c.status !== "match" && ` → ${fmtMod(c.derived)}`}
+                  {c.absolute ? c.imported : fmtMod(c.imported)}
+                  {c.status !== "match" && ` → ${c.absolute ? c.derived : fmtMod(c.derived)}`}
                 </span>
                 <span
                   className={`shrink-0 font-medium ${

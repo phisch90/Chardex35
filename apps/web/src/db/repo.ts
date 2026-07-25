@@ -92,6 +92,14 @@ export const CharacterRepo = {
 };
 
 export const CompendiumRepo = {
+  /** Fertig gebauten Homebrew-Eintrag übernehmen (Import) — ID bleibt erhalten. */
+  async insertHomebrew(entity: Entity): Promise<Entity> {
+    if (entity.source !== "homebrew") throw new Error("Nur Homebrew-Einträge können importiert werden.");
+    const next = { ...entity, updatedAt: now() };
+    await db.entities.put(next);
+    return next;
+  },
+
   async saveHomebrew(entity: Entity): Promise<Entity> {
     if (entity.source !== "homebrew") throw new Error("SRD-Einträge sind unveränderlich — nutze Überschreiben.");
     const next = { ...entity, rev: entity.rev + 1, updatedAt: now() };

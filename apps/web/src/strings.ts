@@ -175,6 +175,7 @@ export const S = {
     reconciled: "ausgeglichen",
     reportedOnly: "weicht ab",
     matches: "Alle Werte stimmen mit dem Original überein.",
+    noValues: "Der Export enthält keine Vergleichswerte (RK, Rettungswürfe, GAB) — nichts zu prüfen.",
     notes: "Hinweise",
     failed: "Datei konnte nicht gelesen werden",
     nothing: "Keine Charaktere in der Datei gefunden.",

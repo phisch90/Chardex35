@@ -187,6 +187,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
   it("erkennt Volk und Multiclass-Stufen", () => {
     expect(parseRaceClass("Human Fighter 3/Cleric 4", compendium)).toEqual({
       raceId: "srd:race:human",
+      unknownRace: null,
       classLevels: [
         { classId: "srd:class:fighter", level: 3 },
         { classId: "srd:class:cleric", level: 4 },
@@ -232,15 +233,14 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(comparisons.filter((c) => c.status === "reconciled").map((c) => c.label)).toEqual(["RK"]);
   });
 
-  it("gleicht die RK per sichtbarem Rüstungs-Modifikator an (nicht untyped!)", () => {
-    const acMod = character.miscModifiers.find((m) => m.target === "ac");
-    expect(acMod?.value).toBe(5);
-    // „armor" bleibt korrekt aus der Berührungs-RK heraus und wird von echter
-    // Rüstung überdeckt statt addiert.
-    expect(acMod?.bonusType).toBe("armor");
-    expect(acMod?.note).toContain("Fight-Club-Import");
+  it("gleicht die RK per sichtbaren Modifikatoren an (nie untyped)", () => {
+    const acMods = character.miscModifiers.filter((m) => m.target === "ac");
+    // Summe trifft den Importwert; kein untyped, damit Berührungs-RK und
+    // späteres 3.5-Stacking mit echter Ausrüstung korrekt bleiben.
+    expect(acMods.reduce((sum, m) => sum + m.value, 0)).toBe(5);
+    expect(acMods.every((m) => m.bonusType !== "untyped")).toBe(true);
+    expect(acMods.every((m) => m.note.includes("Fight-Club-Import"))).toBe(true);
     expect(sheet.ac.total.total).toBe(16);
-    expect(sheet.ac.touch).toBe(11);
   });
 
   it("Save-Ausgleich nutzt 'resistance' (überdeckt später echte Resistenz-Boni)", () => {
@@ -315,6 +315,114 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
   it("hält die Herkunft in den Notizen fest", () => {
     expect(character.notes).toContain("Fight Club");
     expect(character.notes).toContain("Human Fighter 3/Cleric 4");
+  });
+
+  it("hält negative TP fest: ein sterbender Charakter bleibt sterbend", () => {
+    const dying = XML.replace("<hp>36/62 (7 HD)</hp>", "<hp>-3/62 (7 HD)</hp>");
+    let n = 0;
+    const result = importFightClubXml(dying, compendium, { idFactory: () => `d-${++n}` }).results[0]!;
+    expect(result.character.hp.damage).toBe(65);
+    expect(deriveSheet(result.character, compendium).hp.current).toBe(-3);
+  });
+
+  it("rekonstruiert auch die Berührungs-RK (Aufteilung Rüstung/Ablenkung)", () => {
+    // Original: RK 16, Berührung 12 → +4 Rüstung (nicht gegen Berührung)
+    // und +1 Ablenkung (auch gegen Berührung).
+    expect(sheet.ac.total.total).toBe(16);
+    expect(sheet.ac.touch).toBe(12);
+    const types = character.miscModifiers
+      .filter((m) => m.target === "ac")
+      .map((m) => `${m.bonusType}${m.value >= 0 ? "+" : ""}${m.value}`)
+      .sort();
+    expect(types).toEqual(["armor+4", "deflection+1"]);
+  });
+
+  it("Mönch: der RK-Bonus gilt auch gegen Berührung", () => {
+    const monk = `<characters version="3"><pc><name>Mönch</name>
+      <raceClass>Human Monk 5</raceClass><size>M</size>
+      <str>12</str><dex>16</dex><con>12</con><int>10</int><wis>16</wis><cha>10</cha>
+      <ac>17</ac><touch>17</touch><hp>30/30</hp></pc></characters>`;
+    let n = 0;
+    const result = importFightClubXml(monk, compendium, { idFactory: () => `m-${++n}` }).results[0]!;
+    const monkSheet = deriveSheet(result.character, compendium);
+    expect(monkSheet.ac.total.total).toBe(17);
+    expect(monkSheet.ac.touch).toBe(17);
+  });
+
+  it("legt für Nicht-SRD-Völker ein Platzhalter-Volk an statt einen kaputten Bogen", () => {
+    const ogre = `<characters version="3"><npc><name>Grunk</name>
+      <raceClass>Ogre Barbarian 2</raceClass><size>L</size><speed>40 ft.</speed>
+      <str>21</str><dex>8</dex><con>15</con><int>6</int><wis>10</wis><cha>7</cha>
+      <hp>29/29</hp></npc></characters>`;
+    let n = 0;
+    const result = importFightClubXml(ogre, compendium, { idFactory: () => `o-${++n}` }).results[0]!;
+    expect(result.entities).toHaveLength(1);
+    const race = result.entities[0]!;
+    expect(race.kind).toBe("race");
+    expect(race.name).toBe("Ogre");
+    expect(race.source).toBe("homebrew");
+    if (race.kind === "race") {
+      expect(race.data.size).toBe("large");
+      expect(race.data.speedFt).toBe(40);
+      // Attributsmodifikatoren MÜSSEN leer bleiben: sie stecken schon in den
+      // exportierten Endwerten.
+      expect(race.data.abilityMods).toEqual({});
+    }
+    expect(result.character.raceId).toBe(race.id);
+    expect(result.character.levels).toHaveLength(2);
+
+    // Der Bogen rechnet vollständig — mit dem Platzhalter im Kompendium.
+    const withPlaceholder = resolveCompendium([
+      ...[...compendium.values()],
+      ...result.entities,
+    ]);
+    const ogreSheet = deriveSheet(result.character, withPlaceholder);
+    expect(ogreSheet.issues.filter((i) => i.severity === "error")).toEqual([]);
+    expect(ogreSheet.size).toBe("large");
+    expect(ogreSheet.speedFt.total).toBe(40);
+    expect(ogreSheet.abilities.str.score.total).toBe(21);
+  });
+
+  it("Teilgebiete: höchster Rang statt Summe — kein Rangmaximum-Verstoß", () => {
+    const wizard = `<characters version="3"><pc><name>Magier</name>
+      <raceClass>Elf Wizard 5</raceClass>
+      <str>8</str><dex>14</dex><con>12</con><int>18</int><wis>12</wis><cha>10</cha>
+      <hp>20/20</hp>
+      <skills>Knowledge (Arcana) (8) +12, Knowledge (Religion) (5) +9, Spellcraft (8) +12</skills>
+      </pc></characters>`;
+    let n = 0;
+    const result = importFightClubXml(wizard, compendium, { idFactory: () => `w-${++n}` }).results[0]!;
+    // 8 und 5 Ränge auf zwei Teilgebieten → 8, nicht 13.
+    expect(result.character.skillRanks["srd:skill:knowledge"]).toBe(8);
+    const wizSheet = deriveSheet(result.character, compendium);
+    expect(wizSheet.issues.filter((i) => i.code === "max-ranks")).toEqual([]);
+    // Die Originalwerte aller Teilgebiete bleiben in den Notizen erhalten.
+    expect(result.character.notes).toContain("Knowledge (Religion) (5)");
+  });
+
+  it("verliert Fertigkeiten ohne Rangangabe nicht (Listen +11)", () => {
+    const xml = XML.replace(
+      "<skills>Bluff (1) +1,",
+      "<skills>Listen +11, Spot +9, Bluff (1) +1,",
+    );
+    let n = 0;
+    const result = importFightClubXml(xml, compendium, { idFactory: () => `s-${++n}` }).results[0]!;
+    expect(result.character.skillRanks["srd:skill:listen"]).toBe(0);
+    // Die Abweichung (Original +11, App +0) wird berichtet statt verschluckt.
+    expect(result.comparisons.some((c) => c.label === "Listen" && c.status === "reported")).toBe(true);
+  });
+
+  it("gleicht NICHT aus, wenn Volk oder Klassen fehlen (kein Zudecken)", () => {
+    const broken = XML.replace(
+      "<raceClass>Human Fighter 3/Cleric 4</raceClass>",
+      "<raceClass>Human Fighter 3/Kriegsmagier 4</raceClass>",
+    );
+    let n = 0;
+    const result = importFightClubXml(broken, compendium, { idFactory: () => `b-${++n}` }).results[0]!;
+    expect(result.character.miscModifiers).toEqual([]);
+    const acRow = result.comparisons.find((c) => c.label === "RK")!;
+    expect(acRow.status).toBe("reported");
+    expect(acRow.hint).toContain("Kein Ausgleich");
   });
 
   it("meldet unbekannte Klassen ohne den Import abzubrechen", () => {
