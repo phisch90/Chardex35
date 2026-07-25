@@ -3,7 +3,8 @@ import { Link } from "@tanstack/react-router";
 import type { HouseRules } from "@codex35/core";
 import { S } from "../strings.js";
 import { SettingsRepo } from "../db/repo.js";
-import { useHouseRules } from "../lib/hooks.js";
+import { AppSettingsRepo } from "../db/appSettings.js";
+import { useAppSettings, useHouseRules } from "../lib/hooks.js";
 import { buildExport, downloadExport, importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton, PrimaryButton, SectionTitle } from "../ui/bits.js";
 
@@ -17,6 +18,7 @@ const oglText = Object.values(
 
 export function SettingsPage() {
   const houseRules = useHouseRules();
+  const appSettings = useAppSettings();
   const [persisted, setPersisted] = useState<boolean | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -46,6 +48,22 @@ export function SettingsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-bold">{S.nav.settings}</h1>
+
+      <Card>
+        <SectionTitle>{S.settings.features}</SectionTitle>
+        <Toggle
+          label={S.settings.diceEnabled}
+          hint={S.settings.diceEnabledHint}
+          checked={appSettings.diceEnabled}
+          onChange={(v) => void AppSettingsRepo.set({ ...appSettings, diceEnabled: v })}
+        />
+        <Toggle
+          label={S.settings.encumbrance}
+          hint={S.settings.encumbranceHint}
+          checked={!houseRules.ignoreEncumbrance}
+          onChange={(v) => setRule({ ignoreEncumbrance: !v })}
+        />
+      </Card>
 
       <Card>
         <SectionTitle>{S.settings.houseRules}</SectionTitle>
@@ -130,15 +148,23 @@ export function SettingsPage() {
   );
 }
 
-function Toggle(props: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
+function Toggle(props: {
+  label: string;
+  hint?: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) {
   return (
     <label className="flex cursor-pointer items-center justify-between gap-3 py-1.5">
-      <span className="text-sm">{props.label}</span>
+      <span className="min-w-0">
+        <span className="text-sm">{props.label}</span>
+        {props.hint && <span className="block text-xs text-slate-500">{props.hint}</span>}
+      </span>
       <input
         type="checkbox"
         checked={props.checked}
         onChange={(e) => props.onChange(e.target.checked)}
-        className="h-5 w-9 accent-amber-500"
+        className="h-5 w-9 shrink-0 accent-amber-500"
       />
     </label>
   );

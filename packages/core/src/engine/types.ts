@@ -75,6 +75,8 @@ export interface SpellcastingBlock {
   slots: SlotInfo[];
   spellsKnown: (number | null)[] | undefined;
   spellListId: string;
+  /** Klasse führt ein Zauberbuch (Magier, Assassine) und ist darauf begrenzt. */
+  usesSpellbook: boolean;
 }
 
 export interface EncumbranceBlock {

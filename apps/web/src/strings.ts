@@ -41,6 +41,16 @@ export const S = {
       feats: "Talente",
       notes: "Notizen",
     },
+    /** Kurzformen für die mobile Reiter-Leiste (sieben Reiter nebeneinander). */
+    tabsShort: {
+      stats: "Werte",
+      combat: "Kampf",
+      skills: "Fert.",
+      spells: "Zauber",
+      inventory: "Ausr.",
+      feats: "Talente",
+      notes: "Notiz",
+    },
     hp: "TP",
     hpMax: "max.",
     damage: "Schaden",
@@ -106,6 +116,11 @@ export const S = {
   },
 
   settings: {
+    features: "Funktionen",
+    diceEnabled: "Würfeln in der App",
+    diceEnabledHint: "Aus: keine Würfel-Knöpfe am Bogen und kein Würfel-Reiter.",
+    encumbrance: "Gewicht & Traglast",
+    encumbranceHint: "Aus: keine Gewichtsangaben, und die Last bremst weder Bewegung noch Geschicklichkeit.",
     houseRules: "Hausregeln",
     fractional: "Fraktionale BAB/Saves (Unearthed Arcana)",
     maxHpL1: "Volle TP auf Stufe 1",

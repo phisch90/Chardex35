@@ -9,15 +9,22 @@ import { parsePrerequisites, resolveFeatId, resolveSkillId } from "./prereqs.js"
 /** Die sieben PHB-Caster — nur sie bekommen einen spellcasting-Block. */
 const SPELLCASTING: Record<
   string,
-  { model: "prepared" | "spontaneous"; ability: "int" | "wis" | "cha"; list: string; armorFailure: boolean }
+  {
+    model: "prepared" | "spontaneous";
+    ability: "int" | "wis" | "cha";
+    list: string;
+    armorFailure: boolean;
+    /** Nur der Magier führt unter den PHB-Castern ein Zauberbuch. */
+    spellbook: boolean;
+  }
 > = {
-  wizard: { model: "prepared", ability: "int", list: "sorcerer-wizard", armorFailure: true },
-  sorcerer: { model: "spontaneous", ability: "cha", list: "sorcerer-wizard", armorFailure: true },
-  bard: { model: "spontaneous", ability: "cha", list: "bard", armorFailure: true },
-  cleric: { model: "prepared", ability: "wis", list: "cleric", armorFailure: false },
-  druid: { model: "prepared", ability: "wis", list: "druid", armorFailure: false },
-  paladin: { model: "prepared", ability: "wis", list: "paladin", armorFailure: false },
-  ranger: { model: "prepared", ability: "wis", list: "ranger", armorFailure: false },
+  wizard: { model: "prepared", ability: "int", list: "sorcerer-wizard", armorFailure: true, spellbook: true },
+  sorcerer: { model: "spontaneous", ability: "cha", list: "sorcerer-wizard", armorFailure: true, spellbook: false },
+  bard: { model: "spontaneous", ability: "cha", list: "bard", armorFailure: true, spellbook: false },
+  cleric: { model: "prepared", ability: "wis", list: "cleric", armorFailure: false, spellbook: false },
+  druid: { model: "prepared", ability: "wis", list: "druid", armorFailure: false, spellbook: false },
+  paladin: { model: "prepared", ability: "wis", list: "paladin", armorFailure: false, spellbook: false },
+  ranger: { model: "prepared", ability: "wis", list: "ranger", armorFailure: false, spellbook: false },
 };
 
 /** "3", "3+1" → 3; NULL/"" → null. */
@@ -214,6 +221,7 @@ export function convertClasses(ctx: ConvertContext): ClassEntity[] {
                 spellListId: `srd:spelllist:${caster.list}`,
                 bonusSlots: true,
                 armorFailure: caster.armorFailure,
+                spellbook: caster.spellbook,
               },
             }
           : {}),

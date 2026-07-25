@@ -11,6 +11,7 @@ import {
   type HouseRules,
 } from "@codex35/core";
 import { db } from "../db/db.js";
+import { APP_SETTINGS_KEY, parseAppSettings, type AppSettings } from "../db/appSettings.js";
 
 export function useAllEntities(): Entity[] | undefined {
   return useLiveQuery(() => db.entities.toArray(), []);
@@ -46,6 +47,12 @@ export function useHouseRules(): HouseRules {
     const parsed = houseRulesSchema.safeParse(row.value);
     return parsed.success ? parsed.data : DEFAULT_HOUSE_RULES;
   }, [row]);
+}
+
+/** Geräte-Einstellungen (Anzeige), unabhängig von den Hausregeln. */
+export function useAppSettings(): AppSettings {
+  const row = useLiveQuery(() => db.settings.get(APP_SETTINGS_KEY), []);
+  return useMemo(() => parseAppSettings(row?.value), [row]);
 }
 
 /** Der abgeleitete Bogen — nie State, immer berechnet. */

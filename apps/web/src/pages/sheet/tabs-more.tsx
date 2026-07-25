@@ -7,12 +7,13 @@ import {
   type StatPath,
 } from "@codex35/core";
 import { S } from "../../strings.js";
-import { useAllEntities } from "../../lib/hooks.js";
+import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import type { TabProps } from "./index.js";
 
 export function InventoryTab({ character, sheet, save }: TabProps) {
   const entities = useAllEntities();
+  const { ignoreEncumbrance } = useHouseRules();
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const results =
@@ -37,7 +38,7 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
                 <div className="min-w-0 flex-1">
                   <div className="truncate">{name}</div>
                   <div className="text-xs text-slate-500">
-                    {weight ? `${weight * row.qty} lb` : ""}
+                    {!ignoreEncumbrance && weight ? `${weight * row.qty} lb` : ""}
                     {row.extraEffects.length > 0 && " · verzaubert"}
                   </div>
                 </div>
@@ -86,9 +87,11 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
             <li className="py-2 text-sm text-slate-500">Leer.</li>
           )}
         </ul>
-        <p className="mt-2 text-xs text-slate-400">
-          Gesamt {sheet.encumbrance.loadLb} lb — {S.sheet.encumbrance[sheet.encumbrance.level]}
-        </p>
+        {!ignoreEncumbrance && (
+          <p className="mt-2 text-xs text-slate-400">
+            Gesamt {sheet.encumbrance.loadLb} lb — {S.sheet.encumbrance[sheet.encumbrance.level]}
+          </p>
+        )}
       </Card>
 
       <Card>
@@ -121,7 +124,9 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
           onClick={() => {
             const name = prompt("Name des Gegenstands?");
             if (!name) return;
-            const weight = Number(prompt("Gewicht in lb?", "0") ?? 0) || 0;
+            const weight = ignoreEncumbrance
+              ? 0
+              : Number(prompt("Gewicht in lb?", "0") ?? 0) || 0;
             save((c) =>
               void c.inventory.push({
                 id: crypto.randomUUID(),
