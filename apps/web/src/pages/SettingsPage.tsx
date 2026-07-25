@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import type { HouseRules } from "@codex35/core";
 import { S } from "../strings.js";
 import { SettingsRepo } from "../db/repo.js";
@@ -86,6 +87,12 @@ export function SettingsPage() {
             />
           </label>
         </div>
+        <p className="mt-3 text-xs text-slate-400">
+          Aus der alten App umsteigen?{" "}
+          <Link to="/import" className="text-amber-400 underline decoration-dotted">
+            {S.import.title}
+          </Link>
+        </p>
         {importResult && (
           <p className="mt-2 text-xs text-emerald-400">
             Import: {importResult.charactersAdded + importResult.charactersUpdated} Charaktere,{" "}

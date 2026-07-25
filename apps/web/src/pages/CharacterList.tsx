@@ -21,7 +21,17 @@ export function CharacterListPage() {
       </div>
 
       {characters === undefined && <p className="text-slate-400">{S.misc.loading}</p>}
-      {characters?.length === 0 && <p className="py-10 text-center text-slate-400">{S.misc.noCharacters}</p>}
+      {characters?.length === 0 && (
+        <p className="py-10 text-center text-slate-400">{S.misc.noCharacters}</p>
+      )}
+      {characters !== undefined && (
+        <Link
+          to="/import"
+          className="block text-center text-xs text-slate-400 underline decoration-dotted hover:text-amber-300"
+        >
+          📂 {S.import.title}
+        </Link>
+      )}
 
       {characters?.map((character) => (
         <CharacterRow key={character.id} character={character} />

@@ -61,6 +61,13 @@ export const CharacterRepo = {
     return character;
   },
 
+  /** Fertig gebauten Charakter übernehmen (Import) — ID bleibt erhalten. */
+  async insert(character: Character): Promise<Character> {
+    const next = { ...character, updatedAt: now() };
+    await db.characters.put(next);
+    return next;
+  },
+
   /**
    * Mutation gegen den FRISCHEN DB-Stand in einer Transaktion — verhindert
    * Lost Updates bei schnellen Doppel-Taps (HP −1/−1, Slot-Pips), die sonst
