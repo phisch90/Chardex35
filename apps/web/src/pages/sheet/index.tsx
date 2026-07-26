@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import type { Character, DerivedSheet, StatValue } from "@codex35/core";
-import { displayName } from "@codex35/core";
+import { applyHpChange, displayName } from "@codex35/core";
 import { S } from "../../strings.js";
 import { CharacterRepo } from "../../db/repo.js";
 import { useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
@@ -146,21 +146,23 @@ export function CharacterSheetPage() {
               </div>
             </div>
           </button>
+          {/* Schnelltasten gehen durch dieselbe Regel wie der Rechner — sonst
+              würden temporäre TP hier Schaden abfangen und dort nicht. */}
           <div className="mt-1 flex gap-1.5">
             <button
-              onClick={() => save((c) => void (c.hp.damage += 1))}
+              onClick={() => save((c) => void (c.hp = applyHpChange(c.hp, "damage", 1)))}
               className="flex-1 rounded-lg border border-red-800 bg-red-950/60 py-1.5 text-sm font-semibold text-red-300 active:bg-red-900"
             >
               −1
             </button>
             <button
-              onClick={() => save((c) => void (c.hp.damage += 5))}
+              onClick={() => save((c) => void (c.hp = applyHpChange(c.hp, "damage", 5)))}
               className="flex-1 rounded-lg border border-red-800 bg-red-950/60 py-1.5 text-sm font-semibold text-red-300 active:bg-red-900"
             >
               −5
             </button>
             <button
-              onClick={() => save((c) => void (c.hp.damage = Math.max(0, c.hp.damage - 1)))}
+              onClick={() => save((c) => void (c.hp = applyHpChange(c.hp, "heal", 1)))}
               className="flex-1 rounded-lg border border-emerald-800 bg-emerald-950/60 py-1.5 text-sm font-semibold text-emerald-300 active:bg-emerald-900"
             >
               +1
@@ -242,13 +244,9 @@ export function CharacterSheetPage() {
       <HpPad
         open={hpPadOpen}
         onClose={() => setHpPadOpen(false)}
-        onApply={(mode, amount) =>
-          save((c) => {
-            if (mode === "damage") c.hp.damage += amount;
-            else if (mode === "heal") c.hp.damage = Math.max(0, c.hp.damage - amount);
-            else c.hp.temp += amount;
-          })
-        }
+        // Die 3.5-Regeln dazu (temporäre TP fangen Schaden zuerst ab) stehen in
+        // applyHpChange, damit sie getestet sind und nicht in der UI hängen.
+        onApply={(mode, amount) => save((c) => void (c.hp = applyHpChange(c.hp, mode, amount)))}
       />
 
       <BreakdownSheet

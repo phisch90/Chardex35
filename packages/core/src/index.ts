@@ -3,4 +3,7 @@ export * from "./schema/entities.js";
 export * from "./schema/character.js";
 export * from "./engine/index.js";
 export * from "./dice/dice.js";
+export * from "./calc/arithmetic.js";
+export * from "./calc/hp.js";
+export * from "./calc/keypad.js";
 export * from "./import/fightclub.js";
