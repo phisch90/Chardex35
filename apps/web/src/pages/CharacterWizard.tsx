@@ -6,6 +6,7 @@ import {
   deriveSheet,
   displayName,
   maxRanks,
+  skillPointCost,
   type Ability,
   type Character,
   type Entity,
@@ -15,6 +16,7 @@ import { S } from "../strings.js";
 import { CharacterRepo } from "../db/repo.js";
 import { useAllEntities, useCompendium, useHouseRules } from "../lib/hooks.js";
 import { Card, Chip, GhostButton, PrimaryButton, SearchInput, fmtMod } from "../ui/bits.js";
+import { FeatText } from "../ui/FeatText.js";
 
 interface Draft {
   name: string;
@@ -352,6 +354,9 @@ function SkillStep(props: {
           const isClass = skill.isClassSkill;
           const ranks = draft.skillRanks[skill.key] ?? 0;
           const max = maxRanks(1, isClass);
+          // 3.5: ganze Ränge, klassenfremd 2 Punkte je Rang (keine halben
+          // Ränge zum halben Preis — das war 3.0).
+          const cost = skillPointCost(isClass);
           const isSubtypeAnchor = skill.subtyped && skill.subtype === undefined;
           return (
             <li key={skill.key} className="flex items-center justify-between gap-2 py-1.5 text-sm">
@@ -361,6 +366,7 @@ function SkillStep(props: {
                 {!isSubtypeAnchor && (
                   <span className="ml-1 text-xs text-slate-500">
                     {S.sheet.maxRanks} {max}
+                    {cost > 1 && <span className="ml-1 text-slate-600">· 2 Pkt/Rang</span>}
                   </span>
                 )}
               </span>
@@ -371,15 +377,15 @@ function SkillStep(props: {
                 {!isSubtypeAnchor && (
                   <>
                     <GhostButton
-                      onClick={() => setRanks(skill.key, ranks - (isClass ? 1 : 0.5))}
+                      onClick={() => setRanks(skill.key, ranks - 1)}
                       disabled={ranks <= 0}
                     >
                       −
                     </GhostButton>
                     <span className="w-8 text-center font-mono">{ranks}</span>
                     <GhostButton
-                      onClick={() => setRanks(skill.key, ranks + (isClass ? 1 : 0.5))}
-                      disabled={ranks >= max || left <= 0}
+                      onClick={() => setRanks(skill.key, ranks + 1)}
+                      disabled={ranks >= max || left < cost}
                     >
                       +
                     </GhostButton>
@@ -419,12 +425,10 @@ function FeatStep(props: {
       <SearchInput value={query} onChange={setQuery} placeholder={S.actions.search} />
       <ul className="divide-y divide-slate-800">
         {feats.map((feat) => (
-          <li key={feat.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
-            <div className="min-w-0">
-              <div className="truncate">{displayName(feat)}</div>
-              {feat.kind === "feat" && feat.data.benefit && (
-                <div className="truncate text-xs text-slate-500">{feat.data.benefit}</div>
-              )}
+          <li key={feat.id} className="flex items-start justify-between gap-2 py-2 text-sm">
+            <div className="min-w-0 flex-1">
+              <div className="font-medium">{displayName(feat)}</div>
+              <FeatText entity={feat} />
             </div>
             {chosen.has(feat.id) ? (
               <GhostButton

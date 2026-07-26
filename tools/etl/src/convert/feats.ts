@@ -3,6 +3,7 @@ import type { ConvertContext } from "../context.js";
 import { requireTable } from "../parse-sql.js";
 import { htmlToText, slugify } from "../util.js";
 import { parsePrerequisites, resolveSkillId } from "./prereqs.js";
+import { FEATS_DE } from "../data/feats-de.js";
 
 /**
  * Kuratierte Effects — nur wo die Mechanik eindeutig ist (Phase 1).
@@ -108,6 +109,11 @@ export function convertFeats(ctx: ConvertContext): FeatEntity[] {
       rev: 1,
       updatedAt: "",
       tags,
+      // Deutsche Erklärung als Overlay; der englische Originaltext bleibt
+      // daneben stehen und ist im Kompendium weiter nachlesbar.
+      ...(FEATS_DE[slug] !== undefined
+        ? { localized: { de: { summary: FEATS_DE[slug] } } }
+        : {}),
       description: htmlToText(row.full_text),
       effects,
       data: {

@@ -101,10 +101,23 @@ export function bonusSpells(abilityMod: number, spellLevel: number): number {
   return Math.floor((abilityMod - spellLevel) / 4) + 1;
 }
 
-/** Maximale Ränge: Klassenfertigkeit Stufe+3, sonst die Hälfte (PHB S. 62). */
+/**
+ * Maximale Ränge: Klassenfertigkeit Stufe+3, klassenfremd die Hälfte (PHB S. 62).
+ *
+ * ABGERUNDET, obwohl das PHB die Hälfte als „2½", „5½" schreibt: in 3.5 kostet
+ * ein Rang in einer klassenfremden Fertigkeit 2 Punkte, und man kauft ganze
+ * Ränge. Die halbe Stufe ist damit ohnehin unerreichbar — sie stünde nur als
+ * „0/5,5" in der Oberfläche und liest sich wie ein halber Fertigkeitspunkt.
+ * (Halbe Ränge für den halben Preis waren 3.0.)
+ */
 export function maxRanks(totalLevel: number, isClassSkill: boolean): number {
   const max = totalLevel + 3;
-  return isClassSkill ? max : max / 2;
+  return isClassSkill ? max : Math.floor(max / 2);
+}
+
+/** Punkte für einen Rang: klassenfremd das Doppelte (PHB S. 62). */
+export function skillPointCost(isClassSkill: boolean): number {
+  return isClassSkill ? 1 : 2;
 }
 
 /** Durchschnittlicher TW-Wurf (abgerundet), z.B. W8 → 4. */

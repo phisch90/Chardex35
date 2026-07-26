@@ -17,6 +17,11 @@
     "effects": [],
     "id": "srd:feat:ability-focus",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle einen besonderen Angriff der Kreatur: der Rettungswurf-SG dagegen steigt um 2."
+      }
+    },
     "name": "Ability Focus",
     "rev": 1,
     "schemaVersion": 1,
@@ -51,6 +56,11 @@
     ],
     "id": "srd:feat:acrobatic",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Jump und Tumble."
+      }
+    },
     "name": "Acrobatic",
     "rev": 1,
     "schemaVersion": 1,
@@ -108,6 +118,11 @@
     ],
     "id": "srd:feat:agile",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Balance und Escape Artist."
+      }
+    },
     "name": "Agile",
     "rev": 1,
     "schemaVersion": 1,
@@ -143,6 +158,11 @@
     ],
     "id": "srd:feat:alertness",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Listen und Spot."
+      }
+    },
     "name": "Alertness",
     "rev": 1,
     "schemaVersion": 1,
@@ -177,6 +197,11 @@
     ],
     "id": "srd:feat:animal-affinity",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Handle Animal und Ride."
+      }
+    },
     "name": "Animal Affinity",
     "rev": 1,
     "schemaVersion": 1,
@@ -205,6 +230,11 @@
     "effects": [],
     "id": "srd:feat:antipsionic-magic",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Zauberstufen-Würfe, um die Kraftresistenz psionischer Kreaturen zu überwinden."
+      }
+    },
     "name": "Antipsionic Magic",
     "rev": 1,
     "schemaVersion": 1,
@@ -237,6 +267,11 @@
     "effects": [],
     "id": "srd:feat:armor-proficiency-heavy",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wie Armor Proficiency (Light), aber für schwere Rüstung. Setzt die mittelschwere Vertrautheit voraus."
+      }
+    },
     "name": "Armor Proficiency (Heavy)",
     "rev": 1,
     "schemaVersion": 1,
@@ -260,6 +295,11 @@
     "effects": [],
     "id": "srd:feat:armor-proficiency-light",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du bist mit leichter Rüstung vertraut: deren Rüstungsmalus gilt nur noch für Balance, Climb, Escape Artist, Hide, Jump, Move Silently, Sleight of Hand und Tumble. Ohne Vertrautheit zählt der Malus auf alle Fertigkeitswürfe mit Stärke oder Geschicklichkeit."
+      }
+    },
     "name": "Armor Proficiency (Light)",
     "rev": 1,
     "schemaVersion": 1,
@@ -288,6 +328,11 @@
     "effects": [],
     "id": "srd:feat:armor-proficiency-medium",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wie Armor Proficiency (Light), aber für mittelschwere Rüstung. Setzt die leichte Vertrautheit voraus."
+      }
+    },
     "name": "Armor Proficiency (Medium)",
     "rev": 1,
     "schemaVersion": 1,
@@ -344,6 +389,11 @@
     ],
     "id": "srd:feat:athletic",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Climb und Swim."
+      }
+    },
     "name": "Athletic",
     "rev": 1,
     "schemaVersion": 1,
@@ -370,6 +420,11 @@
     "effects": [],
     "id": "srd:feat:augment-summoning",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Kreaturen, die du mit einem summon-Zauber herbeirufst, erhalten für die Dauer +4 Erweiterungsbonus auf Stärke und Konstitution."
+      }
+    },
     "name": "Augment Summoning",
     "rev": 1,
     "schemaVersion": 1,
@@ -531,6 +586,11 @@
     "effects": [],
     "id": "srd:feat:autonomous",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Autohypnosis und Knowledge (psionics)."
+      }
+    },
     "name": "Autonomous",
     "rev": 1,
     "schemaVersion": 1,
@@ -570,6 +630,11 @@
     "effects": [],
     "id": "srd:feat:awesome-blow",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Mit einer Standard-Aktion und −4 auf den Angriffswurf: triffst du einen körperlichen Gegner, der kleiner ist als du, wird er bei misslungenem Reflex-Rettungswurf 10 Fuß weit geschleudert und liegt danach am Boden."
+      }
+    },
     "name": "Awesome Blow",
     "rev": 1,
     "schemaVersion": 1,
@@ -625,6 +690,11 @@
     "effects": [],
     "id": "srd:feat:blind-fight",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Verfehlst du im Nahkampf wegen Sichtschutz, darfst du den Prozentwurf einmal wiederholen. Unsichtbare Angreifer haben im Nahkampf gegen dich keinen Vorteil, und schwieriges Gelände halbiert deine Geschwindigkeit nicht, wenn du blind kämpfst."
+      }
+    },
     "name": "Blind-Fight",
     "rev": 1,
     "schemaVersion": 1,
@@ -688,6 +758,11 @@
     "effects": [],
     "id": "srd:feat:blindsight-5-ft-radius",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Über Gehör und Erschütterungen erkennst du die Position von Gegnern bis 5 Fuß Entfernung. Unsichtbarkeit und Dunkelheit spielen dabei keine Rolle."
+      }
+    },
     "name": "Blindsight, 5-Ft. Radius",
     "rev": 1,
     "schemaVersion": 1,
@@ -746,6 +821,11 @@
     "effects": [],
     "id": "srd:feat:brew-potion",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Tränke aus Zaubern bis Grad 3 herstellen, die auf Kreaturen wirken. Ein Trank braucht einen Tag, kostet die Hälfte des Grundpreises an Material und 1/25 an EP."
+      }
+    },
     "name": "Brew Potion",
     "rev": 1,
     "schemaVersion": 1,
@@ -809,6 +889,11 @@
     "effects": [],
     "id": "srd:feat:chaotic-mind",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Gegner verlieren gegen dich ihre Erkenntnis-Boni (Insight) auf Angriff, RK und Fertigkeitswürfe."
+      }
+    },
     "name": "Chaotic Mind",
     "rev": 1,
     "schemaVersion": 1,
@@ -871,6 +956,11 @@
     "effects": [],
     "id": "srd:feat:cleave",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bringst du eine Kreatur mit einem Nahkampfangriff zu Fall, erhältst du sofort einen weiteren Nahkampfangriff gegen einen anderen Gegner in Reichweite. Höchstens einmal pro Runde."
+      }
+    },
     "name": "Cleave",
     "rev": 1,
     "schemaVersion": 1,
@@ -903,6 +993,11 @@
     "effects": [],
     "id": "srd:feat:cloak-dance",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Mit einer Bewegungsaktion verschleierst du deine Position und hast bis zu deiner nächsten Runde Sichtschutz. Mit einer vollen Aktion wirst du vollständig verborgen."
+      }
+    },
     "name": "Cloak Dance",
     "rev": 1,
     "schemaVersion": 1,
@@ -925,6 +1020,11 @@
     "effects": [],
     "id": "srd:feat:closed-mind",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Rettungswürfe gegen psionische Kräfte."
+      }
+    },
     "name": "Closed Mind",
     "rev": 1,
     "schemaVersion": 1,
@@ -1009,6 +1109,11 @@
     "effects": [],
     "id": "srd:feat:combat-casting",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+4 auf Concentration-Würfe, um in der Defensive, im Ringkampf oder festgehalten zu zaubern."
+      }
+    },
     "name": "Combat Casting",
     "rev": 1,
     "schemaVersion": 1,
@@ -1038,6 +1143,11 @@
     "effects": [],
     "id": "srd:feat:combat-expertise",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei einer Angriffs- oder vollen Angriffsaktion im Nahkampf darfst du bis zu −5 auf deine Angriffswürfe nehmen und denselben Betrag als Ausweich-Bonus auf die RK legen. Höchstens so viel, wie dein Grundangriffsbonus beträgt. Die Verschiebung gilt bis zu deiner nächsten Aktion."
+      }
+    },
     "name": "Combat Expertise",
     "rev": 1,
     "schemaVersion": 1,
@@ -1061,6 +1171,11 @@
     "effects": [],
     "id": "srd:feat:combat-reflexes",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du darfst zusätzliche Gelegenheitsangriffe in Höhe deines GE-Bonus führen und auch dann, wenn du auf dem falschen Fuß stehst."
+      }
+    },
     "name": "Combat Reflexes",
     "rev": 1,
     "schemaVersion": 1,
@@ -1087,6 +1202,11 @@
     "effects": [],
     "id": "srd:feat:craft-cognizance-crystal",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Erkenntniskristalle herstellen, die Kraftpunkte speichern."
+      }
+    },
     "name": "Craft Cognizance Crystal",
     "rev": 1,
     "schemaVersion": 1,
@@ -1117,6 +1237,11 @@
     "effects": [],
     "id": "srd:feat:craft-construct",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Konstrukte erschaffen, deren Voraussetzungen du erfüllst."
+      }
+    },
     "name": "Craft Construct",
     "rev": 1,
     "schemaVersion": 1,
@@ -1143,6 +1268,11 @@
     "effects": [],
     "id": "srd:feat:craft-dorje",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Dorjes herstellen — Kristallstäbe, die psionische Kräfte mit Ladungen entfalten."
+      }
+    },
     "name": "Craft Dorje",
     "rev": 1,
     "schemaVersion": 1,
@@ -1317,6 +1447,11 @@
     "effects": [],
     "id": "srd:feat:craft-magic-arms-and-armor",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst magische Waffen, Rüstungen und Schilde herstellen und aufwerten. Ein Tag je 1.000 GM des magischen Anteils."
+      }
+    },
     "name": "Craft Magic Arms and Armor",
     "rev": 1,
     "schemaVersion": 1,
@@ -1343,6 +1478,11 @@
     "effects": [],
     "id": "srd:feat:craft-psicrown",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Psikronen mit mehreren psionischen Wirkungen herstellen."
+      }
+    },
     "name": "Craft Psicrown",
     "rev": 1,
     "schemaVersion": 1,
@@ -1369,6 +1509,11 @@
     "effects": [],
     "id": "srd:feat:craft-psionic-arms-and-armor",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst psionische Waffen, Rüstungen und Schilde herstellen."
+      }
+    },
     "name": "Craft Psionic Arms and Armor",
     "rev": 1,
     "schemaVersion": 1,
@@ -1399,6 +1544,11 @@
     "effects": [],
     "id": "srd:feat:craft-psionic-construct",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst psionische Konstrukte erschaffen."
+      }
+    },
     "name": "Craft Psionic Construct",
     "rev": 1,
     "schemaVersion": 1,
@@ -1425,6 +1575,11 @@
     "effects": [],
     "id": "srd:feat:craft-rod",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Ruten herstellen, deren Voraussetzungen du erfüllst."
+      }
+    },
     "name": "Craft Rod",
     "rev": 1,
     "schemaVersion": 1,
@@ -1451,6 +1606,11 @@
     "effects": [],
     "id": "srd:feat:craft-staff",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Stäbe (Staffs) herstellen, deren Voraussetzungen du erfüllst."
+      }
+    },
     "name": "Craft Staff",
     "rev": 1,
     "schemaVersion": 1,
@@ -1477,6 +1637,11 @@
     "effects": [],
     "id": "srd:feat:craft-universal-item",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst universelle psionische Gegenstände herstellen."
+      }
+    },
     "name": "Craft Universal Item",
     "rev": 1,
     "schemaVersion": 1,
@@ -1503,6 +1668,11 @@
     "effects": [],
     "id": "srd:feat:craft-wand",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Zauberstäbe (Wands) aus Zaubern bis Grad 4 herstellen. Grundpreis = Zauberstufe × Zaubergrad × 750 GM."
+      }
+    },
     "name": "Craft Wand",
     "rev": 1,
     "schemaVersion": 1,
@@ -1529,6 +1699,11 @@
     "effects": [],
     "id": "srd:feat:craft-wondrous-item",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst wundersame Gegenstände herstellen, deren Voraussetzungen du erfüllst."
+      }
+    },
     "name": "Craft Wondrous Item",
     "rev": 1,
     "schemaVersion": 1,
@@ -1588,6 +1763,11 @@
     "effects": [],
     "id": "srd:feat:deadly-precision",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei den Zusatzwürfeln eines hinterhältigen Angriffs darfst du jede gewürfelte 1 einmal neu würfeln."
+      }
+    },
     "name": "Deadly Precision",
     "rev": 1,
     "schemaVersion": 1,
@@ -1689,6 +1869,11 @@
     ],
     "id": "srd:feat:deceitful",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Disguise und Forgery."
+      }
+    },
     "name": "Deceitful",
     "rev": 1,
     "schemaVersion": 1,
@@ -1721,6 +1906,11 @@
     "effects": [],
     "id": "srd:feat:deflect-arrows",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Einmal pro Runde darfst du einen Fernangriff, der dich treffen würde, abwehren und nimmst keinen Schaden. Du musst eine Hand frei haben und den Angriff bemerken; Geschosse von Belagerungswaffen und außergewöhnlich große Projektile gehen nicht."
+      }
+    },
     "name": "Deflect Arrows",
     "rev": 1,
     "schemaVersion": 1,
@@ -1755,6 +1945,11 @@
     ],
     "id": "srd:feat:deft-hands",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Sleight of Hand und Use Rope."
+      }
+    },
     "name": "Deft Hands",
     "rev": 1,
     "schemaVersion": 1,
@@ -1896,6 +2091,11 @@
     "effects": [],
     "id": "srd:feat:diehard",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei −1 bis −9 Trefferpunkten wirst du automatisch stabil und verlierst nicht jede Runde einen weiteren Trefferpunkt. Du darfst weiter handeln wie außer Gefecht (eine Standard- oder Bewegungsaktion pro Runde, anstrengende Handlungen kosten 1 TP)."
+      }
+    },
     "name": "Diehard",
     "rev": 1,
     "schemaVersion": 1,
@@ -1930,6 +2130,11 @@
     ],
     "id": "srd:feat:diligent",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Appraise und Decipher Script."
+      }
+    },
     "name": "Diligent",
     "rev": 1,
     "schemaVersion": 1,
@@ -2016,6 +2221,11 @@
     "effects": [],
     "id": "srd:feat:disguise-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du verbirgst das Zaubern in Musik oder Auftritt, sodass andere es kaum bemerken. Braucht einen Zauberplatz einen Grad höher."
+      }
+    },
     "name": "Disguise Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -2091,6 +2301,11 @@
     "effects": [],
     "id": "srd:feat:divine-might",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Als freie Aktion opferst du einen Versuch, Untote zu vertreiben, und legst für eine ganze Runde deinen CH-Bonus auf deinen Waffenschaden."
+      }
+    },
     "name": "Divine Might",
     "rev": 1,
     "schemaVersion": 1,
@@ -2121,6 +2336,11 @@
     "effects": [],
     "id": "srd:feat:divine-vengeance",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du opferst einen Vertreiben-Versuch und fügst deinen gelungenen Nahkampfangriffen gegen Untote bis zum Ende deiner nächsten Aktion je 2W6 heilige Energie zu."
+      }
+    },
     "name": "Divine Vengeance",
     "rev": 1,
     "schemaVersion": 1,
@@ -2157,6 +2377,11 @@
     ],
     "id": "srd:feat:dodge",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du bestimmst zu Beginn deiner Aktion einen Gegner und erhältst gegen dessen Angriffe +1 Ausweich-Bonus auf die RK. Das Ziel darfst du in jeder Aktion neu wählen. Verlierst du deinen GE-Bonus auf die RK (z.B. auf dem falschen Fuß), fällt auch dieser Bonus weg."
+      }
+    },
     "name": "Dodge",
     "rev": 1,
     "schemaVersion": 1,
@@ -2253,6 +2478,11 @@
     "effects": [],
     "id": "srd:feat:empower-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Alle veränderlichen Zahlenwerte des Zaubers steigen um die Hälfte. Rettungswürfe und vergleichende Würfe nicht. Braucht einen Zauberplatz zwei Grade höher."
+      }
+    },
     "name": "Empower Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -2280,6 +2510,11 @@
     "effects": [],
     "id": "srd:feat:empower-spell-like-ability",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine zauberähnliche Fähigkeit der Kreatur: sie kann diese dreimal täglich verstärkt einsetzen (wie Empower Spell)."
+      }
+    },
     "name": "Empower Spell-Like Ability",
     "rev": 1,
     "schemaVersion": 1,
@@ -2303,6 +2538,11 @@
     "effects": [],
     "id": "srd:feat:endurance",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+4 auf Würfe gegen Erschöpfung: Swim gegen nichttödlichen Schaden, KO-Würfe beim Rennen und Gewaltmarsch, Hunger, Durst, Hitze und Kälte, sowie gegen Ersticken. Du darfst außerdem in Rüstung schlafen, ohne müde zu werden."
+      }
+    },
     "name": "Endurance",
     "rev": 1,
     "schemaVersion": 1,
@@ -2357,6 +2597,11 @@
     "effects": [],
     "id": "srd:feat:energy-substitution",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine Energieart (Säure, Kälte, Elektrizität, Feuer, Schall). Zauber mit einem dieser Deskriptoren kannst du auf deine gewählte Art umstellen, ohne den Zaubergrad zu erhöhen."
+      }
+    },
     "name": "Energy Substitution",
     "rev": 1,
     "schemaVersion": 1,
@@ -2407,6 +2652,11 @@
     "effects": [],
     "id": "srd:feat:enlarge-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Die Reichweite eines Zaubers mit Reichweite kurz, mittel oder weit verdoppelt sich. Braucht einen Zauberplatz einen Grad höher."
+      }
+    },
     "name": "Enlarge Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -2941,6 +3191,11 @@
     "effects": [],
     "id": "srd:feat:eschew-materials",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Zauber mit materiellen Komponenten von höchstens 1 GM Wert kannst du ohne diese Komponente wirken."
+      }
+    },
     "name": "Eschew Materials",
     "rev": 1,
     "schemaVersion": 1,
@@ -3009,6 +3264,11 @@
     "effects": [],
     "id": "srd:feat:exotic-weapon-proficiency",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine exotische Waffe. Mit dieser Waffe greifst du normal an, statt den Malus für Unvertrautheit zu erhalten. Das Talent gilt je Waffe einmal."
+      }
+    },
     "name": "Exotic Weapon Proficiency",
     "rev": 1,
     "schemaVersion": 1,
@@ -3030,6 +3290,11 @@
     "effects": [],
     "id": "srd:feat:extend-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Die Wirkungsdauer verdoppelt sich. Wirkt nicht bei Konzentration, sofortiger oder dauerhafter Wirkung. Braucht einen Zauberplatz einen Grad höher."
+      }
+    },
     "name": "Extend Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -3080,6 +3345,11 @@
     "effects": [],
     "id": "srd:feat:extra-music",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Vier zusätzliche Einsätze der Bardenmusik pro Tag."
+      }
+    },
     "name": "Extra Music",
     "rev": 1,
     "schemaVersion": 1,
@@ -3108,6 +3378,11 @@
     "effects": [],
     "id": "srd:feat:extra-turning",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Vier zusätzliche Versuche pro Tag, Untote zu vertreiben oder zu befehligen. Mehrfach nehmbar."
+      }
+    },
     "name": "Extra Turning",
     "rev": 1,
     "schemaVersion": 1,
@@ -3139,6 +3414,11 @@
     "effects": [],
     "id": "srd:feat:eyes-in-the-back-of-your-head",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Angreifer erhalten den üblichen Flankier-Bonus von +2 nicht gegen dich. Wirkt nicht, wenn du deinen GE-Bonus auf die RK ohnehin verlierst."
+      }
+    },
     "name": "Eyes in the Back of Your Head",
     "rev": 1,
     "schemaVersion": 1,
@@ -3193,6 +3473,11 @@
     "effects": [],
     "id": "srd:feat:far-shot",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei Schusswaffen steigt der Entfernungsschritt um die Hälfte, bei Wurfwaffen verdoppelt er sich."
+      }
+    },
     "name": "Far Shot",
     "rev": 1,
     "schemaVersion": 1,
@@ -3281,6 +3566,11 @@
     "effects": [],
     "id": "srd:feat:fleet-of-foot",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Beim Rennen oder Ansturm darfst du eine einzige Richtungsänderung von bis zu 90 Grad machen. Nicht in mittelschwerer oder schwerer Rüstung und nicht bei mittlerer oder schwerer Last."
+      }
+    },
     "name": "Fleet of Foot",
     "rev": 1,
     "schemaVersion": 1,
@@ -3308,6 +3598,11 @@
     "effects": [],
     "id": "srd:feat:flyby-attack",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Die Kreatur darf im Flug ihre Bewegung unterbrechen, eine Standard-Aktion ausführen und weiterfliegen."
+      }
+    },
     "name": "Flyby Attack",
     "rev": 1,
     "schemaVersion": 1,
@@ -3335,6 +3630,11 @@
     "effects": [],
     "id": "srd:feat:force-of-will",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Einmal pro Runde darfst du gegen eine psionische Wirkung, die einen Reflex- oder Fortitude-Rettungswurf erlaubt, stattdessen einen Will-Rettungswurf machen."
+      }
+    },
     "name": "Force of Will",
     "rev": 1,
     "schemaVersion": 1,
@@ -3398,6 +3698,11 @@
     "effects": [],
     "id": "srd:feat:forge-ring",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst magische Ringe herstellen, deren Voraussetzungen du erfüllst."
+      }
+    },
     "name": "Forge Ring",
     "rev": 1,
     "schemaVersion": 1,
@@ -3488,6 +3793,11 @@
     "effects": [],
     "id": "srd:feat:great-cleave",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wie Cleave, aber ohne Begrenzung auf einmal pro Runde."
+      }
+    },
     "name": "Great Cleave",
     "rev": 1,
     "schemaVersion": 1,
@@ -3560,6 +3870,11 @@
     ],
     "id": "srd:feat:great-fortitude",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf alle Fortitude-Rettungswürfe."
+      }
+    },
     "name": "Great Fortitude",
     "rev": 1,
     "schemaVersion": 1,
@@ -3702,6 +4017,11 @@
     "effects": [],
     "id": "srd:feat:greater-manyshot",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei Manyshot darfst du die Pfeile auf verschiedene Ziele verteilen statt alle auf eines."
+      }
+    },
     "name": "Greater Manyshot",
     "rev": 1,
     "schemaVersion": 1,
@@ -3746,6 +4066,11 @@
     "effects": [],
     "id": "srd:feat:greater-multiweapon-fighting",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bis zu drei zusätzliche Angriffe mit jeder weiteren Waffe, der dritte jeweils mit −10."
+      }
+    },
     "name": "Greater Multiweapon Fighting",
     "rev": 1,
     "schemaVersion": 1,
@@ -3768,6 +4093,11 @@
     "effects": [],
     "id": "srd:feat:greater-spell-focus",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Weitere +1 auf den SG einer bereits fokussierten Zauberschule (kumulativ mit Spell Focus)."
+      }
+    },
     "name": "Greater Spell Focus",
     "rev": 1,
     "schemaVersion": 1,
@@ -3794,6 +4124,11 @@
     "effects": [],
     "id": "srd:feat:greater-spell-penetration",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Weitere +2 auf Würfe gegen Zauberresistenz (kumulativ mit Spell Penetration)."
+      }
+    },
     "name": "Greater Spell Penetration",
     "rev": 1,
     "schemaVersion": 1,
@@ -3834,6 +4169,11 @@
     "effects": [],
     "id": "srd:feat:greater-two-weapon-fighting",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Ein dritter Angriff mit der Nebenhandwaffe, dieser mit −10."
+      }
+    },
     "name": "Greater Two-Weapon Fighting",
     "rev": 1,
     "schemaVersion": 1,
@@ -3878,6 +4218,11 @@
     ],
     "id": "srd:feat:greater-weapon-focus",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Weitere +1 auf Angriffswürfe mit einer Waffe, für die du schon Weapon Focus hast (zusammen also +2)."
+      }
+    },
     "name": "Greater Weapon Focus",
     "rev": 1,
     "schemaVersion": 1,
@@ -3930,6 +4275,11 @@
     ],
     "id": "srd:feat:greater-weapon-specialization",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Weitere +2 auf Schadenswürfe mit einer Waffe, für die du schon Weapon Specialization hast (zusammen also +4). Braucht Kämpfer-Stufe 12."
+      }
+    },
     "name": "Greater Weapon Specialization",
     "rev": 1,
     "schemaVersion": 1,
@@ -3983,6 +4333,11 @@
     "effects": [],
     "id": "srd:feat:heighten-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Der Zauber gilt als von höherem Grad — Rettungswurf-SG und alles vom Grad Abhängige steigen mit. Braucht den Zauberplatz des gewählten höheren Grades."
+      }
+    },
     "name": "Heighten Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -4049,6 +4404,11 @@
     "effects": [],
     "id": "srd:feat:hold-the-line",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Gegen einen anstürmenden Gegner, der ein von dir bedrohtes Feld betritt, erhältst du einen Gelegenheitsangriff — unmittelbar bevor sein Ansturm-Angriff abgehandelt wird."
+      }
+    },
     "name": "Hold the Line",
     "rev": 1,
     "schemaVersion": 1,
@@ -4107,6 +4467,11 @@
     "effects": [],
     "id": "srd:feat:hostile-mind",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wirkt jemand eine Telepathie-Kraft auf dich, erleidet er selbst Schaden."
+      }
+    },
     "name": "Hostile Mind",
     "rev": 1,
     "schemaVersion": 1,
@@ -4134,6 +4499,11 @@
     "effects": [],
     "id": "srd:feat:hover",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Die fliegende Kreatur kann mit einer Bewegungsaktion auf der Stelle schweben und danach mit halber Geschwindigkeit in jede Richtung fliegen, auch senkrecht."
+      }
+    },
     "name": "Hover",
     "rev": 1,
     "schemaVersion": 1,
@@ -4195,6 +4565,11 @@
     "effects": [],
     "id": "srd:feat:imprint-stone",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Kraftsteine herstellen, die psionische Kräfte speichern."
+      }
+    },
     "name": "Imprint Stone",
     "rev": 1,
     "schemaVersion": 1,
@@ -4380,6 +4755,11 @@
     "effects": [],
     "id": "srd:feat:improved-bull-rush",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Ansturm löst keinen Gelegenheitsangriff aus, und du erhältst +4 auf den Stärke-Vergleich."
+      }
+    },
     "name": "Improved Bull Rush",
     "rev": 1,
     "schemaVersion": 1,
@@ -4464,6 +4844,11 @@
     "effects": [],
     "id": "srd:feat:improved-counterspell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Beim Gegenzaubern genügt ein Zauber derselben Schule, der mindestens einen Grad höher ist als der Zielzauber."
+      }
+    },
     "name": "Improved Counterspell",
     "rev": 1,
     "schemaVersion": 1,
@@ -4495,6 +4880,11 @@
     "effects": [],
     "id": "srd:feat:improved-critical",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine Waffenart: ihr Bedrohungsbereich verdoppelt sich (aus 20 wird 19–20, aus 19–20 wird 17–20). Kumuliert NICHT mit Wirkungen wie einer keen-Waffe."
+      }
+    },
     "name": "Improved Critical",
     "rev": 1,
     "schemaVersion": 1,
@@ -4586,6 +4976,11 @@
     "effects": [],
     "id": "srd:feat:improved-disarm",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Entwaffnen löst keinen Gelegenheitsangriff aus, und du erhältst +4 auf den entsprechenden vergleichenden Angriffswurf."
+      }
+    },
     "name": "Improved Disarm",
     "rev": 1,
     "schemaVersion": 1,
@@ -4653,6 +5048,11 @@
     "effects": [],
     "id": "srd:feat:improved-familiar",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du darfst deinen Vertrauten aus einer erweiterten Liste wählen (etwa Quasit, Imp oder Pseudodrache), sobald du überhaupt einen neuen Vertrauten erhalten könntest."
+      }
+    },
     "name": "Improved Familiar",
     "rev": 1,
     "schemaVersion": 1,
@@ -4712,6 +5112,11 @@
     "effects": [],
     "id": "srd:feat:improved-feint",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst im Nahkampf mit einer Standard-Aktion täuschen statt mit einer vollen Aktion."
+      }
+    },
     "name": "Improved Feint",
     "rev": 1,
     "schemaVersion": 1,
@@ -4751,6 +5156,11 @@
     "effects": [],
     "id": "srd:feat:improved-flyby-attack",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Ist die Standard-Aktion beim Flyby Attack ein Nahkampfangriff, löst das Verlassen der bedrohten Felder des Ziels keinen Gelegenheitsangriff aus."
+      }
+    },
     "name": "Improved Flyby Attack",
     "rev": 1,
     "schemaVersion": 1,
@@ -4784,6 +5194,11 @@
     "effects": [],
     "id": "srd:feat:improved-grapple",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Ein Ringkampf-Versuch löst keinen Gelegenheitsangriff aus, und du erhältst +4 auf Ringkampf-Würfe."
+      }
+    },
     "name": "Improved Grapple",
     "rev": 1,
     "schemaVersion": 1,
@@ -4845,6 +5260,11 @@
     ],
     "id": "srd:feat:improved-initiative",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+4 auf Initiative."
+      }
+    },
     "name": "Improved Initiative",
     "rev": 1,
     "schemaVersion": 1,
@@ -5011,6 +5431,11 @@
     "effects": [],
     "id": "srd:feat:improved-multiattack",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Die Sekundärangriffe der Kreatur erhalten überhaupt keinen Malus mehr."
+      }
+    },
     "name": "Improved Multiattack",
     "rev": 1,
     "schemaVersion": 1,
@@ -5052,6 +5477,11 @@
     "effects": [],
     "id": "srd:feat:improved-multiweapon-fighting",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Für Kreaturen mit mehreren Armen: ein zweiter Angriff mit jeder zusätzlichen Waffe, dieser mit −5."
+      }
+    },
     "name": "Improved Multiweapon Fighting",
     "rev": 1,
     "schemaVersion": 1,
@@ -5084,6 +5514,11 @@
     "effects": [],
     "id": "srd:feat:improved-natural-armor",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Der natürliche Rüstungsbonus der Kreatur steigt um 1."
+      }
+    },
     "name": "Improved Natural Armor",
     "rev": 1,
     "schemaVersion": 1,
@@ -5114,6 +5549,11 @@
     "effects": [],
     "id": "srd:feat:improved-natural-attack",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine natürliche Angriffsform: ihr Schadenswürfel steigt eine Stufe, als wäre die Kreatur eine Größenkategorie größer."
+      }
+    },
     "name": "Improved Natural Attack",
     "rev": 1,
     "schemaVersion": 1,
@@ -5147,6 +5587,11 @@
     "effects": [],
     "id": "srd:feat:improved-overrun",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Der Gegner darf einem Überrennen nicht ausweichen, und du erhältst +4 auf den Stärke-Vergleich."
+      }
+    },
     "name": "Improved Overrun",
     "rev": 1,
     "schemaVersion": 1,
@@ -5188,6 +5633,11 @@
     "effects": [],
     "id": "srd:feat:improved-precise-shot",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Deckung und Sichtschutz des Ziels durch Kreaturen im Weg werden ignoriert (totale Deckung und totaler Sichtschutz weiterhin nicht), und beim Schuss in einen Ringkampf triffst du immer den gewünschten Gegner."
+      }
+    },
     "name": "Improved Precise Shot",
     "rev": 1,
     "schemaVersion": 1,
@@ -5216,6 +5666,11 @@
     "effects": [],
     "id": "srd:feat:improved-shield-bash",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Beim Schildstoß behältst du den Schildbonus auf deine RK."
+      }
+    },
     "name": "Improved Shield Bash",
     "rev": 1,
     "schemaVersion": 1,
@@ -5379,6 +5834,11 @@
     "effects": [],
     "id": "srd:feat:improved-sunder",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Das Zerschlagen einer Waffe oder eines Schildes löst keinen Gelegenheitsangriff aus, und du erhältst +4 auf den vergleichenden Angriffswurf."
+      }
+    },
     "name": "Improved Sunder",
     "rev": 1,
     "schemaVersion": 1,
@@ -5412,6 +5872,11 @@
     "effects": [],
     "id": "srd:feat:improved-trip",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Umwerfen löst keinen Gelegenheitsangriff aus, du erhältst +4 auf den Stärke-Vergleich, und nach einem gelungenen Umwerfen darfst du sofort einen weiteren Nahkampfangriff gegen dasselbe Ziel führen."
+      }
+    },
     "name": "Improved Trip",
     "rev": 1,
     "schemaVersion": 1,
@@ -5438,6 +5903,11 @@
     "effects": [],
     "id": "srd:feat:improved-turning",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du vertreibst oder befehligst Untote, als wärst du in der entsprechenden Klasse eine Stufe höher."
+      }
+    },
     "name": "Improved Turning",
     "rev": 1,
     "schemaVersion": 1,
@@ -5475,6 +5945,11 @@
     "effects": [],
     "id": "srd:feat:improved-two-weapon-fighting",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Ein zweiter Angriff mit der Nebenhandwaffe, dieser mit −5."
+      }
+    },
     "name": "Improved Two-Weapon Fighting",
     "rev": 1,
     "schemaVersion": 1,
@@ -5498,6 +5973,11 @@
     "effects": [],
     "id": "srd:feat:improved-unarmed-strike",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du gelt als immer bewaffnet: du löst mit unbewaffneten Angriffen keine Gelegenheitsangriffe aus und kannst selbst Gelegenheitsangriffe führen. Der Schaden gilt als nichttödlich, kann aber mit −4 auf den Angriff als tödlich erklärt werden."
+      }
+    },
     "name": "Improved Unarmed Strike",
     "rev": 1,
     "schemaVersion": 1,
@@ -5763,6 +6243,11 @@
     ],
     "id": "srd:feat:investigator",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Gather Information und Search."
+      }
+    },
     "name": "Investigator",
     "rev": 1,
     "schemaVersion": 1,
@@ -5791,6 +6276,11 @@
     ],
     "id": "srd:feat:iron-will",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf alle Will-Rettungswürfe."
+      }
+    },
     "name": "Iron Will",
     "rev": 1,
     "schemaVersion": 1,
@@ -5817,6 +6307,11 @@
     "effects": [],
     "id": "srd:feat:jack-of-all-trades",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du darfst jede Fertigkeit ungeübt einsetzen, auch solche, die normalerweise Ausbildung verlangen."
+      }
+    },
     "name": "Jack of all Trades",
     "rev": 1,
     "schemaVersion": 1,
@@ -5900,6 +6395,11 @@
     "effects": [],
     "id": "srd:feat:knock-down",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Fügst du im Nahkampf 10 oder mehr Schaden zu, folgt als freie Aktion ein Umwerf-Versuch gegen dasselbe Ziel."
+      }
+    },
     "name": "Knock-Down",
     "rev": 1,
     "schemaVersion": 1,
@@ -5932,252 +6432,6 @@
     "id": "srd:feat:lasting-inspiration",
     "kind": "feat",
     "name": "Lasting Inspiration",
-    "rev": 1,
-    "schemaVersion": 1,
-    "source": "srd",
-    "tags": [
-      "epic"
-    ],
-    "updatedAt": ""
-  },
-  {
-    "data": {
-      "benefit": "**Benefits:** Having this feat enables the character to attract loyal companions and devoted followers, subordinates who assist her. See the table below for what sort of cohort and how many followers the character can recruit.\n\n**Leadership Modifiers:** Several factors can affect a character's Leadership score, causing it to vary from the base score (character level + Cha modifier). A character's reputation (from the point of view of the cohort or follower he is trying to attract) raises or lowers his Leadership score:\n\n**Leader's Reputation** | **Modifier**\nGreat renown | +2\nFairness and generosity | +1\nSpecial power | +1\nFailure | -1\nAloofness | -1\nCruelty | -2\n\nOther modifiers may apply when the character tries to attract a cohort:\n\n**The Leader** . . . | **Modifier**\nHas a familiar, special mount, or animal companion | -2\nRecruits a cohort of a different alignment | -1\nCaused the death of a cohort | -2*\n* Cumulative per cohort killed.\n\nFollowers have different priorities from cohorts. When the character tries to attract a new follower, use any of the following modifiers that apply.\n\n**The Leader** . . . | **Modifier**\nHas a stronghold, base of operations, guildhouse, or the like | +2\nMoves around a lot | -1\nCaused the death of other followers | -1.\n\n**Leadership Score** | **Cohort Level** | **-- Number of Followers by Level -- 1st** | **2nd** | **3rd** | **4th** | **5th** | **6th**\n1 or lower | - | - | - | - | - | - | -\n2 | 1st | - | - | - | - | - | -\n3 | 2nd | - | - | - | - | - | -\n4 | 3rd | - | - | - | - | - | -\n5 | 3rd | - | - | - | - | - | -\n6 | 4th | - | - | - | - | - | -\n7 | 5th | - | - | - | - | - | -\n8 | 5th | - | - | - | - | - | -\n9 | 6th | - | - | - | - | - | -\n10 | 7th | 5 | - | - | - | - | -\n11 | 7th | 6 | - | - | - | - | -\n12 | 8th | 8 | - | - | - | - | -\n13 | 9th | 10 | 1 | - | - | - | -\n14 | 10th | 15 | 1 | - | - | - | -\n15 | 10th | 20 | 2 | 1 | - | - | -\n16 | 11th | 25 | 2 | 1 | - | - | -\n17 | 12th | 30 | 3 | 1 | 1 | - | -\n18 | 12th | 35 | 3 | 1 | 1 | - | -\n19 | 13th | 40 | 4 | 2 | 1 | 1 | -\n20 | 14th | 50 | 5 | 3 | 2 | 1 | -\n21 | 15th | 60 | 6 | 3 | 2 | 1 | 1\n22 | 15th | 75 | 7 | 4 | 2 | 2 | 1\n23 | 16th | 90 | 9 | 5 | 3 | 2 | 1\n24 | 17th | 110 | 11 | 6 | 3 | 2 | 1\n25 or higher | 17th | 135 | 13 | 7 | 4 | 2 | 2\n\n*Leadership Score:* A character's base Leadership score equals his level plus any Charisma modifier. In order to take into account negative Charisma modifiers, this table allows for very low Leadership scores, but the character must still be 6th level or higher in order to gain the Leadership feat. Outside factors can affect a character's Leadership score, as detailed above.\n\n*Cohort Level:* The character can attract a cohort of up to this level. Regardless of a character's Leadership score, he can only recruit a cohort who is two or more levels lower than himself. The cohort should be equipped with gear appropriate for its level. A character can try to attract a cohort of a particular race, class, and alignment. The cohort's alignment may not be opposed to the leader's alignment on either the law-vs-chaos or good-vs-evil axis, and the leader takes a Leadership penalty if he recruits a cohort of an alignment different from his own.\n\nCohorts earn XP as follows:\n\nThe cohort does not count as a party member when determining the party's XP.\n\nDivide the cohort's level by the level of the PC with whom he or she is associated (the character with the Leadership feat who attracted the cohort).\n\nMultiply this result by the total XP awarded to the PC and add that number of experience points to the cohort's total.\n\nIf a cohort gains enough XP to bring it to a level one lower than the associated PC's character level, the cohort does not gain the new level-its new XP total is 1 less than the amount needed attain the next level.\n\n*Number of Followers by Level:* The character can lead up to the indicated number of characters of each level. Followers are similar to cohorts, except they're generally low-level NPCs. Because they're generally five or more levels behind the character they follow, they're rarely effective in combat.\n\nFollowers don't earn experience and thus don't gain levels. However, when a character with Leadership attains a new level, the player consults the table above to determine if she has acquired more followers, some of which may be higher level than the existing followers. (You don't consult the table to see if your cohort gains levels, however, because cohorts earn experience on their own.)",
-      "featType": "General",
-      "prerequisites": [
-        {
-          "text": "Character level 6th",
-          "type": "custom"
-        }
-      ],
-      "requiresChoice": false,
-      "stackable": false
-    },
-    "description": "Leadership [General]\n\n**Prerequisite:** Character level 6th.\n\n**Benefits:** Having this feat enables the character to attract loyal companions and devoted followers, subordinates who assist her. See the table below for what sort of cohort and how many followers the character can recruit.\n\n**Leadership Modifiers:** Several factors can affect a character's Leadership score, causing it to vary from the base score (character level + Cha modifier). A character's reputation (from the point of view of the cohort or follower he is trying to attract) raises or lowers his Leadership score:\n\n**Leader's Reputation** | **Modifier**\nGreat renown | +2\nFairness and generosity | +1\nSpecial power | +1\nFailure | -1\nAloofness | -1\nCruelty | -2\n\nOther modifiers may apply when the character tries to attract a cohort:\n\n**The Leader** . . . | **Modifier**\nHas a familiar, special mount, or animal companion | -2\nRecruits a cohort of a different alignment | -1\nCaused the death of a cohort | -2*\n* Cumulative per cohort killed.\n\nFollowers have different priorities from cohorts. When the character tries to attract a new follower, use any of the following modifiers that apply.\n\n**The Leader** . . . | **Modifier**\nHas a stronghold, base of operations, guildhouse, or the like | +2\nMoves around a lot | -1\nCaused the death of other followers | -1.\n\n**Leadership Score** | **Cohort Level** | **-- Number of Followers by Level -- 1st** | **2nd** | **3rd** | **4th** | **5th** | **6th**\n1 or lower | - | - | - | - | - | - | -\n2 | 1st | - | - | - | - | - | -\n3 | 2nd | - | - | - | - | - | -\n4 | 3rd | - | - | - | - | - | -\n5 | 3rd | - | - | - | - | - | -\n6 | 4th | - | - | - | - | - | -\n7 | 5th | - | - | - | - | - | -\n8 | 5th | - | - | - | - | - | -\n9 | 6th | - | - | - | - | - | -\n10 | 7th | 5 | - | - | - | - | -\n11 | 7th | 6 | - | - | - | - | -\n12 | 8th | 8 | - | - | - | - | -\n13 | 9th | 10 | 1 | - | - | - | -\n14 | 10th | 15 | 1 | - | - | - | -\n15 | 10th | 20 | 2 | 1 | - | - | -\n16 | 11th | 25 | 2 | 1 | - | - | -\n17 | 12th | 30 | 3 | 1 | 1 | - | -\n18 | 12th | 35 | 3 | 1 | 1 | - | -\n19 | 13th | 40 | 4 | 2 | 1 | 1 | -\n20 | 14th | 50 | 5 | 3 | 2 | 1 | -\n21 | 15th | 60 | 6 | 3 | 2 | 1 | 1\n22 | 15th | 75 | 7 | 4 | 2 | 2 | 1\n23 | 16th | 90 | 9 | 5 | 3 | 2 | 1\n24 | 17th | 110 | 11 | 6 | 3 | 2 | 1\n25 or higher | 17th | 135 | 13 | 7 | 4 | 2 | 2\n\n*Leadership Score:* A character's base Leadership score equals his level plus any Charisma modifier. In order to take into account negative Charisma modifiers, this table allows for very low Leadership scores, but the character must still be 6th level or higher in order to gain the Leadership feat. Outside factors can affect a character's Leadership score, as detailed above.\n\n*Cohort Level:* The character can attract a cohort of up to this level. Regardless of a character's Leadership score, he can only recruit a cohort who is two or more levels lower than himself. The cohort should be equipped with gear appropriate for its level. A character can try to attract a cohort of a particular race, class, and alignment. The cohort's alignment may not be opposed to the leader's alignment on either the law-vs-chaos or good-vs-evil axis, and the leader takes a Leadership penalty if he recruits a cohort of an alignment different from his own.\n\nCohorts earn XP as follows:\n\nThe cohort does not count as a party member when determining the party's XP.\n\nDivide the cohort's level by the level of the PC with whom he or she is associated (the character with the Leadership feat who attracted the cohort).\n\nMultiply this result by the total XP awarded to the PC and add that number of experience points to the cohort's total.\n\nIf a cohort gains enough XP to bring it to a level one lower than the associated PC's character level, the cohort does not gain the new level-its new XP total is 1 less than the amount needed attain the next level.\n\n*Number of Followers by Level:* The character can lead up to the indicated number of characters of each level. Followers are similar to cohorts, except they're generally low-level NPCs. Because they're generally five or more levels behind the character they follow, they're rarely effective in combat.\n\nFollowers don't earn experience and thus don't gain levels. However, when a character with Leadership attains a new level, the player consults the table above to determine if she has acquired more followers, some of which may be higher level than the existing followers. (You don't consult the table to see if your cohort gains levels, however, because cohorts earn experience on their own.)",
-    "effects": [],
-    "id": "srd:feat:leadership",
-    "kind": "feat",
-    "name": "Leadership",
-    "rev": 1,
-    "schemaVersion": 1,
-    "source": "srd",
-    "tags": [
-      "general"
-    ],
-    "updatedAt": ""
-  },
-  {
-    "data": {
-      "benefit": "**Benefit:** The character can ignore any check penalties applied for accelerated climbing or rapid climbing.",
-      "featType": "Epic",
-      "normalText": "Without this feat, a character takes a -5 penalty on Climb checks when attempting to cover his or her full speed in climbing distance in a round, or a -20 penalty when attempting to cover twice his or her speed in climbing distance in a round.",
-      "prerequisites": [
-        {
-          "ability": "dex",
-          "type": "minAbility",
-          "value": 21
-        },
-        {
-          "ranks": 12,
-          "skillId": "srd:skill:balance",
-          "type": "minSkillRanks"
-        },
-        {
-          "ranks": 24,
-          "skillId": "srd:skill:climb",
-          "type": "minSkillRanks"
-        }
-      ],
-      "requiresChoice": false,
-      "stackable": false
-    },
-    "description": "Legendary Climber [Epic]\n\n**Prerequisites:** Dex 21, Balance 12 ranks, Climb 24 ranks.\n\n**Benefit:** The character can ignore any check penalties applied for accelerated climbing or rapid climbing.\n\n**Normal:** Without this feat, a character takes a -5 penalty on Climb checks when attempting to cover his or her full speed in climbing distance in a round, or a -20 penalty when attempting to cover twice his or her speed in climbing distance in a round.",
-    "effects": [],
-    "id": "srd:feat:legendary-climber",
-    "kind": "feat",
-    "name": "Legendary Climber",
-    "rev": 1,
-    "schemaVersion": 1,
-    "source": "srd",
-    "tags": [
-      "epic"
-    ],
-    "updatedAt": ""
-  },
-  {
-    "data": {
-      "benefit": "**Benefit:** Multiply the number of followers of each level that the character can lead by 10. This has no effect on cohorts.",
-      "featType": "Epic",
-      "prerequisites": [
-        {
-          "ability": "cha",
-          "type": "minAbility",
-          "value": 25
-        },
-        {
-          "featId": "srd:feat:epic-leadership",
-          "type": "hasFeat"
-        },
-        {
-          "featId": "srd:feat:leadership",
-          "type": "hasFeat"
-        },
-        {
-          "ranks": 30,
-          "skillId": "srd:skill:diplomacy",
-          "type": "minSkillRanks"
-        },
-        {
-          "text": "must rule own kingdom and have a stronghold",
-          "type": "custom"
-        }
-      ],
-      "requiresChoice": false,
-      "stackable": false
-    },
-    "description": "Legendary Commander [Epic]\n\n**Prerequisites:** Cha 25, Epic Leadership, Leadership, Diplomacy 30 ranks, must rule own kingdom and have a stronghold.\n\n**Benefit:** Multiply the number of followers of each level that the character can lead by 10. This has no effect on cohorts.",
-    "effects": [],
-    "id": "srd:feat:legendary-commander",
-    "kind": "feat",
-    "name": "Legendary Commander",
-    "rev": 1,
-    "schemaVersion": 1,
-    "source": "srd",
-    "tags": [
-      "epic"
-    ],
-    "updatedAt": ""
-  },
-  {
-    "data": {
-      "benefit": "**Benefit:** The character need only move 5 feet in a straight line to make a running jump.",
-      "featType": "Epic",
-      "normalText": "Without this feat, a character must move at least 20 feet in a straight line before attempting a running jump.",
-      "prerequisites": [
-        {
-          "ranks": 24,
-          "skillId": "srd:skill:jump",
-          "type": "minSkillRanks"
-        }
-      ],
-      "requiresChoice": false,
-      "stackable": false
-    },
-    "description": "Legendary Leaper [Epic]\n\n**Prerequisite:** Jump 24 ranks.\n\n**Benefit:** The character need only move 5 feet in a straight line to make a running jump.\n\n**Normal:** Without this feat, a character must move at least 20 feet in a straight line before attempting a running jump.",
-    "effects": [],
-    "id": "srd:feat:legendary-leaper",
-    "kind": "feat",
-    "name": "Legendary Leaper",
-    "rev": 1,
-    "schemaVersion": 1,
-    "source": "srd",
-    "tags": [
-      "epic"
-    ],
-    "updatedAt": ""
-  },
-  {
-    "data": {
-      "benefit": "**Benefit:** The character doesn't take a penalty on Ride checks when riding a mount without a saddle (bareback). The character never needs to make a Ride check to control a mount in combat (and even controlling a mount not trained for combat doesn't require an action).",
-      "featType": "Epic",
-      "normalText": "Without this feat, a character takes a -5 penalty on Ride checks without a saddle, and must make a Ride check to control a mount in combat (and controlling a mount not trained for combat requires a move action).",
-      "prerequisites": [
-        {
-          "ranks": 24,
-          "skillId": "srd:skill:ride",
-          "type": "minSkillRanks"
-        }
-      ],
-      "requiresChoice": false,
-      "stackable": false
-    },
-    "description": "Legendary Rider [Epic]\n\n**Prerequisite:** Ride 24 ranks.\n\n**Benefit:** The character doesn't take a penalty on Ride checks when riding a mount without a saddle (bareback). The character never needs to make a Ride check to control a mount in combat (and even controlling a mount not trained for combat doesn't require an action).\n\n**Normal:** Without this feat, a character takes a -5 penalty on Ride checks without a saddle, and must make a Ride check to control a mount in combat (and controlling a mount not trained for combat requires a move action).",
-    "effects": [],
-    "id": "srd:feat:legendary-rider",
-    "kind": "feat",
-    "name": "Legendary Rider",
-    "rev": 1,
-    "schemaVersion": 1,
-    "source": "srd",
-    "tags": [
-      "epic"
-    ],
-    "updatedAt": ""
-  },
-  {
-    "data": {
-      "benefit": "**Benefit:** The character can track creatures across water, under-water, or through the air. This adds the surfaces of water, underwater, and air to the list of surfaces found under the Track feat:\n\n**Surface** | **DC**\nWater | 60\nUnderwater | 80\nAir | 120",
-      "featType": "Epic",
-      "prerequisites": [
-        {
-          "ability": "wis",
-          "type": "minAbility",
-          "value": 25
-        },
-        {
-          "featId": "srd:feat:track",
-          "type": "hasFeat"
-        },
-        {
-          "ranks": 30,
-          "skillId": "srd:skill:knowledge",
-          "type": "minSkillRanks"
-        },
-        {
-          "ranks": 30,
-          "skillId": "srd:skill:survival",
-          "type": "minSkillRanks"
-        }
-      ],
-      "requiresChoice": false,
-      "stackable": false
-    },
-    "description": "Legendary Tracker [Epic]\n\n**Prerequisites:** Wis 25, Track, Knowledge (nature) 30 ranks, Survival 30 ranks.\n\n**Benefit:** The character can track creatures across water, under-water, or through the air. This adds the surfaces of water, underwater, and air to the list of surfaces found under the Track feat:\n\n**Surface** | **DC**\nWater | 60\nUnderwater | 80\nAir | 120",
-    "effects": [],
-    "id": "srd:feat:legendary-tracker",
-    "kind": "feat",
-    "name": "Legendary Tracker",
-    "rev": 1,
-    "schemaVersion": 1,
-    "source": "srd",
-    "tags": [
-      "epic"
-    ],
-    "updatedAt": ""
-  },
-  {
-    "data": {
-      "benefit": "**Benefit:** The character gains a +10 bonus on all grapple checks.",
-      "featType": "Epic",
-      "prerequisites": [
-        {
-          "ability": "str",
-          "type": "minAbility",
-          "value": 21
-        },
-        {
-          "ability": "dex",
-          "type": "minAbility",
-          "value": 21
-        },
-        {
-          "featId": "srd:feat:improved-unarmed-strike",
-          "type": "hasFeat"
-        },
-        {
-          "ranks": 15,
-          "skillId": "srd:skill:escape-artist",
-          "type": "minSkillRanks"
-        }
-      ],
-      "requiresChoice": false,
-      "stackable": false
-    },
-    "description": "Legendary Wrestler [Epic]\n\n**Prerequisite:** Str 21, Dex 21, Improved Unarmed Strike, Escape Artist 15 ranks.\n\n**Benefit:** The character gains a +10 bonus on all grapple checks.",
-    "effects": [],
-    "id": "srd:feat:legendary-wrestler",
-    "kind": "feat",
-    "name": "Legendary Wrestler",
     "rev": 1,
     "schemaVersion": 1,
     "source": "srd",

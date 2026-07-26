@@ -1,6 +1,257 @@
 [
   {
     "data": {
+      "benefit": "**Benefits:** Having this feat enables the character to attract loyal companions and devoted followers, subordinates who assist her. See the table below for what sort of cohort and how many followers the character can recruit.\n\n**Leadership Modifiers:** Several factors can affect a character's Leadership score, causing it to vary from the base score (character level + Cha modifier). A character's reputation (from the point of view of the cohort or follower he is trying to attract) raises or lowers his Leadership score:\n\n**Leader's Reputation** | **Modifier**\nGreat renown | +2\nFairness and generosity | +1\nSpecial power | +1\nFailure | -1\nAloofness | -1\nCruelty | -2\n\nOther modifiers may apply when the character tries to attract a cohort:\n\n**The Leader** . . . | **Modifier**\nHas a familiar, special mount, or animal companion | -2\nRecruits a cohort of a different alignment | -1\nCaused the death of a cohort | -2*\n* Cumulative per cohort killed.\n\nFollowers have different priorities from cohorts. When the character tries to attract a new follower, use any of the following modifiers that apply.\n\n**The Leader** . . . | **Modifier**\nHas a stronghold, base of operations, guildhouse, or the like | +2\nMoves around a lot | -1\nCaused the death of other followers | -1.\n\n**Leadership Score** | **Cohort Level** | **-- Number of Followers by Level -- 1st** | **2nd** | **3rd** | **4th** | **5th** | **6th**\n1 or lower | - | - | - | - | - | - | -\n2 | 1st | - | - | - | - | - | -\n3 | 2nd | - | - | - | - | - | -\n4 | 3rd | - | - | - | - | - | -\n5 | 3rd | - | - | - | - | - | -\n6 | 4th | - | - | - | - | - | -\n7 | 5th | - | - | - | - | - | -\n8 | 5th | - | - | - | - | - | -\n9 | 6th | - | - | - | - | - | -\n10 | 7th | 5 | - | - | - | - | -\n11 | 7th | 6 | - | - | - | - | -\n12 | 8th | 8 | - | - | - | - | -\n13 | 9th | 10 | 1 | - | - | - | -\n14 | 10th | 15 | 1 | - | - | - | -\n15 | 10th | 20 | 2 | 1 | - | - | -\n16 | 11th | 25 | 2 | 1 | - | - | -\n17 | 12th | 30 | 3 | 1 | 1 | - | -\n18 | 12th | 35 | 3 | 1 | 1 | - | -\n19 | 13th | 40 | 4 | 2 | 1 | 1 | -\n20 | 14th | 50 | 5 | 3 | 2 | 1 | -\n21 | 15th | 60 | 6 | 3 | 2 | 1 | 1\n22 | 15th | 75 | 7 | 4 | 2 | 2 | 1\n23 | 16th | 90 | 9 | 5 | 3 | 2 | 1\n24 | 17th | 110 | 11 | 6 | 3 | 2 | 1\n25 or higher | 17th | 135 | 13 | 7 | 4 | 2 | 2\n\n*Leadership Score:* A character's base Leadership score equals his level plus any Charisma modifier. In order to take into account negative Charisma modifiers, this table allows for very low Leadership scores, but the character must still be 6th level or higher in order to gain the Leadership feat. Outside factors can affect a character's Leadership score, as detailed above.\n\n*Cohort Level:* The character can attract a cohort of up to this level. Regardless of a character's Leadership score, he can only recruit a cohort who is two or more levels lower than himself. The cohort should be equipped with gear appropriate for its level. A character can try to attract a cohort of a particular race, class, and alignment. The cohort's alignment may not be opposed to the leader's alignment on either the law-vs-chaos or good-vs-evil axis, and the leader takes a Leadership penalty if he recruits a cohort of an alignment different from his own.\n\nCohorts earn XP as follows:\n\nThe cohort does not count as a party member when determining the party's XP.\n\nDivide the cohort's level by the level of the PC with whom he or she is associated (the character with the Leadership feat who attracted the cohort).\n\nMultiply this result by the total XP awarded to the PC and add that number of experience points to the cohort's total.\n\nIf a cohort gains enough XP to bring it to a level one lower than the associated PC's character level, the cohort does not gain the new level-its new XP total is 1 less than the amount needed attain the next level.\n\n*Number of Followers by Level:* The character can lead up to the indicated number of characters of each level. Followers are similar to cohorts, except they're generally low-level NPCs. Because they're generally five or more levels behind the character they follow, they're rarely effective in combat.\n\nFollowers don't earn experience and thus don't gain levels. However, when a character with Leadership attains a new level, the player consults the table above to determine if she has acquired more followers, some of which may be higher level than the existing followers. (You don't consult the table to see if your cohort gains levels, however, because cohorts earn experience on their own.)",
+      "featType": "General",
+      "prerequisites": [
+        {
+          "text": "Character level 6th",
+          "type": "custom"
+        }
+      ],
+      "requiresChoice": false,
+      "stackable": false
+    },
+    "description": "Leadership [General]\n\n**Prerequisite:** Character level 6th.\n\n**Benefits:** Having this feat enables the character to attract loyal companions and devoted followers, subordinates who assist her. See the table below for what sort of cohort and how many followers the character can recruit.\n\n**Leadership Modifiers:** Several factors can affect a character's Leadership score, causing it to vary from the base score (character level + Cha modifier). A character's reputation (from the point of view of the cohort or follower he is trying to attract) raises or lowers his Leadership score:\n\n**Leader's Reputation** | **Modifier**\nGreat renown | +2\nFairness and generosity | +1\nSpecial power | +1\nFailure | -1\nAloofness | -1\nCruelty | -2\n\nOther modifiers may apply when the character tries to attract a cohort:\n\n**The Leader** . . . | **Modifier**\nHas a familiar, special mount, or animal companion | -2\nRecruits a cohort of a different alignment | -1\nCaused the death of a cohort | -2*\n* Cumulative per cohort killed.\n\nFollowers have different priorities from cohorts. When the character tries to attract a new follower, use any of the following modifiers that apply.\n\n**The Leader** . . . | **Modifier**\nHas a stronghold, base of operations, guildhouse, or the like | +2\nMoves around a lot | -1\nCaused the death of other followers | -1.\n\n**Leadership Score** | **Cohort Level** | **-- Number of Followers by Level -- 1st** | **2nd** | **3rd** | **4th** | **5th** | **6th**\n1 or lower | - | - | - | - | - | - | -\n2 | 1st | - | - | - | - | - | -\n3 | 2nd | - | - | - | - | - | -\n4 | 3rd | - | - | - | - | - | -\n5 | 3rd | - | - | - | - | - | -\n6 | 4th | - | - | - | - | - | -\n7 | 5th | - | - | - | - | - | -\n8 | 5th | - | - | - | - | - | -\n9 | 6th | - | - | - | - | - | -\n10 | 7th | 5 | - | - | - | - | -\n11 | 7th | 6 | - | - | - | - | -\n12 | 8th | 8 | - | - | - | - | -\n13 | 9th | 10 | 1 | - | - | - | -\n14 | 10th | 15 | 1 | - | - | - | -\n15 | 10th | 20 | 2 | 1 | - | - | -\n16 | 11th | 25 | 2 | 1 | - | - | -\n17 | 12th | 30 | 3 | 1 | 1 | - | -\n18 | 12th | 35 | 3 | 1 | 1 | - | -\n19 | 13th | 40 | 4 | 2 | 1 | 1 | -\n20 | 14th | 50 | 5 | 3 | 2 | 1 | -\n21 | 15th | 60 | 6 | 3 | 2 | 1 | 1\n22 | 15th | 75 | 7 | 4 | 2 | 2 | 1\n23 | 16th | 90 | 9 | 5 | 3 | 2 | 1\n24 | 17th | 110 | 11 | 6 | 3 | 2 | 1\n25 or higher | 17th | 135 | 13 | 7 | 4 | 2 | 2\n\n*Leadership Score:* A character's base Leadership score equals his level plus any Charisma modifier. In order to take into account negative Charisma modifiers, this table allows for very low Leadership scores, but the character must still be 6th level or higher in order to gain the Leadership feat. Outside factors can affect a character's Leadership score, as detailed above.\n\n*Cohort Level:* The character can attract a cohort of up to this level. Regardless of a character's Leadership score, he can only recruit a cohort who is two or more levels lower than himself. The cohort should be equipped with gear appropriate for its level. A character can try to attract a cohort of a particular race, class, and alignment. The cohort's alignment may not be opposed to the leader's alignment on either the law-vs-chaos or good-vs-evil axis, and the leader takes a Leadership penalty if he recruits a cohort of an alignment different from his own.\n\nCohorts earn XP as follows:\n\nThe cohort does not count as a party member when determining the party's XP.\n\nDivide the cohort's level by the level of the PC with whom he or she is associated (the character with the Leadership feat who attracted the cohort).\n\nMultiply this result by the total XP awarded to the PC and add that number of experience points to the cohort's total.\n\nIf a cohort gains enough XP to bring it to a level one lower than the associated PC's character level, the cohort does not gain the new level-its new XP total is 1 less than the amount needed attain the next level.\n\n*Number of Followers by Level:* The character can lead up to the indicated number of characters of each level. Followers are similar to cohorts, except they're generally low-level NPCs. Because they're generally five or more levels behind the character they follow, they're rarely effective in combat.\n\nFollowers don't earn experience and thus don't gain levels. However, when a character with Leadership attains a new level, the player consults the table above to determine if she has acquired more followers, some of which may be higher level than the existing followers. (You don't consult the table to see if your cohort gains levels, however, because cohorts earn experience on their own.)",
+    "effects": [],
+    "id": "srd:feat:leadership",
+    "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du gewinnst einen Gefolgsmann (Cohort) und eine Zahl einfacher Anhänger. Wie viele und wie mächtig, richtet sich nach deiner Führungswertung aus Stufe, Ruf und Verhalten."
+      }
+    },
+    "name": "Leadership",
+    "rev": 1,
+    "schemaVersion": 1,
+    "source": "srd",
+    "tags": [
+      "general"
+    ],
+    "updatedAt": ""
+  },
+  {
+    "data": {
+      "benefit": "**Benefit:** The character can ignore any check penalties applied for accelerated climbing or rapid climbing.",
+      "featType": "Epic",
+      "normalText": "Without this feat, a character takes a -5 penalty on Climb checks when attempting to cover his or her full speed in climbing distance in a round, or a -20 penalty when attempting to cover twice his or her speed in climbing distance in a round.",
+      "prerequisites": [
+        {
+          "ability": "dex",
+          "type": "minAbility",
+          "value": 21
+        },
+        {
+          "ranks": 12,
+          "skillId": "srd:skill:balance",
+          "type": "minSkillRanks"
+        },
+        {
+          "ranks": 24,
+          "skillId": "srd:skill:climb",
+          "type": "minSkillRanks"
+        }
+      ],
+      "requiresChoice": false,
+      "stackable": false
+    },
+    "description": "Legendary Climber [Epic]\n\n**Prerequisites:** Dex 21, Balance 12 ranks, Climb 24 ranks.\n\n**Benefit:** The character can ignore any check penalties applied for accelerated climbing or rapid climbing.\n\n**Normal:** Without this feat, a character takes a -5 penalty on Climb checks when attempting to cover his or her full speed in climbing distance in a round, or a -20 penalty when attempting to cover twice his or her speed in climbing distance in a round.",
+    "effects": [],
+    "id": "srd:feat:legendary-climber",
+    "kind": "feat",
+    "name": "Legendary Climber",
+    "rev": 1,
+    "schemaVersion": 1,
+    "source": "srd",
+    "tags": [
+      "epic"
+    ],
+    "updatedAt": ""
+  },
+  {
+    "data": {
+      "benefit": "**Benefit:** Multiply the number of followers of each level that the character can lead by 10. This has no effect on cohorts.",
+      "featType": "Epic",
+      "prerequisites": [
+        {
+          "ability": "cha",
+          "type": "minAbility",
+          "value": 25
+        },
+        {
+          "featId": "srd:feat:epic-leadership",
+          "type": "hasFeat"
+        },
+        {
+          "featId": "srd:feat:leadership",
+          "type": "hasFeat"
+        },
+        {
+          "ranks": 30,
+          "skillId": "srd:skill:diplomacy",
+          "type": "minSkillRanks"
+        },
+        {
+          "text": "must rule own kingdom and have a stronghold",
+          "type": "custom"
+        }
+      ],
+      "requiresChoice": false,
+      "stackable": false
+    },
+    "description": "Legendary Commander [Epic]\n\n**Prerequisites:** Cha 25, Epic Leadership, Leadership, Diplomacy 30 ranks, must rule own kingdom and have a stronghold.\n\n**Benefit:** Multiply the number of followers of each level that the character can lead by 10. This has no effect on cohorts.",
+    "effects": [],
+    "id": "srd:feat:legendary-commander",
+    "kind": "feat",
+    "name": "Legendary Commander",
+    "rev": 1,
+    "schemaVersion": 1,
+    "source": "srd",
+    "tags": [
+      "epic"
+    ],
+    "updatedAt": ""
+  },
+  {
+    "data": {
+      "benefit": "**Benefit:** The character need only move 5 feet in a straight line to make a running jump.",
+      "featType": "Epic",
+      "normalText": "Without this feat, a character must move at least 20 feet in a straight line before attempting a running jump.",
+      "prerequisites": [
+        {
+          "ranks": 24,
+          "skillId": "srd:skill:jump",
+          "type": "minSkillRanks"
+        }
+      ],
+      "requiresChoice": false,
+      "stackable": false
+    },
+    "description": "Legendary Leaper [Epic]\n\n**Prerequisite:** Jump 24 ranks.\n\n**Benefit:** The character need only move 5 feet in a straight line to make a running jump.\n\n**Normal:** Without this feat, a character must move at least 20 feet in a straight line before attempting a running jump.",
+    "effects": [],
+    "id": "srd:feat:legendary-leaper",
+    "kind": "feat",
+    "name": "Legendary Leaper",
+    "rev": 1,
+    "schemaVersion": 1,
+    "source": "srd",
+    "tags": [
+      "epic"
+    ],
+    "updatedAt": ""
+  },
+  {
+    "data": {
+      "benefit": "**Benefit:** The character doesn't take a penalty on Ride checks when riding a mount without a saddle (bareback). The character never needs to make a Ride check to control a mount in combat (and even controlling a mount not trained for combat doesn't require an action).",
+      "featType": "Epic",
+      "normalText": "Without this feat, a character takes a -5 penalty on Ride checks without a saddle, and must make a Ride check to control a mount in combat (and controlling a mount not trained for combat requires a move action).",
+      "prerequisites": [
+        {
+          "ranks": 24,
+          "skillId": "srd:skill:ride",
+          "type": "minSkillRanks"
+        }
+      ],
+      "requiresChoice": false,
+      "stackable": false
+    },
+    "description": "Legendary Rider [Epic]\n\n**Prerequisite:** Ride 24 ranks.\n\n**Benefit:** The character doesn't take a penalty on Ride checks when riding a mount without a saddle (bareback). The character never needs to make a Ride check to control a mount in combat (and even controlling a mount not trained for combat doesn't require an action).\n\n**Normal:** Without this feat, a character takes a -5 penalty on Ride checks without a saddle, and must make a Ride check to control a mount in combat (and controlling a mount not trained for combat requires a move action).",
+    "effects": [],
+    "id": "srd:feat:legendary-rider",
+    "kind": "feat",
+    "name": "Legendary Rider",
+    "rev": 1,
+    "schemaVersion": 1,
+    "source": "srd",
+    "tags": [
+      "epic"
+    ],
+    "updatedAt": ""
+  },
+  {
+    "data": {
+      "benefit": "**Benefit:** The character can track creatures across water, under-water, or through the air. This adds the surfaces of water, underwater, and air to the list of surfaces found under the Track feat:\n\n**Surface** | **DC**\nWater | 60\nUnderwater | 80\nAir | 120",
+      "featType": "Epic",
+      "prerequisites": [
+        {
+          "ability": "wis",
+          "type": "minAbility",
+          "value": 25
+        },
+        {
+          "featId": "srd:feat:track",
+          "type": "hasFeat"
+        },
+        {
+          "ranks": 30,
+          "skillId": "srd:skill:knowledge",
+          "type": "minSkillRanks"
+        },
+        {
+          "ranks": 30,
+          "skillId": "srd:skill:survival",
+          "type": "minSkillRanks"
+        }
+      ],
+      "requiresChoice": false,
+      "stackable": false
+    },
+    "description": "Legendary Tracker [Epic]\n\n**Prerequisites:** Wis 25, Track, Knowledge (nature) 30 ranks, Survival 30 ranks.\n\n**Benefit:** The character can track creatures across water, under-water, or through the air. This adds the surfaces of water, underwater, and air to the list of surfaces found under the Track feat:\n\n**Surface** | **DC**\nWater | 60\nUnderwater | 80\nAir | 120",
+    "effects": [],
+    "id": "srd:feat:legendary-tracker",
+    "kind": "feat",
+    "name": "Legendary Tracker",
+    "rev": 1,
+    "schemaVersion": 1,
+    "source": "srd",
+    "tags": [
+      "epic"
+    ],
+    "updatedAt": ""
+  },
+  {
+    "data": {
+      "benefit": "**Benefit:** The character gains a +10 bonus on all grapple checks.",
+      "featType": "Epic",
+      "prerequisites": [
+        {
+          "ability": "str",
+          "type": "minAbility",
+          "value": 21
+        },
+        {
+          "ability": "dex",
+          "type": "minAbility",
+          "value": 21
+        },
+        {
+          "featId": "srd:feat:improved-unarmed-strike",
+          "type": "hasFeat"
+        },
+        {
+          "ranks": 15,
+          "skillId": "srd:skill:escape-artist",
+          "type": "minSkillRanks"
+        }
+      ],
+      "requiresChoice": false,
+      "stackable": false
+    },
+    "description": "Legendary Wrestler [Epic]\n\n**Prerequisite:** Str 21, Dex 21, Improved Unarmed Strike, Escape Artist 15 ranks.\n\n**Benefit:** The character gains a +10 bonus on all grapple checks.",
+    "effects": [],
+    "id": "srd:feat:legendary-wrestler",
+    "kind": "feat",
+    "name": "Legendary Wrestler",
+    "rev": 1,
+    "schemaVersion": 1,
+    "source": "srd",
+    "tags": [
+      "epic"
+    ],
+    "updatedAt": ""
+  },
+  {
+    "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Reflex saving throws.",
       "featType": "General",
       "prerequisites": [],
@@ -18,6 +269,11 @@
     ],
     "id": "srd:feat:lightning-reflexes",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf alle Reflex-Rettungswürfe."
+      }
+    },
     "name": "Lightning Reflexes",
     "rev": 1,
     "schemaVersion": 1,
@@ -82,6 +338,11 @@
     ],
     "id": "srd:feat:magical-aptitude",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Spellcraft und Use Magic Device."
+      }
+    },
     "name": "Magical Aptitude",
     "rev": 1,
     "schemaVersion": 1,
@@ -192,6 +453,11 @@
     "effects": [],
     "id": "srd:feat:manyshot",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Als Standard-Aktion schießt du zwei oder mehr Pfeile gleichzeitig auf ein Ziel in bis zu 30 Fuß. Die Zahl steigt mit dem Grundangriffsbonus; alle Pfeile nutzen einen Angriffswurf mit steigendem Malus."
+      }
+    },
     "name": "Manyshot",
     "rev": 1,
     "schemaVersion": 1,
@@ -215,6 +481,11 @@
     "effects": [],
     "id": "srd:feat:martial-weapon-proficiency",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine Kriegswaffe. Mit dieser Waffe greifst du ohne den Malus von −4 für Unvertrautheit an. Das Talent gilt je Waffe einmal."
+      }
+    },
     "name": "Martial Weapon Proficiency",
     "rev": 1,
     "schemaVersion": 1,
@@ -298,6 +569,11 @@
     "effects": [],
     "id": "srd:feat:maximize-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Alle veränderlichen Zahlenwerte werden zum Höchstwert. Braucht einen Zauberplatz drei Grade höher."
+      }
+    },
     "name": "Maximize Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -325,6 +601,11 @@
     "effects": [],
     "id": "srd:feat:mental-resistance",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Gegen psionische Angriffe ohne Energieart hast du Schadensreduzierung 3/−, und Attributsschaden aus psionischer Quelle wird gemindert."
+      }
+    },
     "name": "Mental Resistance",
     "rev": 1,
     "schemaVersion": 1,
@@ -393,6 +674,11 @@
     "effects": [],
     "id": "srd:feat:mind-over-body",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Attributsschaden heilt schneller: pro Tag 1 + dein KO-Bonus an Attributspunkten."
+      }
+    },
     "name": "Mind Over Body",
     "rev": 1,
     "schemaVersion": 1,
@@ -469,6 +755,11 @@
     "effects": [],
     "id": "srd:feat:mobility",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+4 Ausweich-Bonus auf die RK gegen Gelegenheitsangriffe, die du dadurch auslöst, dass du aus einem bedrohten Feld herausgehst."
+      }
+    },
     "name": "Mobility",
     "rev": 1,
     "schemaVersion": 1,
@@ -501,6 +792,11 @@
     "effects": [],
     "id": "srd:feat:mounted-archery",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Der Malus für Fernangriffe vom Reittier halbiert sich: −2 statt −4 im Schritt, −4 statt −8 in schnellerer Gangart."
+      }
+    },
     "name": "Mounted Archery",
     "rev": 1,
     "schemaVersion": 1,
@@ -529,6 +825,11 @@
     "effects": [],
     "id": "srd:feat:mounted-combat",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Einmal pro Runde darfst du bei einem Treffer gegen dein Reittier einen Ride-Wurf gegen die Angriffs-SG versuchen; gelingt er, geht der Angriff daneben."
+      }
+    },
     "name": "Mounted Combat",
     "rev": 1,
     "schemaVersion": 1,
@@ -556,6 +857,11 @@
     "effects": [],
     "id": "srd:feat:multiattack",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Die Sekundärangriffe der Kreatur erhalten nur −2 statt −5."
+      }
+    },
     "name": "Multiattack",
     "rev": 1,
     "schemaVersion": 1,
@@ -620,6 +926,11 @@
     "effects": [],
     "id": "srd:feat:multiweapon-fighting",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Für Kreaturen mit mehr als zwei Armen: der Malus für das Kämpfen mit mehreren Waffen sinkt auf −2 für den Haupt- und −6 für jeden weiteren Angriff."
+      }
+    },
     "name": "Multiweapon Fighting",
     "rev": 1,
     "schemaVersion": 1,
@@ -727,6 +1038,11 @@
     "effects": [],
     "id": "srd:feat:natural-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "In Tiergestalt (Wild Shape) kannst du weiter zaubern: Verbale und gestische Komponenten sowie Materialkomponenten ersetzt du durch entsprechende Laute und Bewegungen."
+      }
+    },
     "name": "Natural Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -801,6 +1117,11 @@
     ],
     "id": "srd:feat:negotiator",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Diplomacy und Sense Motive."
+      }
+    },
     "name": "Negotiator",
     "rev": 1,
     "schemaVersion": 1,
@@ -835,6 +1156,11 @@
     ],
     "id": "srd:feat:nimble-fingers",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Disable Device und Open Lock."
+      }
+    },
     "name": "Nimble Fingers",
     "rev": 1,
     "schemaVersion": 1,
@@ -857,6 +1183,11 @@
     "effects": [],
     "id": "srd:feat:open-minded",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du erhältst sofort 5 zusätzliche Fertigkeitspunkte, frei verteilbar nach den üblichen Regeln."
+      }
+    },
     "name": "Open Minded",
     "rev": 1,
     "schemaVersion": 1,
@@ -1097,6 +1428,11 @@
     "effects": [],
     "id": "srd:feat:persistent-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Ein beharrlicher Zauber wirkt 24 Stunden. Nur bei Reichweite „persönlich“ oder festen Reichweiten. Braucht einen Zauberplatz sechs Grade höher."
+      }
+    },
     "name": "Persistent Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -1131,6 +1467,11 @@
     ],
     "id": "srd:feat:persuasive",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Bluff und Intimidate."
+      }
+    },
     "name": "Persuasive",
     "rev": 1,
     "schemaVersion": 1,
@@ -1197,6 +1538,11 @@
     "effects": [],
     "id": "srd:feat:plant-control",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Pflanzenkreaturen befehligen wie ein böser Kleriker Untote."
+      }
+    },
     "name": "Plant Control",
     "rev": 1,
     "schemaVersion": 1,
@@ -1223,6 +1569,11 @@
     "effects": [],
     "id": "srd:feat:plant-defiance",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Pflanzenkreaturen vertreiben wie ein guter Kleriker Untote (aber nicht vernichten)."
+      }
+    },
     "name": "Plant Defiance",
     "rev": 1,
     "schemaVersion": 1,
@@ -1277,6 +1628,11 @@
     "effects": [],
     "id": "srd:feat:point-blank-shot",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+1 auf Angriff und Schaden mit Fernwaffen gegen Ziele innerhalb von 30 Fuß."
+      }
+    },
     "name": "Point Blank Shot",
     "rev": 1,
     "schemaVersion": 1,
@@ -1371,6 +1727,11 @@
     "effects": [],
     "id": "srd:feat:power-attack",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei einer Angriffs- oder vollen Angriffsaktion darfst du bis zu deinem Grundangriffsbonus von den Angriffswürfen abziehen und denselben Betrag auf den Nahkampfschaden legen. Mit zweihändig geführten Waffen zählt der Schadensbonus doppelt; bei leichten Waffen gar nicht."
+      }
+    },
     "name": "Power Attack",
     "rev": 1,
     "schemaVersion": 1,
@@ -1402,6 +1763,11 @@
     "effects": [],
     "id": "srd:feat:power-critical",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Mit der gewählten Waffe erhältst du +4 auf den Wurf, einen kritischen Treffer zu bestätigen."
+      }
+    },
     "name": "Power Critical",
     "rev": 1,
     "schemaVersion": 1,
@@ -1429,6 +1795,11 @@
     "effects": [],
     "id": "srd:feat:precise-shot",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst ohne den üblichen Malus von −4 in einen Nahkampf hineinschießen."
+      }
+    },
     "name": "Precise Shot",
     "rev": 1,
     "schemaVersion": 1,
@@ -1463,6 +1834,11 @@
     ],
     "id": "srd:feat:psionic-affinity",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Psicraft und Use Psionic Device."
+      }
+    },
     "name": "Psionic Affinity",
     "rev": 1,
     "schemaVersion": 1,
@@ -1491,6 +1867,11 @@
     "effects": [],
     "id": "srd:feat:psionic-hole",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Ein Gegner, der dich im Nahkampf trifft, verliert sofort seinen psionischen Fokus."
+      }
+    },
     "name": "Psionic Hole",
     "rev": 1,
     "schemaVersion": 1,
@@ -1519,6 +1900,11 @@
     "effects": [],
     "id": "srd:feat:quick-draw",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Waffe ziehen kostet nur eine freie Aktion statt einer Bewegungsaktion; eine versteckte Waffe eine Bewegungsaktion. Wurfwaffen darfst du mit voller Angriffsrate werfen."
+      }
+    },
     "name": "Quick Draw",
     "rev": 1,
     "schemaVersion": 1,
@@ -1541,6 +1927,11 @@
     "effects": [],
     "id": "srd:feat:quicken-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Der Zauber kostet nur eine schnelle Aktion; höchstens ein beschleunigter Zauber pro Runde. Braucht einen Zauberplatz vier Grade höher."
+      }
+    },
     "name": "Quicken Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -1569,6 +1960,11 @@
     "effects": [],
     "id": "srd:feat:quicken-spell-like-ability",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine zauberähnliche Fähigkeit der Kreatur: sie kann diese dreimal täglich als schnelle Aktion einsetzen."
+      }
+    },
     "name": "Quicken Spell-Like Ability",
     "rev": 1,
     "schemaVersion": 1,
@@ -1659,6 +2055,11 @@
     "effects": [],
     "id": "srd:feat:rapid-metabolism",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du heilst pro Tag deine normale Rate zuzüglich des doppelten KO-Bonus — auch ohne zu ruhen."
+      }
+    },
     "name": "Rapid Metabolism",
     "rev": 1,
     "schemaVersion": 1,
@@ -1687,6 +2088,11 @@
     "effects": [],
     "id": "srd:feat:rapid-reload",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine Armbrust-Art: Nachladen kostet nur noch eine freie Aktion (Hand- und leichte Armbrust) bzw. eine Bewegungsaktion (schwere Armbrust)."
+      }
+    },
     "name": "Rapid Reload",
     "rev": 1,
     "schemaVersion": 1,
@@ -1719,6 +2125,11 @@
     "effects": [],
     "id": "srd:feat:rapid-shot",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei einer vollen Angriffsaktion mit einer Fernwaffe erhältst du einen zusätzlichen Angriff, dafür alle Fernangriffe in dieser Runde mit −2."
+      }
+    },
     "name": "Rapid Shot",
     "rev": 1,
     "schemaVersion": 1,
@@ -1740,6 +2151,11 @@
     "effects": [],
     "id": "srd:feat:reach-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Ein Zauber mit Reichweite „Berührung“ wirkt auf bis zu 30 Fuß; er wird zum Strahl und braucht einen Fernkampf-Berührungsangriff. Braucht einen Zauberplatz zwei Grade höher."
+      }
+    },
     "name": "Reach Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -1802,6 +2218,11 @@
     "effects": [],
     "id": "srd:feat:reckless-offense",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei einer Angriffs- oder vollen Angriffsaktion im Nahkampf darfst du −4 auf die RK nehmen und dafür +2 auf die Angriffswürfe legen."
+      }
+    },
     "name": "Reckless Offense",
     "rev": 1,
     "schemaVersion": 1,
@@ -1863,6 +2284,11 @@
     "effects": [],
     "id": "srd:feat:repeat-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Der Zauber wirkt zu Beginn deiner nächsten Runde automatisch ein zweites Mal, von derselben Stelle auf dieselbe Fläche. Braucht einen Zauberplatz drei Grade höher."
+      }
+    },
     "name": "Repeat Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -1895,6 +2321,11 @@
     "effects": [],
     "id": "srd:feat:ride-by-attack",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei einem Ansturm zu Pferd darfst du nach dem Angriff weiterreiten. Insgesamt bis zum Doppelten der Reittier-Geschwindigkeit, und der Angegriffene erhält keinen Gelegenheitsangriff."
+      }
+    },
     "name": "Ride-by Attack",
     "rev": 1,
     "schemaVersion": 1,
@@ -1995,6 +2426,11 @@
     "effects": [],
     "id": "srd:feat:run",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du rennst mit fünffacher statt vierfacher Geschwindigkeit (in schwerer Rüstung vierfach statt dreifach) und behältst beim Rennen deinen GE-Bonus auf die RK. Beim Weitsprung mit Anlauf erhältst du +4 auf Jump."
+      }
+    },
     "name": "Run",
     "rev": 1,
     "schemaVersion": 1,
@@ -2016,6 +2452,11 @@
     "effects": [],
     "id": "srd:feat:sacred-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Die Hälfte des Schadens stammt direkt aus göttlicher Macht und lässt sich nicht durch Energieschutz mindern. Braucht einen Zauberplatz einen Grad höher."
+      }
+    },
     "name": "Sacred Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -2079,6 +2520,11 @@
     "effects": [],
     "id": "srd:feat:scribe-scroll",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Schriftrollen jedes Zaubers herstellen, den du kennst. Ein Tag je 1.000 GM Grundpreis, Material die Hälfte, EP 1/25."
+      }
+    },
     "name": "Scribe Scroll",
     "rev": 1,
     "schemaVersion": 1,
@@ -2105,6 +2551,11 @@
     "effects": [],
     "id": "srd:feat:scribe-tattoo",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst psionische Tätowierungen herstellen, die Kräfte bis Grad 3 speichern."
+      }
+    },
     "name": "Scribe Tattoo",
     "rev": 1,
     "schemaVersion": 1,
@@ -2181,6 +2632,11 @@
     ],
     "id": "srd:feat:self-sufficient",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Heal und Survival."
+      }
+    },
     "name": "Self-Sufficient",
     "rev": 1,
     "schemaVersion": 1,
@@ -2217,6 +2673,11 @@
     "effects": [],
     "id": "srd:feat:sharp-shooting",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Deckung gibt deinen Zielen nur noch +2 auf die RK statt +4. Gegen totale Deckung hilft es nicht."
+      }
+    },
     "name": "Sharp-Shooting",
     "rev": 1,
     "schemaVersion": 1,
@@ -2279,6 +2740,11 @@
     "effects": [],
     "id": "srd:feat:shield-proficiency",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Schilde ohne Malus auf Angriffswürfe führen. Ohne Vertrautheit gilt der Rüstungsmalus des Schildes auch auf Angriffe."
+      }
+    },
     "name": "Shield Proficiency",
     "rev": 1,
     "schemaVersion": 1,
@@ -2323,6 +2789,11 @@
     "effects": [],
     "id": "srd:feat:shot-on-the-run",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei einer vollen Aktion darfst du dich bewegen, einen Fernangriff führen und weiterlaufen."
+      }
+    },
     "name": "Shot on the Run",
     "rev": 1,
     "schemaVersion": 1,
@@ -2354,6 +2825,11 @@
     "effects": [],
     "id": "srd:feat:sidestep-charge",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+4 Ausweich-Bonus auf die RK gegen Ansturm-Angriffe. Verfehlt dich ein anstürmender Gegner, erhältst du sofort einen Gelegenheitsangriff gegen ihn."
+      }
+    },
     "name": "Sidestep Charge",
     "rev": 1,
     "schemaVersion": 1,
@@ -2376,6 +2852,11 @@
     "effects": [],
     "id": "srd:feat:silent-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Der Zauber braucht keine verbale Komponente. Braucht einen Zauberplatz einen Grad höher."
+      }
+    },
     "name": "Silent Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -2399,6 +2880,11 @@
     "effects": [],
     "id": "srd:feat:simple-weapon-proficiency",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du bist mit allen einfachen Waffen vertraut. Ohne Vertrautheit gibt es −4 auf Angriffswürfe mit der Waffe."
+      }
+    },
     "name": "Simple Weapon Proficiency",
     "rev": 1,
     "schemaVersion": 1,
@@ -2421,6 +2907,11 @@
     "effects": [],
     "id": "srd:feat:skill-focus",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine Fertigkeit: +3 auf alle Würfe damit. Das Talent gilt je Fertigkeit einmal."
+      }
+    },
     "name": "Skill Focus",
     "rev": 1,
     "schemaVersion": 1,
@@ -2447,6 +2938,11 @@
     "effects": [],
     "id": "srd:feat:snatch",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Trifft die Kreatur mit Klaue oder Biss, darf sie damit einen Ringkampf beginnen, als hätte sie „improved grab“."
+      }
+    },
     "name": "Snatch",
     "rev": 1,
     "schemaVersion": 1,
@@ -2483,6 +2979,11 @@
     "effects": [],
     "id": "srd:feat:snatch-arrows",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Statt ein Geschoss nur abzuwehren, fängst du es auf und kannst es (wenn es eine Waffe ist, die du werfen kannst) im selben Zug als freie Aktion zurückwerfen."
+      }
+    },
     "name": "Snatch Arrows",
     "rev": 1,
     "schemaVersion": 1,
@@ -2567,6 +3068,11 @@
     "effects": [],
     "id": "srd:feat:spell-focus",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine Zauberschule. Der Rettungswurf-SG deiner Zauber dieser Schule steigt um 1. Das Talent gilt je Schule einmal."
+      }
+    },
     "name": "Spell Focus",
     "rev": 1,
     "schemaVersion": 1,
@@ -2622,6 +3128,11 @@
     "effects": [],
     "id": "srd:feat:spell-mastery",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine Anzahl Zauber gleich deinem IN-Bonus. Diese Zauber kannst du als Magier auch ohne Zauberbuch vorbereiten."
+      }
+    },
     "name": "Spell Mastery",
     "rev": 1,
     "schemaVersion": 1,
@@ -2683,6 +3194,11 @@
     "effects": [],
     "id": "srd:feat:spell-penetration",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Zauberstufen-Würfe, um Zauberresistenz zu überwinden."
+      }
+    },
     "name": "Spell Penetration",
     "rev": 1,
     "schemaVersion": 1,
@@ -2777,6 +3293,11 @@
     "effects": [],
     "id": "srd:feat:spirited-charge",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei einem Ansturm zu Pferd verdoppelst du den Schaden (mit einer Lanze verdreifachst du ihn)."
+      }
+    },
     "name": "Spirited Charge",
     "rev": 1,
     "schemaVersion": 1,
@@ -2886,6 +3407,11 @@
     "effects": [],
     "id": "srd:feat:spring-attack",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei einer vollen Aktion darfst du dich bewegen, angreifen und weiterlaufen — die Gesamtstrecke bleibt dein Bewegungswert. Der Gegner, den du angreifst, bekommt für diese Bewegung keinen Gelegenheitsangriff."
+      }
+    },
     "name": "Spring Attack",
     "rev": 1,
     "schemaVersion": 1,
@@ -2914,6 +3440,11 @@
     "effects": [],
     "id": "srd:feat:stand-still",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Statt eines Gelegenheitsangriffs auf einen sich entfernenden Gegner darfst du ihn festnageln: gelingt dir der Schadenswurf gegen seinen Reflex-Rettungswurf, endet seine Bewegung."
+      }
+    },
     "name": "Stand Still",
     "rev": 1,
     "schemaVersion": 1,
@@ -2948,6 +3479,11 @@
     ],
     "id": "srd:feat:stealthy",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+2 auf Hide und Move Silently."
+      }
+    },
     "name": "Stealthy",
     "rev": 1,
     "schemaVersion": 1,
@@ -2969,6 +3505,11 @@
     "effects": [],
     "id": "srd:feat:still-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Der Zauber braucht keine gestische Komponente. Braucht einen Zauberplatz einen Grad höher."
+      }
+    },
     "name": "Still Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -3049,6 +3590,11 @@
     "effects": [],
     "id": "srd:feat:stunning-fist",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Vor dem Angriffswurf angekündigt: ein von deinem unbewaffneten Angriff getroffener Gegner muss einen Fortitude-Rettungswurf (SG 10 + halbe Stufe + WE-Bonus) bestehen, sonst ist er eine Runde betäubt. Einsätze pro Tag begrenzt."
+      }
+    },
     "name": "Stunning Fist",
     "rev": 1,
     "schemaVersion": 1,
@@ -3080,6 +3626,11 @@
     "effects": [],
     "id": "srd:feat:subdual-substitution",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Ein Zauber mit Säure-, Kälte-, Elektrizitäts-, Feuer- oder Schall-Deskriptor richtet stattdessen nichttödlichen Schaden an. Braucht einen Zauberplatz einen Grad höher."
+      }
+    },
     "name": "Subdual Substitution",
     "rev": 1,
     "schemaVersion": 1,
@@ -3115,6 +3666,11 @@
     "effects": [],
     "id": "srd:feat:superior-expertise",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei Combat Expertise darf die Verschiebung bis zu deinem vollen Grundangriffsbonus gehen, nicht nur bis −5."
+      }
+    },
     "name": "Superior Expertise",
     "rev": 1,
     "schemaVersion": 1,
@@ -3299,6 +3855,11 @@
     ],
     "id": "srd:feat:toughness",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "+3 Trefferpunkte. Das Talent lässt sich mehrfach nehmen."
+      }
+    },
     "name": "Toughness",
     "rev": 1,
     "schemaVersion": 1,
@@ -3327,6 +3888,11 @@
     "effects": [],
     "id": "srd:feat:tower-shield-proficiency",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst Turmschilde führen, ohne dafür einen Malus auf Angriffswürfe zu erhalten."
+      }
+    },
     "name": "Tower Shield Proficiency",
     "rev": 1,
     "schemaVersion": 1,
@@ -3350,6 +3916,11 @@
     "effects": [],
     "id": "srd:feat:track",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kannst mit einem Survival-Wurf Spuren finden und verfolgen. Ohne dieses Talent lassen sich Spuren nur mit Search finden, und nur Feld für Feld."
+      }
+    },
     "name": "Track",
     "rev": 1,
     "schemaVersion": 1,
@@ -3382,6 +3953,11 @@
     "effects": [],
     "id": "srd:feat:trample",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Beim Überrennen zu Pferd darf der Gegner nicht ausweichen, und dein Reittier fügt ihm bei gelungenem Angriff Hufschaden zu."
+      }
+    },
     "name": "Trample",
     "rev": 1,
     "schemaVersion": 1,
@@ -3450,6 +4026,11 @@
     "effects": [],
     "id": "srd:feat:two-weapon-defense",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Mit zwei Waffen oder einer Doppelwaffe erhältst du +1 Schildbonus auf die RK; beim defensiven Kampf oder in totaler Verteidigung +2."
+      }
+    },
     "name": "Two-Weapon Defense",
     "rev": 1,
     "schemaVersion": 1,
@@ -3479,6 +4060,11 @@
     "effects": [],
     "id": "srd:feat:two-weapon-fighting",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du kämpfst mit einer Waffe in jeder Hand und erhältst einen Zusatzangriff mit der zweiten. Die Mali sinken auf −2/−2 (mit leichter Zweitwaffe) statt −6/−10."
+      }
+    },
     "name": "Two-Weapon Fighting",
     "rev": 1,
     "schemaVersion": 1,
@@ -3748,6 +4334,11 @@
     ],
     "id": "srd:feat:weapon-finesse",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Mit einer leichten Waffe, einem Rapier, einer Peitsche oder einer Stachelkette darfst du deinen GE- statt deinen ST-Modifikator auf Angriffswürfe nehmen."
+      }
+    },
     "name": "Weapon Finesse",
     "rev": 1,
     "schemaVersion": 1,
@@ -3787,6 +4378,11 @@
     ],
     "id": "srd:feat:weapon-focus",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine Waffenart (auch unbewaffneter Angriff, Ringkampf oder — als Zauberwirker — Strahl). Mit dieser Waffe erhältst du +1 auf alle Angriffswürfe. Das Talent gilt je Waffenart einmal."
+      }
+    },
     "name": "Weapon Focus",
     "rev": 1,
     "schemaVersion": 1,
@@ -3831,6 +4427,11 @@
     ],
     "id": "srd:feat:weapon-specialization",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Wähle eine Waffe, für die du Weapon Focus hast: +2 auf alle Schadenswürfe mit dieser Waffe. Braucht Kämpfer-Stufe 4."
+      }
+    },
     "name": "Weapon Specialization",
     "rev": 1,
     "schemaVersion": 1,
@@ -3884,6 +4485,11 @@
     "effects": [],
     "id": "srd:feat:whirlwind-attack",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Bei einer vollen Angriffsaktion verzichtest du auf deine normalen Angriffe und führst statt dessen je einen Nahkampfangriff mit vollem Grundangriffsbonus gegen jeden Gegner in Reichweite."
+      }
+    },
     "name": "Whirlwind Attack",
     "rev": 1,
     "schemaVersion": 1,
@@ -3967,6 +4573,11 @@
     "effects": [],
     "id": "srd:feat:widen-spell",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Ein Flächenzauber wirkt auf die doppelte Fläche in jeder Richtung. Braucht einen Zauberplatz drei Grade höher."
+      }
+    },
     "name": "Widen Spell",
     "rev": 1,
     "schemaVersion": 1,
@@ -3988,6 +4599,11 @@
     "effects": [],
     "id": "srd:feat:wild-talent",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Du gilst als psionischer Charakter und erhältst einen kleinen Vorrat an Kraftpunkten."
+      }
+    },
     "name": "Wild Talent",
     "rev": 1,
     "schemaVersion": 1,
@@ -4014,6 +4630,11 @@
     "effects": [],
     "id": "srd:feat:wingover",
     "kind": "feat",
+    "localized": {
+      "de": {
+        "summary": "Die fliegende Kreatur darf einmal pro Runde als freie Aktion um bis zu 180 Grad wenden, unabhängig von ihrer Manövrierfähigkeit."
+      }
+    },
     "name": "Wingover",
     "rev": 1,
     "schemaVersion": 1,
