@@ -13,7 +13,7 @@ describe("packs/srd", () => {
   const manifest = loadManifest();
 
   it("manifest listet Dateien und counts", () => {
-    expect(manifest.srdRev).toBe(3);
+    expect(manifest.srdRev).toBe(4);
     expect(manifest.files.length).toBeGreaterThan(0);
     expect([...manifest.files].sort()).toEqual(manifest.files);
     expect(manifest.files).not.toContain("manifest.json");

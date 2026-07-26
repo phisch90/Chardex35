@@ -72,8 +72,21 @@ export const characterSchema = z.object({
     )
     .default([]),
 
-  /** Flach; Klassen-/Cross-Class-Bewertung übernimmt validate (warn-only). */
+  /**
+   * Flach; Klassen-/Cross-Class-Bewertung übernimmt validate (warn-only).
+   * Schlüssel ist die Fertigkeits-ID oder `id#teilgebiet` bei Teilgebieten
+   * (siehe `skillSubtypes`).
+   */
   skillRanks: z.record(z.string(), z.number()).default({}),
+
+  /**
+   * Angelegte Teilgebiete — „Knowledge (arcana)", „Craft (weaponsmithing)".
+   * Eigener Eintrag statt bloßer Rang-Schlüssel, damit ein Teilgebiet auch mit
+   * 0 Rängen im Bogen stehen bleibt.
+   */
+  skillSubtypes: z
+    .array(z.object({ skillId: z.string(), subtype: z.string() }))
+    .default([]),
 
   feats: z
     .array(

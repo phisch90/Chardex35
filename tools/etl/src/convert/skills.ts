@@ -15,12 +15,17 @@ const ABILITY_MAP: Record<string, "str" | "dex" | "con" | "int" | "wis" | "cha">
 interface SynergyDef {
   to: string;
   condition?: string;
+  /** Nur dieses Teilgebiet der Quell-Fertigkeit gibt die Synergie. */
+  from?: string;
+  /** Nur dieses Teilgebiet der Ziel-Fertigkeit bekommt sie. */
+  toSubtype?: string;
 }
 
 /**
  * PHB-3.5-Synergietabelle, hart kodiert (Quelle: PHB Kap. 4 / SRD "Skill Synergies").
- * Knowledge ist bei Andargor EIN generischer Skill — die Teilgebiets-Synergien
- * hängen deshalb an srd:skill:knowledge mit dem Teilgebiet als condition-Text.
+ * Knowledge ist bei Andargor EIN generischer Skill; die Teilgebiets-Synergien
+ * hängen deshalb an srd:skill:knowledge mit `from` = Teilgebiet, damit 5 Ränge
+ * Knowledge (arcana) Spellcraft helfen und 5 Ränge Knowledge (religion) nicht.
  * Nicht abbildbar (kein Skill-Ziel): Handle Animal→wild empathy,
  * Knowledge (history)→bardic knowledge, Knowledge (religion)→turn undead.
  */
@@ -37,24 +42,93 @@ const SYNERGIES: Record<string, SynergyDef[]> = {
   "handle-animal": [{ to: "ride" }],
   jump: [{ to: "tumble" }],
   knowledge: [
-    { to: "spellcraft", condition: "with 5 ranks in Knowledge (arcana)" },
-    { to: "search", condition: "with 5 ranks in Knowledge (architecture and engineering), to find secret doors or hidden compartments" },
-    { to: "survival", condition: "with 5 ranks in Knowledge (dungeoneering), when underground" },
-    { to: "survival", condition: "with 5 ranks in Knowledge (geography), to keep from getting lost or to avoid natural hazards" },
-    { to: "gather-information", condition: "with 5 ranks in Knowledge (local)" },
-    { to: "survival", condition: "with 5 ranks in Knowledge (nature), in aboveground natural environments" },
-    { to: "diplomacy", condition: "with 5 ranks in Knowledge (nobility and royalty)" },
-    { to: "survival", condition: "with 5 ranks in Knowledge (the planes), when on other planes" },
+    { to: "spellcraft", from: "arcana" },
+    {
+      to: "search",
+      from: "architecture and engineering",
+      condition: "to find secret doors or hidden compartments",
+    },
+    { to: "survival", from: "dungeoneering", condition: "when underground" },
+    {
+      to: "survival",
+      from: "geography",
+      condition: "to keep from getting lost or to avoid natural hazards",
+    },
+    { to: "gather-information", from: "local" },
+    { to: "survival", from: "nature", condition: "in aboveground natural environments" },
+    { to: "diplomacy", from: "nobility and royalty" },
+    { to: "survival", from: "the planes", condition: "when on other planes" },
   ],
+  profession: [{ to: "use-rope", from: "sailor", condition: "aboard a ship" }],
   search: [{ to: "survival", condition: "when following tracks" }],
   "sense-motive": [{ to: "diplomacy" }],
   spellcraft: [{ to: "use-magic-device", condition: "involving scrolls" }],
-  survival: [{ to: "knowledge", condition: "on Knowledge (nature) checks" }],
+  survival: [{ to: "knowledge", toSubtype: "nature" }],
   tumble: [{ to: "balance" }, { to: "jump" }],
   "use-magic-device": [{ to: "spellcraft", condition: "to decipher spells on scrolls" }],
   "use-rope": [
     { to: "climb", condition: "involving ropes" },
     { to: "escape-artist", condition: "involving rope bonds" },
+  ],
+};
+
+/**
+ * Teilgebiete aus dem SRD. Knowledge ist abschließend, Craft/Perform/Profession
+ * sind Beispiele — eigene Teilgebiete kann man im Bogen jederzeit anlegen.
+ */
+const SUBTYPES: Record<string, string[]> = {
+  knowledge: [
+    "arcana",
+    "architecture and engineering",
+    "dungeoneering",
+    "geography",
+    "history",
+    "local",
+    "nature",
+    "nobility and royalty",
+    "religion",
+    "the planes",
+  ],
+  craft: [
+    "alchemy",
+    "armorsmithing",
+    "blacksmithing",
+    "bowmaking",
+    "carpentry",
+    "leatherworking",
+    "painting",
+    "sculpting",
+    "shipmaking",
+    "stonemasonry",
+    "trapmaking",
+    "weaponsmithing",
+  ],
+  perform: [
+    "act",
+    "comedy",
+    "dance",
+    "keyboard instruments",
+    "oratory",
+    "percussion instruments",
+    "sing",
+    "string instruments",
+    "wind instruments",
+  ],
+  profession: [
+    "apothecary",
+    "cook",
+    "driver",
+    "farmer",
+    "herbalist",
+    "hunter",
+    "innkeeper",
+    "miner",
+    "sailor",
+    "scribe",
+    "siege engineer",
+    "stablehand",
+    "tanner",
+    "teamster",
   ],
 };
 
@@ -120,6 +194,10 @@ export function convertSkills(ctx: ConvertContext): SkillEntity[] {
         trainedOnly: row.trained === "Yes",
         acpApplies: row.armor_check === "Yes",
         acpDouble: name === "Swim",
+        // „Speak Language" trägt im Dump zwar ein Teilgebiet, ist aber keine
+        // Probe-Fertigkeit — Sprachen führt der Bogen als Notiz, nicht als Rang.
+        subtyped: slug in SUBTYPES,
+        subtypeSuggestions: SUBTYPES[slug] ?? [],
         synergies: [],
       },
     });
@@ -139,6 +217,8 @@ export function convertSkills(ctx: ConvertContext): SkillEntity[] {
         toSkillId: toId,
         bonus: 2,
         ...(syn.condition ? { condition: syn.condition } : {}),
+        ...(syn.from ? { fromSubtype: syn.from } : {}),
+        ...(syn.toSubtype ? { toSubtype: syn.toSubtype } : {}),
       });
     }
   }

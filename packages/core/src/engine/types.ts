@@ -43,7 +43,15 @@ export interface AttackLine {
 }
 
 export interface SkillLine {
+  /** ID der Fertigkeits-Entity — bei Teilgebieten die der Grundfertigkeit. */
   skillId: string;
+  /** Schlüssel in `character.skillRanks`: `skillId` oder `skillId#teilgebiet`. */
+  key: string;
+  /** Gesetzt bei Teilgebiets-Zeilen („arcana"). */
+  subtype?: string;
+  /** true, wenn die Fertigkeit Teilgebiete kennt (auch auf der Grundzeile). */
+  subtyped: boolean;
+  /** „Knowledge (arcana)" bzw. „Knowledge" auf der Grundzeile. */
   name: string;
   /** false bei trainedOnly ohne Ränge („—"). */
   usable: boolean;

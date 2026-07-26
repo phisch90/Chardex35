@@ -126,9 +126,11 @@ export function TrackersCard({ character, save }: TabProps) {
         ))}
       </ul>
 
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2">
         <GhostButton onClick={addTracker}>+ {S.trackers.add}</GhostButton>
-        {trackers.length === 0 && <span className="text-xs text-slate-500">{S.trackers.hint}</span>}
+        {trackers.length === 0 && (
+          <p className="mt-1.5 text-xs text-slate-500">{S.trackers.hint}</p>
+        )}
       </div>
     </Card>
   );

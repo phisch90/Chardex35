@@ -1,6 +1,13 @@
 import { ABILITIES, type Ability, type Size, type StatPath } from "../schema/common.js";
 import type { HouseRules } from "../schema/character.js";
-import { displayName, type ItemEntity } from "../schema/entities.js";
+import {
+  displayName,
+  parseSkillKey,
+  skillDisplayName,
+  skillKey,
+  type ItemEntity,
+  type SkillEntity,
+} from "../schema/entities.js";
 import type { ActiveEffect, ResolvedCharacter, TimelineResult } from "./internal.js";
 import {
   baseContribution,
@@ -398,9 +405,27 @@ export function deriveSheetValues(
   for (const cls of resolved.classes.values()) {
     for (const id of cls.data.classSkillIds) classSkillIds.add(id);
   }
-  const skills: SkillLine[] = resolved.skills.map(({ id, entity }) => {
+  /**
+   * Eine Zeile je Fertigkeit — bei Teilgebiets-Fertigkeiten zusätzlich eine je
+   * angelegtem Teilgebiet. Die Grundzeile bleibt stehen: bei Craft/Perform ist
+   * sie der untrainierte Wurf, bei Knowledge/Profession der Anker fürs Anlegen.
+   */
+  type SkillTarget = { id: string; entity: SkillEntity; subtype?: string };
+  const skillTargets: SkillTarget[] = [];
+  for (const target of resolved.skills) {
+    skillTargets.push(target);
+    if (!target.entity.data.subtyped) continue;
+    for (const entry of character.skillSubtypes) {
+      if (entry.skillId === target.id && entry.subtype !== "") {
+        skillTargets.push({ ...target, subtype: entry.subtype });
+      }
+    }
+  }
+
+  const skills: SkillLine[] = skillTargets.map(({ id, entity, subtype }) => {
     const data = entity.data;
-    const ranks = character.skillRanks[id] ?? 0;
+    const key = skillKey(id, subtype);
+    const ranks = character.skillRanks[key] ?? 0;
     const isClassSkill = classSkillIds.has(id);
     const abilityMod = data.keyAbility ? mod(data.keyAbility) : 0;
 
@@ -412,19 +437,22 @@ export function deriveSheetValues(
       );
     }
     // Synergien: +2 aus jedem anderen Skill mit ≥5 Rängen, der auf diesen zeigt.
+    // Teilgebiete zählen einzeln — 5 Ränge Knowledge (arcana) helfen Spellcraft,
+    // 5 Ränge Knowledge (religion) nicht.
     for (const { id: otherId, entity: other } of resolved.skills) {
-      if (otherId === id) continue;
       for (const synergy of other.data.synergies) {
         if (synergy.toSkillId !== id) continue;
-        if ((character.skillRanks[otherId] ?? 0) >= 5) {
-          contributions.push({
-            source: `Synergie: ${displayName(other)}`,
-            bonusType: "untyped",
-            value: synergy.bonus,
-            applied: true,
-            condition: synergy.condition,
-          });
-        }
+        if (synergy.toSubtype !== undefined && synergy.toSubtype !== subtype) continue;
+        const sourceKey = skillKey(otherId, synergy.fromSubtype);
+        if (sourceKey === key) continue;
+        if ((character.skillRanks[sourceKey] ?? 0) < 5) continue;
+        contributions.push({
+          source: `Synergie: ${skillDisplayName(other, synergy.fromSubtype)}`,
+          bonusType: "untyped",
+          value: synergy.bonus,
+          applied: true,
+          condition: synergy.condition,
+        });
       }
     }
     if (data.acpApplies && acp < 0) {
@@ -436,13 +464,23 @@ export function deriveSheetValues(
         condition: undefined,
       });
     }
+    // `skill:<id>` gilt für die ganze Fertigkeit, `skill:<id>#<teilgebiet>` nur
+    // für dieses eine (Skill Focus (Knowledge (arcana))).
     for (const effect of buckets.get(`skill:${id}`) ?? []) contributions.push(toContribution(effect));
+    if (subtype !== undefined) {
+      for (const effect of buckets.get(`skill:${key}`) ?? []) {
+        contributions.push(toContribution(effect));
+      }
+    }
     for (const effect of buckets.get("skill.all") ?? []) contributions.push(toContribution(effect));
 
     const total = stackContributions(contributions);
     return {
       skillId: id,
-      name: displayName(entity),
+      key,
+      ...(subtype !== undefined ? { subtype } : {}),
+      subtyped: data.subtyped,
+      name: skillDisplayName(entity, subtype),
       usable: !(data.trainedOnly && ranks === 0),
       total,
       ranks,
@@ -463,8 +501,10 @@ export function deriveSheetValues(
     skillPointsAvailable += index === 0 ? perLevel * 4 : perLevel;
   });
   let skillPointsSpent = 0;
-  for (const [skillId, ranks] of Object.entries(character.skillRanks)) {
+  for (const [key, ranks] of Object.entries(character.skillRanks)) {
     if (ranks <= 0) continue;
+    // Klassenfertigkeit gilt für die ganze Fertigkeit, nicht je Teilgebiet.
+    const { skillId } = parseSkillKey(key);
     skillPointsSpent += classSkillIds.has(skillId) ? ranks : ranks * 2;
   }
 

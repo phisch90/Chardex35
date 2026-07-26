@@ -23,70 +23,88 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
           .slice(0, 20)
       : [];
 
+  // Angelegt zuerst, wie in Fight Club — was am Körper hängt, zählt im Kampf.
+  const equipped = character.inventory.filter((row) => row.equipped);
+  const stowed = character.inventory.filter((row) => !row.equipped);
+
+  const renderRow = (row: (typeof character.inventory)[number]) => {
+    const entity = row.itemId ? entities?.find((e) => e.id === row.itemId) : undefined;
+    const name = row.customName ?? (entity ? displayName(entity) : "—");
+    const weight =
+      row.weightLbOverride ?? (entity?.kind === "item" ? (entity.data.weightLb ?? 0) : 0);
+    return (
+      <li key={row.id} className="flex items-center gap-2 py-1.5 text-sm">
+        <div className="min-w-0 flex-1">
+          <div className="truncate">{name}</div>
+          <div className="text-xs text-slate-500">
+            {!ignoreEncumbrance && weight ? `${weight * row.qty} lb` : ""}
+            {row.extraEffects.length > 0 && " · verzaubert"}
+          </div>
+        </div>
+        <GhostButton
+          onClick={() =>
+            save((c) => {
+              const item = c.inventory.find((r) => r.id === row.id);
+              if (item) item.qty = Math.max(1, item.qty - 1);
+            })
+          }
+        >
+          −
+        </GhostButton>
+        <span className="w-6 text-center font-mono">{row.qty}</span>
+        <GhostButton
+          onClick={() =>
+            save((c) => {
+              const item = c.inventory.find((r) => r.id === row.id);
+              if (item) item.qty += 1;
+            })
+          }
+        >
+          +
+        </GhostButton>
+        <Chip
+          active={row.equipped}
+          onClick={() =>
+            save((c) => {
+              const item = c.inventory.find((r) => r.id === row.id);
+              if (item) item.equipped = !item.equipped;
+            })
+          }
+        >
+          {row.equipped ? S.sheet.equipped : S.sheet.stowed}
+        </Chip>
+        <GhostButton
+          danger
+          onClick={() => save((c) => void (c.inventory = c.inventory.filter((r) => r.id !== row.id)))}
+        >
+          ✕
+        </GhostButton>
+      </li>
+    );
+  };
+
   return (
     <div className="space-y-3">
       <Card>
-        <SectionTitle>{S.sheet.tabs.inventory}</SectionTitle>
+        <SectionTitle>
+          {S.sheet.equipped} ({equipped.length})
+        </SectionTitle>
         <ul className="divide-y divide-slate-800">
-          {character.inventory.map((row) => {
-            const entity = row.itemId ? entities?.find((e) => e.id === row.itemId) : undefined;
-            const name = row.customName ?? (entity ? displayName(entity) : "—");
-            const weight =
-              row.weightLbOverride ?? (entity?.kind === "item" ? (entity.data.weightLb ?? 0) : 0);
-            return (
-              <li key={row.id} className="flex items-center gap-2 py-1.5 text-sm">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate">{name}</div>
-                  <div className="text-xs text-slate-500">
-                    {!ignoreEncumbrance && weight ? `${weight * row.qty} lb` : ""}
-                    {row.extraEffects.length > 0 && " · verzaubert"}
-                  </div>
-                </div>
-                <GhostButton
-                  onClick={() =>
-                    save((c) => {
-                      const item = c.inventory.find((r) => r.id === row.id);
-                      if (item) item.qty = Math.max(1, item.qty - 1);
-                    })
-                  }
-                >
-                  −
-                </GhostButton>
-                <span className="w-6 text-center font-mono">{row.qty}</span>
-                <GhostButton
-                  onClick={() =>
-                    save((c) => {
-                      const item = c.inventory.find((r) => r.id === row.id);
-                      if (item) item.qty += 1;
-                    })
-                  }
-                >
-                  +
-                </GhostButton>
-                <Chip
-                  active={row.equipped}
-                  onClick={() =>
-                    save((c) => {
-                      const item = c.inventory.find((r) => r.id === row.id);
-                      if (item) item.equipped = !item.equipped;
-                    })
-                  }
-                >
-                  {row.equipped ? "angelegt" : "Rucksack"}
-                </Chip>
-                <GhostButton
-                  danger
-                  onClick={() => save((c) => void (c.inventory = c.inventory.filter((r) => r.id !== row.id)))}
-                >
-                  ✕
-                </GhostButton>
-              </li>
-            );
-          })}
-          {character.inventory.length === 0 && (
-            <li className="py-2 text-sm text-slate-500">Leer.</li>
+          {equipped.map(renderRow)}
+          {equipped.length === 0 && (
+            <li className="py-2 text-sm text-slate-500">Nichts angelegt.</li>
           )}
         </ul>
+
+        <div className="mt-3">
+          <SectionTitle>
+            {S.sheet.stowed} ({stowed.length})
+          </SectionTitle>
+          <ul className="divide-y divide-slate-800">
+            {stowed.map(renderRow)}
+            {stowed.length === 0 && <li className="py-2 text-sm text-slate-500">Leer.</li>}
+          </ul>
+        </div>
         {!ignoreEncumbrance && (
           <p className="mt-2 text-xs text-slate-400">
             Gesamt {sheet.encumbrance.loadLb} lb — {S.sheet.encumbrance[sheet.encumbrance.level]}

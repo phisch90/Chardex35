@@ -186,6 +186,20 @@ const skillHide = E({
   source: "srd",
   data: { keyAbility: "dex", acpApplies: true },
 });
+/** Fertigkeit mit Teilgebieten — die Synergie hängt an genau einem davon. */
+const skillLore = E({
+  id: "test:skill:lore",
+  kind: "skill",
+  name: "Lore",
+  source: "srd",
+  data: {
+    keyAbility: "int",
+    trainedOnly: true,
+    subtyped: true,
+    subtypeSuggestions: ["arcana", "religion"],
+    synergies: [{ toSkillId: "test:skill:hide", bonus: 2, fromSubtype: "arcana" }],
+  },
+});
 
 const featDodge = E({
   id: "test:feat:dodge",
@@ -312,7 +326,7 @@ const conditionShaken = E({
 const ALL_ENTITIES: Entity[] = [
   fighter, rogue, wizard,
   human, dwarf, halfling,
-  skillClimb, skillSwim, skillJump, skillTumble, skillHide,
+  skillClimb, skillSwim, skillJump, skillTumble, skillHide, skillLore,
   featDodge, featToughness, featFinesse,
   longsword, greatsword, dagger, chainShirt, fullPlate, heavyShield, ringPlus1, ringPlus3,
   conditionShaken,
@@ -555,6 +569,70 @@ describe("deriveSheet — Fertigkeiten", () => {
     const sheet = deriveSheet(fighterDwarf4(), COMPENDIUM, HOUSE);
     const tumble = sheet.skills.find((s) => s.skillId === "test:skill:tumble")!;
     expect(tumble.usable).toBe(false);
+  });
+
+  describe("Teilgebiete", () => {
+    const scholar = (overrides: Record<string, unknown> = {}) =>
+      fighterDwarf4({
+        abilities: { base: { str: 16, dex: 13, con: 14, int: 14, wis: 12, cha: 8 } },
+        skillSubtypes: [
+          { skillId: "test:skill:lore", subtype: "arcana" },
+          { skillId: "test:skill:lore", subtype: "religion" },
+        ],
+        skillRanks: { "test:skill:lore#arcana": 5, "test:skill:lore#religion": 2 },
+        ...overrides,
+      });
+
+    it("jedes Teilgebiet ist eine eigene Zeile mit eigenen Rängen", () => {
+      const sheet = deriveSheet(scholar(), COMPENDIUM, HOUSE);
+      const lines = sheet.skills.filter((s) => s.skillId === "test:skill:lore");
+      // Grundzeile + zwei Teilgebiete.
+      expect(lines.map((l) => l.name)).toEqual(["Lore", "Lore (arcana)", "Lore (religion)"]);
+      const arcana = lines.find((l) => l.subtype === "arcana")!;
+      const religion = lines.find((l) => l.subtype === "religion")!;
+      expect(arcana.total.total).toBe(5 + 2); // Ränge + IN 14
+      expect(religion.total.total).toBe(2 + 2);
+      // Die Grundzeile bleibt rangfrei und (trainedOnly) unbenutzbar.
+      expect(lines[0]!.ranks).toBe(0);
+      expect(lines[0]!.usable).toBe(false);
+      expect(lines[0]!.subtyped).toBe(true);
+    });
+
+    it("Synergie zählt nur das genannte Teilgebiet", () => {
+      const sheet = deriveSheet(scholar(), COMPENDIUM, HOUSE);
+      const hide = sheet.skills.find((s) => s.skillId === "test:skill:hide")!;
+      // 0 Ränge + GE 13 (+1) + 2 Synergie aus Lore (arcana) mit 5 Rängen.
+      expect(hide.total.total).toBe(1 + 2);
+      expect(hide.total.contributions.some((c) => c.source === "Synergie: Lore (arcana)")).toBe(true);
+
+      // Dieselben 5 Ränge auf dem falschen Teilgebiet geben nichts.
+      const other = deriveSheet(
+        scholar({ skillRanks: { "test:skill:lore#religion": 5 } }),
+        COMPENDIUM,
+        HOUSE,
+      );
+      const hideOther = other.skills.find((s) => s.skillId === "test:skill:hide")!;
+      expect(hideOther.total.total).toBe(1);
+    });
+
+    it("Punkte: Ränge aller Teilgebiete zählen, Klassenfertigkeit gilt fürs Ganze", () => {
+      // Lore ist für den Kämpfer klassenfremd → 7 Ränge kosten 14 Punkte.
+      const sheet = deriveSheet(scholar(), COMPENDIUM, HOUSE);
+      expect(sheet.skillPoints.spent).toBe((5 + 2) * 2);
+      // Rangmaximum gilt je Teilgebiet, nicht in Summe: 5 ≤ (4+3)/2 = 3.5? Nein → Warnung.
+      expect(sheet.issues.some((i) => i.code === "max-ranks")).toBe(true);
+    });
+
+    it("Ränge auf der Grundfertigkeit bleiben erhalten (Alt-Charaktere)", () => {
+      const sheet = deriveSheet(
+        fighterDwarf4({ skillRanks: { "test:skill:lore": 3 } }),
+        COMPENDIUM,
+        HOUSE,
+      );
+      const base = sheet.skills.find((s) => s.key === "test:skill:lore")!;
+      expect(base.ranks).toBe(3);
+      expect(base.usable).toBe(true);
+    });
   });
 
   it("Rüstungsmalus: einfach auf Climb, doppelt auf Swim", () => {
