@@ -32,6 +32,7 @@ export function deriveSheet(
 }
 
 export { effectKey } from "./internal.js";
+export * from "./classinfo.js";
 export * from "./diff.js";
 export * from "./spells.js";
 export * from "./tables.js";

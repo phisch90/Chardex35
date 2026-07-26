@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ABILITIES,
@@ -17,6 +17,7 @@ import { CharacterRepo } from "../db/repo.js";
 import { useAllEntities, useCompendium, useHouseRules } from "../lib/hooks.js";
 import { Card, Chip, GhostButton, PrimaryButton, SearchInput, fmtMod } from "../ui/bits.js";
 import { FeatText } from "../ui/FeatText.js";
+import { ClassInfo, RaceInfo } from "../ui/RaceClassInfo.js";
 
 interface Draft {
   name: string;
@@ -114,6 +115,7 @@ export function CharacterWizardPage() {
           items={races}
           selectedId={draft.raceId}
           onSelect={(id) => setDraft({ ...draft, raceId: id })}
+          info={(race) => <RaceInfo race={race} compendium={compendium} />}
           detail={(race) =>
             race.kind === "race"
               ? `${race.data.size} · ${race.data.speedFt} ft.` +
@@ -201,6 +203,7 @@ export function CharacterWizardPage() {
           items={classes}
           selectedId={draft.classId}
           onSelect={(id) => setDraft({ ...draft, classId: id })}
+          info={(cls) => <ClassInfo klass={cls} compendium={compendium} nextLevelInClass={1} />}
           detail={(cls) =>
             cls.kind === "class"
               ? `W${cls.data.hitDie} · ${cls.data.skillPointsPerLevel}+IN Punkte${cls.data.spellcasting ? " · Zauberer" : ""}`
@@ -279,32 +282,60 @@ export function CharacterWizardPage() {
   );
 }
 
+/**
+ * Auswahlliste mit Infofeld. Das Feld klappt beim Auswählen von allein auf —
+ * man soll die Werte sehen, sobald man sich festlegt — und lässt sich für jeden
+ * anderen Eintrag zum Nachlesen aufziehen, BEVOR man sich festlegt.
+ */
 function PickList(props: {
   items: Entity[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   detail: (entity: Entity) => string;
+  info?: (entity: Entity) => ReactNode;
 }) {
+  const [openId, setOpenId] = useState<string | null>(null);
   return (
     <ul className="space-y-2">
       {props.items.length === 0 && (
         <p className="py-6 text-center text-sm text-slate-400">{S.compendium.empty}</p>
       )}
-      {props.items.map((entity) => (
-        <li key={entity.id}>
-          <button
-            onClick={() => props.onSelect(entity.id)}
-            className={`w-full rounded-xl border p-3 text-left ${
-              props.selectedId === entity.id
-                ? "border-amber-500 bg-amber-600/10"
-                : "border-slate-700 bg-slate-900/60 hover:border-slate-500"
-            }`}
-          >
-            <div className="font-semibold">{displayName(entity)}</div>
-            <div className="text-xs text-slate-400">{props.detail(entity)}</div>
-          </button>
-        </li>
-      ))}
+      {props.items.map((entity) => {
+        const open = openId === entity.id;
+        return (
+          <li key={entity.id}>
+            <div
+              className={`rounded-xl border ${
+                props.selectedId === entity.id
+                  ? "border-amber-500 bg-amber-600/10"
+                  : "border-slate-700 bg-slate-900/60"
+              }`}
+            >
+              <button
+                onClick={() => {
+                  props.onSelect(entity.id);
+                  setOpenId(entity.id);
+                }}
+                className="w-full p-3 text-left"
+              >
+                <div className="font-semibold">{displayName(entity)}</div>
+                <div className="text-xs text-slate-400">{props.detail(entity)}</div>
+              </button>
+              {props.info && (
+                <div className="px-3 pb-2">
+                  <button
+                    onClick={() => setOpenId(open ? null : entity.id)}
+                    className="text-[11px] text-slate-400 underline decoration-dotted hover:text-amber-300"
+                  >
+                    {open ? "Infos ausblenden ▾" : "Infos ▸"}
+                  </button>
+                  {open && props.info(entity)}
+                </div>
+              )}
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }
