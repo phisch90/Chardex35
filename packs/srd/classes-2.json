@@ -335,7 +335,7 @@
         }
       ],
       "maxLevel": 20,
-      "proficiencies": "Monks are proficient with club, crossbow (light or heavy), dagger, handaxe, javelin, kama, nunchaku, quarterstaff, sai, shuriken, siangham, and sling.Monks are not proficient with any armor or shieldsWhen wearing armor, using a shield, or carrying a medium or heavy load, a monk loses her AC bonus, as well as her fast movement and flurry of blows abilities.",
+      "proficiencies": "Monks are proficient with club, crossbow (light or heavy), dagger, handaxe, javelin, kama, nunchaku, quarterstaff, sai, shuriken, siangham, and sling. Monks are not proficient with any armor or shieldsWhen wearing armor, using a shield, or carrying a medium or heavy load, a monk loses her AC bonus, as well as her fast movement and flurry of blows abilities.",
       "requirements": [],
       "skillPointsPerLevel": 4
     },

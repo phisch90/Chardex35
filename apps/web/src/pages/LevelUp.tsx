@@ -24,6 +24,7 @@ import {
 } from "../lib/hooks.js";
 import { Card, Chip, GhostButton, PrimaryButton, SearchInput, SectionTitle, fmtMod } from "../ui/bits.js";
 import { FeatText } from "../ui/FeatText.js";
+import { ClassInfo } from "../ui/RaceClassInfo.js";
 
 export function LevelUpPage() {
   const { charId } = useParams({ strict: false }) as { charId: string };
@@ -36,6 +37,7 @@ export function LevelUpPage() {
 
   const [classId, setClassId] = useState<string | null>(null);
   const [showAllClasses, setShowAllClasses] = useState(false);
+  const [infoClassId, setInfoClassId] = useState<string | null>(null);
   const [hpRoll, setHpRoll] = useState<number | null>(null);
   const [abilityPick, setAbilityPick] = useState<Ability | null>(null);
   const [ranks, setRanks] = useState<Record<string, number> | null>(null);
@@ -210,6 +212,19 @@ export function LevelUpPage() {
             );
           })}
         </div>
+        {/* Sobald eine Klasse gewählt ist: was bringt genau diese Stufe darin?
+            Die Stufe IN DER KLASSE, nicht die Gesamtstufe — davon hängen
+            Tabelle, Zaubergrade und Klassenfähigkeiten ab. */}
+        {classId !== null && (
+          <ClassInfo
+            klass={compendium.get(classId)}
+            compendium={compendium}
+            nextLevelInClass={
+              character.levels.filter((l) => l.classId === classId).length + 1
+            }
+          />
+        )}
+
         <details className="mt-2">
           <summary className="cursor-pointer text-sm text-slate-400">andere Klasse wählen…</summary>
           <div className="mt-1 flex items-center gap-2">
@@ -228,9 +243,29 @@ export function LevelUpPage() {
                 >
                   {displayName(cls)}
                   {cls.kind === "class" && (
-                    <span className="ml-1 text-xs text-slate-500">W{cls.data.hitDie}</span>
+                    <span className="ml-1 text-xs text-slate-500">
+                      W{cls.data.hitDie}
+                      {cls.data.spellcasting ? " · Zauberer" : ""}
+                    </span>
                   )}
                 </button>
+                <div className="px-2 pb-1">
+                  <button
+                    onClick={() => setInfoClassId(infoClassId === cls.id ? null : cls.id)}
+                    className="text-[11px] text-slate-400 underline decoration-dotted hover:text-amber-300"
+                  >
+                    {infoClassId === cls.id ? "Infos ausblenden ▾" : "Infos ▸"}
+                  </button>
+                  {infoClassId === cls.id && (
+                    <ClassInfo
+                      klass={cls}
+                      compendium={compendium}
+                      nextLevelInClass={
+                        character.levels.filter((l) => l.classId === cls.id).length + 1
+                      }
+                    />
+                  )}
+                </div>
               </li>
             ))}
           </ul>
