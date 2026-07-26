@@ -85,8 +85,11 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
 ]);
 
-// Auf GitHub Pages liegt die App unter /test/ — der Router muss den
-// Basis-Pfad kennen, sonst matcht keine Route („Not found" trotz Menü).
+// Auf GitHub Pages liegt die App in einem Unterpfad, der so heißt wie das
+// Repository (/Chardex35/) — der Router muss diesen Basis-Pfad kennen, sonst
+// matcht keine Route („Not found" trotz Menü). Der Wert kommt aus BASE_URL,
+// das das Deployment aus $GITHUB_REPOSITORY setzt: eine Umbenennung des
+// Repos wirkt damit von allein, ohne Codeänderung.
 const basepath = import.meta.env.BASE_URL.replace(/\/$/, "") || "/";
 const router = createRouter({ routeTree, basepath });
 
