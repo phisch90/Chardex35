@@ -212,6 +212,14 @@ export const S = {
     preparedHint:
       "Wirken zählt die Slots des Grads hoch — welcher konkrete Zauber verbraucht ist, merkt ihr euch wie am Tisch üblich.",
     knownLimit: (have: number, max: string) => `${have}/${max} bekannt`,
+    slots: "Slots",
+    addToSpellbook: "Zauberbuch erweitern",
+    emptySpellbook: "Noch keine Zauber im Buch — unten aus der Klassenliste wählen.",
+    noneAtLevel: "Kein Zauber dieses Grades gefunden.",
+    another: "noch einmal vorbereiten",
+    unprepare: "Vorbereitung lösen",
+    unlearn: "Vergessen",
+    removeFromSpellbook: "Aus dem Zauberbuch nehmen",
   },
 
   import: {
