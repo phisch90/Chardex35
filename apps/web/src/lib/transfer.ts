@@ -20,7 +20,7 @@ export async function buildExport(): Promise<string> {
   const envelope: ExportEnvelope = {
     formatVersion: CURRENT_EXPORT_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
-    app: "codex35",
+    app: "chardex35",
     characters,
     homebrewEntities,
     houseRules,
@@ -34,7 +34,7 @@ export function downloadExport(json: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `codex35-export-${stamp}.json`;
+  link.download = `chardex35-export-${stamp}.json`;
   link.click();
   URL.revokeObjectURL(url);
 }
