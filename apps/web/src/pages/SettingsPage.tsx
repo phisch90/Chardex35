@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
 import { Link } from "@tanstack/react-router";
 import type { HouseRules } from "@codex35/core";
 import { S } from "../strings.js";
+import { db } from "../db/db.js";
 import { SettingsRepo } from "../db/repo.js";
 import { AppSettingsRepo } from "../db/appSettings.js";
 import { useAppSettings, useHouseRules } from "../lib/hooks.js";
 import { buildExport, downloadExport, importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton, PrimaryButton, SectionTitle } from "../ui/bits.js";
 import { SyncCard } from "./SyncCard.js";
+import { SYNC_SETTINGS_KEY, isSyncConfigured, parseSyncSettings } from "../sync/syncSettings.js";
 
 const oglText = Object.values(
   import.meta.glob("../../../../packs/srd/OGL.txt", {
@@ -24,6 +27,8 @@ export function SettingsPage() {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [showLicense, setShowLicense] = useState(false);
+  const syncRow = useLiveQuery(() => db.settings.get(SYNC_SETTINGS_KEY), []);
+  const syncConnected = syncRow !== undefined && isSyncConfigured(parseSyncSettings(syncRow.value));
 
   useEffect(() => {
     navigator.storage
@@ -129,6 +134,14 @@ export function SettingsPage() {
         <p className={`text-sm ${persisted ? "text-emerald-400" : "text-amber-400"}`}>
           {persisted === null ? "…" : persisted ? S.settings.persisted : S.settings.notPersisted}
         </p>
+        {/* Läuft der Abgleich, liegt die Kopie ohnehin außerhalb des Geräts —
+            dann ist die Warnung oben nur noch die halbe Wahrheit. */}
+        {syncConnected && (
+          <p className="mt-1 text-xs text-slate-400">
+            Der Geräte-Abgleich hält zusätzlich eine Kopie in deinem privaten Gist. Ein
+            Browser, der hier aufräumt, kostet dich damit keinen Charakter.
+          </p>
+        )}
       </Card>
 
       <Card>
