@@ -68,6 +68,45 @@ export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
             onChange={(v) => save((c) => void (c.hp.temp = Math.max(0, v)))}
           />
         </div>
+
+        {/* Festes Maximum: der Fight-Club-Import setzt es, weil dort nur die
+            Gesamt-TP stehen, nicht die einzelnen Würfe. Solange es steht,
+            RECHNET die Engine das Maximum nicht — eine neue Stufe ändert dann
+            nichts. Das muss man sehen und wegnehmen können. */}
+        <div className="mt-3 border-t border-slate-800 pt-2">
+          {character.hp.overrideMax === undefined ? (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs text-slate-500">
+                Maximum: {sheet.hp.max} — berechnet aus Stufen, KO und Effekten.
+              </span>
+              <GhostButton
+                onClick={() => save((c) => void (c.hp.overrideMax = sheet.hp.max))}
+                title="Maximum fest eintragen"
+              >
+                festsetzen
+              </GhostButton>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <div className="flex items-end justify-between gap-3">
+                <NumberField
+                  label="Maximum (fest)"
+                  value={character.hp.overrideMax}
+                  onChange={(v) => save((c) => void (c.hp.overrideMax = Math.max(1, v)))}
+                />
+                <GhostButton
+                  onClick={() => save((c) => void (c.hp.overrideMax = undefined))}
+                  title="Wieder berechnen lassen"
+                >
+                  berechnen lassen
+                </GhostButton>
+              </div>
+              <p className="text-[11px] text-amber-400/80">
+                Fest eingetragen — Stufenaufstiege ändern das Maximum nicht.
+              </p>
+            </div>
+          )}
+        </div>
       </Card>
 
       <Card>

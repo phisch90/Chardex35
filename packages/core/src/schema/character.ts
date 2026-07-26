@@ -41,6 +41,17 @@ export const characterSchema = z.object({
 
   name: z.string(),
   playerName: z.string().optional(),
+
+  /**
+   * ENTWURF: ID des Charakters, aus dem dieser hier kopiert wurde. Gesetzt =
+   * Probelauf („was ändert sich, wenn ich Stufe 8 als Kleriker nehme").
+   *
+   * Ein Entwurf ist ansonsten ein vollwertiger Charakter — eigene ID, geht
+   * durch dieselbe Engine, wird mitsynchronisiert. Nur die Oberfläche behandelt
+   * ihn anders: eigener Abschnitt, vergleichbar mit dem Original,
+   * übernehmbar (schreibt auf die Original-ID) und leicht verwerfbar.
+   */
+  draftOf: z.string().optional(),
   /** Data-URL (Porträts der Gruppe sind PNGs). */
   portrait: z.string().optional(),
   alignment: z.string().optional(),
