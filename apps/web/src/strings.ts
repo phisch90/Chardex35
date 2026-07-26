@@ -174,6 +174,17 @@ export const S = {
     temp: "Temp.",
     damage: "Schaden",
     open: "TP ändern",
+    backspace: "Zeichen löschen",
+    clear: "leeren",
+    errors: {
+      syntax: "Ausdruck ist unvollständig",
+      "divide-by-zero": "Teilung durch Null",
+      overflow: "Zahl ist zu groß",
+      "too-complex": "Ausdruck ist zu verschachtelt",
+      empty: "",
+    } as Record<string, string>,
+    rounded: (exact: string) => `${exact} — Bruchteil fällt weg`,
+    negative: "unter 0 — kein Effekt",
   },
 
   trackers: {
