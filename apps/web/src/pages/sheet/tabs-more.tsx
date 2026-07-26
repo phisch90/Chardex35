@@ -8,6 +8,7 @@ import {
 } from "@codex35/core";
 import { S } from "../../strings.js";
 import { toPortraitDataUrl } from "../../lib/image.js";
+import { FeatText } from "../../ui/FeatText.js";
 import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import type { TabProps } from "./index.js";
@@ -212,10 +213,13 @@ export function FeatsTab({ character, sheet, save }: TabProps) {
               ? entities?.find((e) => e.id === feat.choiceRef)
               : undefined;
             return (
-              <li key={index} className="flex items-center justify-between gap-2 py-1.5 text-sm">
-                <div className="min-w-0">
-                  <span>{entity ? displayName(entity) : feat.featId}</span>
+              <li key={index} className="flex items-start justify-between gap-2 py-2 text-sm">
+                <div className="min-w-0 flex-1">
+                  <span className="font-medium">{entity ? displayName(entity) : feat.featId}</span>
                   {feat.choice && <span className="text-slate-400"> ({feat.choice})</span>}
+                  {/* Erklärung direkt am Talent, vollständig — nicht erst nach
+                      einem Sprung ins Kompendium. */}
+                  <FeatText entity={entity} />
                   {needsItem && (
                     <div className="text-xs">
                       {chosen ? (
@@ -302,9 +306,14 @@ export function FeatsTab({ character, sheet, save }: TabProps) {
         </ul>
         <SearchInput value={query} onChange={setQuery} placeholder={S.actions.search} />
         <ul className="mt-1 divide-y divide-slate-800">
+          {/* Erklärung schon in der Trefferliste: man soll wissen, was man
+              wählt, bevor man es wählt. */}
           {results.map((feat) => (
-            <li key={feat.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
-              <span className="truncate">{displayName(feat)}</span>
+            <li key={feat.id} className="flex items-start justify-between gap-2 py-2 text-sm">
+              <div className="min-w-0 flex-1">
+                <span className="font-medium">{displayName(feat)}</span>
+                <FeatText entity={feat} />
+              </div>
               <GhostButton onClick={() => save((c) => void c.feats.push({ featId: feat.id }))}>
                 {S.actions.add}
               </GhostButton>

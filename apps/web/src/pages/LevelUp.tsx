@@ -5,6 +5,7 @@ import {
   deriveSheet,
   displayName,
   maxRanks,
+  skillPointCost,
   parseDice,
   rollDice,
   spellsForList,
@@ -22,6 +23,7 @@ import {
   useSheet,
 } from "../lib/hooks.js";
 import { Card, Chip, GhostButton, PrimaryButton, SearchInput, SectionTitle, fmtMod } from "../ui/bits.js";
+import { FeatText } from "../ui/FeatText.js";
 
 export function LevelUpPage() {
   const { charId } = useParams({ strict: false }) as { charId: string };
@@ -285,10 +287,11 @@ export function LevelUpPage() {
             const current = ranks?.[skill.key] ?? 0;
             const max = maxRanks(newTotal, isClass);
             const isSubtypeAnchor = skill.subtyped && skill.subtype === undefined;
-            // Schrittweite MUSS zur Kostenbasis der Engine passen (Union aller
-            // Klassen, siehe derive.ts skillPointsSpent) — sonst kosten Ränge
-            // alter Klassenfertigkeiten beim klassenfremden Aufstieg die Hälfte.
-            const step = isClass ? 1 : 0.5;
+            // 3.5: ganze Ränge. Klassenfremd kostet ein Rang 2 Punkte (die
+            // Engine rechnet in derive.ts mit derselben Basis). Halbe Ränge für
+            // den halben Preis waren 3.0 und sind hier bewusst weg.
+            const step = 1;
+            const cost = skillPointCost(isClass);
             const setSkill = (value: number) => {
               const next = { ...(ranks ?? {}) };
               if (value <= 0) delete next[skill.key];
@@ -303,6 +306,9 @@ export function LevelUpPage() {
                   {!isSubtypeAnchor && (
                     <span className="ml-1 text-xs text-slate-500">
                       {current}/{max}
+                      {/* Klassenfremd kostet ein Rang 2 Punkte — das muss am
+                          Knopf stehen, sonst wundert man sich über den Verbrauch. */}
+                      {cost > 1 && <span className="ml-1 text-slate-600">· 2 Pkt/Rang</span>}
                     </span>
                   )}
                 </span>
@@ -318,7 +324,10 @@ export function LevelUpPage() {
                       >
                         −
                       </GhostButton>
-                      <GhostButton disabled={current >= max || skillLeft <= 0} onClick={() => setSkill(current + step)}>
+                      <GhostButton
+                        disabled={current >= max || skillLeft < cost}
+                        onClick={() => setSkill(current + step)}
+                      >
                         +
                       </GhostButton>
                     </>
@@ -350,12 +359,12 @@ export function LevelUpPage() {
           <SearchInput value={featQuery} onChange={setFeatQuery} placeholder={S.actions.search} />
           <ul className="mt-1 max-h-60 divide-y divide-slate-800 overflow-y-auto">
             {feats.map((feat) => (
-              <li key={feat.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
-                <div className="min-w-0">
-                  <div className="truncate">{displayName(feat)}</div>
-                  {feat.kind === "feat" && feat.data.benefit && (
-                    <div className="truncate text-xs text-slate-500">{feat.data.benefit}</div>
-                  )}
+              <li key={feat.id} className="flex items-start justify-between gap-2 py-2 text-sm">
+                <div className="min-w-0 flex-1">
+                  {/* Vorher stand hier der englische Regeltext mit `truncate` —
+                      eine abgeschnittene Regel hilft bei der Wahl nicht. */}
+                  <div className="font-medium">{displayName(feat)}</div>
+                  <FeatText entity={feat} />
                 </div>
                 {!newFeatIds.includes(feat.id) && (
                   <GhostButton onClick={() => setNewFeatIds([...newFeatIds, feat.id])}>

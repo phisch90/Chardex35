@@ -13,10 +13,35 @@ describe("packs/srd", () => {
   const manifest = loadManifest();
 
   it("manifest listet Dateien und counts", () => {
-    expect(manifest.srdRev).toBe(5);
+    expect(manifest.srdRev).toBe(6);
     expect(manifest.files.length).toBeGreaterThan(0);
     expect([...manifest.files].sort()).toEqual(manifest.files);
     expect(manifest.files).not.toContain("manifest.json");
+  });
+
+  /**
+   * Die deutschen Erklärungen entstehen im ETL aus data/feats-de.ts. Ein
+   * Tippfehler im Slug fiele sonst niemandem auf — der Eintrag hätte einfach
+   * keinen deutschen Text, und in der App stünde weiter Englisch.
+   */
+  it("Talente tragen deutsche Erklärungen", () => {
+    const feats = [...loadEntities(manifest).values()].filter((e) => e.kind === "feat");
+    const withGerman = feats.filter((e) => e.localized?.de?.summary !== undefined);
+    const nonEpic = feats.filter((e) => !(e.data as { featType?: string }).featType?.includes("Epic"));
+
+    expect(feats.length).toBeGreaterThan(300);
+    // Alle nicht-epischen Talente sind abgedeckt; Epic bleibt bewusst englisch.
+    expect(withGerman.length).toBe(nonEpic.length);
+    expect(nonEpic.every((e) => e.localized?.de?.summary !== undefined)).toBe(true);
+
+    // Stichproben: die Talente, die an einem Tisch wirklich fallen.
+    const byId = new Map(feats.map((e) => [e.id, e]));
+    expect(byId.get("srd:feat:weapon-focus")?.localized?.de?.summary).toContain("+1 auf alle Angriffswürfe");
+    expect(byId.get("srd:feat:toughness")?.localized?.de?.summary).toContain("+3 Trefferpunkte");
+    expect(byId.get("srd:feat:power-attack")?.localized?.de?.summary).toContain("Grundangriffsbonus");
+
+    // Der englische Originaltext bleibt daneben stehen.
+    expect(byId.get("srd:feat:weapon-focus")?.description).toBeTruthy();
   });
 
   for (const file of manifest.files) {
