@@ -20,6 +20,16 @@ export const effectSchema = z.object({
   /** Freitext („nur gegen Riesen") — wird angezeigt, nie ausgewertet. */
   condition: z.string().optional(),
   activation: z.enum(["passive", "equipped", "toggle"]).default("passive"),
+  /**
+   * `chosenItem`: gilt nur für den Gegenstand, den die Talent-Auswahl nennt
+   * („Weapon Focus (Kurzschwert)" → +1 nur mit dem Kurzschwert). Der Charakter
+   * verweist dafür in `feats[].choiceRef` auf die Gegenstands-ID; ohne Verweis
+   * zählt der Auswahltext gegen den Waffennamen.
+   *
+   * Ohne Angabe gilt der Effekt immer — deshalb optional und nicht mit Default:
+   * so bleiben die vielen bestehenden Effekt-Literale unverändert.
+   */
+  scope: z.literal("chosenItem").optional(),
 });
 export type Effect = z.infer<typeof effectSchema>;
 

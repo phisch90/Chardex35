@@ -55,6 +55,7 @@ export function resolve(
   const feats = character.feats.map((f) => ({
     featId: f.featId,
     choice: f.choice,
+    choiceRef: f.choiceRef,
     entity: get(f.featId, "feat", "Talent"),
   }));
 

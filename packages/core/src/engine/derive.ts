@@ -132,6 +132,49 @@ export function deriveSheetValues(
     if (entity.data.weapon) equippedWeapons.push({ entity, instanceId: instance.id, label });
   }
 
+  /**
+   * Talent-Effekte, die nur für die gewählte Waffe gelten („Weapon Focus
+   * (Kurzschwert)" → +1 nur mit dem Kurzschwert). Der Verweis `choiceRef` ist
+   * eindeutig; fehlt er, wird der Auswahltext gegen den Waffennamen gehalten,
+   * damit auch handgetippte Auswahlen greifen.
+   */
+  const normalizeChoice = (text: string) =>
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+
+  const chosenItemContributions = (
+    weapon: { entity: ItemEntity; label?: string | undefined },
+    target: StatPath,
+  ): Contribution[] => {
+    const out: Contribution[] = [];
+    const names = new Set(
+      [weapon.entity.name, displayName(weapon.entity), weapon.label ?? ""].map(normalizeChoice),
+    );
+    for (const feat of resolved.feats) {
+      if (!feat.entity) continue;
+      const matches =
+        feat.choiceRef !== undefined
+          ? feat.choiceRef === weapon.entity.id
+          : feat.choice !== undefined && names.has(normalizeChoice(feat.choice));
+      if (!matches) continue;
+      for (const effect of feat.entity.effects) {
+        if (effect.scope !== "chosenItem" || effect.target !== target) continue;
+        out.push({
+          source: `${displayName(feat.entity)}${feat.choice ? ` (${feat.choice})` : ""}`,
+          bonusType: effect.bonusType,
+          value: typeof effect.value === "number" ? effect.value : 0,
+          applied: true,
+          condition: effect.condition,
+        });
+      }
+    }
+    return out;
+  };
+
   // --- Traglast ------------------------------------------------------------
   let loadLb = 0;
   for (const { instance, entity } of resolved.items) {
@@ -341,6 +384,8 @@ export function deriveSheetValues(
       for (const effect of itemScoped.get(weapon.instanceId) ?? []) {
         if (effect.target === "attack.self") contributions.push(toContribution(effect));
       }
+      // Weapon Focus & Co. — nur mit der gewählten Waffe.
+      contributions.push(...chosenItemContributions(weapon, "attack.self"));
     }
     const attack = stackContributions(contributions);
     const bonuses = iterativeAttacks(timeline.bab).map((b) => b + (attack.total - timeline.bab));
@@ -371,6 +416,8 @@ export function deriveSheetValues(
         for (const effect of itemScoped.get(weapon.instanceId) ?? []) {
           if (effect.target === "damage.self") damageContributions.push(toContribution(effect));
         }
+        // Weapon Specialization & Co. — nur mit der gewählten Waffe.
+        damageContributions.push(...chosenItemContributions(weapon, "damage.self"));
       }
     }
     const damageBonus = stackContributions(damageContributions);

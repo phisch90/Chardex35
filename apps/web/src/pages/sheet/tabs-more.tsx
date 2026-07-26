@@ -203,13 +203,77 @@ export function FeatsTab({ character, sheet, save }: TabProps) {
         <ul className="divide-y divide-slate-800">
           {character.feats.map((feat, index) => {
             const entity = entities?.find((e) => e.id === feat.featId);
+            // Talente wie Weapon Focus wirken nur mit einer bestimmten Waffe.
+            // Ohne Zuordnung liegt der Bonus brach, also hier sichtbar machen.
+            const needsItem =
+              entity?.kind === "feat" && entity.effects.some((e) => e.scope === "chosenItem");
+            const chosen = feat.choiceRef
+              ? entities?.find((e) => e.id === feat.choiceRef)
+              : undefined;
             return (
               <li key={index} className="flex items-center justify-between gap-2 py-1.5 text-sm">
                 <div className="min-w-0">
                   <span>{entity ? displayName(entity) : feat.featId}</span>
                   {feat.choice && <span className="text-slate-400"> ({feat.choice})</span>}
+                  {needsItem && (
+                    <div className="text-xs">
+                      {chosen ? (
+                        <span className="text-emerald-500">
+                          ✓ wirkt mit {displayName(chosen)}
+                        </span>
+                      ) : (
+                        <span className="text-amber-400">
+                          ⚠ keiner Waffe zugeordnet — der Bonus wirkt nicht
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-1">
+                  {needsItem && (
+                    <GhostButton
+                      title="Waffe zuordnen"
+                      onClick={() => {
+                        // Nur was im Inventar liegt — der Bonus gilt für eine
+                        // Waffe, die der Charakter auch führt.
+                        const options = character.inventory
+                          .map((row) => {
+                            const item = row.itemId
+                              ? entities?.find((e) => e.id === row.itemId)
+                              : undefined;
+                            return item?.kind === "item" && item.data.weapon
+                              ? { id: item.id, name: row.customName ?? displayName(item) }
+                              : null;
+                          })
+                          .filter((o): o is { id: string; name: string } => o !== null);
+                        if (options.length === 0) {
+                          alert("Keine Waffe im Inventar, die zugeordnet werden könnte.");
+                          return;
+                        }
+                        const list = options.map((o, i) => `${i + 1}. ${o.name}`).join("\n");
+                        const answer = prompt(
+                          `Für welche Waffe gilt ${entity ? displayName(entity) : "das Talent"}?\n\n${list}\n\n(Nummer eingeben, leer = keine)`,
+                          options.findIndex((o) => o.id === feat.choiceRef) >= 0
+                            ? String(options.findIndex((o) => o.id === feat.choiceRef) + 1)
+                            : "",
+                        );
+                        if (answer === null) return;
+                        const pick = options[Number(answer.trim()) - 1];
+                        save((c) => {
+                          const f = c.feats[index];
+                          if (!f) return;
+                          if (pick) {
+                            f.choiceRef = pick.id;
+                            if (!f.choice) f.choice = pick.name;
+                          } else {
+                            delete f.choiceRef;
+                          }
+                        });
+                      }}
+                    >
+                      ⚔
+                    </GhostButton>
+                  )}
                   <GhostButton
                     onClick={() => {
                       const choice = prompt("Auswahl (z.B. Langschwert)?", feat.choice ?? "");
