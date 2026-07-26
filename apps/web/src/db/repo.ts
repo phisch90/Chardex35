@@ -42,6 +42,12 @@ export function migrateAndParseEntity(raw: unknown): Entity {
 
 const now = () => new Date().toISOString();
 
+/** „Hike Greatbush (Entwurf)" → „Hike Greatbush". */
+function stripDraftSuffix(name: string): string {
+  const stripped = name.replace(/\s*\((Entwurf|Kopie)\)\s*$/u, "").trim();
+  return stripped === "" ? name : stripped;
+}
+
 export const CharacterRepo = {
   async save(character: Character): Promise<Character> {
     const next = { ...character, rev: character.rev + 1, updatedAt: now() };
@@ -83,6 +89,84 @@ export const CharacterRepo = {
       copy.updatedAt = now();
       await db.characters.put(copy);
     });
+  },
+
+  /**
+   * Kopie mit neuer ID. Als Entwurf (`draftOf` zeigt aufs Original) ist das der
+   * Probelauf: „was ändert sich, wenn ich Stufe 8 als Kleriker nehme" — man
+   * probiert an der Kopie und lässt das Original in Ruhe.
+   *
+   * Die TP-Lage (Schaden, nichttödlich, temporär) wird bewusst zurückgesetzt:
+   * ein Entwurf dient dem Vergleich der ABLEITUNG, und 26 Schaden aus dem
+   * letzten Kampf würden den Vergleich nur verrauschen.
+   */
+  async duplicate(
+    character: Character,
+    options: { asDraft: boolean; name?: string },
+  ): Promise<Character> {
+    const raw: Record<string, unknown> = structuredClone(character) as Record<string, unknown>;
+    delete raw.deletedAt;
+    delete raw.draftOf;
+    const copy = characterSchema.parse({
+      ...raw,
+      id: crypto.randomUUID(),
+      rev: 1,
+      updatedAt: now(),
+      name: options.name ?? `${character.name} (Kopie)`,
+      hp: { damage: 0, nonlethal: 0, temp: 0, ...(character.hp.overrideMax === undefined ? {} : { overrideMax: character.hp.overrideMax }) },
+      ...(options.asDraft ? { draftOf: character.id } : {}),
+    });
+    await db.characters.put(copy);
+    return copy;
+  },
+
+  /**
+   * Entwurf übernehmen: sein Inhalt wird auf die ID des ORIGINALS geschrieben,
+   * der Entwurf verschwindet. Über die Original-ID zu gehen ist der ganze
+   * Punkt — der Abgleich sieht dann eine Änderung am bekannten Charakter und
+   * nicht plötzlich einen zweiten.
+   *
+   * Die aktuelle TP-Lage des Originals bleibt: der Entwurf hat über Wochen
+   * hinweg geplant, aber wie verwundet die Figur JETZT ist, weiß das Original.
+   */
+  async applyDraft(draft: Character): Promise<Character | null> {
+    if (draft.draftOf === undefined) return null;
+    let result: Character | null = null;
+    await db.transaction("rw", db.characters, async () => {
+      const original = await db.characters.get(draft.draftOf as string);
+      if (!original || original.deletedAt) return;
+      const raw: Record<string, unknown> = structuredClone(draft) as Record<string, unknown>;
+      delete raw.draftOf;
+      const merged = characterSchema.parse({
+        ...raw,
+        id: original.id,
+        rev: original.rev + 1,
+        updatedAt: now(),
+        // „Hike (Entwurf)" darf nicht als echter Name hängen bleiben — das
+        // Anhängsel fällt weg. Hat er den Entwurf dagegen bewusst umbenannt
+        // („Hike der Priester"), war das eine Entscheidung und bleibt.
+        name: stripDraftSuffix(draft.name),
+        hp: original.hp,
+      });
+      await db.characters.put(merged);
+      await db.characters.put({
+        ...draft,
+        deletedAt: now(),
+        rev: draft.rev + 1,
+        updatedAt: now(),
+      });
+      result = merged;
+    });
+    return result;
+  },
+
+  /** Aus einem Entwurf eine eigenständige Figur machen (Herkunft fällt weg). */
+  async promoteDraft(draft: Character): Promise<void> {
+    const raw: Record<string, unknown> = structuredClone(draft) as Record<string, unknown>;
+    delete raw.draftOf;
+    await db.characters.put(
+      characterSchema.parse({ ...raw, rev: draft.rev + 1, updatedAt: now() }),
+    );
   },
 
   /** Tombstone, nie physisch löschen (Sync-Seam). */

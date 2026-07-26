@@ -10,6 +10,7 @@ import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
 import { Chip, GhostButton, fmtMod } from "../../ui/bits.js";
 import { ShareCharacterButton } from "../../ui/ShareCharacter.js";
+import { CharacterActionsSheet } from "../../ui/CharacterActions.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
 import { FeatsTab, InventoryTab, NotesTab } from "./tabs-more.js";
 import { SpellsTab } from "./SpellsTab.js";
@@ -42,6 +43,7 @@ export function CharacterSheetPage() {
   const compendium = useCompendium();
   const [tab, setTab] = useState<TabKey>("stats");
   const [hpPadOpen, setHpPadOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [breakdown, setBreakdown] = useState<{
     title: string;
     value: StatValue;
@@ -67,27 +69,40 @@ export function CharacterSheetPage() {
   const hasSpells = sheet.spellcasting.length > 0;
   const tabs = (Object.keys(S.sheet.tabs) as TabKey[]).filter((t) => t !== "spells" || hasSpells);
 
-  const remove = async () => {
-    if (confirm(S.misc.confirmDelete(character.name))) {
-      await CharacterRepo.remove(character);
-      void navigate({ to: "/" });
-    }
-  };
+  // Gelöscht wird nur über das Aktions-Sheet: Gefahrenzone aufklappen,
+  // Löschen wählen, Namen abtippen. Ein einzelner Fehlgriff darf keinen Bogen
+  // kosten — über den Geräte-Abgleich wäre er sonst auch auf dem iPad weg.
+  const afterDelete = () => void navigate({ to: "/" });
 
   return (
     // Extra Platz unten, damit die mobile Reiter-Leiste nichts überdeckt.
     <div className="space-y-3 pb-14 md:pb-0">
+      {/* Ein Entwurf muss sich sofort verraten, sonst baut man am Probelauf
+          und hält ihn für den echten Bogen. */}
+      {character.draftOf !== undefined && (
+        <div className="-mx-3 -mt-3 flex flex-wrap items-center gap-2 border-b border-amber-800/60 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
+          <span className="font-semibold">🧪 Entwurf</span>
+          <span className="text-amber-300/80">Änderungen hier berühren das Original nicht.</span>
+          <Link
+            to="/charaktere/$charId/vergleich"
+            params={{ charId: character.id }}
+            className="ml-auto rounded-lg border border-amber-700 px-2 py-1 font-semibold hover:bg-amber-900/40"
+          >
+            Vergleichen
+          </Link>
+        </div>
+      )}
       {/* Porträt bildschirmbreit mit Name darüber — der Bogen soll nach dem
           Charakter aussehen, nicht nach einer Tabelle. */}
       {character.portrait && (
         <div className="-mx-3 -mt-3 relative h-40 overflow-hidden sm:h-52">
           <img src={character.portrait} alt="" className="h-full w-full object-cover object-top" />
           <button
-            onClick={() => void remove()}
-            aria-label={S.actions.delete}
-            className="absolute right-2 top-2 rounded-lg bg-slate-950/60 px-2.5 py-1.5 text-red-300 backdrop-blur"
+            onClick={() => setActionsOpen(true)}
+            aria-label="Aktionen"
+            className="absolute right-2 top-2 rounded-lg bg-slate-950/60 px-2.5 py-1.5 text-slate-200 backdrop-blur"
           >
-            🗑
+            ⋯
           </button>
           <ShareCharacterButton character={character} variant="overlay" />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent px-3 pb-2 pt-8">
@@ -203,8 +218,8 @@ export function CharacterSheetPage() {
           <div className="flex shrink-0 flex-col items-end gap-1">
             <div className="flex gap-1">
               <ShareCharacterButton character={character} />
-              <GhostButton danger onClick={() => void remove()} title={S.actions.delete}>
-                🗑
+              <GhostButton onClick={() => setActionsOpen(true)} title="Aktionen">
+                ⋯
               </GhostButton>
             </div>
           </div>
@@ -270,6 +285,13 @@ export function CharacterSheetPage() {
               }
             : undefined
         }
+      />
+
+      <CharacterActionsSheet
+        character={character}
+        open={actionsOpen}
+        onClose={() => setActionsOpen(false)}
+        onDeleted={afterDelete}
       />
     </div>
   );
