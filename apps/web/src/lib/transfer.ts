@@ -51,6 +51,11 @@ export interface ImportResult {
 /**
  * Import: Zod-validiert (Trust Boundary), Migrationen laufen eager.
  * Konfliktregel v1: höhere rev gewinnt, gleiche/ältere wird übersprungen.
+ *
+ * `envelope.houseRules` wird BEWUSST nicht übernommen: Hausregeln gehören dem
+ * Tisch, der importiert, nicht dem, der exportiert hat. Sie stehen nur in der
+ * Datei, damit man nachlesen kann, unter welchen Regeln die Werte entstanden
+ * sind. Einstellen tut man sie in den Einstellungen.
  */
 export async function importEnvelope(raw: unknown): Promise<ImportResult> {
   const envelope = exportEnvelopeSchema.parse(raw);

@@ -158,7 +158,10 @@ export function deriveSheetValues(
       if (!feat.entity) continue;
       const matches =
         feat.choiceRef !== undefined
-          ? feat.choiceRef === weapon.entity.id
+          ? // Weapon Focus gilt für einen Waffen-TYP, nicht für ein Exemplar:
+            // eine Homebrew-Variante („Templer Schwert" mit `basedOn`
+            // Kurzschwert) ist dieser Typ und bekommt den Bonus mit.
+            feat.choiceRef === weapon.entity.id || feat.choiceRef === weapon.entity.basedOn
           : feat.choice !== undefined && names.has(normalizeChoice(feat.choice));
       if (!matches) continue;
       for (const effect of feat.entity.effects) {
