@@ -394,6 +394,107 @@ function buildPlaceholderRace(name: string, pc: FightClubPc, id: string): Entity
   };
 }
 
+/** Name → ID-Bestandteil („Templer Schwert" → „templer-schwert"). */
+function slugifyName(name: string): string {
+  return (
+    name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "waffe"
+  );
+}
+
+/**
+ * Waffe aus einer Aktionszeile als Homebrew-Gegenstand — für eigene Namen
+ * („Templer Schwert"), die im SRD nicht stehen. Ohne das läge die Waffe nur als
+ * Notiz im Rucksack und tauchte im Kampf-Reiter gar nicht auf.
+ *
+ * Der Griff (ein-/zweihändig) lässt sich aus dem Export nicht ablesen; wir
+ * nehmen einhändig an, weil der Schadensbonus dann nicht zu hoch ausfällt, und
+ * sagen es in der Beschreibung.
+ */
+function buildHomebrewWeapon(action: FightClubAction, id: string): Entity {
+  const critical = action.critical ?? "";
+  const rangeMatch = /^(\d+)(?:\s*[-–]\s*(\d+))?/.exec(critical);
+  const multMatch = /x\s*(\d+)/i.exec(critical);
+  const low = rangeMatch?.[1];
+  // Fight Club schreibt „19/x2" für 19–20; eine einzelne Zahl unter 20 ist die
+  // untere Grenze des Bereichs, nicht der einzige Wert.
+  const critRange =
+    low === undefined
+      ? "20"
+      : rangeMatch?.[2] !== undefined
+        ? `${low}-${rangeMatch[2]}`
+        : Number(low) < 20
+          ? `${low}-20`
+          : "20";
+  return {
+    id,
+    kind: "item",
+    name: action.name,
+    source: "homebrew",
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    rev: 1,
+    updatedAt: "",
+    tags: ["import", "waffe"],
+    description:
+      `Aus dem Fight-Club-Import („${action.name}"). Schaden und Kritischer Treffer stehen ` +
+      "so im Export; als einhändige Kriegswaffe angenommen, weil der Export das nicht " +
+      `verrät.${action.attack ? ` Angriffsbonus im Original: ${action.attack}.` : ""} ` +
+      "Gewicht, Preis und Schadensart kannst du nachtragen.",
+    effects: [],
+    data: {
+      category: "weapon",
+      weapon: {
+        // Der Export nennt den Schaden inklusive Attributsbonus („1d6+2"); die
+        // App rechnet den selbst dazu, also bleibt hier nur der Würfel.
+        damage: /^\s*(\d+d\d+|\d+)/.exec(action.damage ?? "")?.[1] ?? "1d6",
+        critRange,
+        critMult: multMatch ? `x${multMatch[1]}` : "x2",
+        category: "martial",
+        handedness: "one",
+      },
+    },
+  };
+}
+
+/**
+ * Deutsche Waffennamen, wie sie die Gruppe in Talent-Auswahlen schreibt, auf
+ * SRD-Slugs. Nur dadurch wirkt „Weapon Focus (Kurzschwert)" auf das Kurzschwert
+ * — der Auswahltext allein passt zu keinem englischen Eintrag.
+ */
+const GERMAN_WEAPON_ALIASES: Record<string, string> = {
+  kurzschwert: "sword-short",
+  langschwert: "longsword",
+  breitschwert: "longsword",
+  zweihänder: "greatsword",
+  zweihandschwert: "greatsword",
+  bastardschwert: "bastard-sword",
+  dolch: "dagger",
+  streitkolben: "mace-heavy",
+  morgenstern: "morningstar",
+  kriegshammer: "warhammer",
+  handaxt: "handaxe",
+  streitaxt: "battleaxe",
+  großaxt: "greataxe",
+  speer: "shortspear",
+  langspeer: "longspear",
+  hellebarde: "halberd",
+  stab: "quarterstaff",
+  keule: "club",
+  sichel: "sickle",
+  rapier: "rapier",
+  krummsäbel: "scimitar",
+  kurzbogen: "shortbow",
+  langbogen: "longbow",
+  armbrust: "crossbow-light",
+  schwerearmbrust: "crossbow-heavy",
+  peitsche: "whip",
+  kettenhemd: "chain-shirt",
+};
+
 // ---------------------------------------------------------------------------
 // Abbildung auf einen Charakter
 // ---------------------------------------------------------------------------
@@ -575,26 +676,58 @@ export function mapFightClubPc(
     if (hit && hit.rest === "") {
       return { id: idFactory(), itemId: hit.id, qty: 1, equipped: true, extraEffects: [] };
     }
-    // Eigene Namen („Templer Schwert") als freie Zeile mit den Werten aus dem Export.
-    const notes = [action.attack && `Angriff ${action.attack}`, action.damage && `Schaden ${action.damage}`, action.critical && `Krit. ${action.critical}`]
-      .filter(Boolean)
-      .join(" · ");
-    return {
-      id: idFactory(),
-      customName: action.name,
-      qty: 1,
-      equipped: false,
-      extraEffects: [],
-      ...(notes ? { notes } : {}),
-    };
+    // Eigene Namen („Templer Schwert") werden zu Homebrew-Waffen, damit sie im
+    // Kampf-Reiter als Angriff auftauchen und nicht bloß als Notiz im Rucksack.
+    const weapon = buildHomebrewWeapon(action, `homebrew:item:${slugifyName(action.name)}`);
+    entities.push(weapon);
+    return { id: idFactory(), itemId: weapon.id, qty: 1, equipped: true, extraEffects: [] };
   });
+  /*
+    Talent-Auswahlen auf Gegenstände verweisen — erst jetzt, weil die
+    Homebrew-Waffen aus den Aktionszeilen dazugehören. Ohne diesen Verweis
+    wirkt „Weapon Focus (Kurzschwert)" nicht: der deutsche Auswahltext passt zu
+    keinem englischen SRD-Namen.
+  */
+  const inventoryItems = inventory
+    .map((row) => (row.itemId !== undefined ? compendium.get(row.itemId) ?? entities.find((e) => e.id === row.itemId) : undefined))
+    .filter((e): e is Entity => e !== undefined && e.kind === "item");
+  for (const feat of feats) {
+    if (feat.choice === undefined) continue;
+    const wanted = normalize(feat.choice);
+    const alias = GERMAN_WEAPON_ALIASES[wanted.replace(/\s+/g, "")];
+    const candidates = [
+      alias !== undefined ? `srd:item:${alias}` : undefined,
+      ...inventoryItems.filter((e) => normalize(e.name) === wanted).map((e) => e.id),
+      matchName(itemIndex, feat.choice)?.id,
+    ].filter((id): id is string => id !== undefined);
+    const resolved = candidates.find(
+      (id) => compendium.has(id) || entities.some((e) => e.id === id),
+    );
+    if (resolved !== undefined) {
+      feat.choiceRef = resolved;
+      continue;
+    }
+    // Nur melden, wenn dadurch wirklich ein Bonus liegen bleibt.
+    const entity = compendium.get(feat.featId);
+    const losesBonus =
+      entity?.kind === "feat" && entity.effects.some((e) => e.scope === "chosenItem");
+    if (losesBonus) {
+      const featName = entity ? displayName(entity) : feat.featId;
+      issues.push({
+        severity: "warning",
+        code: "feat-choice-unresolved",
+        message: `${featName} („${feat.choice}"): keine Waffe dieses Namens gefunden — der Bonus wirkt erst, wenn du die Waffe im Bogen zuordnest.`,
+      });
+    }
+  }
+
   for (const action of pc.actions) {
     const hit = matchName(itemIndex, action.name);
     if (!hit || hit.rest !== "") {
       issues.push({
         severity: "info",
         code: "item-unmatched",
-        message: `Waffe „${action.name}" ist kein SRD-Gegenstand — als freie Inventarzeile übernommen (Werte in den Notizen).`,
+        message: `Waffe „${action.name}" steht nicht im SRD — als Homebrew-Waffe angelegt (Schaden und Kritischer Treffer aus dem Export, einhändig angenommen).`,
       });
     }
   }

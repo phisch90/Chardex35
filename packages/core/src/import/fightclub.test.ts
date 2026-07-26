@@ -164,7 +164,7 @@ const packsDir = join(dirname(fileURLToPath(import.meta.url)), "../../../../pack
 const manifestPath = join(packsDir, "manifest.json");
 const packsAvailable = existsSync(manifestPath);
 
-function loadCompendium(): Map<string, Entity> {
+function loadPackEntities(): Entity[] {
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { files: string[] };
   const entities: Entity[] = [];
   for (const file of manifest.files) {
@@ -173,7 +173,11 @@ function loadCompendium(): Map<string, Entity> {
       entities.push(entitySchema.parse(item));
     }
   }
-  return resolveCompendium(entities);
+  return entities;
+}
+
+function loadCompendium(): Map<string, Entity> {
+  return resolveCompendium(loadPackEntities());
 }
 
 describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => {
@@ -182,7 +186,12 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
   const idFactory = () => `id-${++counter}`;
   const { results } = importFightClubXml(XML, compendium, { idFactory });
   const { character, issues, comparisons } = results[0]!;
-  const sheet = deriveSheet(character, compendium);
+  // Beim Import erzeugte Homebrew-Einträge gehören ins Kompendium — die App
+  // speichert sie (ImportPage), also muss der Bogen sie hier auch kennen.
+  const withImported = packsAvailable
+    ? resolveCompendium([...loadPackEntities(), ...results[0]!.entities])
+    : compendium;
+  const sheet = deriveSheet(character, withImported);
 
   it("erkennt Volk und Multiclass-Stufen", () => {
     expect(parseRaceClass("Human Fighter 3/Cleric 4", compendium)).toEqual({
@@ -268,13 +277,17 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
   it("ordnet Talente zu und rettet deutsche Waffennamen in die Auswahl", () => {
     expect(character.feats).toHaveLength(6);
     expect(character.feats).toContainEqual({ featId: "srd:feat:dodge" });
+    // Die Auswahl trägt zusätzlich den Verweis auf die Waffe — nur damit wirkt
+    // der Bonus (siehe eigener Test weiter unten).
     expect(character.feats).toContainEqual({
       featId: "srd:feat:weapon-focus",
       choice: "Kurzschwert",
+      choiceRef: "srd:item:sword-short",
     });
     expect(character.feats).toContainEqual({
       featId: "srd:feat:weapon-focus",
       choice: "Zweihänder",
+      choiceRef: "srd:item:greatsword",
     });
     // „Weapon Focus" darf NICHT mit „Greater/Epic Weapon Focus" verwechselt werden.
     expect(character.feats.some((f) => f.featId.includes("greater"))).toBe(false);
@@ -293,18 +306,19 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     ).toBe(3);
   });
 
-  it("legt SRD-Waffen angelegt ins Inventar, Eigenbauten als freie Zeile", () => {
-    const ids = character.inventory.map((i) => i.itemId ?? i.customName);
+  it("legt jede Waffe angelegt ins Inventar — Eigenbauten als Homebrew-Eintrag", () => {
+    const ids = character.inventory.map((i) => i.itemId);
     expect(ids).toEqual([
       "srd:item:sword-short",
-      "Templer Schwert",
+      "homebrew:item:templer-schwert",
       "srd:item:greatsword",
       "srd:item:dagger",
     ]);
-    const custom = character.inventory.find((i) => i.customName === "Templer Schwert")!;
-    expect(custom.notes).toContain("1d6+2");
-    // Angelegte SRD-Waffen erzeugen eigene Angriffszeilen im Bogen.
-    expect(sheet.attacks.some((a) => a.label === "Greatsword")).toBe(true);
+    expect(character.inventory.every((i) => i.equipped)).toBe(true);
+    // Jede angelegte Waffe erzeugt eine eigene Angriffszeile im Bogen.
+    for (const label of ["Sword, short", "Templer Schwert", "Greatsword", "Dagger"]) {
+      expect(sheet.attacks.some((a) => a.label === label), label).toBe(true);
+    }
   });
 
   it("erzeugt keine Fehler-Issues und keine kaputten Referenzen", () => {
@@ -435,6 +449,37 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(result.character.skillRanks["srd:skill:move-silently"]).toBe(6);
     expect(result.character.skillSubtypes).toEqual([]);
     expect(result.issues.some((i) => i.code === "skill-subtype")).toBe(true);
+  });
+
+  it("ordnet deutsche Waffen-Auswahlen der Waffe zu, damit Weapon Focus wirkt", () => {
+    const focus = character.feats.filter((f) => f.featId === "srd:feat:weapon-focus");
+    expect(focus).toHaveLength(2);
+    expect(focus.map((f) => [f.choice, f.choiceRef])).toEqual([
+      ["Kurzschwert", "srd:item:sword-short"],
+      ["Zweihänder", "srd:item:greatsword"],
+    ]);
+    // Und der Bonus landet auf genau diesen beiden Waffen.
+    const bonus = (label: string) =>
+      sheet.attacks.find((a) => a.label === label)?.attack.contributions
+        .filter((c) => c.source.startsWith("Weapon Focus"))
+        .reduce((sum, c) => sum + c.value, 0) ?? 0;
+    expect(bonus("Sword, short")).toBe(1);
+    expect(bonus("Greatsword")).toBe(1);
+    expect(bonus("Dagger")).toBe(0);
+  });
+
+  it("legt Waffen mit eigenem Namen als Homebrew-Waffe an, nicht als Notiz", () => {
+    const weapon = results[0]!.entities.find((e) => e.kind === "item");
+    expect(weapon).toBeDefined();
+    expect(weapon!.name).toBe("Templer Schwert");
+    expect(weapon!.source).toBe("homebrew");
+    if (weapon!.kind !== "item") throw new Error("kein Gegenstand");
+    // Schaden ohne den Attributsbonus aus dem Export; „19/x2" heißt 19–20.
+    expect(weapon!.data.weapon).toMatchObject({ damage: "1d6", critRange: "19-20", critMult: "x2" });
+    // Sie ist angelegt und erzeugt damit eine Angriffszeile.
+    const row = character.inventory.find((i) => i.itemId === weapon!.id);
+    expect(row?.equipped).toBe(true);
+    expect(sheet.attacks.some((a) => a.label === "Templer Schwert")).toBe(true);
   });
 
   it("verliert Fertigkeiten ohne Rangangabe nicht (Listen +11)", () => {

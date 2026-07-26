@@ -17,7 +17,13 @@ export interface ResolvedCharacter {
   /** In Reihenfolge des ersten Auftretens in der Stufen-Timeline. */
   classes: Map<string, ClassEntity>;
   classLevelCounts: Map<string, number>;
-  feats: { featId: string; choice: string | undefined; entity: FeatEntity | null }[];
+  feats: {
+    featId: string;
+    choice: string | undefined;
+    /** Gegenstands-ID, auf die sich `choice` bezieht (siehe Charakter-Schema). */
+    choiceRef: string | undefined;
+    entity: FeatEntity | null;
+  }[];
   items: { instance: Character["inventory"][number]; entity: ItemEntity | null }[];
   conditions: { conditionId: string; entity: ConditionEntity | null }[];
   /**

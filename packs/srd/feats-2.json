@@ -3776,7 +3776,15 @@
       "stackable": false
     },
     "description": "Weapon Focus [General]\n\nChoose one type of weapon. You can also choose unarmed strike or grapple (or ray, if you are a spellcaster) as your weapon for purposes of this feat.\n\n**Prerequisites:** Proficiency with selected weapon, base attack bonus +1.\n\n**Benefit:** You gain a +1 bonus on all attack rolls you make using the selected weapon.\n\n**Special:** You can gain this feat multiple times. Its effects do not stack. Each time you take the feat, it applies to a new type of weapon.\n\nA fighter may select Weapon Focus as one of his fighter bonus feats. He must have Weapon Focus with a weapon to gain the Weapon Specialization feat for that weapon.",
-    "effects": [],
+    "effects": [
+      {
+        "activation": "passive",
+        "bonusType": "untyped",
+        "scope": "chosenItem",
+        "target": "attack.self",
+        "value": 1
+      }
+    ],
     "id": "srd:feat:weapon-focus",
     "kind": "feat",
     "name": "Weapon Focus",
@@ -3812,7 +3820,15 @@
       "stackable": false
     },
     "description": "Weapon Specialization [General]\n\nChoose one type of weapon for which you have already selected the Weapon Focus feat. You can also choose unarmed strike or grapple as your weapon for purposes of this feat. You deal extra damage when using this weapon.\n\n**Prerequisites:** Proficiency with selected weapon, Weapon Focus with selected weapon, fighter level 4th.\n\n**Benefit:** You gain a +2 bonus on all damage rolls you make using the selected weapon.\n\n**Special:** You can gain this feat multiple times. Its effects do not stack. Each time you take the feat, it applies to a new type of weapon.\n\nA fighter may select Weapon Specialization as one of his fighter bonus feats.",
-    "effects": [],
+    "effects": [
+      {
+        "activation": "passive",
+        "bonusType": "untyped",
+        "scope": "chosenItem",
+        "target": "damage.self",
+        "value": 2
+      }
+    ],
     "id": "srd:feat:weapon-specialization",
     "kind": "feat",
     "name": "Weapon Specialization",

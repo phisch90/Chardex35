@@ -94,6 +94,13 @@ export const characterSchema = z.object({
         featId: z.string(),
         /** „Weapon Focus (Langschwert)". */
         choice: z.string().optional(),
+        /**
+         * Gegenstands-ID, auf die sich `choice` bezieht. Nur damit wirken
+         * Effekte mit `scope: "chosenItem"` verlässlich — der Auswahltext
+         * allein kann in jeder Sprache und Schreibweise stehen („Kurzschwert"
+         * für `srd:item:sword-short`).
+         */
+        choiceRef: z.string().optional(),
       }),
     )
     .default([]),

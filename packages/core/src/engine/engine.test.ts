@@ -226,6 +226,24 @@ const featFinesse = E({
   effects: [{ target: "flag:weaponFinesse", bonusType: "untyped", value: 1 }],
 });
 
+/** Auswahl-gebundenes Talent: wirkt nur mit der Waffe, die es nennt. */
+const featWeaponFocus = E({
+  id: "test:feat:weapon-focus",
+  kind: "feat",
+  name: "Weapon Focus",
+  source: "srd",
+  data: { requiresChoice: true, prerequisites: [{ type: "minBab", value: 1 }] },
+  effects: [{ target: "attack.self", bonusType: "untyped", value: 1, scope: "chosenItem" }],
+});
+const featWeaponSpecialization = E({
+  id: "test:feat:weapon-specialization",
+  kind: "feat",
+  name: "Weapon Specialization",
+  source: "srd",
+  data: { requiresChoice: true, prerequisites: [] },
+  effects: [{ target: "damage.self", bonusType: "untyped", value: 2, scope: "chosenItem" }],
+});
+
 const longsword = E({
   id: "test:item:longsword",
   kind: "item",
@@ -327,7 +345,7 @@ const ALL_ENTITIES: Entity[] = [
   fighter, rogue, wizard,
   human, dwarf, halfling,
   skillClimb, skillSwim, skillJump, skillTumble, skillHide, skillLore,
-  featDodge, featToughness, featFinesse,
+  featDodge, featToughness, featFinesse, featWeaponFocus, featWeaponSpecialization,
   longsword, greatsword, dagger, chainShirt, fullPlate, heavyShield, ringPlus1, ringPlus3,
   conditionShaken,
 ];
@@ -563,6 +581,83 @@ describe("deriveSheet — Fertigkeiten", () => {
     const jump = sheet.skills.find((s) => s.skillId === "test:skill:jump")!;
     // 3 Ränge + ST -1 (Halbling -2 auf 10 → 8) + 2 Synergie
     expect(jump.total.total).toBe(3 - 1 + 2);
+  });
+
+  describe("Auswahl-gebundene Talente (Weapon Focus & Co.)", () => {
+    const armed = (feats: Character["feats"]) =>
+      fighterDwarf4({
+        feats,
+        inventory: [
+          { id: "w1", itemId: "test:item:longsword", equipped: true },
+          { id: "w2", itemId: "test:item:greatsword", equipped: true },
+        ],
+      });
+    const attack = (c: Character, label: string) => {
+      const line = deriveSheet(c, COMPENDIUM, HOUSE).attacks.find((a) => a.label === label)!;
+      return { total: line.attack.total, damage: line.damageText };
+    };
+
+    it("wirkt nur mit der Waffe, auf die choiceRef zeigt", () => {
+      const c = armed([
+        { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword" },
+      ]);
+      // GAB 4 + ST 3 = 7; mit Talent 8 — aber nur beim Langschwert.
+      expect(attack(c, "Longsword").total).toBe(8);
+      expect(attack(c, "Greatsword").total).toBe(7);
+    });
+
+    it("greift auch über den Auswahltext, wenn kein Verweis gesetzt ist", () => {
+      const c = armed([{ featId: "test:feat:weapon-focus", choice: "greatsword" }]);
+      expect(attack(c, "Greatsword").total).toBe(8);
+      expect(attack(c, "Longsword").total).toBe(7);
+    });
+
+    it("wirkt gar nicht, wenn die Auswahl zu keiner Waffe passt", () => {
+      const c = armed([{ featId: "test:feat:weapon-focus", choice: "Kurzschwert" }]);
+      expect(attack(c, "Longsword").total).toBe(7);
+      expect(attack(c, "Greatsword").total).toBe(7);
+    });
+
+    it("der Verweis schlägt den Auswahltext", () => {
+      // Text sagt Langschwert, Verweis zeigt auf den Zweihänder — der Verweis gilt.
+      const c = armed([
+        { featId: "test:feat:weapon-focus", choice: "Longsword", choiceRef: "test:item:greatsword" },
+      ]);
+      expect(attack(c, "Greatsword").total).toBe(8);
+      expect(attack(c, "Longsword").total).toBe(7);
+    });
+
+    it("Weapon Specialization schlägt auf den Schaden derselben Waffe", () => {
+      const c = armed([
+        {
+          featId: "test:feat:weapon-specialization",
+          choice: "Langschwert",
+          choiceRef: "test:item:longsword",
+        },
+      ]);
+      // 1d8 + ST 3 + 2 aus dem Talent; der Zweihänder bleibt bei ×1,5 ST.
+      expect(attack(c, "Longsword").damage).toBe("1d8+5");
+      expect(attack(c, "Greatsword").damage).toBe("2d6+4");
+    });
+
+    it("zwei Talente auf zwei Waffen wirken getrennt", () => {
+      const c = armed([
+        { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword" },
+        { featId: "test:feat:weapon-focus", choice: "Zweihänder", choiceRef: "test:item:greatsword" },
+      ]);
+      expect(attack(c, "Longsword").total).toBe(8);
+      expect(attack(c, "Greatsword").total).toBe(8);
+    });
+
+    it("die Herkunft steht in der Aufschlüsselung", () => {
+      const c = armed([
+        { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword" },
+      ]);
+      const line = deriveSheet(c, COMPENDIUM, HOUSE).attacks.find((a) => a.label === "Longsword")!;
+      expect(line.attack.contributions.some((x) => x.source === "Weapon Focus (Langschwert)")).toBe(
+        true,
+      );
+    });
   });
 
   it("trainedOnly ohne Ränge ist unbenutzbar", () => {

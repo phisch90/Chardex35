@@ -24,6 +24,21 @@ const CURATED_EFFECTS: Record<string, Effect[]> = {
     },
   ],
   "weapon-finesse": [{ target: "flag:weaponFinesse", bonusType: "untyped", value: 1, activation: "passive" }],
+  // Auswahl-gebunden: wirken nur mit der Waffe, die im Talent steht
+  // („Weapon Focus (Kurzschwert)"). Die Engine hängt sie über
+  // `feats[].choiceRef` bzw. den Auswahltext an genau diese Waffe.
+  "weapon-focus": [
+    { target: "attack.self", bonusType: "untyped", value: 1, activation: "passive", scope: "chosenItem" },
+  ],
+  "greater-weapon-focus": [
+    { target: "attack.self", bonusType: "untyped", value: 1, activation: "passive", scope: "chosenItem" },
+  ],
+  "weapon-specialization": [
+    { target: "damage.self", bonusType: "untyped", value: 2, activation: "passive", scope: "chosenItem" },
+  ],
+  "greater-weapon-specialization": [
+    { target: "damage.self", bonusType: "untyped", value: 2, activation: "passive", scope: "chosenItem" },
+  ],
   alertness: [
     { target: "skill:srd:skill:listen", bonusType: "untyped", value: 2, activation: "passive" },
     { target: "skill:srd:skill:spot", bonusType: "untyped", value: 2, activation: "passive" },

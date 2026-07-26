@@ -170,9 +170,9 @@ function main(): void {
 
   writeFileSync(
     join(PACKS_DIR, "manifest.json"),
-    // srdRev 4: Fertigkeits-Teilgebiete (Knowledge/Craft/Perform/Profession)
-    // mit teilgebiets-genauen Synergien.
-    `${canonicalJson({ srdRev: 4, files, counts: sortedCounts })}\n`,
+    // srdRev 5: Weapon Focus & Specialization wirken über `scope: chosenItem`
+    // auf die gewählte Waffe — vorher hatten sie gar keine Effekte.
+    `${canonicalJson({ srdRev: 5, files, counts: sortedCounts })}\n`,
   );
   console.log(`  manifest.json: ${files.length} Dateien, counts=${JSON.stringify(sortedCounts)}`);
 
