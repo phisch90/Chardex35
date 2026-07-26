@@ -1,6 +1,7 @@
 import {
   CURRENT_EXPORT_FORMAT_VERSION,
   canonicalJson,
+  collectHomebrewClosure,
   exportEnvelopeSchema,
   type ExportEnvelope,
 } from "@codex35/core";
@@ -28,15 +29,73 @@ export async function buildExport(): Promise<string> {
   return canonicalJson(envelope);
 }
 
-export function downloadExport(json: string): void {
+/**
+ * Ein einzelner Charakter samt dem Homebrew, das er BRAUCHT (transitiv, inkl.
+ * Überschreibungen) — der Weg, um einen Bogen ohne Konto-Einrichtung auf ein
+ * zweites Gerät zu bringen: teilen, drüben importieren.
+ */
+export async function buildCharacterExport(
+  characterId: string,
+): Promise<{ json: string; filename: string } | null> {
+  const character = await db.characters.get(characterId);
+  if (!character || character.deletedAt) return null;
+
+  const homebrew = (await db.entities.where("source").equals("homebrew").toArray()).filter(
+    (e) => !e.deletedAt,
+  );
+  const envelope: ExportEnvelope = {
+    formatVersion: CURRENT_EXPORT_FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    app: "chardex35",
+    characters: [character],
+    homebrewEntities: collectHomebrewClosure(character, homebrew),
+    houseRules: await SettingsRepo.getHouseRules(),
+  };
+  return { json: canonicalJson(envelope), filename: `${slugForFile(character.name)}.json` };
+}
+
+/** Dateiname aus dem Charakternamen — Umlaute bleiben, Pfadzeichen nicht. */
+function slugForFile(name: string): string {
+  const stem = name.replace(/[^\p{L}\p{N} _-]+/gu, "").trim().replace(/\s+/g, "-");
+  return `chardex35-${stem === "" ? "charakter" : stem.toLowerCase()}`;
+}
+
+export function downloadExport(json: string, filename?: string): void {
   const stamp = new Date().toISOString().slice(0, 10);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `chardex35-export-${stamp}.json`;
+  link.download = filename ?? `chardex35-export-${stamp}.json`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+export type ShareOutcome = "shared" | "cancelled" | "downloaded";
+
+/**
+ * Auf iOS/iPadOS öffnet das das System-Teilen-Blatt: AirDrop aufs iPad,
+ * „In Dateien speichern" (iCloud Drive) oder direkt in eine Nachricht. Wo es
+ * das nicht gibt (Desktop-Browser), wird schlicht heruntergeladen.
+ */
+export async function shareOrDownload(
+  json: string,
+  filename: string,
+  title: string,
+): Promise<ShareOutcome> {
+  const file = new File([json], filename, { type: "application/json" });
+  if (navigator.canShare?.({ files: [file] }) === true) {
+    try {
+      await navigator.share({ files: [file], title });
+      return "shared";
+    } catch (error) {
+      // Abbruch durch den Nutzer ist kein Fehler; alles andere (z.B. fehlende
+      // Nutzer-Interaktion in Safari) fällt auf den Download zurück.
+      if (error instanceof DOMException && error.name === "AbortError") return "cancelled";
+    }
+  }
+  downloadExport(json, filename);
+  return "downloaded";
 }
 
 export interface ImportResult {

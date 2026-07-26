@@ -9,6 +9,7 @@ import { useDiceStore } from "../../lib/diceStore.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
 import { Chip, GhostButton, fmtMod } from "../../ui/bits.js";
+import { ShareCharacterButton } from "../../ui/ShareCharacter.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
 import { FeatsTab, InventoryTab, NotesTab } from "./tabs-more.js";
 import { SpellsTab } from "./SpellsTab.js";
@@ -88,6 +89,11 @@ export function CharacterSheetPage() {
           >
             🗑
           </button>
+          <ShareCharacterButton
+            characterId={character.id}
+            characterName={character.name}
+            variant="overlay"
+          />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent px-3 pb-2 pt-8">
             <h1 className="truncate text-2xl font-bold drop-shadow">{character.name}</h1>
             <p className="text-sm text-slate-300">
@@ -198,9 +204,14 @@ export function CharacterSheetPage() {
         </div>
         {/* Mit Porträt sitzt der Löschknopf oben im Bild, nicht neben dem TP-Balken. */}
         {!character.portrait && (
-          <GhostButton danger onClick={() => void remove()} title={S.actions.delete}>
-            🗑
-          </GhostButton>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <div className="flex gap-1">
+              <ShareCharacterButton characterId={character.id} characterName={character.name} />
+              <GhostButton danger onClick={() => void remove()} title={S.actions.delete}>
+                🗑
+              </GhostButton>
+            </div>
+          </div>
         )}
       </header>
 

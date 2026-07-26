@@ -4,6 +4,8 @@ import { S } from "../strings.js";
 import { ensureSeeded, requestPersistentStorage } from "../db/seed.js";
 import { useAppSettings } from "../lib/hooks.js";
 import { DiceResultSheet } from "./DiceSheet.js";
+import { SyncGate } from "../sync/SyncGate.js";
+import { SyncBadge } from "./SyncBadge.js";
 
 const NAV = [
   { to: "/", label: S.nav.characters, icon: "🛡️" },
@@ -80,6 +82,9 @@ export function Layout() {
       </nav>
 
       {diceEnabled && <DiceResultSheet />}
+      {/* Hält den Geräte-Abgleich am Laufen; zeigt selbst nichts an. */}
+      <SyncGate />
+      <SyncBadge />
     </div>
   );
 }

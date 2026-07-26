@@ -7,6 +7,7 @@ import { AppSettingsRepo } from "../db/appSettings.js";
 import { useAppSettings, useHouseRules } from "../lib/hooks.js";
 import { buildExport, downloadExport, importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton, PrimaryButton, SectionTitle } from "../ui/bits.js";
+import { SyncCard } from "./SyncCard.js";
 
 const oglText = Object.values(
   import.meta.glob("../../../../packs/srd/OGL.txt", {
@@ -84,6 +85,8 @@ export function SettingsPage() {
         />
       </Card>
 
+      <SyncCard />
+
       <Card>
         <SectionTitle>{S.settings.exportTitle}</SectionTitle>
         <p className="mb-2 text-xs text-slate-400">{S.settings.dataPrivacy}</p>
@@ -95,7 +98,7 @@ export function SettingsPage() {
             {S.settings.importFile}
             <input
               type="file"
-              accept="application/json"
+              accept="application/json,.json"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
