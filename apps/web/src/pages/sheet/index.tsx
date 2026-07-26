@@ -76,26 +76,51 @@ export function CharacterSheetPage() {
   return (
     // Extra Platz unten, damit die mobile Reiter-Leiste nichts überdeckt.
     <div className="space-y-3 pb-14 md:pb-0">
+      {/* Porträt bildschirmbreit mit Name darüber — der Bogen soll nach dem
+          Charakter aussehen, nicht nach einer Tabelle. */}
+      {character.portrait && (
+        <div className="-mx-3 -mt-3 relative h-40 overflow-hidden sm:h-52">
+          <img src={character.portrait} alt="" className="h-full w-full object-cover object-top" />
+          <button
+            onClick={() => void remove()}
+            aria-label={S.actions.delete}
+            className="absolute right-2 top-2 rounded-lg bg-slate-950/60 px-2.5 py-1.5 text-red-300 backdrop-blur"
+          >
+            🗑
+          </button>
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent px-3 pb-2 pt-8">
+            <h1 className="truncate text-2xl font-bold drop-shadow">{character.name}</h1>
+            <p className="text-sm text-slate-300">
+              {sheet.classLevels.map((c) => `${c.className} ${c.level}`).join(" / ")} ·{" "}
+              {S.sheet.level} {sheet.totalLevel}
+              {sheet.ecl !== sheet.totalLevel && ` (ECL ${sheet.ecl})`}
+            </p>
+          </div>
+        </div>
+      )}
+
       <header className="flex items-start gap-3">
-        {character.portrait && (
-          <img src={character.portrait} alt="" className="h-16 w-16 rounded-xl object-cover" />
-        )}
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold">{character.name}</h1>
-          <p className="text-sm text-slate-400">
-            {sheet.classLevels.map((c) => `${c.className} ${c.level}`).join(" / ")} · {S.sheet.level}{" "}
-            {sheet.totalLevel}
-            {sheet.ecl !== sheet.totalLevel && ` (ECL ${sheet.ecl})`}
-            {sheet.xp.nextLevelAt !== null && character.xp >= sheet.xp.nextLevelAt && (
-              <Link
-                to="/charaktere/$charId/stufenaufstieg"
-                params={{ charId: character.id }}
-                className="ml-2 rounded-full bg-emerald-700/40 px-2 py-0.5 text-xs font-semibold text-emerald-300"
-              >
-                {S.levelUp.ready}
-              </Link>
-            )}
-          </p>
+          {/* Ohne Porträt steht der Kopf hier; mit Porträt liegt er im Bild. */}
+          {!character.portrait && (
+            <>
+              <h1 className="truncate text-xl font-bold">{character.name}</h1>
+              <p className="text-sm text-slate-400">
+                {sheet.classLevels.map((c) => `${c.className} ${c.level}`).join(" / ")} ·{" "}
+                {S.sheet.level} {sheet.totalLevel}
+                {sheet.ecl !== sheet.totalLevel && ` (ECL ${sheet.ecl})`}
+              </p>
+            </>
+          )}
+          {sheet.xp.nextLevelAt !== null && character.xp >= sheet.xp.nextLevelAt && (
+            <Link
+              to="/charaktere/$charId/stufenaufstieg"
+              params={{ charId: character.id }}
+              className="inline-block rounded-full bg-emerald-700/40 px-2 py-0.5 text-xs font-semibold text-emerald-300"
+            >
+              {S.levelUp.ready}
+            </Link>
+          )}
           {/* TP als Balken mit Ampelfarbe; der Rechner deckt jeden Betrag ab. */}
           <button
             onClick={() => setHpPadOpen(true)}
@@ -169,9 +194,12 @@ export function CharacterSheetPage() {
             </div>
           )}
         </div>
-        <GhostButton danger onClick={() => void remove()}>
-          🗑
-        </GhostButton>
+        {/* Mit Porträt sitzt der Löschknopf oben im Bild, nicht neben dem TP-Balken. */}
+        {!character.portrait && (
+          <GhostButton danger onClick={() => void remove()} title={S.actions.delete}>
+            🗑
+          </GhostButton>
+        )}
       </header>
 
       {/* Auf Desktop bleiben die Reiter oben; mobil sitzen sie unten am Daumen. */}

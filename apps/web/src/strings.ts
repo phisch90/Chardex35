@@ -74,6 +74,8 @@ export const S = {
     classSkill: "Klassenfertigkeit",
     melee: "Nahkampf",
     ranged: "Fernkampf",
+    equipped: "Angelegt",
+    stowed: "Rucksack",
     skillFilter: { all: "Alle", trained: "Trainiert", class: "Klasse" } as Record<string, string>,
     subtype: "Teilgebiet",
     addSubtype: "Teilgebiet anlegen",
