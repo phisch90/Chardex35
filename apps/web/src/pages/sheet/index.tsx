@@ -89,11 +89,7 @@ export function CharacterSheetPage() {
           >
             🗑
           </button>
-          <ShareCharacterButton
-            characterId={character.id}
-            characterName={character.name}
-            variant="overlay"
-          />
+          <ShareCharacterButton character={character} variant="overlay" />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent px-3 pb-2 pt-8">
             <h1 className="truncate text-2xl font-bold drop-shadow">{character.name}</h1>
             <p className="text-sm text-slate-300">
@@ -206,7 +202,7 @@ export function CharacterSheetPage() {
         {!character.portrait && (
           <div className="flex shrink-0 flex-col items-end gap-1">
             <div className="flex gap-1">
-              <ShareCharacterButton characterId={character.id} characterName={character.name} />
+              <ShareCharacterButton character={character} />
               <GhostButton danger onClick={() => void remove()} title={S.actions.delete}>
                 🗑
               </GhostButton>

@@ -90,6 +90,32 @@ describe("mergeDocSets", () => {
     expect(out.toRemote).toHaveLength(1);
   });
 
+  it(`hier gelöscht, dort weitergespielt: die Löschung gewinnt, der Spielstand bleibt als Verlierer erhalten`, () => {
+    // Genau der Fall, in dem eine Konfliktkopie zählt: würde nur die Löschung
+    // ankommen, wäre die Arbeit am anderen Gerät weg.
+    const deleted = doc("a", 5, "2026-01-02T12:00:00Z", "A", "2026-01-02T12:00:00Z");
+    const edited = doc("a", 5, "2026-01-02T10:00:00Z", "A weitergespielt");
+    const out = mergeDocSets([deleted], [edited]);
+
+    expect(out.merged[0]?.deletedAt).toBe("2026-01-02T12:00:00Z");
+    expect(out.conflicts).toHaveLength(1);
+    expect(out.conflicts[0]?.loser.deletedAt).toBeUndefined();
+    expect(out.conflicts[0]?.loser.name).toBe("A weitergespielt");
+    expect(out.conflicts[0]?.loserSide).toBe("remote");
+  });
+
+  it(`umgekehrt: ist die Änderung neuer, gibt es keinen Spielstand zu retten`, () => {
+    const edited = doc("a", 5, "2026-01-02T12:00:00Z", "A weitergespielt");
+    const deleted = doc("a", 5, "2026-01-02T10:00:00Z", "A", "2026-01-02T10:00:00Z");
+    const out = mergeDocSets([edited], [deleted]);
+
+    expect(out.merged[0]?.deletedAt).toBeUndefined();
+    expect(out.conflicts).toHaveLength(1);
+    // Der Verlierer IST die Leiche — daraus eine Kopie zu machen wäre Unsinn,
+    // und genau danach filtert der Aufrufer.
+    expect(out.conflicts[0]?.loser.deletedAt).toBe("2026-01-02T10:00:00Z");
+  });
+
   it(`ist unabhängig von der Reihenfolge der Eingaben`, () => {
     const local = [doc("c", 1, "2026-01-01", "C"), doc("a", 2, "2026-01-02", "A")];
     const remote = [doc("b", 1, "2026-01-01", "B"), doc("a", 1, "2026-01-01", "A alt")];

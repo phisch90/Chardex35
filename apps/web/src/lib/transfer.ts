@@ -3,7 +3,10 @@ import {
   canonicalJson,
   collectHomebrewClosure,
   exportEnvelopeSchema,
+  type Character,
+  type Entity,
   type ExportEnvelope,
+  type HouseRules,
 } from "@codex35/core";
 import { db } from "../db/db.js";
 import { SettingsRepo, migrateAndParseCharacter, migrateAndParseEntity } from "../db/repo.js";
@@ -33,23 +36,25 @@ export async function buildExport(): Promise<string> {
  * Ein einzelner Charakter samt dem Homebrew, das er BRAUCHT (transitiv, inkl.
  * Überschreibungen) — der Weg, um einen Bogen ohne Konto-Einrichtung auf ein
  * zweites Gerät zu bringen: teilen, drüben importieren.
+ *
+ * BEWUSST synchron und ohne Datenbankzugriff: der Aufrufer hat Charakter und
+ * Kompendium ohnehin schon im Speicher, und `navigator.share()` muss auf
+ * iOS/iPadOS im selben Zug wie der Fingertipp laufen. Jedes `await` davor
+ * riskiert, dass Safari das Teilen-Blatt mit „NotAllowedError" verweigert.
  */
-export async function buildCharacterExport(
-  characterId: string,
-): Promise<{ json: string; filename: string } | null> {
-  const character = await db.characters.get(characterId);
-  if (!character || character.deletedAt) return null;
-
-  const homebrew = (await db.entities.where("source").equals("homebrew").toArray()).filter(
-    (e) => !e.deletedAt,
-  );
+export function buildCharacterExport(
+  character: Character,
+  allEntities: Entity[],
+  houseRules: HouseRules,
+): { json: string; filename: string } {
+  const homebrew = allEntities.filter((e) => e.source === "homebrew" && !e.deletedAt);
   const envelope: ExportEnvelope = {
     formatVersion: CURRENT_EXPORT_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
     app: "chardex35",
     characters: [character],
     homebrewEntities: collectHomebrewClosure(character, homebrew),
-    houseRules: await SettingsRepo.getHouseRules(),
+    houseRules,
   };
   return { json: canonicalJson(envelope), filename: `${slugForFile(character.name)}.json` };
 }

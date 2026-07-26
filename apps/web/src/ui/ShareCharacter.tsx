@@ -1,46 +1,64 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { Character } from "@codex35/core";
 import { buildCharacterExport, shareOrDownload } from "../lib/transfer.js";
+import { useAllEntities, useHouseRules } from "../lib/hooks.js";
 
 /**
  * Einen Bogen ohne jede Einrichtung auf ein anderes Gerät bringen: teilen
  * (AirDrop, „In Dateien speichern") und drüben in den Einstellungen
  * importieren. Der Geräte-Abgleich ist der bequeme Weg, dieser hier der, der
  * immer funktioniert — auch ohne Netz und ohne Konto.
+ *
+ * Der Export wird SYNCHRON aus dem gebaut, was schon im Speicher liegt. Auf
+ * iOS verlangt `navigator.share()` den Fingertipp als Auslöser; läge davor
+ * eine Datenbankabfrage, könnte Safari das Teilen-Blatt verweigern.
  */
 export function ShareCharacterButton(props: {
-  characterId: string;
-  characterName: string;
+  character: Character;
   variant?: "inline" | "overlay";
 }) {
+  const entities = useAllEntities();
+  const houseRules = useHouseRules();
   const [note, setNote] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const share = async () => {
-    setBusy(true);
+  useEffect(
+    () => () => {
+      if (timer.current !== null) clearTimeout(timer.current);
+    },
+    [],
+  );
+
+  const share = () => {
     setNote(null);
+    let built: { json: string; filename: string };
     try {
-      const built = await buildCharacterExport(props.characterId);
-      if (!built) {
-        setNote("Charakter nicht gefunden.");
-        return;
-      }
-      const outcome = await shareOrDownload(built.json, built.filename, props.characterName);
-      if (outcome === "downloaded") setNote(`Gespeichert als ${built.filename}`);
-      else if (outcome === "shared") setNote("Geteilt.");
+      built = buildCharacterExport(props.character, entities ?? [], houseRules);
     } catch (error) {
       setNote(error instanceof Error ? error.message : String(error));
-    } finally {
-      setBusy(false);
-      setTimeout(() => setNote(null), 6000);
+      return;
     }
+    // Kein await vor dem Teilen — siehe oben.
+    void shareOrDownload(built.json, built.filename, props.character.name)
+      .then((outcome) => {
+        if (outcome === "downloaded") setNote(`Gespeichert als ${built.filename}`);
+        else if (outcome === "shared") setNote("Geteilt.");
+      })
+      .catch((error: unknown) => {
+        setNote(error instanceof Error ? error.message : String(error));
+      })
+      .finally(() => {
+        if (timer.current !== null) clearTimeout(timer.current);
+        timer.current = setTimeout(() => setNote(null), 6000);
+      });
   };
 
   const overlay = props.variant === "overlay";
   return (
     <>
       <button
-        onClick={() => void share()}
-        disabled={busy}
+        onClick={share}
+        disabled={entities === undefined}
         aria-label="Charakter teilen"
         title="Charakter teilen"
         className={
