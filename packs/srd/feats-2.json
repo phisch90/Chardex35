@@ -446,7 +446,7 @@
         }
       ],
       "requiresChoice": false,
-      "specialText": "Regardless of the number of arrows you fire, you apply precision-based damage only once. If you score a critical hit, only the first arrow fired deals critical damage; all others deal regular damage.A fighter may select Manyshot as one of his fighter bonus feats.A 6th-level ranger who has chosen the archery combat style is treated as having Manyshot even if he does not have the prerequisites for it, but only when he is wearing light or no armor.",
+      "specialText": "Regardless of the number of arrows you fire, you apply precision-based damage only once. If you score a critical hit, only the first arrow fired deals critical damage; all others deal regular damage. A fighter may select Manyshot as one of his fighter bonus feats. A 6th-level ranger who has chosen the archery combat style is treated as having Manyshot even if he does not have the prerequisites for it, but only when he is wearing light or no armor.",
       "stackable": false
     },
     "description": "Manyshot [General]\n\n**Prerequisites:** Dex 17, Point Blank Shot, Rapid Shot, base attack bonus +6\n\n**Benefit:** As a standard action, you may fire two arrows at a single opponent within 30 feet. Both arrows use the same attack roll (with a -4 penalty) to determine success and deal damage normally (but see Special).\n\nFor every five points of base attack bonus you have above +6, you may add one additional arrow to this attack, to a maximum of four arrows at a base attack bonus of +16. However, each arrow after the second adds a cumulative -2 penalty on the attack roll (for a total penalty of -6 for three arrows and -8 for four).\n\nDamage reduction and other resistances apply separately against each arrow fired.\n\n**Special:** Regardless of the number of arrows you fire, you apply precision-based damage only once. If you score a critical hit, only the first arrow fired deals critical damage; all others deal regular damage.\n\nA fighter may select Manyshot as one of his fighter bonus feats.\n\nA 6th-level ranger who has chosen the archery combat style is treated as having Manyshot even if he does not have the prerequisites for it, but only when he is wearing light or no armor.",
@@ -474,7 +474,7 @@
       "normalText": "When using a weapon with which you are not proficient, you take a -4 penalty on attack rolls.",
       "prerequisites": [],
       "requiresChoice": true,
-      "specialText": "Barbarians, fighters, paladins, and rangers are proficient with all martial weapons. They need not select this feat.You can gain Martial Weapon Proficiency multiple times. Each time you take the feat, it applies to a new type of weapon.A cleric who chooses the War domain automatically gains the Martial Weapon Proficiency feat related to his deity's favored weapon as a bonus feat, if the weapon is a martial one. He need not select it.",
+      "specialText": "Barbarians, fighters, paladins, and rangers are proficient with all martial weapons. They need not select this feat. You can gain Martial Weapon Proficiency multiple times. Each time you take the feat, it applies to a new type of weapon. A cleric who chooses the War domain automatically gains the Martial Weapon Proficiency feat related to his deity's favored weapon as a bonus feat, if the weapon is a martial one. He need not select it.",
       "stackable": false
     },
     "description": "Martial Weapon Proficiency [General]\n\nChoose a type of martial weapon. You understand how to use that type of martial weapon in combat.\n\n**Benefit:** You make attack rolls with the selected weapon normally.\n\n**Normal:** When using a weapon with which you are not proficient, you take a -4 penalty on attack rolls.\n\n**Special:** Barbarians, fighters, paladins, and rangers are proficient with all martial weapons. They need not select this feat.\n\nYou can gain Martial Weapon Proficiency multiple times. Each time you take the feat, it applies to a new type of weapon.\n\nA cleric who chooses the War domain automatically gains the Martial Weapon Proficiency feat related to his deity's favored weapon as a bonus feat, if the weapon is a martial one. He need not select it.",
@@ -1756,7 +1756,7 @@
         }
       ],
       "requiresChoice": true,
-      "specialText": "A fighter may select Power Critical as one of his fighter bonus feats.You can gain Power Critical multiple times. Each time you take the feat, it may be with a different weapon or the same weapon. If you take it with the same weapon, the effects of the feats stack.",
+      "specialText": "A fighter may select Power Critical as one of his fighter bonus feats. You can gain Power Critical multiple times. Each time you take the feat, it may be with a different weapon or the same weapon. If you take it with the same weapon, the effects of the feats stack.",
       "stackable": true
     },
     "description": "Power Critical [General]\n\n**Prerequisites:** Weapon focus (chosen weapon), base attack bonus +4\n\n**Benefit:** When using the weapon you selected, you gain a +4 bonus on the roll to confirm a threat.\n\n**Special:** A fighter may select Power Critical as one of his fighter bonus feats.\n\nYou can gain Power Critical multiple times. Each time you take the feat, it may be with a different weapon or the same weapon. If you take it with the same weapon, the effects of the feats stack.",
@@ -2081,7 +2081,7 @@
         }
       ],
       "requiresChoice": true,
-      "specialText": "You can gain Rapid Reload multiple times. Each time you take the feat, it applies to a new type of crossbow.A fighter may select Rapid Reload as one of his fighter bonus feats.",
+      "specialText": "You can gain Rapid Reload multiple times. Each time you take the feat, it applies to a new type of crossbow. A fighter may select Rapid Reload as one of his fighter bonus feats.",
       "stackable": false
     },
     "description": "Rapid Reload [General]\n\nChoose a type of crossbow (hand, light, or heavy).\n\n**Prerequisite:** Weapon Proficiency (crossbow type chosen).\n\n**Benefit:** The time required for you to reload your chosen type of crossbow is reduced to a free action (for a hand or light crossbow) or a move action (for a heavy crossbow). Reloading a crossbow still provokes an attack of opportunity.\n\nIf you have selected this feat for hand crossbow or light crossbow, you may fire that weapon as many times in a full attack action as you could attack if you were using a bow.\n\n**Normal:** A character without this feat needs a move action to reload a hand or light crossbow, or a full-round action to reload a heavy crossbow.\n\n**Special:** You can gain Rapid Reload multiple times. Each time you take the feat, it applies to a new type of crossbow.\n\nA fighter may select Rapid Reload as one of his fighter bonus feats.",
@@ -2118,7 +2118,7 @@
         }
       ],
       "requiresChoice": false,
-      "specialText": "A fighter may select Rapid Shot as one of his fighter bonus feats.A 2nd-level ranger who has chosen the archery combat style is treated as having Rapid Shot, even if he does not have the prerequisites for it, but only when he is wearing light or no armor.",
+      "specialText": "A fighter may select Rapid Shot as one of his fighter bonus feats. A 2nd-level ranger who has chosen the archery combat style is treated as having Rapid Shot, even if he does not have the prerequisites for it, but only when he is wearing light or no armor.",
       "stackable": false
     },
     "description": "Rapid Shot [General]\n\n**Prerequisites:** Dex 13, Point Blank Shot.\n\n**Benefit:** You can get one extra attack per round with a ranged weapon. The attack is at your highest base attack bonus, but each attack you make in that round (the extra one and the normal ones) takes a -2 penalty. You must use the full attack action to use this feat.\n\n**Special:** A fighter may select Rapid Shot as one of his fighter bonus feats.\n\nA 2nd-level ranger who has chosen the archery combat style is treated as having Rapid Shot, even if he does not have the prerequisites for it, but only when he is wearing light or no armor.",
@@ -3583,7 +3583,7 @@
         }
       ],
       "requiresChoice": false,
-      "specialText": "A monk may select Stunning Fist as a bonus feat at 1st level, even if she does not meet the prerequisites. A monk who selects this feat may attempt a stunning attack a number of times per day equal to her monk level, plus one more time per day for every four levels she has in classes other than monk.A fighter may select Stunning Fist as one of his fighter bonus feats.",
+      "specialText": "A monk may select Stunning Fist as a bonus feat at 1st level, even if she does not meet the prerequisites. A monk who selects this feat may attempt a stunning attack a number of times per day equal to her monk level, plus one more time per day for every four levels she has in classes other than monk. A fighter may select Stunning Fist as one of his fighter bonus feats.",
       "stackable": false
     },
     "description": "Stunning Fist [General]\n\n**Prerequisites:** Dex 13, Wis 13, Improved Unarmed Strike, base attack bonus +8.\n\n**Benefit:** You must declare that you are using this feat before you make your attack roll (thus, a failed attack roll ruins the attempt). Stunning Fist forces a foe damaged by your unarmed attack to make a Fortitude saving throw (DC 10 + 1/2 your character level + your Wis modifier), in addition to dealing damage normally. A defender who fails this saving throw is stunned for 1 round (until just before your next action). A stunned character can't act, loses any Dexterity bonus to AC, and takes a -2 penalty to AC. You may attempt a stunning attack once per day for every four levels you have attained (but see Special), and no more than once per round. Constructs, oozes, plants, undead, incorporeal creatures, and creatures immune to critical hits cannot be stunned.\n\n**Special:** A monk may select Stunning Fist as a bonus feat at 1st level, even if she does not meet the prerequisites. A monk who selects this feat may attempt a stunning attack a number of times per day equal to her monk level, plus one more time per day for every four levels she has in classes other than monk.\n\nA fighter may select Stunning Fist as one of his fighter bonus feats.",
@@ -3909,7 +3909,7 @@
       "normalText": "Without this feat, you can use the Survival skill to find tracks, but you can follow them only if the DC for the task is 10 or lower. Alternatively, you can use the Search skill to find a footprint or similar sign of a creature's passage using the DCs given above, but you can't use Search to follow tracks, even if someone else has already found them.",
       "prerequisites": [],
       "requiresChoice": false,
-      "specialText": "A ranger automatically has Track as a bonus feat. He need not select it.This feat does not allow you to find or follow the tracks made by a subject of a pass without trace spell.",
+      "specialText": "A ranger automatically has Track as a bonus feat. He need not select it. This feat does not allow you to find or follow the tracks made by a subject of a pass without trace spell.",
       "stackable": false
     },
     "description": "Track [General]\n\n**Benefit:** To find tracks or to follow them for 1 mile requires a successful Survival check. You must make another Survival check every time the tracks become difficult to follow.\n\nYou move at half your normal speed (or at your normal speed with a -5 penalty on the check, or at up to twice your normal speed with a -20 penalty on the check). The DC depends on the surface and the prevailing conditions, as given on the table below:\n\n**Surface** | **Survival DC** | **Surface Survival** | **DC**\nVery soft ground | 5 | Firm ground | 15\nSoft ground | 10 | Hard ground | 20\n\n*Very Soft Ground:* Any surface (fresh snow, thick dust, wet mud) that holds deep, clear impressions of footprints.\n\n*Soft Ground:* Any surface soft enough to yield to pressure, but firmer than wet mud or fresh snow, in which a creature leaves frequent but shallow footprints.\n\n*Firm Ground:* Most normal outdoor surfaces (such as lawns, fields, woods, and the like) or exceptionally soft or dirty indoor surfaces (thick rugs and very dirty or dusty floors). The creature might leave some traces (broken branches or tufts of hair), but it leaves only occasional or partial footprints.\n\n*Hard Ground:* Any surface that doesn't hold footprints at all, such as bare rock or an indoor floor. Most streambeds fall into this category, since any footprints left behind are obscured or washed away. The creature leaves only traces (scuff marks or displaced pebbles).\n\nSeveral modifiers may apply to the Survival check, as given on the table below.\n\n**Condition** | **Survival DC Modifier**\nEvery three creatures in the group being tracked | -1\nSize of creature or creatures being tracked:**1**\nFine | +8\nDiminutive | +4\nTiny | +2\nSmall | +1\nMedium | +0\nLarge | -1\nHuge | -2\nGargantuan | -4\nColossal | -8\nEvery 24 hours since the trail was made | +1\nEvery hour of rain since the trail was made | +1\nFresh snow cover since the trail was made | +10\nPoor visibility:**2**\nOvercast or moonless night | +6\nMoonlight | +3\nFog or precipitation | +3\nTracked party hides trail (and moves at half speed) | +5\n1 For a group of mixed sizes, apply only the modifier for the largest size category.\n2 Apply only the largest modifier from this category.\n\nIf you fail a Survival check, you can retry after 1 hour (outdoors) or 10 minutes (indoors) of searching.\n\n**Normal:** Without this feat, you can use the Survival skill to find tracks, but you can follow them only if the DC for the task is 10 or lower. Alternatively, you can use the Search skill to find a footprint or similar sign of a creature's passage using the DCs given above, but you can't use Search to follow tracks, even if someone else has already found them.\n\n**Special:** A ranger automatically has Track as a bonus feat. He need not select it.\n\nThis feat does not allow you to find or follow the tracks made by a subject of a *pass without trace* spell.",
@@ -4053,7 +4053,7 @@
         }
       ],
       "requiresChoice": false,
-      "specialText": "A 2nd-level ranger who has chosen the two-weapon combat style is treated as having Two-Weapon Fighting, even if he does not have the prerequisite for it, but only when he is wearing light or no armor.A fighter may select Two-Weapon Fighting as one of his fighter bonus feats.",
+      "specialText": "A 2nd-level ranger who has chosen the two-weapon combat style is treated as having Two-Weapon Fighting, even if he does not have the prerequisite for it, but only when he is wearing light or no armor. A fighter may select Two-Weapon Fighting as one of his fighter bonus feats.",
       "stackable": false
     },
     "description": "Two-Weapon Fighting [General]\n\nYou can fight with a weapon in each hand. You can make one extra attack each round with the second weapon.\n\n**Prerequisite:** Dex 15.\n\n**Benefit:** Your penalties on attack rolls for fighting with two weapons are reduced. The penalty for your primary hand lessens by 2 and the one for your off hand lessens by 6.\n\n**Normal:** If you wield a second weapon in your off hand, you can get one extra attack per round with that weapon. When fighting in this way you suffer a -6 penalty with your regular attack or attacks with your primary hand and a -10 penalty to the attack with your off hand. If your off-hand weapon is light the penalties are reduced by 2 each. (An unarmed strike is always considered light.)\n\n**Special:** A 2nd-level ranger who has chosen the two-weapon combat style is treated as having Two-Weapon Fighting, even if he does not have the prerequisite for it, but only when he is wearing light or no armor.\n\nA fighter may select Two-Weapon Fighting as one of his fighter bonus feats.",
@@ -4320,7 +4320,7 @@
         }
       ],
       "requiresChoice": false,
-      "specialText": "A fighter may select Weapon Finesse as one of his fighter bonus feats.Natural weapons are always considered light weapons.",
+      "specialText": "A fighter may select Weapon Finesse as one of his fighter bonus feats. Natural weapons are always considered light weapons.",
       "stackable": false
     },
     "description": "Weapon Finesse [General]\n\n**Prerequisite:** Base attack bonus +1.\n\n**Benefit:** With a light weapon, rapier, whip, or spiked chain made for a creature of your size category, you may use your Dexterity modifier instead of your Strength modifier on attack rolls. If you carry a shield, its armor check penalty applies to your attack rolls.\n\n**Special:** A fighter may select Weapon Finesse as one of his fighter bonus feats.\n\nNatural weapons are always considered light weapons.",
@@ -4363,7 +4363,7 @@
         }
       ],
       "requiresChoice": true,
-      "specialText": "You can gain this feat multiple times. Its effects do not stack. Each time you take the feat, it applies to a new type of weapon.A fighter may select Weapon Focus as one of his fighter bonus feats. He must have Weapon Focus with a weapon to gain the Weapon Specialization feat for that weapon.",
+      "specialText": "You can gain this feat multiple times. Its effects do not stack. Each time you take the feat, it applies to a new type of weapon. A fighter may select Weapon Focus as one of his fighter bonus feats. He must have Weapon Focus with a weapon to gain the Weapon Specialization feat for that weapon.",
       "stackable": false
     },
     "description": "Weapon Focus [General]\n\nChoose one type of weapon. You can also choose unarmed strike or grapple (or ray, if you are a spellcaster) as your weapon for purposes of this feat.\n\n**Prerequisites:** Proficiency with selected weapon, base attack bonus +1.\n\n**Benefit:** You gain a +1 bonus on all attack rolls you make using the selected weapon.\n\n**Special:** You can gain this feat multiple times. Its effects do not stack. Each time you take the feat, it applies to a new type of weapon.\n\nA fighter may select Weapon Focus as one of his fighter bonus feats. He must have Weapon Focus with a weapon to gain the Weapon Specialization feat for that weapon.",
@@ -4412,7 +4412,7 @@
         }
       ],
       "requiresChoice": true,
-      "specialText": "You can gain this feat multiple times. Its effects do not stack. Each time you take the feat, it applies to a new type of weapon.A fighter may select Weapon Specialization as one of his fighter bonus feats.",
+      "specialText": "You can gain this feat multiple times. Its effects do not stack. Each time you take the feat, it applies to a new type of weapon. A fighter may select Weapon Specialization as one of his fighter bonus feats.",
       "stackable": false
     },
     "description": "Weapon Specialization [General]\n\nChoose one type of weapon for which you have already selected the Weapon Focus feat. You can also choose unarmed strike or grapple as your weapon for purposes of this feat. You deal extra damage when using this weapon.\n\n**Prerequisites:** Proficiency with selected weapon, Weapon Focus with selected weapon, fighter level 4th.\n\n**Benefit:** You gain a +2 bonus on all damage rolls you make using the selected weapon.\n\n**Special:** You can gain this feat multiple times. Its effects do not stack. Each time you take the feat, it applies to a new type of weapon.\n\nA fighter may select Weapon Specialization as one of his fighter bonus feats.",

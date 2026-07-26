@@ -170,10 +170,11 @@ function main(): void {
 
   writeFileSync(
     join(PACKS_DIR, "manifest.json"),
+    // srdRev 7: fehlende Leerzeichen zwischen zusammengeklebten Sätzen behoben
     // srdRev 6: deutsche Erklärungen an den Talenten (localized.de.summary)
     // srdRev 5: Weapon Focus & Specialization wirken über `scope: chosenItem`
     // auf die gewählte Waffe — vorher hatten sie gar keine Effekte.
-    `${canonicalJson({ srdRev: 6, files, counts: sortedCounts })}\n`,
+    `${canonicalJson({ srdRev: 7, files, counts: sortedCounts })}\n`,
   );
   console.log(`  manifest.json: ${files.length} Dateien, counts=${JSON.stringify(sortedCounts)}`);
 

@@ -100,6 +100,14 @@ export function htmlToText(html: string | null | undefined): string {
   // Leere Bold/Italic-Reste ("****", "**  **") entfernen
   text = text.replace(/\*\*\s*\*\*/g, " ").replace(/(^|\s)\*\s*\*(\s|$)/g, " ");
 
+  /*
+    Im Rohdatensatz kleben Sätze ohne Trenner aneinander („…tower shields).A
+    cleric who chooses…"), weil dort weder <p> noch <br> steht. Ein Leerzeichen
+    nur dann einfügen, wenn vor dem Satzzeichen ein Kleinbuchstabe oder eine
+    schließende Klammer steht — so bleiben Abkürzungen wie „D.C." unangetastet.
+  */
+  text = text.replace(/([a-z)\]][.!?])([A-Z])/g, "$1 $2");
+
   // Whitespace normalisieren
   text = text
     .split("\n")

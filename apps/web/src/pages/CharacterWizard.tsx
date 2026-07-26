@@ -17,7 +17,7 @@ import { CharacterRepo } from "../db/repo.js";
 import { useAllEntities, useCompendium, useHouseRules } from "../lib/hooks.js";
 import { Card, Chip, GhostButton, PrimaryButton, SearchInput, fmtMod } from "../ui/bits.js";
 import { FeatText } from "../ui/FeatText.js";
-import { ClassInfo, RaceInfo } from "../ui/RaceClassInfo.js";
+import { ClassInfo, RaceInfo, classDetailLine, raceDetailLine } from "../ui/RaceClassInfo.js";
 
 interface Draft {
   name: string;
@@ -116,14 +116,7 @@ export function CharacterWizardPage() {
           selectedId={draft.raceId}
           onSelect={(id) => setDraft({ ...draft, raceId: id })}
           info={(race) => <RaceInfo race={race} compendium={compendium} />}
-          detail={(race) =>
-            race.kind === "race"
-              ? `${race.data.size} · ${race.data.speedFt} ft.` +
-                Object.entries(race.data.abilityMods)
-                  .map(([a, v]) => ` · ${S.abilities[a]} ${fmtMod(v ?? 0)}`)
-                  .join("")
-              : ""
-          }
+          detail={raceDetailLine}
         />
       )}
 
@@ -204,11 +197,7 @@ export function CharacterWizardPage() {
           selectedId={draft.classId}
           onSelect={(id) => setDraft({ ...draft, classId: id })}
           info={(cls) => <ClassInfo klass={cls} compendium={compendium} nextLevelInClass={1} />}
-          detail={(cls) =>
-            cls.kind === "class"
-              ? `W${cls.data.hitDie} · ${cls.data.skillPointsPerLevel}+IN Punkte${cls.data.spellcasting ? " · Zauberer" : ""}`
-              : ""
-          }
+          detail={classDetailLine}
         />
       )}
 

@@ -88,6 +88,34 @@ function DetailList({
   );
 }
 
+/**
+ * Kompakte Kopfzeile für die Auswahlliste — dieselben deutschen Begriffe wie im
+ * Infofeld, damit nicht oben „medium" und darunter „mittelgroß" steht.
+ */
+export function raceDetailLine(race: Entity): string {
+  const summary = raceSummary(race);
+  if (!summary) return "";
+  const mods = summary.abilityMods
+    .map((mod) => `${S.abilities[mod.ability] ?? mod.ability} ${fmtMod(mod.value)}`)
+    .join(" · ");
+  const size = SIZE_DE[summary.size] ?? summary.size;
+  return `${size} · ${summary.speedFt} ft${mods === "" ? "" : ` · ${mods}`}`;
+}
+
+/** Kompakte Kopfzeile für Klassen. */
+export function classDetailLine(klass: Entity): string {
+  const summary = classSummary(klass);
+  if (!summary) return "";
+  const parts = [
+    `W${summary.hitDie}`,
+    `${summary.skillPointsPerLevel}+IN Punkte`,
+    BAB_DE[summary.babProgression].replace(/ \(.*\)/, "") + " GAB",
+  ];
+  if (summary.spellcasting) parts.push("Zauberer");
+  if (summary.isPrestige) parts.push("Prestige");
+  return parts.join(" · ");
+}
+
 export function RaceInfo({
   race,
   compendium,
@@ -208,8 +236,13 @@ export function ClassInfo({
       {skillNames.length > 0 && (
         <Fact label="Klassenfertigkeiten">{skillNames.join(", ")}</Fact>
       )}
+      {/* Der einzige englische Block und der längste — eingeklappt, damit die
+          deutschen Kennzahlen darüber auf einen Blick lesbar bleiben. */}
       {summary.proficiencies !== undefined && summary.proficiencies !== "" && (
-        <Fact label="Vertrautheiten">{summary.proficiencies}</Fact>
+        <DetailList
+          title=""
+          items={[{ name: "Vertrautheiten (Regeltext)", description: summary.proficiencies }]}
+        />
       )}
       {summary.requirements.length > 0 && (
         <Fact label="Voraussetzungen">
