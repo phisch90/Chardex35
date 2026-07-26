@@ -584,14 +584,40 @@ export function mapFightClubPc(
     }
   }
 
-  const notesLines = [
-    "Aus Fight Club importiert.",
-    ...(pc.skills.length > 0 ? [`Fertigkeiten im Original: ${pc.skills.map((s) => `${s.name} (${s.ranks})${s.total !== undefined ? ` ${s.total >= 0 ? "+" : ""}${s.total}` : ""}`).join(", ")}`] : []),
-    `Original: ${pc.raceClass}${pc.speed ? ` · ${pc.speed}` : ""}`,
-    ...(unmatchedFeats.length > 0 ? [`Nicht zugeordnete Talente: ${unmatchedFeats.join(", ")}`] : []),
-    ...pc.actions
-      .filter((a) => a.attack || a.damage)
-      .map((a) => `${a.name}: ${a.attack ?? ""} ${a.damage ?? ""}${a.critical ? ` (${a.critical})` : ""}`.trim()),
+  // Herkunft als eigener, aufklappbarer Notiz-Abschnitt statt als Textwand.
+  const noteSections: Character["noteSections"] = [
+    {
+      id: idFactory(),
+      title: "Aus Fight Club importiert",
+      body: [
+        `Original: ${pc.raceClass}${pc.speed ? ` · ${pc.speed}` : ""}`,
+        ...(pc.skills.length > 0
+          ? [
+              "",
+              "Fertigkeiten im Original:",
+              ...pc.skills.map(
+                (s) =>
+                  `  ${s.name} (${s.ranks})${s.total !== undefined ? ` ${s.total >= 0 ? "+" : ""}${s.total}` : ""}`,
+              ),
+            ]
+          : []),
+        ...(unmatchedFeats.length > 0
+          ? ["", `Nicht zugeordnete Talente: ${unmatchedFeats.join(", ")}`]
+          : []),
+        ...(pc.actions.some((a) => a.attack || a.damage)
+          ? [
+              "",
+              "Angriffe im Original:",
+              ...pc.actions
+                .filter((a) => a.attack || a.damage)
+                .map(
+                  (a) =>
+                    `  ${a.name}: ${a.attack ?? ""} ${a.damage ?? ""}${a.critical ? ` (${a.critical})` : ""}`.trim(),
+                ),
+            ]
+          : []),
+      ].join("\n"),
+    },
   ];
 
   let character = characterSchema.parse({
@@ -609,7 +635,8 @@ export function mapFightClubPc(
     hp: pc.hp
       ? { damage: Math.max(0, pc.hp.max - pc.hp.current), nonlethal: 0, temp: 0, overrideMax: pc.hp.max }
       : { damage: 0, nonlethal: 0, temp: 0 },
-    notes: notesLines.join("\n"),
+    noteSections,
+    notes: "",
   });
 
   // --- Abgleich: RK und Rettungswürfe ausgleichen, alles andere berichten ---

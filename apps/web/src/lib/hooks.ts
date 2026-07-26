@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   DEFAULT_HOUSE_RULES,
+  characterSchema,
   deriveSheet,
   houseRulesSchema,
   resolveCompendium,
@@ -23,11 +24,24 @@ export function useCompendium(): Map<string, Entity> | undefined {
   return useMemo(() => (entities ? resolveCompendium(entities) : undefined), [entities]);
 }
 
+/**
+ * Beim Laden durchs Schema schicken: so füllen neu ergänzte Felder ihre
+ * Standardwerte (Zähler, Notiz-Abschnitte) und Migrationen greifen lazy —
+ * ohne dass die App an einem alten Datensatz scheitert.
+ */
+function hydrate(raw: Character): Character {
+  const parsed = characterSchema.safeParse(raw);
+  if (parsed.success) return parsed.data;
+  console.error("Charakter passt nicht zum Schema, nutze Rohdaten:", parsed.error.issues[0]);
+  return raw;
+}
+
 export function useCharacters(): Character[] | undefined {
   return useLiveQuery(
     async () =>
       (await db.characters.toArray())
         .filter((c) => !c.deletedAt)
+        .map(hydrate)
         .sort((a, b) => a.name.localeCompare(b.name)),
     [],
   );
@@ -36,7 +50,7 @@ export function useCharacters(): Character[] | undefined {
 export function useCharacter(id: string): Character | undefined | null {
   return useLiveQuery(async () => {
     const character = await db.characters.get(id);
-    return character && !character.deletedAt ? character : null;
+    return character && !character.deletedAt ? hydrate(character) : null;
   }, [id]);
 }
 

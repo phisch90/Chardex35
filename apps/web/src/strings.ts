@@ -160,6 +160,36 @@ export const S = {
     invalid: "Ungültiger Ausdruck",
   },
 
+  hpPad: {
+    title: "Trefferpunkte ändern",
+    heal: "Heilen",
+    temp: "Temp.",
+    damage: "Schaden",
+    open: "TP ändern",
+  },
+
+  trackers: {
+    title: "Zähler",
+    add: "Zähler anlegen",
+    hint: "Für eigene Mechaniken: Aktionspunkte, Untote vertreiben, Schicksalspunkte …",
+    name: "Name",
+    kind: "Art",
+    kinds: { counter: "Zähler", value: "Fester Wert", roll: "Würfelwurf" } as Record<string, string>,
+    value: "Wert",
+    max: "Maximum (optional)",
+    formula: "Würfelformel (z.B. 1d6+2)",
+    reset: "Zurücksetzen",
+    empty: "Noch keine Zähler. Leg einen an für Aktionspunkte & Co.",
+  },
+
+  notes: {
+    sections: "Abschnitte",
+    addSection: "Abschnitt anlegen",
+    sectionTitle: "Titel (z.B. Gottheit, Familie, Hausregeln)",
+    freeText: "Schnellnotizen",
+    emptySections: "Noch keine Abschnitte — gut für Gottheit, Hintergrund oder Hausregel-Formeln.",
+  },
+
   spells: {
     prepared: "Vorbereitet",
     known: "Bekannt",
