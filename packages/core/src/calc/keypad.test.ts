@@ -31,8 +31,10 @@ describe("pressKey", () => {
     expect(amount("2", "×", "−", "3")).toBe(0); // −6 → kein Effekt
     expect(type("1", "0", "−", "−", "3")).toBe("10−−3");
     expect(amount("1", "0", "−", "−", "3")).toBe(13);
-    // Aber nicht beliebig stapeln.
-    expect(type("2", "×", "−", "−")).toBe("2×−");
+    // Aber nicht beliebig stapeln: ein weiterer Druck korrigiert beide Zeichen
+    // zu dem einen, das gedrückt wurde.
+    expect(type("2", "×", "−", "−")).toBe("2−");
+    expect(type("2", "×", "−", "÷")).toBe("2÷");
     expect(type("(", "−", "−")).toBe("(−");
   });
 
@@ -44,11 +46,55 @@ describe("pressKey", () => {
     expect(type("−", "5")).toBe("−5");
   });
 
-  it("kippt ein führendes Vorzeichen nicht in einen ungültigen Operator", () => {
-    // Früher ersetzte „−" bedingungslos: aus „−" wurde „×" — nur per ⌫ zu retten.
+  it("kippt ein Vorzeichen nie in ein Rechenzeichen", () => {
+    // Früher ersetzte der Druck das Vorzeichen und hinterließ einen Ausdruck,
+    // der mit einem Rechenzeichen beginnt („−" → „×", „(−" → „(×").
     expect(type("−", "×")).toBe("−");
     expect(type("−", "+")).toBe("−");
     expect(type("−", "−")).toBe("−");
+    expect(type("(", "−", "×")).toBe("(−");
+    expect(type("(", "−", "÷")).toBe("(−");
+    expect(type("2", "×", "(", "−", "+")).toBe("2×(−");
+    // Und ein Rechenzeichen hinter einem Vorzeichen ersetzt beide, statt zu
+    // stapeln: „2×−" + „×" ist „2×", nicht „2××".
+    expect(type("2", "×", "−", "×")).toBe("2×");
+    expect(type("1", "0", "−", "−", "×")).toBe("10×");
+  });
+
+  it("hält jeden erreichbaren Zustand frei von Rechenzeichen-Ketten", () => {
+    // Deterministischer Zufallslauf über die Tasten (fester Startwert, damit ein
+    // Fehlschlag reproduzierbar ist): kein Zustand darf mit einem Rechenzeichen
+    // beginnen, zwei davon hintereinander tragen oder direkt hinter „(" eines
+    // haben. Ein Vorzeichen („−") ist erlaubt, ein Rechenzeichen nicht.
+    // Geprüft wird in reinem JS und erst am Ende behauptet — 100.000 einzelne
+    // expect-Aufrufe blockieren die Suite minutenlang.
+    const KEYS = ["7", "8", "9", "4", "5", "6", "1", "2", "3", "0", "(", ")", "÷", "×", "−", "+"];
+    let seed = 20260726;
+    const nextKey = () => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return KEYS[seed % KEYS.length]!;
+    };
+    const bad: string[] = [];
+    const seen = new Set<string>();
+    for (let run = 0; run < 2000; run++) {
+      let input = "";
+      for (let step = 0; step < 12; step++) {
+        const key = nextKey();
+        const next = pressKey(input, key);
+        seen.add(next);
+        if (
+          /^[÷×+]/.test(next) ||
+          /[÷×+−][÷×+]/.test(next) ||
+          /\([÷×+]/.test(next) ||
+          next.length > 40
+        ) {
+          bad.push(`"${input}" + "${key}" → "${next}"`);
+        }
+        input = next;
+      }
+    }
+    expect(bad.slice(0, 5)).toEqual([]);
+    expect(seen.size).toBeGreaterThan(400);
   });
 
   it(`erlaubt nach „(" nur ein Vorzeichen`, () => {

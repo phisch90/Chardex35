@@ -28,7 +28,6 @@ const MAX_INPUT = 40;
 export function pressKey(input: string, key: string): string {
   if (input.length >= MAX_INPUT) return input;
   const last = input.slice(-1);
-  const beforeLast = input.slice(-2, -1);
   const open = (input.match(/\(/g) ?? []).length - (input.match(/\)/g) ?? []).length;
 
   if (key === "(") return `${input}(`;
@@ -38,21 +37,29 @@ export function pressKey(input: string, key: string): string {
     return `${input})`;
   }
   if (isOperator(key)) {
-    // Am Anfang und direkt nach „(" trägt nur ein Vorzeichen — und zwar genau
-    // eines. Ein zweiter Druck ersetzt es, statt „−−" zu stapeln.
-    const atStart = input === "" || last === "(" || (isOperator(last) && input.length === 1);
-    if (atStart) {
-      if (key !== "−") return input;
-      return isOperator(last) ? `${input.slice(0, -1)}−` : `${input}−`;
-    }
-    // Ein „−" hinter einem echten Rechenzeichen ist ein Vorzeichen („2×−3"),
-    // keine Korrektur — sonst wären negative Operanden nicht eingebbar. „Echt"
-    // heißt: davor steht ein Wert, nicht schon ein Vorzeichen.
-    if (key === "−" && isOperator(last) && (/\d/.test(beforeLast) || beforeLast === ")")) {
-      return input + key;
-    }
-    if (isOperator(last)) return input.slice(0, -1) + key;
-    return input + key;
+    /*
+      Entscheidend ist, was VOR den Rechenzeichen am Ende steht — nicht das
+      letzte Zeichen allein. Sonst ersetzt ein Druck auf „×" das Vorzeichen in
+      „(−" und hinterlässt „(×", also einen Ausdruck, der mit einem
+      Rechenzeichen beginnt.
+    */
+    const stem = input.replace(/[÷×−+]+$/, "");
+    const stemLast = stem.slice(-1);
+    /** Steht vor den Rechenzeichen ein Wert, an den sie anknüpfen können? */
+    const afterValue = /\d/.test(stemLast) || stemLast === ")";
+    /** Wie viele Rechenzeichen hängen dahinter (0, 1 = Zeichen, 2 = + Vorzeichen). */
+    const trailing = input.length - stem.length;
+
+    // Ohne Wert davor (Anfang oder direkt nach „(") trägt die Stelle nur ein
+    // Vorzeichen — und zwar genau eines.
+    if (!afterValue) return key === "−" ? `${stem}−` : input;
+
+    // Mit Wert davor: erstes Zeichen anhängen, weitere ersetzen. Ein „−" hinter
+    // einem Rechenzeichen ist dabei ein Vorzeichen („2×−3"), keine Korrektur —
+    // sonst wären negative Operanden über den Ziffernblock nicht eingebbar.
+    if (trailing === 0) return input + key;
+    if (trailing === 1 && key === "−") return input + key;
+    return stem + key;
   }
   return input + key;
 }
