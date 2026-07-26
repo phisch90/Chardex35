@@ -7,6 +7,7 @@ import {
   type StatPath,
 } from "@codex35/core";
 import { S } from "../../strings.js";
+import { toPortraitDataUrl } from "../../lib/image.js";
 import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import type { TabProps } from "./index.js";
@@ -396,9 +397,11 @@ export function NotesTab({ character, save }: TabProps) {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => save((c) => void (c.portrait = String(reader.result)));
-                reader.readAsDataURL(file);
+                // Verkleinern, bevor es in den Charakter wandert: ein iPad-Foto
+                // wäre sonst mehrere Megabyte in jedem Export und Abgleich.
+                void toPortraitDataUrl(file).then((dataUrl) =>
+                  save((c) => void (c.portrait = dataUrl)),
+                );
                 e.target.value = "";
               }}
             />

@@ -5,6 +5,21 @@ automatischer Regelberechnung, durchsuchbares SRD-Kompendium, Homebrew als Bürg
 erster Klasse, Würfelroller und (später) Kampf-Tracker. Gedacht als Ersatz für die
 iOS-App „Fight Club" (3.5 Edition).
 
+## Charaktere auf mehreren Geräten
+
+Zwei Wege, bewusst getrennt:
+
+- **Geräte-Abgleich** (Einstellungen → Geräte-Abgleich): ein *privater* GitHub-Gist als
+  Ablage, ein Token mit ausschließlich der Berechtigung `gist`. Jedes Gerät mit demselben
+  Token findet die Ablage von allein und gleicht beim Start, bei Rückkehr in den
+  Vordergrund und wenige Sekunden nach jeder Änderung ab. Pro Dokument entscheidet `rev`,
+  bei Gleichstand die neuere `updatedAt`; ändert man denselben Bogen auf beiden Geräten,
+  bleibt der Verlierer als **Konfliktkopie** stehen — der Abgleich wirft nie etwas weg.
+  Das Token liegt nur in der lokalen IndexedDB und steht in keiner Export-Datei.
+- **Datei teilen** (📤 am Bogen): ein Charakter samt dem Homebrew, das er braucht, als
+  JSON. Auf iOS öffnet das das System-Teilen-Blatt (AirDrop, „In Dateien speichern"),
+  sonst wird heruntergeladen. Braucht kein Konto und kein Netz.
+
 ## Aufbau
 
 | Pfad | Inhalt |
