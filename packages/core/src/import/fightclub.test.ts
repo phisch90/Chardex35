@@ -408,6 +408,8 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(wizSheet.issues.filter((i) => i.code === "max-ranks")).toEqual([]);
     // Kein „Teilgebiete werden nicht getrennt geführt"-Hinweis mehr.
     expect(result.issues.filter((i) => i.code === "skill-subtype")).toEqual([]);
+    // Die Originalzeilen stehen weiterhin im Herkunfts-Abschnitt.
+    expect(character.noteSections[0]!.body).toContain("Knowledge (Religion) (5)");
 
     // Beide Zeilen stehen im Bogen und stimmen mit dem Original überein.
     const arcana = wizSheet.skills.find((s) => s.key === "srd:skill:knowledge#arcana")!;
