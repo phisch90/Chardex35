@@ -5,6 +5,7 @@ import { S } from "../../strings.js";
 import { Card, Chip, GhostButton, SectionTitle, StatButton, fmtMod } from "../../ui/bits.js";
 import { useDiceStore } from "../../lib/diceStore.js";
 import { useAppSettings, useHouseRules } from "../../lib/hooks.js";
+import { TrackersCard } from "./Trackers.js";
 import type { TabProps } from "./index.js";
 
 export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
@@ -45,6 +46,8 @@ export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
           ))}
         </div>
       </Card>
+
+      <TrackersCard {...{ character, sheet, save, openBreakdown }} />
 
       <Card>
         <SectionTitle>{S.sheet.hp}</SectionTitle>

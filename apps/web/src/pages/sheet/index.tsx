@@ -7,6 +7,7 @@ import { CharacterRepo } from "../../db/repo.js";
 import { useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
 import { useDiceStore } from "../../lib/diceStore.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
+import { HpPad } from "../../ui/HpPad.js";
 import { Chip, GhostButton, fmtMod } from "../../ui/bits.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
 import { FeatsTab, InventoryTab, NotesTab } from "./tabs-more.js";
@@ -39,6 +40,7 @@ export function CharacterSheetPage() {
   const sheet = useSheet(character);
   const compendium = useCompendium();
   const [tab, setTab] = useState<TabKey>("stats");
+  const [hpPadOpen, setHpPadOpen] = useState(false);
   const [breakdown, setBreakdown] = useState<{
     title: string;
     value: StatValue;
@@ -60,6 +62,7 @@ export function CharacterSheetPage() {
     setBreakdown({ title, value, rollable });
 
   const tabProps: TabProps = { character, sheet, save, openBreakdown };
+  const hpRatio = sheet.hp.max > 0 ? sheet.hp.current / sheet.hp.max : 0;
   const hasSpells = sheet.spellcasting.length > 0;
   const tabs = (Object.keys(S.sheet.tabs) as TabKey[]).filter((t) => t !== "spells" || hasSpells);
 
@@ -93,43 +96,58 @@ export function CharacterSheetPage() {
               </Link>
             )}
           </p>
-          {/* HP-Leiste: Anpassung in maximal zwei Taps, Farbindikator nach Zustand. */}
-          <div className="mt-1.5 flex items-center gap-1.5">
-            <span
-              className={`text-base font-bold tabular-nums ${
-                sheet.hp.current <= 0
-                  ? "text-red-500"
-                  : sheet.hp.current <= sheet.hp.max / 4
-                    ? "text-red-400"
-                    : sheet.hp.current <= sheet.hp.max / 2
-                      ? "text-amber-400"
-                      : "text-emerald-400"
-              }`}
-            >
-              {S.sheet.hp} {sheet.hp.current}/{sheet.hp.max}
-              {sheet.hp.temp > 0 && <span className="text-sky-400"> +{sheet.hp.temp}</span>}
-            </span>
+          {/* TP als Balken mit Ampelfarbe; der Rechner deckt jeden Betrag ab. */}
+          <button
+            onClick={() => setHpPadOpen(true)}
+            className="mt-1.5 block w-full text-left"
+            aria-label={S.hpPad.open}
+          >
+            <div className="relative h-7 overflow-hidden rounded-lg border border-slate-700 bg-slate-950">
+              <div
+                className={`absolute inset-y-0 left-0 transition-[width] ${
+                  hpRatio <= 0.25 ? "bg-red-800/70" : hpRatio <= 0.5 ? "bg-amber-700/60" : "bg-emerald-800/60"
+                }`}
+                style={{ width: `${Math.max(0, Math.min(100, hpRatio * 100))}%` }}
+              />
+              <div className="relative flex h-full items-center justify-between px-2 text-sm font-bold tabular-nums">
+                <span>
+                  {S.sheet.hp} {sheet.hp.current}/{sheet.hp.max}
+                  {sheet.hp.temp > 0 && <span className="text-sky-300"> +{sheet.hp.temp}</span>}
+                  {sheet.hp.nonlethal > 0 && (
+                    <span className="text-amber-300"> ({sheet.hp.nonlethal} nichttödl.)</span>
+                  )}
+                </span>
+                <span className="text-xs font-medium text-slate-300">± {S.hpPad.open}</span>
+              </div>
+            </div>
+          </button>
+          <div className="mt-1 flex gap-1.5">
             <button
               onClick={() => save((c) => void (c.hp.damage += 1))}
-              className="rounded-lg border border-red-800 bg-red-950/60 px-3 py-1.5 text-sm font-semibold text-red-300 active:bg-red-900"
+              className="flex-1 rounded-lg border border-red-800 bg-red-950/60 py-1.5 text-sm font-semibold text-red-300 active:bg-red-900"
             >
               −1
             </button>
             <button
               onClick={() => save((c) => void (c.hp.damage += 5))}
-              className="rounded-lg border border-red-800 bg-red-950/60 px-3 py-1.5 text-sm font-semibold text-red-300 active:bg-red-900"
+              className="flex-1 rounded-lg border border-red-800 bg-red-950/60 py-1.5 text-sm font-semibold text-red-300 active:bg-red-900"
             >
               −5
             </button>
             <button
               onClick={() => save((c) => void (c.hp.damage = Math.max(0, c.hp.damage - 1)))}
-              className="rounded-lg border border-emerald-800 bg-emerald-950/60 px-3 py-1.5 text-sm font-semibold text-emerald-300 active:bg-emerald-900"
+              className="flex-1 rounded-lg border border-emerald-800 bg-emerald-950/60 py-1.5 text-sm font-semibold text-emerald-300 active:bg-emerald-900"
             >
               +1
             </button>
             <button
-              onClick={() => save((c) => void (c.hp.damage = 0))}
-              className="rounded-lg border border-emerald-800 bg-emerald-950/60 px-3 py-1.5 text-sm font-semibold text-emerald-300 active:bg-emerald-900"
+              onClick={() =>
+                save((c) => {
+                  c.hp.damage = 0;
+                  c.hp.nonlethal = 0;
+                })
+              }
+              className="flex-1 rounded-lg border border-emerald-800 bg-emerald-950/60 py-1.5 text-sm font-semibold text-emerald-300 active:bg-emerald-900"
             >
               voll
             </button>
@@ -192,6 +210,18 @@ export function CharacterSheetPage() {
           </button>
         ))}
       </nav>
+
+      <HpPad
+        open={hpPadOpen}
+        onClose={() => setHpPadOpen(false)}
+        onApply={(mode, amount) =>
+          save((c) => {
+            if (mode === "damage") c.hp.damage += amount;
+            else if (mode === "heal") c.hp.damage = Math.max(0, c.hp.damage - amount);
+            else c.hp.temp += amount;
+          })
+        }
+      />
 
       <BreakdownSheet
         open={breakdown !== null}

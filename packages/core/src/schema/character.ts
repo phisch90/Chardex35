@@ -161,7 +161,41 @@ export const characterSchema = z.object({
     )
     .default([]),
 
+  /**
+   * Freie Zähler für Hausregel-Mechaniken (Action Points, Turn Undead,
+   * Schicksalspunkte …) — die App kennt deren Regeln nicht, führt sie aber
+   * sichtbar am Bogen mit.
+   */
+  trackers: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        /** `counter` = hoch/runter, `value` = fester Wert, `roll` = Würfelformel. */
+        kind: z.enum(["counter", "value", "roll"]).default("counter"),
+        value: z.number().default(0),
+        /** Obergrenze für Zähler (leer = unbegrenzt). */
+        max: z.number().optional(),
+        /** Würfelausdruck für kind „roll", z.B. „1d6+2". */
+        formula: z.string().optional(),
+        note: z.string().optional(),
+      }),
+    )
+    .default([]),
+
+  /** Benannte, aufklappbare Notiz-Abschnitte (Gottheit, Familie, Hausregeln …). */
+  noteSections: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        body: z.string().default(""),
+      }),
+    )
+    .default([]),
+
   languages: z.string().optional(),
+  /** Altes Freitextfeld — bleibt für vorhandene Bögen und schnelle Kritzeleien. */
   notes: z.string().default(""),
   x: z.record(z.string(), z.unknown()).optional(),
 });

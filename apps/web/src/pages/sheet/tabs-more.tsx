@@ -383,15 +383,85 @@ export function NotesTab({ character, save }: TabProps) {
         />
       </Card>
 
+      {/* Benannte Abschnitte: Gottheit, Familie, Hausregel-Formeln … */}
       <Card>
-        <SectionTitle>{S.sheet.tabs.notes}</SectionTitle>
+        <SectionTitle>{S.notes.sections}</SectionTitle>
+        {character.noteSections.length === 0 && (
+          <p className="mb-2 text-xs text-slate-500">{S.notes.emptySections}</p>
+        )}
+        <ul className="space-y-2">
+          {character.noteSections.map((section) => (
+            <li key={section.id}>
+              <details className="rounded-lg border border-slate-700 bg-slate-900/60">
+                <summary className="cursor-pointer px-3 py-2 text-sm font-semibold">
+                  {section.title}
+                </summary>
+                <div className="px-3 pb-3">
+                  <textarea
+                    defaultValue={section.body}
+                    rows={Math.min(14, Math.max(3, section.body.split("\n").length + 1))}
+                    onBlur={(e) =>
+                      save((c) => {
+                        const target = c.noteSections.find((s) => s.id === section.id);
+                        if (target) target.body = e.target.value;
+                      })
+                    }
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 p-2 text-sm"
+                  />
+                  <div className="mt-1 flex justify-end gap-1">
+                    <GhostButton
+                      onClick={() => {
+                        const title = prompt(S.notes.sectionTitle, section.title);
+                        if (!title?.trim()) return;
+                        save((c) => {
+                          const target = c.noteSections.find((s) => s.id === section.id);
+                          if (target) target.title = title.trim();
+                        });
+                      }}
+                    >
+                      ✎
+                    </GhostButton>
+                    <GhostButton
+                      danger
+                      onClick={() =>
+                        save(
+                          (c) =>
+                            void (c.noteSections = c.noteSections.filter((s) => s.id !== section.id)),
+                        )
+                      }
+                    >
+                      ✕
+                    </GhostButton>
+                  </div>
+                </div>
+              </details>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-2">
+          <GhostButton
+            onClick={() => {
+              const title = prompt(S.notes.sectionTitle);
+              if (!title?.trim()) return;
+              save((c) =>
+                void c.noteSections.push({ id: crypto.randomUUID(), title: title.trim(), body: "" }),
+              );
+            }}
+          >
+            + {S.notes.addSection}
+          </GhostButton>
+        </div>
+      </Card>
+
+      <Card>
+        <SectionTitle>{S.notes.freeText}</SectionTitle>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           onBlur={() => save((c) => void (c.notes = notes))}
-          rows={8}
+          rows={6}
           className="w-full rounded-lg border border-slate-700 bg-slate-900 p-2 text-sm"
-          placeholder="Hintergrund, Kontakte, offene Fragen an den DM…"
+          placeholder="Kurznotizen im Spiel, offene Fragen an den DM…"
         />
       </Card>
     </div>

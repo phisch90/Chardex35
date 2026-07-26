@@ -312,9 +312,11 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(sheet.issues.filter((i) => i.severity === "error")).toEqual([]);
   });
 
-  it("hält die Herkunft in den Notizen fest", () => {
-    expect(character.notes).toContain("Fight Club");
-    expect(character.notes).toContain("Human Fighter 3/Cleric 4");
+  it("hält die Herkunft in einem eigenen Notiz-Abschnitt fest", () => {
+    const section = character.noteSections[0]!;
+    expect(section.title).toContain("Fight Club");
+    expect(section.body).toContain("Human Fighter 3/Cleric 4");
+    expect(section.body).toContain("Angriffe im Original");
   });
 
   it("hält negative TP fest: ein sterbender Charakter bleibt sterbend", () => {
@@ -397,7 +399,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     const wizSheet = deriveSheet(result.character, compendium);
     expect(wizSheet.issues.filter((i) => i.code === "max-ranks")).toEqual([]);
     // Die Originalwerte aller Teilgebiete bleiben in den Notizen erhalten.
-    expect(result.character.notes).toContain("Knowledge (Religion) (5)");
+    expect(result.character.noteSections[0]!.body).toContain("Knowledge (Religion) (5)");
   });
 
   it("verliert Fertigkeiten ohne Rangangabe nicht (Listen +11)", () => {
