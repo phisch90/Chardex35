@@ -228,7 +228,9 @@ export type Character = z.infer<typeof characterSchema>;
 export const exportEnvelopeSchema = z.object({
   formatVersion: z.number().int(),
   exportedAt: z.string(),
-  app: z.string().default("codex35"),
+  /** Herkunftsmarke. Freier String, damit ältere Exporte („codex35",
+   * der Name vor der Umbenennung) weiter importierbar bleiben. */
+  app: z.string().default("chardex35"),
   characters: z.array(characterSchema).default([]),
   homebrewEntities: z.array(entitySchema).default([]),
   houseRules: houseRulesSchema.optional(),

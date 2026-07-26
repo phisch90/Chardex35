@@ -627,6 +627,42 @@ describe("deriveSheet — Fertigkeiten", () => {
       expect(attack(c, "Longsword").total).toBe(7);
     });
 
+    it("gilt für den Waffen-TYP: Homebrew-Varianten mit basedOn bekommen ihn mit", () => {
+      // „Templer Schwert" ist ein Kurzschwert mit eigenem Namen — Weapon Focus
+      // (Kurzschwert) wirkt darauf, wie auf jedes andere Kurzschwert.
+      const variant = E({
+        id: "homebrew:item:templer-schwert",
+        kind: "item",
+        name: "Templer Schwert",
+        source: "homebrew",
+        basedOn: "test:item:longsword",
+        data: {
+          category: "weapon",
+          weapon: { damage: "1d8", critRange: "19-20", critMult: "x2", handedness: "one" },
+        },
+      });
+      const compendium = resolveCompendium([...ALL_ENTITIES, variant]);
+      const c = C({
+        id: "char-variant",
+        name: "Templer",
+        raceId: "test:race:dwarf",
+        abilities: { base: { str: 16, dex: 13, con: 14, int: 10, wis: 12, cha: 8 } },
+        levels: Array.from({ length: 4 }, () => ({ classId: "test:class:fighter", hpRoll: "avg" as const })),
+        feats: [
+          { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword" },
+        ],
+        inventory: [
+          { id: "v1", itemId: "homebrew:item:templer-schwert", equipped: true },
+          { id: "v2", itemId: "test:item:greatsword", equipped: true },
+        ],
+      });
+      const sheet = deriveSheet(c, compendium, HOUSE);
+      const variantLine = sheet.attacks.find((a) => a.label === "Templer Schwert")!;
+      expect(variantLine.attack.total).toBe(8); // GAB 4 + ST 3 + 1 Talent
+      // Eine andere Waffe bleibt außen vor.
+      expect(sheet.attacks.find((a) => a.label === "Greatsword")!.attack.total).toBe(7);
+    });
+
     it("Weapon Specialization schlägt auf den Schaden derselben Waffe", () => {
       const c = armed([
         {
