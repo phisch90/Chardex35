@@ -181,6 +181,15 @@ export const skillDataSchema = z.object({
   acpApplies: z.boolean().default(false),
   /** Schwimmen: doppelter Rüstungsmalus. */
   acpDouble: z.boolean().default(false),
+  /**
+   * Fertigkeiten mit Teilgebieten (Knowledge, Craft, Perform, Profession):
+   * jedes Teilgebiet ist regeltechnisch eine eigene Fertigkeit mit eigenen
+   * Rängen. Der Charakter führt sie in `skillSubtypes`, die Ränge liegen unter
+   * dem zusammengesetzten Schlüssel `skillId#teilgebiet`.
+   */
+  subtyped: z.boolean().default(false),
+  /** Vorschläge fürs Anlegen — bei Craft/Profession offen, nicht abschließend. */
+  subtypeSuggestions: z.array(z.string()).default([]),
   /** Synergie ist Daten — Homebrew-Skills nehmen automatisch teil. */
   synergies: z
     .array(
@@ -188,6 +197,10 @@ export const skillDataSchema = z.object({
         toSkillId: z.string(),
         bonus: z.number().int().default(2),
         condition: z.string().optional(),
+        /** Nur dieses Teilgebiet gibt die Synergie (z.B. Knowledge (arcana)). */
+        fromSubtype: z.string().optional(),
+        /** Nur dieses Teilgebiet des Ziels bekommt sie. */
+        toSubtype: z.string().optional(),
       }),
     )
     .default([]),
@@ -332,6 +345,30 @@ export type SpellListEntity = z.infer<typeof spellListEntitySchema>;
 /** Anzeigename mit deutschem Overlay, falls vorhanden. */
 export function displayName(entity: Pick<Entity, "name" | "localized">): string {
   return entity.localized?.de?.name ?? entity.name;
+}
+
+/**
+ * Schlüssel für `skillRanks`. Teilgebiete hängen mit `#` an der Fertigkeits-ID,
+ * damit „Knowledge (arcana)" und „Knowledge (religion)" getrennte Ränge haben.
+ */
+export function skillKey(skillId: string, subtype?: string | undefined): string {
+  return subtype === undefined || subtype === "" ? skillId : `${skillId}#${subtype}`;
+}
+
+/** Gegenstück zu `skillKey`. IDs enthalten selbst kein `#`. */
+export function parseSkillKey(key: string): { skillId: string; subtype?: string } {
+  const hash = key.indexOf("#");
+  if (hash < 0) return { skillId: key };
+  return { skillId: key.slice(0, hash), subtype: key.slice(hash + 1) };
+}
+
+/** „Knowledge (arcana)" — Anzeigename inklusive Teilgebiet. */
+export function skillDisplayName(
+  entity: Pick<Entity, "name" | "localized">,
+  subtype?: string | undefined,
+): string {
+  const base = displayName(entity);
+  return subtype === undefined || subtype === "" ? base : `${base} (${subtype})`;
 }
 
 /**

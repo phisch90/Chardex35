@@ -5,7 +5,7 @@ import {
   type Character,
   type HouseRules,
 } from "../schema/character.js";
-import { displayName, type Entity } from "../schema/entities.js";
+import { displayName, skillKey, type Entity } from "../schema/entities.js";
 import { deriveSheet } from "../engine/index.js";
 
 /**
@@ -511,8 +511,9 @@ export function mapFightClubPc(
   // Fertigkeitsränge.
   const skillIndex = buildIndex(compendium, "skill");
   const skillRanks: Record<string, number> = {};
+  const skillSubtypes: Character["skillSubtypes"] = [];
   const skillTotals = new Map<string, number>();
-  /** Wie viele Export-Zeilen auf denselben App-Skill fielen (Teilgebiete). */
+  /** Wie viele Export-Zeilen auf denselben Rang-Schlüssel fielen. */
   const skillSources = new Map<string, number>();
   for (const entry of pc.skills) {
     const hit = matchName(skillIndex, entry.name);
@@ -524,25 +525,39 @@ export function mapFightClubPc(
       });
       continue;
     }
-    const previous = skillRanks[hit.id];
-    if (hit.rest !== "") {
+    const entity = compendium.get(hit.id);
+    const subtyped = entity?.kind === "skill" && entity.data.subtyped;
+    // „Knowledge (Religion)" → Teilgebiet in SRD-Schreibweise, damit die
+    // Synergien greifen; unbekannte Teilgebiete bleiben wie exportiert.
+    let subtype: string | undefined;
+    if (subtyped && hit.rest !== "") {
+      const suggestions = entity.kind === "skill" ? entity.data.subtypeSuggestions : [];
+      subtype =
+        suggestions.find((s) => s.toLowerCase() === hit.rest.toLowerCase()) ?? hit.rest;
+      if (!skillSubtypes.some((s) => s.skillId === hit.id && s.subtype === subtype)) {
+        skillSubtypes.push({ skillId: hit.id, subtype });
+      }
+    }
+    const key = skillKey(hit.id, subtype);
+    const previous = skillRanks[key];
+    if (hit.rest !== "" && !subtyped) {
       issues.push({
         severity: "info",
         code: "skill-subtype",
         message:
           previous === undefined
-            ? `„${entry.name}": Teilgebiete führt die App noch nicht getrennt — die Ränge liegen auf der Grundfertigkeit.`
+            ? `„${entry.name}": diese Fertigkeit kennt keine Teilgebiete — die Ränge liegen auf der Grundfertigkeit.`
             : `„${entry.name}" trifft auf dieselbe Fertigkeit wie ein anderes Teilgebiet — es gilt der höchste Rangwert (${Math.max(previous, entry.ranks)}), alle Originalwerte stehen in den Notizen.`,
       });
     }
     // Teilgebiete NICHT summieren: 8 Ränge Knowledge (Arkana) + 5 Ränge
     // Knowledge (Religion) sind regeltechnisch zwei Fertigkeiten, niemals 13
-    // Ränge auf einer. Das Maximum kommt der Wahrheit am nächsten und sprengt
-    // das Rangmaximum nicht.
-    skillRanks[hit.id] = Math.max(previous ?? 0, entry.ranks);
-    skillSources.set(hit.id, (skillSources.get(hit.id) ?? 0) + 1);
+    // Ränge auf einer. Fallen zwei Zeilen doch auf denselben Schlüssel (Skill
+    // ohne Teilgebiete), gilt das Maximum — es sprengt das Rangmaximum nicht.
+    skillRanks[key] = Math.max(previous ?? 0, entry.ranks);
+    skillSources.set(key, (skillSources.get(key) ?? 0) + 1);
     if (entry.total !== undefined && (previous === undefined || entry.ranks >= previous)) {
-      skillTotals.set(hit.id, entry.total);
+      skillTotals.set(key, entry.total);
     }
   }
   for (const token of pc.unparsedSkills) {
@@ -630,6 +645,7 @@ export function mapFightClubPc(
     abilities: { method: "rolled", base, levelUps: [] },
     levels,
     skillRanks,
+    skillSubtypes,
     feats,
     inventory,
     hp: pc.hp
@@ -767,11 +783,11 @@ export function mapFightClubPc(
     always: true,
     hint: `Die App zählt Talent-Boni wie „Improved Initiative" mit; Fight Club listet hier oft nur den GE-Modifikator.`,
   });
-  for (const [skillId, total] of skillTotals) {
-    // Auf einen Skill zusammengelegte Teilgebiete (Knowledge (Religion) +
-    // Knowledge (Arcana)) sind nicht vergleichbar — die Ränge wurden addiert.
-    if ((skillSources.get(skillId) ?? 1) > 1) continue;
-    const line = sheet.skills.find((s) => s.skillId === skillId);
+  for (const [key, total] of skillTotals) {
+    // Fielen zwei Export-Zeilen doch auf denselben Schlüssel, ist der Wert
+    // nicht vergleichbar — es gilt dann nur der höchste Rang.
+    if ((skillSources.get(key) ?? 1) > 1) continue;
+    const line = sheet.skills.find((s) => s.key === key);
     if (line) report(line.name, total, line.total.total);
   }
 

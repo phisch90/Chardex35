@@ -4,6 +4,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "int",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -23,6 +25,8 @@
       "acpApplies": true,
       "acpDouble": false,
       "keyAbility": "dex",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -42,6 +46,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "cha",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
@@ -79,6 +85,8 @@
       "acpApplies": true,
       "acpDouble": false,
       "keyAbility": "str",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -98,6 +106,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "con",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -117,6 +127,21 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "int",
+      "subtypeSuggestions": [
+        "alchemy",
+        "armorsmithing",
+        "blacksmithing",
+        "bowmaking",
+        "carpentry",
+        "leatherworking",
+        "painting",
+        "sculpting",
+        "shipmaking",
+        "stonemasonry",
+        "trapmaking",
+        "weaponsmithing"
+      ],
+      "subtyped": true,
       "synergies": [
         {
           "bonus": 2,
@@ -144,6 +169,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "int",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
@@ -169,6 +196,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "cha",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -188,6 +217,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "int",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": true
     },
@@ -207,6 +238,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "cha",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -226,6 +259,8 @@
       "acpApplies": true,
       "acpDouble": false,
       "keyAbility": "dex",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
@@ -251,6 +286,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "int",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -270,6 +307,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "cha",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -289,6 +328,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "cha",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
@@ -313,6 +354,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "wis",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -332,6 +375,8 @@
       "acpApplies": true,
       "acpDouble": false,
       "keyAbility": "dex",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -351,6 +396,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "cha",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -370,6 +417,8 @@
       "acpApplies": true,
       "acpDouble": false,
       "keyAbility": "str",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
@@ -394,45 +443,63 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "int",
+      "subtypeSuggestions": [
+        "arcana",
+        "architecture and engineering",
+        "dungeoneering",
+        "geography",
+        "history",
+        "local",
+        "nature",
+        "nobility and royalty",
+        "religion",
+        "the planes"
+      ],
+      "subtyped": true,
       "synergies": [
         {
           "bonus": 2,
-          "condition": "with 5 ranks in Knowledge (arcana)",
+          "fromSubtype": "arcana",
           "toSkillId": "srd:skill:spellcraft"
         },
         {
           "bonus": 2,
-          "condition": "with 5 ranks in Knowledge (architecture and engineering), to find secret doors or hidden compartments",
+          "condition": "to find secret doors or hidden compartments",
+          "fromSubtype": "architecture and engineering",
           "toSkillId": "srd:skill:search"
         },
         {
           "bonus": 2,
-          "condition": "with 5 ranks in Knowledge (dungeoneering), when underground",
+          "condition": "when underground",
+          "fromSubtype": "dungeoneering",
           "toSkillId": "srd:skill:survival"
         },
         {
           "bonus": 2,
-          "condition": "with 5 ranks in Knowledge (geography), to keep from getting lost or to avoid natural hazards",
+          "condition": "to keep from getting lost or to avoid natural hazards",
+          "fromSubtype": "geography",
           "toSkillId": "srd:skill:survival"
         },
         {
           "bonus": 2,
-          "condition": "with 5 ranks in Knowledge (local)",
+          "fromSubtype": "local",
           "toSkillId": "srd:skill:gather-information"
         },
         {
           "bonus": 2,
-          "condition": "with 5 ranks in Knowledge (nature), in aboveground natural environments",
+          "condition": "in aboveground natural environments",
+          "fromSubtype": "nature",
           "toSkillId": "srd:skill:survival"
         },
         {
           "bonus": 2,
-          "condition": "with 5 ranks in Knowledge (nobility and royalty)",
+          "fromSubtype": "nobility and royalty",
           "toSkillId": "srd:skill:diplomacy"
         },
         {
           "bonus": 2,
-          "condition": "with 5 ranks in Knowledge (the planes), when on other planes",
+          "condition": "when on other planes",
+          "fromSubtype": "the planes",
           "toSkillId": "srd:skill:survival"
         }
       ],
@@ -456,6 +523,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "wis",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -475,6 +544,8 @@
       "acpApplies": true,
       "acpDouble": false,
       "keyAbility": "dex",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -494,6 +565,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "dex",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": true
     },
@@ -513,6 +586,18 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "cha",
+      "subtypeSuggestions": [
+        "act",
+        "comedy",
+        "dance",
+        "keyboard instruments",
+        "oratory",
+        "percussion instruments",
+        "sing",
+        "string instruments",
+        "wind instruments"
+      ],
+      "subtyped": true,
       "synergies": [],
       "trainedOnly": false
     },
@@ -534,7 +619,31 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "wis",
-      "synergies": [],
+      "subtypeSuggestions": [
+        "apothecary",
+        "cook",
+        "driver",
+        "farmer",
+        "herbalist",
+        "hunter",
+        "innkeeper",
+        "miner",
+        "sailor",
+        "scribe",
+        "siege engineer",
+        "stablehand",
+        "tanner",
+        "teamster"
+      ],
+      "subtyped": true,
+      "synergies": [
+        {
+          "bonus": 2,
+          "condition": "aboard a ship",
+          "fromSubtype": "sailor",
+          "toSkillId": "srd:skill:use-rope"
+        }
+      ],
       "trainedOnly": true
     },
     "description": "Like Craft, Knowledge, and Perform, Profession is actually a number of separate skills. You could have several Profession skills, each with its own ranks, each purchased as a separate skill. While a Craft skill represents ability in creating or making an item, a Profession skill represents an aptitude in a vocation requiring a broader range of less specific knowledge.\n\n**Check:** You can practice your trade and make a decent living, earning about half your Profession check result in gold pieces per week of dedicated work. You know how to use the tools of your trade, how to perform the profession's daily tasks, how to supervise helpers, and how to handle common problems.\n\n**Action:** Not applicable. A single check generally represents a week of work.\n\n**Try Again:** Varies. An attempt to use a Profession skill to earn an income cannot be retried. You are stuck with whatever weekly wage your check result brought you. Another check may be made after a week to determine a new income for the next period of time. An attempt to accomplish some specific task can usually be retried.\n\n**Untrained:** Untrained laborers and assistants (that is, characters without any ranks in Profession) earn an average of 1 silver piece per day.",
@@ -555,6 +664,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "dex",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -574,6 +685,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "int",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
@@ -599,6 +712,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "wis",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
@@ -623,6 +738,8 @@
       "acpApplies": true,
       "acpDouble": false,
       "keyAbility": "dex",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": true
     },
@@ -642,6 +759,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": null,
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": true
     },
@@ -663,6 +782,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "int",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
@@ -688,6 +809,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "wis",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -707,11 +830,13 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "wis",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
-          "condition": "on Knowledge (nature) checks",
-          "toSkillId": "srd:skill:knowledge"
+          "toSkillId": "srd:skill:knowledge",
+          "toSubtype": "nature"
         }
       ],
       "trainedOnly": false
@@ -732,6 +857,8 @@
       "acpApplies": true,
       "acpDouble": true,
       "keyAbility": "str",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [],
       "trainedOnly": false
     },
@@ -751,6 +878,8 @@
       "acpApplies": true,
       "acpDouble": false,
       "keyAbility": "dex",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
@@ -779,6 +908,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "cha",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,
@@ -804,6 +935,8 @@
       "acpApplies": false,
       "acpDouble": false,
       "keyAbility": "dex",
+      "subtypeSuggestions": [],
+      "subtyped": false,
       "synergies": [
         {
           "bonus": 2,

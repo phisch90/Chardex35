@@ -36,6 +36,20 @@ export function validate(
     }
   }
 
+  // Ränge auf der Grundzeile einer Teilgebiets-Fertigkeit: regeltechnisch
+  // gehören sie in ein Teilgebiet. Nicht automatisch verschieben — welches
+  // gemeint ist, weiß nur der Spieler (Alt-Charaktere, FC-Import ohne Angabe).
+  for (const skill of sheet.skills) {
+    if (skill.subtyped && skill.subtype === undefined && skill.ranks > 0) {
+      issues.push({
+        severity: "warning",
+        code: "skill-needs-subtype",
+        message: `${skill.name}: ${skill.ranks} Ränge liegen auf der Grundfertigkeit. Leg ein Teilgebiet an (z.B. „${skill.name} (arcana)") und trag die Ränge dort ein.`,
+        ref: skill.skillId,
+      });
+    }
+  }
+
   // Fertigkeitspunkte gesamt.
   if (sheet.skillPoints.spent > sheet.skillPoints.available) {
     issues.push({
@@ -56,7 +70,19 @@ export function validate(
 
   // Talent-Voraussetzungen (gegen den aktuellen Stand — warn-only).
   const featIds = new Set(character.feats.map((f) => f.featId));
-  const ranksOf = (skillId: string) => character.skillRanks[skillId] ?? 0;
+  /**
+   * Voraussetzungen nennen die Grundfertigkeit („8 Ränge Knowledge (arcana)"
+   * steht als `srd:skill:knowledge` in den Daten). Es zählt das beste
+   * Teilgebiet — sonst erfüllt niemand mit Teilgebieten je eine Voraussetzung.
+   */
+  const ranksOf = (skillId: string) => {
+    let best = character.skillRanks[skillId] ?? 0;
+    const prefix = `${skillId}#`;
+    for (const [key, ranks] of Object.entries(character.skillRanks)) {
+      if (key.startsWith(prefix)) best = Math.max(best, ranks);
+    }
+    return best;
+  };
   const maxCasterLevel = Math.max(0, ...sheet.spellcasting.map((s) => s.casterLevel.total));
   const classLevelOf = (classId: string) => resolved.classLevelCounts.get(classId) ?? 0;
 

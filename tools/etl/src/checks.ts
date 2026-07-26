@@ -129,6 +129,30 @@ export function runChecks(manifest: Manifest, entities: Map<string, Entity>): vo
   assert(moveSilently.kind === "skill", "move-silently ist kein Skill");
   assert(moveSilently.data.keyAbility === "dex", "Move Silently keyAbility != dex");
   assert(moveSilently.data.acpApplies === true, "Move Silently acpApplies != true");
+  assert(moveSilently.data.subtyped === false, "Move Silently darf keine Teilgebiete haben");
+
+  // Knowledge: Teilgebiete abschließend, Synergien hängen am Teilgebiet.
+  const knowledge = get(entities, "srd:skill:knowledge");
+  assert(knowledge.kind === "skill", "knowledge ist kein Skill");
+  assert(knowledge.data.subtyped === true, "Knowledge: subtyped != true");
+  assert(
+    knowledge.data.subtypeSuggestions.length === 10,
+    `Knowledge: 10 Teilgebiete erwartet, ${knowledge.data.subtypeSuggestions.length} gefunden`,
+  );
+  assert(
+    knowledge.data.synergies.some(
+      (s) => s.toSkillId === "srd:skill:spellcraft" && s.fromSubtype === "arcana",
+    ),
+    "Knowledge: Synergie arcana → Spellcraft fehlt",
+  );
+  assert(
+    knowledge.data.synergies.every((s) => s.fromSubtype !== undefined),
+    "Knowledge: jede Synergie muss an einem Teilgebiet hängen",
+  );
+  // Speak Language trägt im Dump ein Teilgebiet, ist aber keine Probe.
+  const speakLanguage = get(entities, "srd:skill:speak-language");
+  assert(speakLanguage.kind === "skill", "speak-language ist kein Skill");
+  assert(speakLanguage.data.subtyped === false, "Speak Language darf keine Teilgebiete haben");
 
   // Longsword (Handprobe: 15 gp, 1d8, 19-20/x2, 4 lb)
   const longsword = get(entities, "srd:item:longsword");

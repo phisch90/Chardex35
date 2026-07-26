@@ -385,7 +385,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(ogreSheet.abilities.str.score.total).toBe(21);
   });
 
-  it("Teilgebiete: höchster Rang statt Summe — kein Rangmaximum-Verstoß", () => {
+  it("führt Teilgebiete getrennt — eigene Ränge je Knowledge", () => {
     const wizard = `<characters version="3"><pc><name>Magier</name>
       <raceClass>Elf Wizard 5</raceClass>
       <str>8</str><dex>14</dex><con>12</con><int>18</int><wis>12</wis><cha>10</cha>
@@ -394,12 +394,45 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
       </pc></characters>`;
     let n = 0;
     const result = importFightClubXml(wizard, compendium, { idFactory: () => `w-${++n}` }).results[0]!;
-    // 8 und 5 Ränge auf zwei Teilgebieten → 8, nicht 13.
-    expect(result.character.skillRanks["srd:skill:knowledge"]).toBe(8);
-    const wizSheet = deriveSheet(result.character, compendium);
+    const { character } = result;
+    // Zwei eigenständige Fertigkeiten, nichts wird zusammengelegt.
+    expect(character.skillRanks["srd:skill:knowledge#arcana"]).toBe(8);
+    expect(character.skillRanks["srd:skill:knowledge#religion"]).toBe(5);
+    expect(character.skillRanks["srd:skill:knowledge"]).toBeUndefined();
+    expect(character.skillSubtypes).toEqual([
+      { skillId: "srd:skill:knowledge", subtype: "arcana" },
+      { skillId: "srd:skill:knowledge", subtype: "religion" },
+    ]);
+
+    const wizSheet = deriveSheet(character, compendium);
     expect(wizSheet.issues.filter((i) => i.code === "max-ranks")).toEqual([]);
-    // Die Originalwerte aller Teilgebiete bleiben in den Notizen erhalten.
-    expect(result.character.noteSections[0]!.body).toContain("Knowledge (Religion) (5)");
+    // Kein „Teilgebiete werden nicht getrennt geführt"-Hinweis mehr.
+    expect(result.issues.filter((i) => i.code === "skill-subtype")).toEqual([]);
+
+    // Beide Zeilen stehen im Bogen und stimmen mit dem Original überein.
+    const arcana = wizSheet.skills.find((s) => s.key === "srd:skill:knowledge#arcana")!;
+    const religion = wizSheet.skills.find((s) => s.key === "srd:skill:knowledge#religion")!;
+    expect(arcana.name).toBe("Knowledge (arcana)");
+    expect(arcana.total.total).toBe(12); // 8 Ränge + 4 IN
+    expect(religion.total.total).toBe(9); // 5 Ränge + 4 IN
+    // Synergie hängt am Teilgebiet: Knowledge (arcana) ≥5 → Spellcraft +2.
+    const spellcraft = wizSheet.skills.find((s) => s.key === "srd:skill:spellcraft")!;
+    expect(spellcraft.total.contributions.some((c) => c.source.includes("arcana"))).toBe(true);
+    expect(spellcraft.total.total).toBe(14); // 8 Ränge + 4 IN + 2 Synergie
+  });
+
+  it("hängt Ränge auf die Grundfertigkeit, wenn sie keine Teilgebiete kennt", () => {
+    const rogue = `<characters version="3"><pc><name>Schurke</name>
+      <raceClass>Human Rogue 3</raceClass>
+      <str>10</str><dex>16</dex><con>12</con><int>12</int><wis>10</wis><cha>10</cha>
+      <hp>18/18</hp>
+      <skills>Hide (6) +9, Move Silently (Schatten) (6) +9</skills>
+      </pc></characters>`;
+    let n = 0;
+    const result = importFightClubXml(rogue, compendium, { idFactory: () => `r-${++n}` }).results[0]!;
+    expect(result.character.skillRanks["srd:skill:move-silently"]).toBe(6);
+    expect(result.character.skillSubtypes).toEqual([]);
+    expect(result.issues.some((i) => i.code === "skill-subtype")).toBe(true);
   });
 
   it("verliert Fertigkeiten ohne Rangangabe nicht (Listen +11)", () => {

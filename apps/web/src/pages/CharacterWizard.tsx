@@ -9,6 +9,7 @@ import {
   type Ability,
   type Character,
   type Entity,
+  type SkillLine,
 } from "@codex35/core";
 import { S } from "../strings.js";
 import { CharacterRepo } from "../db/repo.js";
@@ -22,6 +23,7 @@ interface Draft {
   base: Record<Ability, number>;
   classId: string | null;
   skillRanks: Record<string, number>;
+  skillSubtypes: { skillId: string; subtype: string }[];
   featIds: { featId: string; choice?: string }[];
   inventory: { id: string; itemId: string; qty: number; equipped: boolean }[];
 }
@@ -33,6 +35,7 @@ const INITIAL: Draft = {
   base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   classId: null,
   skillRanks: {},
+  skillSubtypes: [],
   featIds: [],
   inventory: [],
 };
@@ -47,6 +50,7 @@ function draftToCharacter(draft: Draft): Character {
     abilities: { base: draft.base },
     levels: draft.classId ? [{ classId: draft.classId, hpRoll: "max" }] : [],
     skillRanks: draft.skillRanks,
+    skillSubtypes: draft.skillSubtypes,
     feats: draft.featIds,
     inventory: draft.inventory,
   });
@@ -204,7 +208,13 @@ export function CharacterWizardPage() {
       )}
 
       {step === 3 && (
-        <SkillStep draft={draft} setDraft={setDraft} entities={entities} sheetPoints={sheet?.skillPoints} classId={draft.classId} compendium={compendium} />
+        <SkillStep
+          draft={draft}
+          setDraft={setDraft}
+          lines={sheet?.skills}
+          sheetPoints={sheet?.skillPoints}
+          compendium={compendium}
+        />
       )}
 
       {step === 4 && (
@@ -297,28 +307,40 @@ function PickList(props: {
   );
 }
 
+/**
+ * Fertigkeitsschritt auf den abgeleiteten Zeilen — nur so tauchen Teilgebiete
+ * („Knowledge (arcana)") überhaupt auf und lassen sich mit Rängen belegen.
+ */
 function SkillStep(props: {
   draft: Draft;
   setDraft: (d: Draft) => void;
-  entities: Entity[];
+  lines: SkillLine[] | undefined;
   sheetPoints: { available: number; spent: number } | undefined;
-  classId: string | null;
   compendium: Map<string, Entity>;
 }) {
   const { draft, setDraft } = props;
-  const cls = props.classId ? props.compendium.get(props.classId) : undefined;
-  const classSkillIds = new Set(cls?.kind === "class" ? cls.data.classSkillIds : []);
-  const skills = props.entities
-    .filter((e) => e.kind === "skill" && !e.deletedAt)
-    .sort((a, b) => a.name.localeCompare(b.name));
   const left = props.sheetPoints ? props.sheetPoints.available - props.sheetPoints.spent : 0;
 
-  const setRanks = (skillId: string, ranks: number) => {
+  const setRanks = (key: string, ranks: number) => {
     const skillRanks = { ...draft.skillRanks };
-    if (ranks <= 0) delete skillRanks[skillId];
-    else skillRanks[skillId] = ranks;
+    if (ranks <= 0) delete skillRanks[key];
+    else skillRanks[key] = ranks;
     setDraft({ ...draft, skillRanks });
   };
+
+  const addSubtype = (skillId: string) => {
+    const entity = props.compendium.get(skillId);
+    const suggestions = entity?.kind === "skill" ? entity.data.subtypeSuggestions.join(", ") : "";
+    const value = prompt(
+      suggestions === "" ? S.sheet.subtypePrompt : `${S.sheet.subtypePrompt}\n\n${suggestions}`,
+    );
+    const subtype = value?.trim();
+    if (!subtype) return;
+    if (draft.skillSubtypes.some((s) => s.skillId === skillId && s.subtype === subtype)) return;
+    setDraft({ ...draft, skillSubtypes: [...draft.skillSubtypes, { skillId, subtype }] });
+  };
+
+  if (!props.lines) return <p className="text-slate-400">{S.misc.loading}</p>;
 
   return (
     <Card>
@@ -326,30 +348,43 @@ function SkillStep(props: {
         {S.wizard.pointsLeft}: {left}
       </div>
       <ul className="divide-y divide-slate-800">
-        {skills.map((skill) => {
-          const isClass = classSkillIds.has(skill.id);
-          const ranks = draft.skillRanks[skill.id] ?? 0;
+        {props.lines.map((skill) => {
+          const isClass = skill.isClassSkill;
+          const ranks = draft.skillRanks[skill.key] ?? 0;
           const max = maxRanks(1, isClass);
+          const isSubtypeAnchor = skill.subtyped && skill.subtype === undefined;
           return (
-            <li key={skill.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+            <li key={skill.key} className="flex items-center justify-between gap-2 py-1.5 text-sm">
               <span className={isClass ? "" : "text-slate-400"}>
-                {displayName(skill)}
-                {isClass && <span className="ml-1 text-[10px] text-amber-400">●</span>}
-                <span className="ml-1 text-xs text-slate-500">
-                  {S.sheet.maxRanks} {max}
-                </span>
+                {skill.name}
+                {isClass && <span className="ml-1 text-[11px] text-amber-400">✧</span>}
+                {!isSubtypeAnchor && (
+                  <span className="ml-1 text-xs text-slate-500">
+                    {S.sheet.maxRanks} {max}
+                  </span>
+                )}
               </span>
               <span className="flex items-center gap-2">
-                <GhostButton onClick={() => setRanks(skill.id, ranks - (isClass ? 1 : 0.5))} disabled={ranks <= 0}>
-                  −
-                </GhostButton>
-                <span className="w-8 text-center font-mono">{ranks}</span>
-                <GhostButton
-                  onClick={() => setRanks(skill.id, ranks + (isClass ? 1 : 0.5))}
-                  disabled={ranks >= max || left <= 0}
-                >
-                  +
-                </GhostButton>
+                {isSubtypeAnchor && (
+                  <GhostButton onClick={() => addSubtype(skill.skillId)}>+ {S.sheet.subtype}</GhostButton>
+                )}
+                {!isSubtypeAnchor && (
+                  <>
+                    <GhostButton
+                      onClick={() => setRanks(skill.key, ranks - (isClass ? 1 : 0.5))}
+                      disabled={ranks <= 0}
+                    >
+                      −
+                    </GhostButton>
+                    <span className="w-8 text-center font-mono">{ranks}</span>
+                    <GhostButton
+                      onClick={() => setRanks(skill.key, ranks + (isClass ? 1 : 0.5))}
+                      disabled={ranks >= max || left <= 0}
+                    >
+                      +
+                    </GhostButton>
+                  </>
+                )}
               </span>
             </li>
           );

@@ -37,6 +37,8 @@ export function LevelUpPage() {
   const [hpRoll, setHpRoll] = useState<number | null>(null);
   const [abilityPick, setAbilityPick] = useState<Ability | null>(null);
   const [ranks, setRanks] = useState<Record<string, number> | null>(null);
+  /** Beim Aufstieg neu angelegte Teilgebiete (z.B. erstes Knowledge (arcana)). */
+  const [newSubtypes, setNewSubtypes] = useState<{ skillId: string; subtype: string }[]>([]);
   const [newFeatIds, setNewFeatIds] = useState<string[]>([]);
   const [newKnown, setNewKnown] = useState<string[]>([]);
   const [featQuery, setFeatQuery] = useState("");
@@ -70,13 +72,14 @@ export function LevelUpPage() {
       copy.abilities.levelUps = ups;
     }
     copy.skillRanks = { ...ranks };
+    copy.skillSubtypes = [...copy.skillSubtypes, ...newSubtypes];
     copy.feats = [...copy.feats, ...newFeatIds.map((featId) => ({ featId }))];
     if (newKnown.length > 0) {
       const state = (copy.spellState[classId] ??= { known: [], prepared: [], usedSlots: [] });
       state.known = [...state.known, ...newKnown.filter((id) => !state.known.includes(id))];
     }
     return copy;
-  }, [character, classId, ranks, hpRoll, needsAbility, newTotal, abilityPick, newFeatIds, newKnown, compendium]);
+  }, [character, classId, ranks, hpRoll, needsAbility, newTotal, abilityPick, newFeatIds, newKnown, newSubtypes, compendium]);
 
   const sheetAfter = useMemo(
     () => (afterCharacter && compendium ? deriveSheet(afterCharacter, compendium, houseRules) : undefined),
@@ -148,14 +151,23 @@ export function LevelUpPage() {
     void navigate({ to: "/charaktere/$charId", params: { charId } });
   };
 
-  const allClassSkillIds = new Set<string>();
-  for (const id of existingClassIds.concat(classId ? [classId] : [])) {
-    const cls = compendium.get(id);
-    if (cls?.kind === "class") for (const s of cls.data.classSkillIds) allClassSkillIds.add(s);
-  }
-  const skills = entities
-    .filter((e) => e.kind === "skill" && !e.deletedAt)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // Fertigkeitszeilen kommen aus der Ableitung — nur so sind Teilgebiete dabei.
+  const skills = sheetAfter?.skills ?? sheetBefore?.skills ?? [];
+
+  const addSubtype = (skillId: string) => {
+    const entity = compendium.get(skillId);
+    const suggestions = entity?.kind === "skill" ? entity.data.subtypeSuggestions.join(", ") : "";
+    const value = prompt(
+      suggestions === "" ? S.sheet.subtypePrompt : `${S.sheet.subtypePrompt}\n\n${suggestions}`,
+    );
+    const subtype = value?.trim();
+    if (!subtype) return;
+    const exists =
+      character.skillSubtypes.some((s) => s.skillId === skillId && s.subtype === subtype) ||
+      newSubtypes.some((s) => s.skillId === skillId && s.subtype === subtype);
+    if (exists) return;
+    setNewSubtypes([...newSubtypes, { skillId, subtype }]);
+  };
 
   // Bereits vorhandene Talente ausblenden — außer sie sind stackable (Toughness).
   const ownedFeatIds = new Set(character.feats.map((f) => f.featId));
@@ -269,38 +281,48 @@ export function LevelUpPage() {
         </div>
         <ul className="max-h-80 divide-y divide-slate-800 overflow-y-auto">
           {skills.map((skill) => {
-            const isClass = allClassSkillIds.has(skill.id);
-            const current = ranks?.[skill.id] ?? 0;
+            const isClass = skill.isClassSkill;
+            const current = ranks?.[skill.key] ?? 0;
             const max = maxRanks(newTotal, isClass);
+            const isSubtypeAnchor = skill.subtyped && skill.subtype === undefined;
             // Schrittweite MUSS zur Kostenbasis der Engine passen (Union aller
             // Klassen, siehe derive.ts skillPointsSpent) — sonst kosten Ränge
             // alter Klassenfertigkeiten beim klassenfremden Aufstieg die Hälfte.
             const step = isClass ? 1 : 0.5;
             const setSkill = (value: number) => {
               const next = { ...(ranks ?? {}) };
-              if (value <= 0) delete next[skill.id];
-              else next[skill.id] = value;
+              if (value <= 0) delete next[skill.key];
+              else next[skill.key] = value;
               setRanks(next);
             };
             return (
-              <li key={skill.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+              <li key={skill.key} className="flex items-center justify-between gap-2 py-1.5 text-sm">
                 <span className={isClass ? "" : "text-slate-400"}>
-                  {displayName(skill)}
-                  {isClass && <span className="ml-1 text-[10px] text-amber-400">●</span>}
-                  <span className="ml-1 text-xs text-slate-500">
-                    {current}/{max}
-                  </span>
+                  {skill.name}
+                  {isClass && <span className="ml-1 text-[11px] text-amber-400">✧</span>}
+                  {!isSubtypeAnchor && (
+                    <span className="ml-1 text-xs text-slate-500">
+                      {current}/{max}
+                    </span>
+                  )}
                 </span>
                 <span className="flex items-center gap-2">
-                  <GhostButton
-                    disabled={current <= (character.skillRanks[skill.id] ?? 0)}
-                    onClick={() => setSkill(current - step)}
-                  >
-                    −
-                  </GhostButton>
-                  <GhostButton disabled={current >= max || skillLeft <= 0} onClick={() => setSkill(current + step)}>
-                    +
-                  </GhostButton>
+                  {isSubtypeAnchor && (
+                    <GhostButton onClick={() => addSubtype(skill.skillId)}>+ {S.sheet.subtype}</GhostButton>
+                  )}
+                  {!isSubtypeAnchor && (
+                    <>
+                      <GhostButton
+                        disabled={current <= (character.skillRanks[skill.key] ?? 0)}
+                        onClick={() => setSkill(current - step)}
+                      >
+                        −
+                      </GhostButton>
+                      <GhostButton disabled={current >= max || skillLeft <= 0} onClick={() => setSkill(current + step)}>
+                        +
+                      </GhostButton>
+                    </>
+                  )}
                 </span>
               </li>
             );

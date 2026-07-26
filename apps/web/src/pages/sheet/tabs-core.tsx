@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { S } from "../../strings.js";
 import { Card, Chip, GhostButton, SectionTitle, StatButton, fmtMod } from "../../ui/bits.js";
 import { useDiceStore } from "../../lib/diceStore.js";
-import { useAppSettings, useHouseRules } from "../../lib/hooks.js";
+import { useAppSettings, useCompendium, useHouseRules } from "../../lib/hooks.js";
 import { TrackersCard } from "./Trackers.js";
 import type { TabProps } from "./index.js";
 
@@ -147,6 +147,21 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
             onClick={() => openBreakdown(S.sheet.speed, sheet.speedFt, false)}
           />
         </div>
+        {/* Nah-/Fernkampf als Gesamtwert — GAB allein sagt am Tisch zu wenig. */}
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {(["melee", "ranged"] as const).map((mode) => {
+            const line = sheet.attacks.find((a) => a.key === mode);
+            if (!line) return null;
+            return (
+              <StatButton
+                key={mode}
+                label={S.sheet[mode]}
+                value={fmtMod(line.attack.total)}
+                onClick={() => openBreakdown(line.label, line.attack, false)}
+              />
+            );
+          })}
+        </div>
       </Card>
 
       <Card>
@@ -227,68 +242,136 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
   );
 }
 
+/** Sichtfilter der Fertigkeitsliste — 36 Zeilen sind am Tisch zu viele. */
+type SkillFilter = "all" | "trained" | "class";
+
 export function SkillsTab({ character, sheet, save, openBreakdown }: TabProps) {
   const roll = useDiceStore((s) => s.roll);
   const { diceEnabled } = useAppSettings();
+  const compendium = useCompendium();
   // Standardansicht ist zum WÜRFELN da — Ränge editieren nur im Bearbeiten-Modus.
   const [editMode, setEditMode] = useState(false);
+  const [filter, setFilter] = useState<SkillFilter>("all");
+
+  const visible = sheet.skills.filter((skill) => {
+    // Grundzeilen von Teilgebiets-Fertigkeiten bleiben zum Anlegen sichtbar.
+    if (editMode && skill.subtyped && skill.subtype === undefined) return true;
+    if (filter === "trained") return skill.ranks > 0;
+    if (filter === "class") return skill.isClassSkill;
+    return true;
+  });
+
+  /** Teilgebiet anlegen — Vorschläge aus dem SRD, eigene jederzeit möglich. */
+  const addSubtype = (skillId: string) => {
+    const entity = compendium?.get(skillId);
+    const suggestions =
+      entity?.kind === "skill" ? entity.data.subtypeSuggestions.join(", ") : "";
+    const subtype = prompt(
+      suggestions === "" ? S.sheet.subtypePrompt : `${S.sheet.subtypePrompt}\n\n${suggestions}`,
+    );
+    const trimmed = subtype?.trim();
+    if (!trimmed) return;
+    save((c) => {
+      if (c.skillSubtypes.some((s) => s.skillId === skillId && s.subtype === trimmed)) return;
+      c.skillSubtypes.push({ skillId, subtype: trimmed });
+    });
+  };
+
   return (
     <Card>
-      <div className="mb-1 flex items-center justify-between">
-        <span className="text-xs text-slate-500">
+      <div className="mb-1 flex flex-wrap items-center gap-1">
+        <span className="mr-auto text-xs text-slate-500">
           Punkte: {sheet.skillPoints.spent}/{sheet.skillPoints.available}
         </span>
+        {(["all", "trained", "class"] as const).map((key) => (
+          <Chip key={key} active={filter === key} onClick={() => setFilter(key)}>
+            {S.sheet.skillFilter[key]}
+          </Chip>
+        ))}
         <Chip active={editMode} onClick={() => setEditMode(!editMode)}>
           ✎ {S.actions.edit}
         </Chip>
       </div>
       <ul className="divide-y divide-slate-800">
-        {sheet.skills.map((skill) => {
+        {visible.map((skill) => {
           const overMax = skill.ranks > skill.maxRanks;
+          const isSubtypeAnchor = skill.subtyped && skill.subtype === undefined;
           return (
-            <li key={skill.skillId} className="flex items-center gap-2 py-1.5 text-sm">
+            <li key={skill.key} className="flex items-center gap-2 py-1.5 text-sm">
+              <span className="w-10 shrink-0 text-right font-mono font-semibold">
+                {skill.usable ? fmtMod(skill.total.total) : "—"}
+              </span>
               <button
                 className="min-w-0 flex-1 text-left"
                 onClick={() => openBreakdown(skill.name, skill.total)}
               >
                 <span className={skill.usable ? "" : "text-slate-500"}>
                   {skill.name}
-                  {skill.isClassSkill && <span className="ml-1 text-[10px] text-amber-400">●</span>}
+                  {skill.ranks > 0 && (
+                    <span className={`ml-1 text-xs ${overMax ? "text-red-400" : "text-slate-400"}`}>
+                      ({skill.ranks}
+                      {overMax && `/${skill.maxRanks}`})
+                    </span>
+                  )}
+                  {skill.isClassSkill && <span className="ml-1 text-[11px] text-amber-400">✧</span>}
+                  {skill.ranks === 0 && skill.usable && !isSubtypeAnchor && (
+                    <span className="ml-1 text-[10px] text-slate-600">U</span>
+                  )}
                 </span>
-                {(editMode || skill.ranks > 0) && (
-                  <span className="ml-2 text-xs text-slate-500">
-                    {S.sheet.ranks} {skill.ranks}
-                    <span className={overMax ? "text-red-400" : ""}>/{skill.maxRanks}</span>
-                  </span>
-                )}
               </button>
-              <span className="w-10 shrink-0 text-right font-mono font-semibold">
-                {skill.usable ? fmtMod(skill.total.total) : "—"}
-              </span>
+              {/* Auch ohne Bearbeiten-Modus sichtbar — sonst findet niemand,
+                  dass „Craft" erst durch ein Teilgebiet spielbar wird. */}
+              {isSubtypeAnchor && (
+                <GhostButton
+                  onClick={() => addSubtype(skill.skillId)}
+                  title={S.sheet.addSubtype}
+                >
+                  {editMode ? `+ ${S.sheet.subtype}` : "＋"}
+                </GhostButton>
+              )}
               {editMode ? (
                 <>
-                  <GhostButton
-                    onClick={() =>
-                      save((c) => {
-                        const current = c.skillRanks[skill.skillId] ?? 0;
-                        const next = current - (skill.isClassSkill ? 1 : 0.5);
-                        if (next <= 0) delete c.skillRanks[skill.skillId];
-                        else c.skillRanks[skill.skillId] = next;
-                      })
-                    }
-                  >
-                    −
-                  </GhostButton>
-                  <GhostButton
-                    onClick={() =>
-                      save((c) => {
-                        const current = c.skillRanks[skill.skillId] ?? 0;
-                        c.skillRanks[skill.skillId] = current + (skill.isClassSkill ? 1 : 0.5);
-                      })
-                    }
-                  >
-                    +
-                  </GhostButton>
+                  {skill.subtype !== undefined && (
+                    <GhostButton
+                      danger
+                      onClick={() =>
+                        save((c) => {
+                          c.skillSubtypes = c.skillSubtypes.filter(
+                            (s) => !(s.skillId === skill.skillId && s.subtype === skill.subtype),
+                          );
+                          delete c.skillRanks[skill.key];
+                        })
+                      }
+                    >
+                      ✕
+                    </GhostButton>
+                  )}
+                  {!isSubtypeAnchor && (
+                    <>
+                      <GhostButton
+                        onClick={() =>
+                          save((c) => {
+                            const current = c.skillRanks[skill.key] ?? 0;
+                            const next = current - (skill.isClassSkill ? 1 : 0.5);
+                            if (next <= 0) delete c.skillRanks[skill.key];
+                            else c.skillRanks[skill.key] = next;
+                          })
+                        }
+                      >
+                        −
+                      </GhostButton>
+                      <GhostButton
+                        onClick={() =>
+                          save((c) => {
+                            const current = c.skillRanks[skill.key] ?? 0;
+                            c.skillRanks[skill.key] = current + (skill.isClassSkill ? 1 : 0.5);
+                          })
+                        }
+                      >
+                        +
+                      </GhostButton>
+                    </>
+                  )}
                 </>
               ) : (
                 diceEnabled && (
@@ -310,7 +393,8 @@ export function SkillsTab({ character, sheet, save, openBreakdown }: TabProps) {
         })}
       </ul>
       <p className="mt-2 text-xs text-slate-500">
-        ● = {S.sheet.classSkill} · klassenfremde Ränge kosten 2 Punkte (halbe Ränge)
+        ✧ = {S.sheet.classSkill} · U = untrainiert benutzbar · (n) = Ränge · klassenfremde Ränge
+        kosten 2 Punkte (halbe Ränge)
       </p>
     </Card>
   );

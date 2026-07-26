@@ -170,8 +170,9 @@ function main(): void {
 
   writeFileSync(
     join(PACKS_DIR, "manifest.json"),
-    // srdRev 3: Zauberbuch-Merkmal je Klasse ergänzt (nur Magier).
-    `${canonicalJson({ srdRev: 3, files, counts: sortedCounts })}\n`,
+    // srdRev 4: Fertigkeits-Teilgebiete (Knowledge/Craft/Perform/Profession)
+    // mit teilgebiets-genauen Synergien.
+    `${canonicalJson({ srdRev: 4, files, counts: sortedCounts })}\n`,
   );
   console.log(`  manifest.json: ${files.length} Dateien, counts=${JSON.stringify(sortedCounts)}`);
 

@@ -117,12 +117,16 @@ export function GhostButton(props: {
   onClick?: () => void;
   disabled?: boolean;
   danger?: boolean;
+  /** Klartext für Icon-Knöpfe — Tooltip und Screenreader-Beschriftung. */
+  title?: string;
 }) {
   return (
     <button
       type="button"
       onClick={props.onClick}
       disabled={props.disabled}
+      title={props.title}
+      aria-label={props.title}
       className={`rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40 ${
         props.danger
           ? "border-red-700 text-red-400 enabled:hover:bg-red-950"
