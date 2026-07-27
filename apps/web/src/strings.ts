@@ -144,6 +144,13 @@ export const S = {
     license: "Lizenz (OGL)",
     dataPrivacy:
       "Alle Daten liegen nur lokal auf diesem Gerät (IndexedDB). Teilen per Export/Import.",
+    /*
+      Die Falle, in die ich ihn geschickt habe: auf iOS hat die
+      Startbildschirm-App einen eigenen Speicher, und das Löschen des Symbols
+      nimmt ihn mit. Das gehört sichtbar in die App, nicht in eine Chat-Nachricht.
+    */
+    iosWarning:
+      "iPhone/iPad: Safari und die Startbildschirm-App haben GETRENNTE Speicher — was du in einem anlegst, fehlt im anderen. Und löschst du das Symbol vom Startbildschirm, nimmt iOS die dortigen Daten mit. Vorher exportieren oder den Geräte-Abgleich einrichten, der beide Seiten zusammenhält.",
   },
 
   compendium: {

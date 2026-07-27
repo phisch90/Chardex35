@@ -8,4 +8,5 @@ export * from "./calc/hp.js";
 export * from "./calc/keypad.js";
 export * from "./import/fightclub.js";
 export * from "./sync/merge.js";
+export * from "./sync/backupStatus.js";
 export * from "./sync/refs.js";
