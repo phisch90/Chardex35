@@ -19,6 +19,28 @@ describe("mergeDocSets", () => {
     expect(out.conflicts).toHaveLength(0);
   });
 
+  /**
+   * Der Wiederherstellungsfall: das Gerät ist leer (Speicher gelöscht, neues
+   * Gerät, iOS hat den Web-App-Container mitgenommen), die Ablage hat alles.
+   * Genau darauf verlässt sich „Token wieder eintragen und der Charakter ist
+   * zurück" — deshalb steht es hier als Test und nicht nur in einer Zusage.
+   */
+  it(`holt bei leerem Gerät ALLES aus der Ablage zurück`, () => {
+    const remote = [
+      doc("hike", 7, "2026-07-27T10:00:00Z", "Hike Greatbush"),
+      doc("hb-1", 2, "2026-07-27T10:00:00Z", "Templer Schwert"),
+    ];
+    const out = mergeDocSets([], remote);
+    // Reihenfolge ist nach id sortiert (bewusst deterministisch), nicht nach Eingabe.
+    expect(out.toLocal.map((d) => d.name).sort()).toEqual(["Hike Greatbush", "Templer Schwert"]);
+    expect(out.toRemote).toHaveLength(0); // nichts kaputt-Überschreiben
+    expect(out.conflicts).toHaveLength(0);
+    // Und ein Tombstone in der Ablage bleibt ein Tombstone — kein Zombie.
+    const tombstone = doc("weg", 3, "2026-07-27T10:00:00Z", "Weg", "2026-07-27T09:00:00Z");
+    const withTombstone = mergeDocSets([], [tombstone]);
+    expect(withTombstone.toLocal[0]?.deletedAt).toBeDefined();
+  });
+
   it(`lässt die höhere rev gewinnen, egal auf welcher Seite`, () => {
     const older = doc("a", 3, "2026-01-01", "alt");
     const newer = doc("a", 4, "2026-01-02", "neu");
