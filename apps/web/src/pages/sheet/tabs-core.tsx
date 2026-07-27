@@ -8,11 +8,14 @@ import { useAppSettings, useCompendium, useHouseRules } from "../../lib/hooks.js
 import { TrackersCard } from "./Trackers.js";
 import type { TabProps } from "./index.js";
 
-export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
+export function StatsTab(props: TabProps) {
+  const { character, sheet, save } = props;
   return (
     <div className="space-y-3">
       <Card>
         <SectionTitle>Attribute</SectionTitle>
+        {/* Nicht antippbar: der Wert steht schon da, groß der Modifikator und
+            klein die Punktzahl. Ein Tap zeigte nur dasselbe noch einmal. */}
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {ABILITIES.map((ability) => {
             const block = sheet.abilities[ability];
@@ -23,13 +26,6 @@ export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
                 label={S.abilities[ability] ?? ability}
                 value={fmtMod(block.mod)}
                 sub={`${block.score.total}`}
-                onClick={() =>
-                  openBreakdown(S.abilityNames[ability] ?? ability, block.score, {
-                    rollable: false,
-                    absolute: true,
-                    note: `Modifikator ${fmtMod(block.mod)}`,
-                  })
-                }
               />
             );
           })}
@@ -45,13 +41,13 @@ export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
               big
               label={S.saves[save_] ?? save_}
               value={fmtMod(sheet.saves[save_].total)}
-              onClick={() => openBreakdown(`${S.saves[save_]}-Save`, sheet.saves[save_])}
+              onClick={() => props.openBreakdown(`${S.saves[save_]}-Save`, sheet.saves[save_])}
             />
           ))}
         </div>
       </Card>
 
-      <TrackersCard {...{ character, sheet, save, openBreakdown }} />
+      <TrackersCard {...props} />
 
       <Card>
         <SectionTitle>{S.sheet.xp}</SectionTitle>
@@ -236,12 +232,10 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
 /** Sichtfilter der Fertigkeitsliste — 36 Zeilen sind am Tisch zu viele. */
 type SkillFilter = "all" | "trained" | "class";
 
-export function SkillsTab({ character, sheet, save, openBreakdown }: TabProps) {
+export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: TabProps) {
   const roll = useDiceStore((s) => s.roll);
   const { diceEnabled } = useAppSettings();
   const compendium = useCompendium();
-  // Standardansicht ist zum WÜRFELN da — Ränge editieren nur im Bearbeiten-Modus.
-  const [editMode, setEditMode] = useState(false);
   const [filter, setFilter] = useState<SkillFilter>("all");
 
   const visible = sheet.skills.filter((skill) => {
@@ -279,9 +273,6 @@ export function SkillsTab({ character, sheet, save, openBreakdown }: TabProps) {
             {S.sheet.skillFilter[key]}
           </Chip>
         ))}
-        <Chip active={editMode} onClick={() => setEditMode(!editMode)}>
-          ✎ {S.actions.edit}
-        </Chip>
       </div>
       <ul className="divide-y divide-slate-800">
         {visible.map((skill) => {

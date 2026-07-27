@@ -15,14 +15,12 @@ import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import type { TabProps } from "./index.js";
 
-export function InventoryTab({ character, sheet, save }: TabProps) {
+export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
   const entities = useAllEntities();
   const { ignoreEncumbrance } = useHouseRules();
   const [query, setQuery] = useState("");
-  // Löschen nur im Bearbeiten-Modus — dasselbe Muster wie bei den
-  // Fertigkeiten, das er dort gut fand. Ein Fehlgriff im Kampf soll keine
-  // Ausrüstung kosten.
-  const [editMode, setEditMode] = useState(false);
+  // Löschen nur im Bearbeiten-Modus (Schalter im Kopf des Bogens) — ein
+  // Fehlgriff im Kampf soll keine Ausrüstung kosten.
   const undo = useUndo();
   const q = query.trim().toLowerCase();
   const results =
@@ -108,14 +106,9 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
   return (
     <div className="space-y-3">
       <Card>
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <SectionTitle>
-            {S.sheet.equipped} ({equipped.length})
-          </SectionTitle>
-          <Chip active={editMode} onClick={() => setEditMode(!editMode)}>
-            ✎ {S.actions.edit}
-          </Chip>
-        </div>
+        <SectionTitle>
+          {S.sheet.equipped} ({equipped.length})
+        </SectionTitle>
         <UndoBar pending={undo.pending} onUndo={undo.undo} onDismiss={undo.dismiss} />
         <ul className="divide-y divide-slate-800">
           {equipped.map(renderRow)}
@@ -211,12 +204,11 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
   );
 }
 
-export function FeatsTab({ character, sheet, save }: TabProps) {
+export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
   const entities = useAllEntities();
   const [query, setQuery] = useState("");
   // Talente sind Stufenaufstiege in Papierform — die dürfen nicht auf einen Tap
-  // verschwinden. Bearbeiten und Löschen nur im Bearbeiten-Modus.
-  const [editMode, setEditMode] = useState(false);
+  // verschwinden. Ändern und Löschen nur im Bearbeiten-Modus.
   const undo = useUndo();
   const q = query.trim().toLowerCase();
   const results =
@@ -229,14 +221,9 @@ export function FeatsTab({ character, sheet, save }: TabProps) {
   return (
     <div className="space-y-3">
       <Card>
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <SectionTitle>
-            {S.sheet.tabs.feats} ({sheet.featSlots.used}/{sheet.featSlots.available})
-          </SectionTitle>
-          <Chip active={editMode} onClick={() => setEditMode(!editMode)}>
-            ✎ {S.actions.edit}
-          </Chip>
-        </div>
+        <SectionTitle>
+          {S.sheet.tabs.feats} ({sheet.featSlots.used}/{sheet.featSlots.available})
+        </SectionTitle>
         <UndoBar pending={undo.pending} onUndo={undo.undo} onDismiss={undo.dismiss} />
         <ul className="divide-y divide-slate-800">
           {character.feats.map((feat, index) => {

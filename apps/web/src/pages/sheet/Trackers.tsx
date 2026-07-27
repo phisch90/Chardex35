@@ -1,10 +1,9 @@
-import { useState } from "react";
 import { parseDice, rollDice, suggestTrackers, type Character } from "@codex35/core";
 import { S } from "../../strings.js";
 import { cryptoRng } from "../../lib/rng.js";
 import { useAppSettings } from "../../lib/hooks.js";
 import { useDiceStore } from "../../lib/diceStore.js";
-import { Card, Chip, GhostButton, SectionTitle } from "../../ui/bits.js";
+import { Card, GhostButton, SectionTitle } from "../../ui/bits.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
 import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import type { TabProps } from "./index.js";
@@ -16,10 +15,9 @@ type Tracker = Character["trackers"][number];
  * Die App wertet nichts davon aus — sie führt nur Buch, so wie es am Tisch
  * gebraucht wird.
  */
-export function TrackersCard({ character, sheet, save }: TabProps) {
+export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
   const { diceEnabled } = useAppSettings();
   const roll = useDiceStore((s) => s.roll);
-  const [editing, setEditing] = useState(false);
   const undo = useUndo();
   const trackers = character.trackers;
 
@@ -47,17 +45,11 @@ export function TrackersCard({ character, sheet, save }: TabProps) {
         value: 0,
       }),
     );
-    setEditing(true);
   };
 
   return (
     <Card>
-      <div className="mb-1 flex items-center justify-between">
-        <SectionTitle>{S.trackers.title}</SectionTitle>
-        <Chip active={editing} onClick={() => setEditing(!editing)}>
-          ✎ {S.actions.edit}
-        </Chip>
-      </div>
+      <SectionTitle>{S.trackers.title}</SectionTitle>
 
       {trackers.length === 0 && (
         <p className="mb-2 text-xs text-slate-500">{S.trackers.empty}</p>
@@ -129,7 +121,7 @@ export function TrackersCard({ character, sheet, save }: TabProps) {
             </div>
 
             {/* Bearbeiten-Knöpfe in eigener Zeile — der Name soll nicht abgeschnitten werden. */}
-            {editing && (
+            {editMode && (
               <div className="mt-1.5 flex justify-end">
                 <TrackerEditor
                   tracker={tracker}

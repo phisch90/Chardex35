@@ -89,6 +89,7 @@ export const S = {
     casterLevel: "Zauberstufe",
     breakdownSuppressed: "wirkt nicht",
     portrait: "Porträt",
+    editModeOn: "Bearbeiten: Ränge, Talente, Ausrüstung, Zähler",
   },
 
   actions: {

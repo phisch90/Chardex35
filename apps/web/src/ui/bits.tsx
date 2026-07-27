@@ -34,11 +34,8 @@ export function StatButton(props: {
   onClick?: () => void;
   big?: boolean;
 }) {
-  return (
-    <button
-      onClick={props.onClick}
-      className="flex min-w-16 flex-col items-center rounded-lg border border-slate-700/60 bg-slate-800/60 px-2 py-1.5 text-center text-slate-100 transition-colors active:bg-slate-700"
-    >
+  const inner = (
+    <>
       <span className="flex items-baseline gap-1">
         <span className={props.big ? "text-2xl font-bold" : "text-lg font-semibold"}>
           {props.value}
@@ -46,6 +43,15 @@ export function StatButton(props: {
         {props.sub && <span className="text-xs text-slate-400">{props.sub}</span>}
       </span>
       <span className="text-[10px] uppercase tracking-wide text-slate-400">{props.label}</span>
+    </>
+  );
+  const shell = "flex min-w-16 flex-col items-center rounded-lg border border-slate-700/60 bg-slate-800/60 px-2 py-1.5 text-center text-slate-100";
+  // Ohne Handler eine Kachel, kein Knopf: ein Knopf, der auf Tap nichts tut,
+  // verspricht etwas, das nicht kommt.
+  if (!props.onClick) return <div className={shell}>{inner}</div>;
+  return (
+    <button onClick={props.onClick} className={`${shell} transition-colors active:bg-slate-700`}>
+      {inner}
     </button>
   );
 }
