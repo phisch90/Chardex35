@@ -36,5 +36,6 @@ export * from "./classinfo.js";
 export * from "./diff.js";
 export * from "./spells.js";
 export * from "./tables.js";
+export * from "./trackers.js";
 export * from "./types.js";
 export { stackContributions } from "./stack.js";

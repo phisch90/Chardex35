@@ -819,6 +819,69 @@ describe("deriveSheet — Zauber", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Trefferpunkte. Am Bogen stand „43 von 7" — die Zahlen selbst waren richtig
+// (7 aktuell von 43 max), aber die Anzeige hatte sie vertauscht. Damit das nicht
+// unbemerkt wiederkommt, ist hier festgehalten, was max, computedMax und current
+// bedeuten.
+// ---------------------------------------------------------------------------
+describe("deriveSheet — Trefferpunkte", () => {
+  it("ohne festes Maximum ist max = computedMax", () => {
+    const sheet = deriveSheet(fighterDwarf4(), COMPENDIUM, HOUSE);
+    expect(sheet.hp.max).toBe(40);
+    expect(sheet.hp.computedMax).toBe(40);
+  });
+
+  it("festes Maximum gewinnt, der gerechnete Wert bleibt daneben stehen", () => {
+    // Der Fight-Club-Import kennt nur Gesamtwerte, als Würfe stehen Platzhalter
+    // drin — deshalb liegt die gerechnete Zahl dort unter der echten. Die
+    // Oberfläche muss beides zeigen können, sonst kostet ein „zurücksetzen"
+    // stillschweigend TP.
+    const sheet = deriveSheet(fighterDwarf4({ hp: { overrideMax: 62 } }), COMPENDIUM, HOUSE);
+    expect(sheet.hp.max).toBe(62);
+    expect(sheet.hp.computedMax).toBe(40);
+  });
+
+  it("current = max − Schaden, auch mit festem Maximum", () => {
+    const computed = deriveSheet(fighterDwarf4({ hp: { damage: 33 } }), COMPENDIUM, HOUSE);
+    expect(computed.hp.current).toBe(7); // 40 − 33
+    const overridden = deriveSheet(
+      fighterDwarf4({ hp: { damage: 33, overrideMax: 62 } }),
+      COMPENDIUM,
+      HOUSE,
+    );
+    expect(overridden.hp.current).toBe(29); // 62 − 33
+  });
+
+  it("current darf negativ werden — sterbend und tot sind Spielzustände", () => {
+    // 3.5: −1 bis −9 sterbend, −10 tot. Ein Klemmen auf 0 würde genau die
+    // Information wegwerfen, die am Tisch zählt.
+    expect(deriveSheet(fighterDwarf4({ hp: { damage: 43 } }), COMPENDIUM, HOUSE).hp.current).toBe(-3);
+    expect(deriveSheet(fighterDwarf4({ hp: { damage: 50 } }), COMPENDIUM, HOUSE).hp.current).toBe(-10);
+  });
+
+  it("nichttödlicher Schaden und temporäre TP werden durchgereicht, nicht verrechnet", () => {
+    const sheet = deriveSheet(
+      fighterDwarf4({ hp: { damage: 5, nonlethal: 8, temp: 4 } }),
+      COMPENDIUM,
+      HOUSE,
+    );
+    expect(sheet.hp.current).toBe(35); // nur echter Schaden zählt gegen max
+    expect(sheet.hp.nonlethal).toBe(8);
+    expect(sheet.hp.temp).toBe(4);
+  });
+
+  it("TP-Effekte (Toughness) erhöhen auch computedMax, nicht nur max", () => {
+    const sheet = deriveSheet(
+      fighterDwarf4({ feats: [{ featId: "test:feat:toughness" }] }),
+      COMPENDIUM,
+      HOUSE,
+    );
+    expect(sheet.hp.computedMax).toBe(43);
+    expect(sheet.hp.max).toBe(43);
+  });
+});
+
 describe("deriveSheet — Robustheit & Validierung", () => {
   it("fehlende Referenzen crashen nicht, sondern erzeugen issues", () => {
     const c = fighterDwarf4({

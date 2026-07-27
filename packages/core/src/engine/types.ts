@@ -124,7 +124,14 @@ export interface DerivedSheet {
   /** Effektive Charakterstufe inkl. Level Adjustment. */
   ecl: number;
   classLevels: { classId: string; className: string; level: number }[];
-  hp: { max: number; current: number; nonlethal: number; temp: number };
+  hp: {
+    max: number;
+    /** Aus Stufen, KO und Effekten gerechnet — unabhängig von `overrideMax`. */
+    computedMax: number;
+    current: number;
+    nonlethal: number;
+    temp: number;
+  };
   ac: AcBlock;
   init: StatValue;
   speedFt: StatValue;

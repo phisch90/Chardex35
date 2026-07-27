@@ -1,0 +1,80 @@
+import { useEffect, useRef, useState } from "react";
+
+/**
+ * „X wurde gelöscht — Rückgängig".
+ *
+ * Sein Einwand war doppelt: ein Tap auf ✕ löschte sofort, UND man sah hinterher
+ * nicht, was weg war. Eine Rückfrage allein löst nur die erste Hälfte; deshalb
+ * nennt die Meldung den Namen und nimmt die Löschung auf Wunsch zurück.
+ *
+ * Der Zustand liegt bewusst hier und nicht im Charakter: eine zurückgenommene
+ * Löschung soll keine rev-Erhöhung und keinen Sync-Anstoß hinterlassen, wenn
+ * sie nie wirksam war.
+ */
+export function useUndo<T>() {
+  const [pending, setPending] = useState<{ label: string; restore: () => void } | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timer.current !== null) clearTimeout(timer.current);
+    },
+    [],
+  );
+
+  /** Nach dem Löschen aufrufen: Name für die Meldung + wie man es zurückholt. */
+  const offer = (label: string, restore: () => void) => {
+    if (timer.current !== null) clearTimeout(timer.current);
+    setPending({ label, restore });
+    timer.current = setTimeout(() => setPending(null), 12000);
+  };
+
+  const undo = () => {
+    if (!pending) return;
+    pending.restore();
+    setPending(null);
+    if (timer.current !== null) clearTimeout(timer.current);
+  };
+
+  const dismiss = () => setPending(null);
+
+  return { pending, offer, undo, dismiss } as const;
+}
+
+export function UndoBar(props: {
+  pending: { label: string } | null;
+  onUndo: () => void;
+  onDismiss: () => void;
+}) {
+  if (!props.pending) return null;
+  return (
+    /*
+      Fest über der Reiter-Leiste, nicht oben in der Karte: gelöscht wird mitten
+      in einer langen Liste, und eine Meldung, zu der man erst hochscrollen muss,
+      beantwortet die Frage „was war das gerade?“ nicht.
+    */
+    <div
+      role="status"
+      // 3,5rem Hauptnavigation + 3,5rem Reiter-Leiste, sonst deckt die Meldung
+      // genau die Reiter ab, die man als Nächstes braucht.
+      className="fixed inset-x-3 bottom-[calc(7rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-2 rounded-lg border border-amber-700 bg-amber-950 px-3 py-2 text-xs text-amber-100 shadow-lg shadow-black/50 md:inset-x-auto md:bottom-4 md:right-4 md:max-w-md"
+    >
+      <span className="min-w-0 flex-1">
+        <strong className="font-semibold">{props.pending.label}</strong> gelöscht
+      </span>
+      <button
+        onClick={props.onUndo}
+        className="shrink-0 rounded border border-amber-600 px-2 py-1 font-semibold text-amber-200 hover:bg-amber-900/50"
+      >
+        Rückgängig
+      </button>
+      <button
+        onClick={props.onDismiss}
+        aria-label="Meldung schließen"
+        className="shrink-0 px-1 text-amber-400/70 hover:text-amber-200"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}

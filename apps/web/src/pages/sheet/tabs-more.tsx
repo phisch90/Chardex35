@@ -9,14 +9,19 @@ import {
 import { S } from "../../strings.js";
 import { toPortraitDataUrl } from "../../lib/image.js";
 import { FeatText } from "../../ui/FeatText.js";
+import { UndoBar, useUndo } from "../../ui/UndoBar.js";
+import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import type { TabProps } from "./index.js";
 
-export function InventoryTab({ character, sheet, save }: TabProps) {
+export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
   const entities = useAllEntities();
   const { ignoreEncumbrance } = useHouseRules();
   const [query, setQuery] = useState("");
+  // Löschen nur im Bearbeiten-Modus (Schalter im Kopf des Bogens) — ein
+  // Fehlgriff im Kampf soll keine Ausrüstung kosten.
+  const undo = useUndo();
   const q = query.trim().toLowerCase();
   const results =
     q.length >= 2
@@ -75,12 +80,25 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
         >
           {row.equipped ? S.sheet.equipped : S.sheet.stowed}
         </Chip>
-        <GhostButton
-          danger
-          onClick={() => save((c) => void (c.inventory = c.inventory.filter((r) => r.id !== row.id)))}
-        >
-          ✕
-        </GhostButton>
+        {editMode && (
+          <ConfirmDeleteButton
+            label={name}
+            onConfirm={() => {
+              const snapshot = structuredClone(row);
+              const at = character.inventory.findIndex((r) => r.id === row.id);
+              save((c) => void (c.inventory = c.inventory.filter((r) => r.id !== row.id)));
+              // An dieselbe Stelle zurück — eine Rücknahme soll die Liste nicht
+              // umsortieren.
+              undo.offer(name, () =>
+                save((c) => {
+                  if (!c.inventory.some((r) => r.id === snapshot.id)) {
+                    c.inventory.splice(at < 0 ? c.inventory.length : at, 0, snapshot);
+                  }
+                }),
+              );
+            }}
+          />
+        )}
       </li>
     );
   };
@@ -91,6 +109,7 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
         <SectionTitle>
           {S.sheet.equipped} ({equipped.length})
         </SectionTitle>
+        <UndoBar pending={undo.pending} onUndo={undo.undo} onDismiss={undo.dismiss} />
         <ul className="divide-y divide-slate-800">
           {equipped.map(renderRow)}
           {equipped.length === 0 && (
@@ -185,9 +204,12 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
   );
 }
 
-export function FeatsTab({ character, sheet, save }: TabProps) {
+export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
   const entities = useAllEntities();
   const [query, setQuery] = useState("");
+  // Talente sind Stufenaufstiege in Papierform — die dürfen nicht auf einen Tap
+  // verschwinden. Ändern und Löschen nur im Bearbeiten-Modus.
+  const undo = useUndo();
   const q = query.trim().toLowerCase();
   const results =
     q.length >= 2
@@ -202,6 +224,7 @@ export function FeatsTab({ character, sheet, save }: TabProps) {
         <SectionTitle>
           {S.sheet.tabs.feats} ({sheet.featSlots.used}/{sheet.featSlots.available})
         </SectionTitle>
+        <UndoBar pending={undo.pending} onUndo={undo.undo} onDismiss={undo.dismiss} />
         <ul className="divide-y divide-slate-800">
           {character.feats.map((feat, index) => {
             const entity = entities?.find((e) => e.id === feat.featId);
@@ -212,6 +235,10 @@ export function FeatsTab({ character, sheet, save }: TabProps) {
             const chosen = feat.choiceRef
               ? entities?.find((e) => e.id === feat.choiceRef)
               : undefined;
+            /** Sprechender Name für Meldungen — inklusive der Auswahl. */
+            const label =
+              (entity ? displayName(entity) : feat.featId) +
+              (feat.choice ? ` (${feat.choice})` : "");
             return (
               <li key={index} className="flex items-start justify-between gap-2 py-2 text-sm">
                 <div className="min-w-0 flex-1">
@@ -279,25 +306,32 @@ export function FeatsTab({ character, sheet, save }: TabProps) {
                       ⚔
                     </GhostButton>
                   )}
-                  <GhostButton
-                    onClick={() => {
-                      const choice = prompt("Auswahl (z.B. Langschwert)?", feat.choice ?? "");
-                      if (choice !== null) {
-                        save((c) => {
-                          const f = c.feats[index];
-                          if (f) f.choice = choice || undefined;
-                        });
-                      }
-                    }}
-                  >
-                    ✎
-                  </GhostButton>
-                  <GhostButton
-                    danger
-                    onClick={() => save((c) => void c.feats.splice(index, 1))}
-                  >
-                    ✕
-                  </GhostButton>
+                  {editMode && (
+                    <GhostButton
+                      title="Auswahl ändern"
+                      onClick={() => {
+                        const choice = prompt("Auswahl (z.B. Langschwert)?", feat.choice ?? "");
+                        if (choice !== null) {
+                          save((c) => {
+                            const f = c.feats[index];
+                            if (f) f.choice = choice || undefined;
+                          });
+                        }
+                      }}
+                    >
+                      ✎
+                    </GhostButton>
+                  )}
+                  {editMode && (
+                    <ConfirmDeleteButton
+                      label={label}
+                      onConfirm={() => {
+                        const snapshot = structuredClone(feat);
+                        save((c) => void c.feats.splice(index, 1));
+                        undo.offer(label, () => save((c) => void c.feats.splice(index, 0, snapshot)));
+                      }}
+                    />
+                  )}
                 </div>
               </li>
             );

@@ -13,13 +13,24 @@ export function BreakdownSheet(props: {
   title: string;
   value: StatValue | null;
   onRoll?: (() => void) | undefined;
+  /**
+   * true = der Gesamtwert ist eine ZAHL, kein Modifikator. Ein Attributswert
+   * von 15, eine RK von 18 und 30 ft Bewegung sind keine „+15", „+18", „+30" —
+   * die Einzelbeiträge behalten ihr Vorzeichen, die Summe nicht.
+   */
+  absolute?: boolean;
+  /** Zusatzzeile unter dem Gesamtwert, z.B. „Modifikator +2". */
+  note?: string | undefined;
 }) {
   const { value } = props;
   return (
     <BottomSheet open={props.open} onClose={props.onClose} title={props.title}>
       {value && (
         <>
-          <div className="mb-3 text-center text-4xl font-bold">{fmtMod(value.total)}</div>
+          <div className="text-center text-4xl font-bold">
+            {props.absolute === true ? value.total : fmtMod(value.total)}
+          </div>
+          <div className="mb-3 min-h-4 text-center text-xs text-slate-400">{props.note}</div>
           <ul className="divide-y divide-slate-800">
             {value.contributions.map((c, i) => (
               <li key={i} className="flex items-baseline justify-between gap-2 py-1.5 text-sm">

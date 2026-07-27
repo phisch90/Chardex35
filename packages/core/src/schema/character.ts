@@ -210,6 +210,11 @@ export const characterSchema = z.object({
         /** Würfelausdruck für kind „roll", z.B. „1d6+2". */
         formula: z.string().optional(),
         note: z.string().optional(),
+        /**
+         * Schlüssel des Vorschlags, aus dem dieser Zähler entstand. Nur dafür da,
+         * denselben Vorschlag nicht zweimal anzubieten — auch nach Umbenennen.
+         */
+        suggestedFrom: z.string().optional(),
       }),
     )
     .default([]),
