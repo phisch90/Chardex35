@@ -7,10 +7,16 @@ import { db } from "./db.js";
 export interface AppSettings {
   /** Würfelfunktion komplett aus: keine 🎲-Knöpfe, kein Würfel-Tab. */
   diceEnabled: boolean;
+  /**
+   * Wann zuletzt exportiert wurde (ISO, "" = nie). Nur dafür da, den
+   * Sicherungs-Zustand anzeigen zu können — siehe backupStatus in core.
+   */
+  lastExportAt: string;
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   diceEnabled: true,
+  lastExportAt: "",
 };
 
 export const APP_SETTINGS_KEY = "appSettings";
@@ -21,6 +27,8 @@ export function parseAppSettings(value: unknown): AppSettings {
   return {
     diceEnabled:
       typeof raw.diceEnabled === "boolean" ? raw.diceEnabled : DEFAULT_APP_SETTINGS.diceEnabled,
+    lastExportAt:
+      typeof raw.lastExportAt === "string" ? raw.lastExportAt : DEFAULT_APP_SETTINGS.lastExportAt,
   };
 }
 
@@ -31,5 +39,10 @@ export const AppSettingsRepo = {
   },
   async set(settings: AppSettings): Promise<void> {
     await db.settings.put({ key: APP_SETTINGS_KEY, value: settings });
+  },
+  /** Nach einem Export aufrufen — die Anzeige lebt von diesem Zeitstempel. */
+  async markExported(): Promise<void> {
+    const current = await this.get();
+    await this.set({ ...current, lastExportAt: new Date().toISOString() });
   },
 };

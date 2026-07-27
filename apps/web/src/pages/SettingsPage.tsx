@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Link } from "@tanstack/react-router";
-import type { HouseRules } from "@codex35/core";
+import { backupStatus, type HouseRules } from "@codex35/core";
 import { S } from "../strings.js";
 import { db } from "../db/db.js";
 import { SettingsRepo } from "../db/repo.js";
@@ -28,7 +28,24 @@ export function SettingsPage() {
   const [importError, setImportError] = useState<string | null>(null);
   const [showLicense, setShowLicense] = useState(false);
   const syncRow = useLiveQuery(() => db.settings.get(SYNC_SETTINGS_KEY), []);
-  const syncConnected = syncRow !== undefined && isSyncConfigured(parseSyncSettings(syncRow.value));
+  const syncSettings = syncRow === undefined ? null : parseSyncSettings(syncRow.value);
+  const syncConnected = syncSettings !== null && isSyncConfigured(syncSettings);
+  const characterCount = useLiveQuery(
+    async () => (await db.characters.toArray()).filter((c) => !c.deletedAt).length,
+    [],
+  );
+  /*
+    Der Zustand gehört sichtbar auf diese Seite: dass die Charaktere in genau
+    einem Browser-Speicher liegen, hat vorher nichts gesagt — bis die
+    Startbildschirm-App auf iOS mit einem eigenen, leeren Speicher startete.
+  */
+  const backup = backupStatus({
+    now: new Date().toISOString(),
+    characterCount: characterCount ?? 0,
+    syncConnected,
+    lastSyncAt: syncSettings?.lastSyncAt ?? "",
+    lastExportAt: appSettings.lastExportAt,
+  });
 
   useEffect(() => {
     navigator.storage
@@ -107,9 +124,26 @@ export function SettingsPage() {
 
       <Card>
         <SectionTitle>{S.settings.exportTitle}</SectionTitle>
+        <p
+          className={`mb-2 rounded-lg px-2 py-1.5 text-xs ${
+            backup.tone === "warnung"
+              ? "border border-amber-700 bg-amber-950/40 text-amber-200"
+              : backup.tone === "hinweis"
+                ? "text-amber-300/90"
+                : "text-emerald-400/90"
+          }`}
+        >
+          {backup.message}
+        </p>
         <p className="mb-2 text-xs text-slate-400">{S.settings.dataPrivacy}</p>
         <div className="flex flex-wrap items-center gap-2">
-          <PrimaryButton onClick={() => void buildExport().then(downloadExport)}>
+          <PrimaryButton
+            onClick={() =>
+              void buildExport()
+                .then(downloadExport)
+                .then(() => AppSettingsRepo.markExported())
+            }
+          >
             {S.settings.exportAll}
           </PrimaryButton>
           <label className="cursor-pointer rounded-lg border border-slate-600 px-3 py-2 text-sm hover:bg-slate-800">
@@ -155,6 +189,7 @@ export function SettingsPage() {
             Browser, der hier aufräumt, kostet dich damit keinen Charakter.
           </p>
         )}
+        <p className="mt-2 text-xs text-amber-300/90">{S.settings.iosWarning}</p>
       </Card>
 
       <Card>
