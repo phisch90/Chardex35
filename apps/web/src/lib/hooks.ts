@@ -12,10 +12,14 @@ import {
   type HouseRules,
 } from "@codex35/core";
 import { db } from "../db/db.js";
+import { hydrateEntities } from "../db/hydrateEntities.js";
 import { APP_SETTINGS_KEY, parseAppSettings, type AppSettings } from "../db/appSettings.js";
 
 export function useAllEntities(): Entity[] | undefined {
-  return useLiveQuery(() => db.entities.toArray(), []);
+  // hydrateEntities: alte Zeilen bekommen die Standardwerte neu ergänzter
+  // Schema-Felder — sonst stürzt die Engine beim ersten Start nach einem
+  // Update ab, solange das neue Kompendium noch im Hintergrund lädt.
+  return useLiveQuery(async () => hydrateEntities(await db.entities.toArray()), []);
 }
 
 /** Aufgelöste Kompendium-Map (Shadowing angewendet). */

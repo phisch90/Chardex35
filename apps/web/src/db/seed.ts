@@ -1,5 +1,6 @@
 import { entitySchema, type Entity } from "@codex35/core";
 import { db } from "./db.js";
+import { clearEntityCache } from "./hydrateEntities.js";
 
 /**
  * SRD-Packs liegen als statische JSON-Assets im Build (via import.meta.glob).
@@ -71,6 +72,10 @@ export async function ensureSeeded(onProgress?: (msg: string) => void): Promise<
     await db.entities.bulkPut(allEntities);
     await db.settings.put({ key: SRD_REV_KEY, value: manifest.srdRev });
   });
+  // Die ersetzten Zeilen tragen dieselbe id/rev/updatedAt wie vorher — der
+  // Lese-Cache erkennt das nicht von allein und würde weiter die alten Inhalte
+  // liefern.
+  clearEntityCache();
 }
 
 /** Persistenten Speicher anfragen (Browser darf sonst IndexedDB räumen). */
