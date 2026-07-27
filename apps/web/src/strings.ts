@@ -125,6 +125,7 @@ export const S = {
   },
 
   settings: {
+    tagline: "D&D 3.5 mit Homebrew — alles auf deinem Gerät",
     features: "Funktionen",
     diceEnabled: "Würfeln in der App",
     diceEnabledHint: "Aus: keine Würfel-Knöpfe am Bogen und kein Würfel-Reiter.",

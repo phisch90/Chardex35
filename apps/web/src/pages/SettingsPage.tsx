@@ -55,6 +55,19 @@ export function SettingsPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-bold">{S.nav.settings}</h1>
 
+      {/* Das große Logo hat hier Platz — auf einem App-Symbol wären drei
+          Gesichter und die Wortmarke bei 60 px nur Matsch. */}
+      <div className="flex flex-col items-center gap-1 py-2">
+        <img
+          src={`${import.meta.env.BASE_URL}logo.png`}
+          alt={S.appName}
+          width={160}
+          height={160}
+          className="h-40 w-40 rounded-2xl"
+        />
+        <p className="text-xs text-slate-500">{S.settings.tagline}</p>
+      </div>
+
       <Card>
         <SectionTitle>{S.settings.features}</SectionTitle>
         <Toggle
