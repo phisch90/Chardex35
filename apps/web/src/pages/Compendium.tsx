@@ -16,6 +16,9 @@ import { Card, Chip, SearchInput, fmtMod } from "../ui/bits.js";
 
 const BROWSABLE: EntityKind[] = ["class", "race", "feat", "spell", "item", "skill", "condition"];
 
+/** Wie viele Zeilen die Liste höchstens rendert (Zauber und Gegenstände sind zu viele). */
+const LIST_LIMIT = 300;
+
 export function CompendiumPage() {
   const params = useParams({ strict: false }) as { kind?: string };
   const kind = (BROWSABLE as string[]).includes(params.kind ?? "") ? (params.kind as EntityKind) : "class";
@@ -23,21 +26,33 @@ export function CompendiumPage() {
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<"all" | "srd" | "homebrew">("all");
 
-  const list = useMemo(() => {
+  /*
+    Erst Art + Suche, DANN die Quelle — in dieser Reihenfolge, weil an den
+    Quellen-Knöpfen die Trefferzahlen stehen sollen.
+
+    Der Anlass: „der SRD-Knopf funktioniert nicht". Er tat genau, was er sollte —
+    nur besteht das Kompendium zu 100 % aus SRD, also änderte „nur SRD" nichts
+    Sichtbares und sah kaputt aus. Ein Filter muss zeigen, wie viel er
+    wegnimmt, sonst ist er von einem toten Knopf nicht zu unterscheiden.
+  */
+  const matching = useMemo(() => {
     if (!entities) return undefined;
     const q = query.trim().toLowerCase();
     return entities
       .filter((e) => e.kind === kind && !e.deletedAt)
-      .filter((e) => source === "all" || e.source === source)
       .filter(
         (e) =>
           !q ||
           e.name.toLowerCase().includes(q) ||
           (e.localized?.de?.name ?? "").toLowerCase().includes(q),
       )
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .slice(0, 300);
-  }, [entities, kind, query, source]);
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [entities, kind, query]);
+
+  const srdCount = matching?.filter((e) => e.source === "srd").length ?? 0;
+  const homebrewCount = matching?.filter((e) => e.source === "homebrew").length ?? 0;
+  const selected = matching?.filter((e) => source === "all" || e.source === source);
+  const list = selected?.slice(0, LIST_LIMIT);
 
   return (
     <div className="space-y-3">
@@ -54,18 +69,37 @@ export function CompendiumPage() {
           <SearchInput value={query} onChange={setQuery} placeholder={S.actions.search} />
         </div>
         <Chip active={source === "srd"} onClick={() => setSource(source === "srd" ? "all" : "srd")}>
-          {S.compendium.sourceSrd}
+          {S.compendium.sourceSrd} {srdCount}
         </Chip>
         <Chip
           active={source === "homebrew"}
           onClick={() => setSource(source === "homebrew" ? "all" : "homebrew")}
         >
-          {S.compendium.sourceHomebrew}
+          {S.compendium.sourceHomebrew} {homebrewCount}
         </Chip>
       </div>
 
+      {/* Solange es kein eigenes Homebrew gibt, trennen die Knöpfe nichts. Das
+          gehört dahin geschrieben, statt es als wirkungslosen Tap zu erleben. */}
+      {matching !== undefined && homebrewCount === 0 && (
+        <p className="text-xs text-slate-500">{S.compendium.allSrd}</p>
+      )}
+
       {list === undefined && <p className="text-slate-400">{S.misc.loading}</p>}
-      {list?.length === 0 && <p className="py-8 text-center text-slate-400">{S.compendium.empty}</p>}
+      {list?.length === 0 && (
+        <p className="py-8 text-center text-slate-400">
+          {source === "homebrew" ? S.compendium.emptyHomebrew : S.compendium.empty}
+        </p>
+      )}
+
+      {/* Die Liste hört bei 300 auf. Bisher schwieg sie dabei — und ein
+          Kompendium, das ohne Hinweis unvollständig ist, ist schlimmer als
+          eines, das seine Grenze nennt. */}
+      {selected !== undefined && list !== undefined && selected.length > list.length && (
+        <p className="text-xs text-amber-300/90">
+          {S.compendium.capped(list.length, selected.length)}
+        </p>
+      )}
 
       {/* Klassen kommen in Gruppen: die 5 NPC-Klassen (Commoner, Warrior …)
           zwischen den spielbaren zu haben, war nur Rauschen. */}
