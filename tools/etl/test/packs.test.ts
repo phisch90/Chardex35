@@ -3,7 +3,7 @@
  * als Entity-Arrays gegen entitySchema + dieselben Stichproben wie verify.ts.
  * Datenfehler schlagen so in CI auf, ohne das ETL zu re-runnen.
  */
-import { entitySchema } from "@codex35/core";
+import { classCategory, entitySchema, isEpicClass } from "@codex35/core";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -17,6 +17,37 @@ describe("packs/srd", () => {
     expect(manifest.files.length).toBeGreaterThan(0);
     expect([...manifest.files].sort()).toEqual(manifest.files);
     expect(manifest.files).not.toContain("manifest.json");
+  });
+
+  /**
+   * Die Kategorie einer Klasse kommt AUS DEN TAGS — die App gruppiert danach.
+   * Hier stehen die Sollzahlen, damit ein verrutschtes Tag im ETL auffällt und
+   * nicht erst dadurch, dass der Commoner wieder zwischen den Basisklassen
+   * steht. NPC-Klassen tragen absichtlich `base` UND `npc`.
+   */
+  it("Klassen sind in Basis, NPC und Prestige eingeteilt", () => {
+    const classes = [...loadEntities(manifest).values()].filter((e) => e.kind === "class");
+    const byCategory = { base: [] as string[], npc: [] as string[], prestige: [] as string[] };
+    for (const cls of classes) byCategory[classCategory(cls)].push(cls.name);
+
+    expect(byCategory.npc.sort()).toEqual(["Adept", "Aristocrat", "Commoner", "Expert", "Warrior"]);
+    expect(byCategory.base.sort()).toEqual([
+      "Barbarian",
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Fighter",
+      "Monk",
+      "Paladin",
+      "Ranger",
+      "Rogue",
+      "Sorcerer",
+      "Wizard",
+    ]);
+    expect(byCategory.prestige).toHaveLength(24);
+    // Von den Prestigeklassen sind neun episch (Einstieg jenseits Stufe 20).
+    expect(classes.filter(isEpicClass)).toHaveLength(9);
+    expect(classes.filter(isEpicClass).every((c) => classCategory(c) === "prestige")).toBe(true);
   });
 
   /**

@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   ABILITIES,
   characterSchema,
+  classCategory,
   deriveSheet,
   displayName,
   maxRanks,
@@ -66,6 +67,7 @@ export function CharacterWizardPage() {
   const houseRules = useHouseRules();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Draft>(INITIAL);
+  const [showNpcClasses, setShowNpcClasses] = useState(false);
 
   const sheet = useMemo(() => {
     if (!compendium || !draft.raceId || !draft.classId) return undefined;
@@ -75,9 +77,16 @@ export function CharacterWizardPage() {
   if (!entities || !compendium) return <p className="text-slate-400">{S.misc.loading}</p>;
 
   const races = entities.filter((e) => e.kind === "race" && !e.deletedAt);
+  /*
+    NPC-Klassen tragen in den Packs auch das Tag `base` (sie sind so gebaut) —
+    aber wer einen Charakter anlegt, will keinen Commoner zwischen Kleriker und
+    Druide. Sie stehen hinter einem Schalter.
+  */
   const classes = entities
     .filter((e) => e.kind === "class" && !e.deletedAt)
-    .filter((e) => e.source === "homebrew" || e.tags.includes("base"));
+    .filter((e) => e.source === "homebrew" || e.tags.includes("base"))
+    .filter((e) => showNpcClasses || classCategory(e) !== "npc")
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const canNext = () => {
     switch (step) {
@@ -192,13 +201,18 @@ export function CharacterWizardPage() {
       )}
 
       {step === 2 && (
-        <PickList
-          items={classes}
-          selectedId={draft.classId}
-          onSelect={(id) => setDraft({ ...draft, classId: id })}
-          info={(cls) => <ClassInfo klass={cls} compendium={compendium} nextLevelInClass={1} />}
-          detail={classDetailLine}
-        />
+        <>
+          <Chip active={showNpcClasses} onClick={() => setShowNpcClasses(!showNpcClasses)}>
+            {S.wizard.showNpcClasses}
+          </Chip>
+          <PickList
+            items={classes}
+            selectedId={draft.classId}
+            onSelect={(id) => setDraft({ ...draft, classId: id })}
+            info={(cls) => <ClassInfo klass={cls} compendium={compendium} nextLevelInClass={1} />}
+            detail={classDetailLine}
+          />
+        </>
       )}
 
       {step === 3 && (

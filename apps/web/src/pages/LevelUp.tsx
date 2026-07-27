@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   ABILITIES,
+  classCategory,
   deriveSheet,
   displayName,
   maxRanks,
@@ -37,6 +38,7 @@ export function LevelUpPage() {
 
   const [classId, setClassId] = useState<string | null>(null);
   const [showAllClasses, setShowAllClasses] = useState(false);
+  const [showNpcClasses, setShowNpcClasses] = useState(false);
   const [infoClassId, setInfoClassId] = useState<string | null>(null);
   const [hpRoll, setHpRoll] = useState<number | null>(null);
   const [abilityPick, setAbilityPick] = useState<Ability | null>(null);
@@ -106,9 +108,15 @@ export function LevelUpPage() {
   };
 
   const existingClassIds = [...new Set(character.levels.map((l) => l.classId))];
+  /*
+    NPC-Klassen tragen in den Packs auch `base`. Beim Aufstieg gehören sie nicht
+    zwischen die spielbaren — aber erreichbar müssen sie sein: einen Aristocrat 3
+    fürs Gefolge legt man genauso in dieser App an.
+  */
   const baseClasses = entities
     .filter((e) => e.kind === "class" && !e.deletedAt)
     .filter((e) => e.source === "homebrew" || e.tags.includes("base") || showAllClasses)
+    .filter((e) => showNpcClasses || classCategory(e) !== "npc")
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const skillLeft = sheetAfter ? sheetAfter.skillPoints.available - sheetAfter.skillPoints.spent : 0;
@@ -230,6 +238,9 @@ export function LevelUpPage() {
           <div className="mt-1 flex items-center gap-2">
             <Chip active={showAllClasses} onClick={() => setShowAllClasses(!showAllClasses)}>
               auch Prestigeklassen
+            </Chip>
+            <Chip active={showNpcClasses} onClick={() => setShowNpcClasses(!showNpcClasses)}>
+              {S.wizard.showNpcClasses}
             </Chip>
           </div>
           <ul className="mt-1 max-h-60 divide-y divide-slate-800 overflow-y-auto">
