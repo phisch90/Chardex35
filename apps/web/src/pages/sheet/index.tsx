@@ -20,7 +20,11 @@ export interface TabProps {
   sheet: DerivedSheet;
   /** Mutiert eine Kopie und persistiert (rev++, liveQuery aktualisiert die UI). */
   save: (mutate: (c: Character) => void) => void;
-  openBreakdown: (title: string, value: StatValue, rollable?: boolean) => void;
+  openBreakdown: (
+    title: string,
+    value: StatValue,
+    opts?: { rollable?: boolean; absolute?: boolean; note?: string },
+  ) => void;
 }
 
 type TabKey = keyof typeof S.sheet.tabs;
@@ -48,6 +52,8 @@ export function CharacterSheetPage() {
     title: string;
     value: StatValue;
     rollable: boolean;
+    absolute: boolean;
+    note?: string | undefined;
   } | null>(null);
   const roll = useDiceStore((s) => s.roll);
 
@@ -61,8 +67,14 @@ export function CharacterSheetPage() {
     void CharacterRepo.mutate(character.id, mutate);
   };
 
-  const openBreakdown: TabProps["openBreakdown"] = (title, value, rollable = true) =>
-    setBreakdown({ title, value, rollable });
+  const openBreakdown: TabProps["openBreakdown"] = (title, value, opts) =>
+    setBreakdown({
+      title,
+      value,
+      rollable: opts?.rollable ?? true,
+      absolute: opts?.absolute ?? false,
+      note: opts?.note,
+    });
 
   const tabProps: TabProps = { character, sheet, save, openBreakdown };
   const hpRatio = sheet.hp.max > 0 ? sheet.hp.current / sheet.hp.max : 0;
@@ -163,39 +175,6 @@ export function CharacterSheetPage() {
               </div>
             </div>
           </button>
-          {/* Schnelltasten gehen durch dieselbe Regel wie der Rechner — sonst
-              würden temporäre TP hier Schaden abfangen und dort nicht. */}
-          <div className="mt-1 flex gap-1.5">
-            <button
-              onClick={() => save((c) => void (c.hp = applyHpChange(c.hp, "damage", 1)))}
-              className="flex-1 rounded-lg border border-red-800 bg-red-950/60 py-1.5 text-sm font-semibold text-red-300 active:bg-red-900"
-            >
-              −1
-            </button>
-            <button
-              onClick={() => save((c) => void (c.hp = applyHpChange(c.hp, "damage", 5)))}
-              className="flex-1 rounded-lg border border-red-800 bg-red-950/60 py-1.5 text-sm font-semibold text-red-300 active:bg-red-900"
-            >
-              −5
-            </button>
-            <button
-              onClick={() => save((c) => void (c.hp = applyHpChange(c.hp, "heal", 1)))}
-              className="flex-1 rounded-lg border border-emerald-800 bg-emerald-950/60 py-1.5 text-sm font-semibold text-emerald-300 active:bg-emerald-900"
-            >
-              +1
-            </button>
-            <button
-              onClick={() =>
-                save((c) => {
-                  c.hp.damage = 0;
-                  c.hp.nonlethal = 0;
-                })
-              }
-              className="flex-1 rounded-lg border border-emerald-800 bg-emerald-950/60 py-1.5 text-sm font-semibold text-emerald-300 active:bg-emerald-900"
-            >
-              voll
-            </button>
-          </div>
           {/* Aktive Zustände immer im Blick — Verwaltung im Notizen-Tab. */}
           {character.conditionIds.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
@@ -269,6 +248,21 @@ export function CharacterSheetPage() {
         // Die 3.5-Regeln dazu (temporäre TP fangen Schaden zuerst ab) stehen in
         // applyHpChange, damit sie getestet sind und nicht in der UI hängen.
         onApply={(mode, amount) => save((c) => void (c.hp = applyHpChange(c.hp, mode, amount)))}
+        hp={{
+          current: sheet.hp.current,
+          max: sheet.hp.max,
+          damage: character.hp.damage,
+          temp: character.hp.temp,
+          nonlethal: character.hp.nonlethal,
+        }}
+        computedMax={sheet.hp.computedMax}
+        overrideMax={character.hp.overrideMax}
+        onSetMax={(value) =>
+          save((c) => {
+            if (value === null) delete c.hp.overrideMax;
+            else c.hp.overrideMax = value;
+          })
+        }
       />
 
       <BreakdownSheet
@@ -276,6 +270,8 @@ export function CharacterSheetPage() {
         onClose={() => setBreakdown(null)}
         title={breakdown?.title ?? ""}
         value={breakdown?.value ?? null}
+        absolute={breakdown?.absolute ?? false}
+        note={breakdown?.note}
         onRoll={
           breakdown?.rollable
             ? () => {

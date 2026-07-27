@@ -346,9 +346,22 @@ export function deriveSheetValues(
   });
   const hpBucket = stackPaths(buckets, ["hp.max"]);
   hpMax += hpBucket.total;
+  /**
+   * Was die REGELN ergeben — bleibt erhalten, auch wenn ein festes Maximum
+   * eingetragen ist. Nur so kann die Oberfläche zeigen, was ein Zurücksetzen
+   * kosten würde: beim Fight-Club-Import stehen als Würfe nur Platzhalter, die
+   * gerechnete Zahl liegt dort deutlich unter der echten.
+   */
+  const computedMax = hpMax;
   if (character.hp.overrideMax !== undefined) hpMax = character.hp.overrideMax;
   const hp = {
     max: hpMax,
+    computedMax,
+    /**
+     * Darf negativ werden — in 3.5 ist −1 bis −9 sterbend und −10 tot. Genau
+     * diese Zahl braucht der Tisch, deshalb wird hier NICHT auf 0 geklemmt
+     * (siehe fightclub.test.ts: ein sterbender Import bleibt sterbend).
+     */
     current: hpMax - character.hp.damage,
     nonlethal: character.hp.nonlethal,
     temp: character.hp.temp,

@@ -22,9 +22,18 @@ function formatExact(value: number): string {
 export function HpPad(props: {
   open: boolean;
   onClose: () => void;
-  onApply: (mode: "heal" | "temp" | "damage", amount: number) => void;
+  onApply: (mode: "heal" | "temp" | "damage" | "nonlethal", amount: number) => void;
+  /** Aktueller Stand, damit man beim Rechnen sieht, worauf es sich auswirkt. */
+  hp: { current: number; max: number; damage: number; temp: number; nonlethal: number };
+  /** Was die Engine aus Stufen, KO und Effekten errechnet. */
+  computedMax: number;
+  /** Gesetzt = fest eingetragenes Maximum, sonst wird gerechnet. */
+  overrideMax: number | undefined;
+  /** `null` gibt die Rechnung wieder frei. */
+  onSetMax: (value: number | null) => void;
 }) {
   const [input, setInput] = useState("");
+  const [maxDraft, setMaxDraft] = useState<string | null>(null);
 
   const press = (key: string) => setInput((prev) => pressKey(prev, key));
   const canPress = (key: string) => pressKey(input, key) !== input;
@@ -38,6 +47,7 @@ export function HpPad(props: {
    */
   const close = () => {
     clear();
+    setMaxDraft(null);
     props.onClose();
   };
 
@@ -60,7 +70,7 @@ export function HpPad(props: {
         ? "rounded"
         : null;
 
-  const apply = (mode: "heal" | "temp" | "damage") => {
+  const apply = (mode: "heal" | "temp" | "damage" | "nonlethal") => {
     if (!applicable) return;
     props.onApply(mode, amount);
     close();
@@ -76,6 +86,76 @@ export function HpPad(props: {
         und Fehler vor — als Knopf mit aria-label war der Inhalt für
         Screenreader unsichtbar.
       */}
+      {/*
+        Der Stand steht im Rechner, nicht in einer eigenen Karte weiter unten:
+        Schaden, temporäre und nichttödliche TP sowie das Maximum gehören an
+        die EINE Stelle, an der man TP anfasst.
+      */}
+      <div className="mb-2 space-y-1.5 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs">
+        <div className="flex items-baseline justify-between">
+          <span className="text-slate-400">Stand</span>
+          <span className="font-mono text-base font-bold text-slate-100">
+            {props.hp.current}/{props.hp.max}
+            {props.hp.temp > 0 && <span className="text-sky-300"> +{props.hp.temp}</span>}
+          </span>
+        </div>
+        <div className="flex items-baseline justify-between text-slate-500">
+          <span>
+            Schaden {props.hp.damage}
+            {props.hp.nonlethal > 0 && ` · nichttödlich ${props.hp.nonlethal}`}
+          </span>
+          {(props.hp.damage > 0 || props.hp.nonlethal > 0 || props.hp.temp > 0) && (
+            <button
+              onClick={() => {
+                props.onApply("heal", props.hp.damage + props.hp.nonlethal);
+                close();
+              }}
+              className="text-emerald-400 underline decoration-dotted"
+            >
+              alles heilen
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2 border-t border-slate-800 pt-1.5">
+          <span className="shrink-0 text-slate-400">Maximum</span>
+          <input
+            aria-label="Maximale Trefferpunkte"
+            type="number"
+            min={1}
+            inputMode="numeric"
+            value={maxDraft ?? String(props.hp.max)}
+            onChange={(e) => setMaxDraft(e.target.value)}
+            onBlur={() => {
+              if (maxDraft === null) return;
+              const parsed = Number.parseInt(maxDraft, 10);
+              // Wer genau die gerechnete Zahl eintippt, will kein festes
+              // Maximum — sonst friert der Wert beim nächsten Stufenaufstieg ein.
+              if (Number.isFinite(parsed) && parsed > 0) {
+                props.onSetMax(parsed === props.computedMax ? null : parsed);
+              }
+              setMaxDraft(null);
+            }}
+            className="w-20 rounded border border-slate-600 bg-slate-950 px-2 py-1 text-right font-mono text-sm"
+          />
+          {props.overrideMax !== undefined && (
+            <span className="text-[11px] text-amber-400/80">
+              fest eingetragen — Stufenaufstiege ändern nichts
+            </span>
+          )}
+        </div>
+        {/* Eigene Zeile, sonst schneidet das Handy den Satz ab. Der berechnete
+            Wert steht mit seiner ZAHL da — wer zurück will, sieht vorher, was
+            er bekommt. Kein blinder Umschalter. */}
+        {props.overrideMax !== undefined && props.overrideMax !== props.computedMax && (
+          <button
+            onClick={() => props.onSetMax(null)}
+            className="block w-full text-left text-[11px] text-slate-500 underline decoration-dotted hover:text-amber-300"
+          >
+            nach Stufen &amp; KO wären es {props.computedMax} — darauf zurücksetzen
+          </button>
+        )}
+      </div>
+
       <div className="mb-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2">
         <div className="flex items-end justify-between gap-2">
           <button
@@ -152,27 +232,34 @@ export function HpPad(props: {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-4 gap-1.5">
         <button
           disabled={!applicable}
           onClick={() => apply("heal")}
-          className="rounded-lg bg-emerald-700 py-3 font-semibold text-white disabled:opacity-30"
+          className="rounded-lg bg-emerald-700 py-3 text-sm font-semibold text-white disabled:opacity-30"
         >
           {S.hpPad.heal}
         </button>
         <button
           disabled={!applicable}
           onClick={() => apply("temp")}
-          className="rounded-lg bg-sky-700 py-3 font-semibold text-white disabled:opacity-30"
+          className="rounded-lg bg-sky-700 py-3 text-sm font-semibold text-white disabled:opacity-30"
         >
           {S.hpPad.temp}
         </button>
         <button
           disabled={!applicable}
           onClick={() => apply("damage")}
-          className="rounded-lg bg-red-800 py-3 font-semibold text-white disabled:opacity-30"
+          className="rounded-lg bg-red-800 py-3 text-sm font-semibold text-white disabled:opacity-30"
         >
           {S.hpPad.damage}
+        </button>
+        <button
+          disabled={!applicable}
+          onClick={() => apply("nonlethal")}
+          className="rounded-lg bg-amber-800 py-3 text-sm font-semibold text-white disabled:opacity-30"
+        >
+          {S.hpPad.nonlethal}
         </button>
       </div>
     </BottomSheet>

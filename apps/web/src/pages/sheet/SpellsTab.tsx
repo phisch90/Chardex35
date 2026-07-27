@@ -335,6 +335,54 @@ function CasterBlock({ block, character, save }: TabProps & { block: Spellcastin
         </p>
       )}
       {isPrepared && <p className="mt-3 text-[10px] text-slate-500">{S.spells.preparedHint}</p>}
+
+      {/*
+        Legende. Die Zeichen sind kompakt genug für ein Handy, aber niemand
+        errät, dass ◉ „vorbereitet“ und 🌙 „Rast“ heißt — einmal pro
+        Klassen-Karte erklärt, unten, wo sie nicht im Weg steht.
+      */}
+      <details className="mt-3 border-t border-slate-800 pt-2">
+        <summary className="cursor-pointer text-xs text-slate-400">Zeichen-Legende</summary>
+        <ul className="mt-1.5 space-y-1 text-xs leading-snug text-slate-500">
+          <li>
+            <span className="text-amber-400">◉</span> / <span className="text-slate-500">○</span> —{" "}
+            {isPrepared ? "vorbereitet / nicht vorbereitet" : "bekannt / nicht bekannt"}; antippen
+            schaltet um
+          </li>
+          <li>
+            <span className="text-amber-400">●</span> / <span className="text-slate-500">○</span> im
+            Grad-Kopf — verbrauchter / freier Slot dieses Grads
+          </li>
+          <li>
+            <span className="text-slate-300">✨</span> — wirken: zählt einen Slot des Grads als
+            verbraucht
+          </li>
+          <li>
+            <span className="text-slate-300">＋</span> / <span className="text-slate-300">−</span> im
+            Grad-Kopf — Slot von Hand verbrauchen bzw. zurückgeben
+          </li>
+          {isPrepared && (
+            <li>
+              <span className="text-slate-300">＋</span> an einem Zauber — denselben Zauber ein
+              weiteres Mal vorbereiten (×2 hinter dem Namen)
+            </li>
+          )}
+          <li>
+            <span className="text-slate-300">🌙</span> — Rast: setzt alle verbrauchten Slots dieser
+            Klasse zurück
+          </li>
+          {usesSpellbook && (
+            <li>
+              <span className="text-slate-300">📖</span> — Zauberbuch erweitern ·{" "}
+              <span className="text-red-400">✕</span> — Zauber aus dem Buch nehmen
+            </li>
+          )}
+          <li>
+            <span className="text-emerald-400">(+n)</span> hinter der Slot-Zahl — Bonus-Slots aus{" "}
+            {S.abilities[block.ability]}
+          </li>
+        </ul>
+      </details>
     </Card>
   );
 }

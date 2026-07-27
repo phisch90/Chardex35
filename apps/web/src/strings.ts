@@ -173,6 +173,7 @@ export const S = {
     heal: "Heilen",
     temp: "Temp.",
     damage: "Schaden",
+    nonlethal: "Nichttödl.",
     open: "TP ändern",
     backspace: "Zeichen löschen",
     clear: "leeren",
@@ -199,6 +200,8 @@ export const S = {
     formula: "Würfelformel (z.B. 1d6+2)",
     reset: "Zurücksetzen",
     empty: "Noch keine Zähler. Leg einen an für Aktionspunkte & Co.",
+    suggestHint: "Aus deinen Klassen ergeben sich diese Zähler:",
+    suggestAdd: "anlegen",
   },
 
   notes: {

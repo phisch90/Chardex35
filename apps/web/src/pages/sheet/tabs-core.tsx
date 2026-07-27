@@ -24,7 +24,11 @@ export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
                 value={fmtMod(block.mod)}
                 sub={`${block.score.total}`}
                 onClick={() =>
-                  openBreakdown(`${S.abilityNames[ability]}`, block.score, false)
+                  openBreakdown(S.abilityNames[ability] ?? ability, block.score, {
+                    rollable: false,
+                    absolute: true,
+                    note: `Modifikator ${fmtMod(block.mod)}`,
+                  })
                 }
               />
             );
@@ -48,66 +52,6 @@ export function StatsTab({ character, sheet, save, openBreakdown }: TabProps) {
       </Card>
 
       <TrackersCard {...{ character, sheet, save, openBreakdown }} />
-
-      <Card>
-        <SectionTitle>{S.sheet.hp}</SectionTitle>
-        <div className="grid grid-cols-3 gap-3 text-sm">
-          <NumberField
-            label={S.sheet.damage}
-            value={character.hp.damage}
-            onChange={(v) => save((c) => void (c.hp.damage = Math.max(0, v)))}
-          />
-          <NumberField
-            label={S.sheet.nonlethal}
-            value={character.hp.nonlethal}
-            onChange={(v) => save((c) => void (c.hp.nonlethal = Math.max(0, v)))}
-          />
-          <NumberField
-            label={S.sheet.temp}
-            value={character.hp.temp}
-            onChange={(v) => save((c) => void (c.hp.temp = Math.max(0, v)))}
-          />
-        </div>
-
-        {/* Festes Maximum: der Fight-Club-Import setzt es, weil dort nur die
-            Gesamt-TP stehen, nicht die einzelnen Würfe. Solange es steht,
-            RECHNET die Engine das Maximum nicht — eine neue Stufe ändert dann
-            nichts. Das muss man sehen und wegnehmen können. */}
-        <div className="mt-3 border-t border-slate-800 pt-2">
-          {character.hp.overrideMax === undefined ? (
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs text-slate-500">
-                Maximum: {sheet.hp.max} — berechnet aus Stufen, KO und Effekten.
-              </span>
-              <GhostButton
-                onClick={() => save((c) => void (c.hp.overrideMax = sheet.hp.max))}
-                title="Maximum fest eintragen"
-              >
-                festsetzen
-              </GhostButton>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <div className="flex items-end justify-between gap-3">
-                <NumberField
-                  label="Maximum (fest)"
-                  value={character.hp.overrideMax}
-                  onChange={(v) => save((c) => void (c.hp.overrideMax = Math.max(1, v)))}
-                />
-                <GhostButton
-                  onClick={() => save((c) => void (c.hp.overrideMax = undefined))}
-                  title="Wieder berechnen lassen"
-                >
-                  berechnen lassen
-                </GhostButton>
-              </div>
-              <p className="text-[11px] text-amber-400/80">
-                Fest eingetragen — Stufenaufstiege ändern das Maximum nicht.
-              </p>
-            </div>
-          )}
-        </div>
-      </Card>
 
       <Card>
         <SectionTitle>{S.sheet.xp}</SectionTitle>
@@ -159,7 +103,9 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
             big
             label={S.sheet.ac}
             value={`${sheet.ac.total.total}`}
-            onClick={() => openBreakdown(S.sheet.ac, sheet.ac.total, false)}
+            onClick={() =>
+              openBreakdown(S.sheet.ac, sheet.ac.total, { rollable: false, absolute: true })
+            }
           />
           <StatButton label={S.sheet.touch} value={`${sheet.ac.touch}`} />
           <StatButton label={S.sheet.flatFooted} value={`${sheet.ac.flatFooted}`} />
@@ -183,7 +129,13 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
             label={S.sheet.speed}
             value={`${sheet.speedFt.total} ft`
             }
-            onClick={() => openBreakdown(S.sheet.speed, sheet.speedFt, false)}
+            onClick={() =>
+              openBreakdown(S.sheet.speed, sheet.speedFt, {
+                rollable: false,
+                absolute: true,
+                note: "Fuß pro Runde",
+              })
+            }
           />
         </div>
         {/* Nah-/Fernkampf als Gesamtwert — GAB allein sagt am Tisch zu wenig. */}
@@ -196,7 +148,7 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
                 key={mode}
                 label={S.sheet[mode]}
                 value={fmtMod(line.attack.total)}
-                onClick={() => openBreakdown(line.label, line.attack, false)}
+                onClick={() => openBreakdown(line.label, line.attack, { rollable: false })}
               />
             );
           })}
@@ -211,7 +163,7 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
               <div className="flex items-center justify-between gap-2">
                 <button
                   className="min-w-0 flex-1 text-left"
-                  onClick={() => openBreakdown(attack.label, attack.attack, false)}
+                  onClick={() => openBreakdown(attack.label, attack.attack, { rollable: false })}
                 >
                   <div className="truncate text-sm font-semibold">{attack.label}</div>
                   <div className="text-xs text-slate-400">
@@ -433,7 +385,7 @@ export function SkillsTab({ character, sheet, save, openBreakdown }: TabProps) {
       </ul>
       <p className="mt-2 text-xs text-slate-500">
         ✧ = {S.sheet.classSkill} · U = untrainiert benutzbar · (n) = Ränge · klassenfremde Ränge
-        kosten 2 Punkte (halbe Ränge)
+        kosten 2 Punkte je Rang
       </p>
     </Card>
   );

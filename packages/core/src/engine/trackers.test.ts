@@ -1,0 +1,150 @@
+import { describe, expect, it } from "vitest";
+import { characterSchema, houseRulesSchema } from "../schema/character.js";
+import { entitySchema, resolveCompendium, type ClassLevelRow } from "../schema/entities.js";
+import { deriveSheet } from "./index.js";
+import { suggestTrackers } from "./trackers.js";
+
+/**
+ * Die Formeln hier sind der Grund für diese Tests: sie stehen im Regelwerk, nicht
+ * im Datensatz, also kann sie nichts außer einem Test gegenprüfen. Zwei davon
+ * hatte ich beim Schreiben falsch (Betäubender Schlag, Tiergestalt) — die
+ * erwarteten Zahlen unten sind die aus den 3.5-Klassentabellen.
+ */
+
+// Nur so viel Kompendium, wie suggestTrackers braucht: echte SRD-IDs, Stufen,
+// und ein paar Klassenfähigkeiten mit „X/day“ im Namen.
+function rows(count: number, features: (level: number) => string[] = () => []): ClassLevelRow[] {
+  return Array.from({ length: count }, (_, i) => {
+    const level = i + 1;
+    return {
+      bab: level,
+      fort: 2 + Math.floor(level / 2),
+      ref: Math.floor(level / 3),
+      will: Math.floor(level / 3),
+      features: features(level).map((name) => ({ name })),
+      template: { bab: "good", fort: "good", ref: "poor", will: "poor" },
+    } as ClassLevelRow;
+  });
+}
+
+function classEntity(id: string, name: string, extra: Partial<Record<string, unknown>> = {}) {
+  return entitySchema.parse({
+    id,
+    kind: "class",
+    name,
+    source: "srd",
+    data: {
+      hitDie: 8,
+      skillPointsPerLevel: 4,
+      classSkillIds: [],
+      levels: rows(20),
+      ...extra,
+    },
+  });
+}
+
+const COMPENDIUM = resolveCompendium([
+  entitySchema.parse({
+    id: "srd:race:human",
+    kind: "race",
+    name: "Human",
+    source: "srd",
+    data: { size: "medium", speedFt: 30 },
+  }),
+  classEntity("srd:class:cleric", "Cleric"),
+  classEntity("srd:class:paladin", "Paladin"),
+  classEntity("srd:class:bard", "Bard"),
+  classEntity("srd:class:barbarian", "Barbarian"),
+  classEntity("srd:class:monk", "Monk"),
+  classEntity("srd:class:druid", "Druid"),
+  classEntity("srd:class:fighter", "Fighter", {
+    // Fähigkeit mit eindeutiger Zahl im Namen — der generische Zweig.
+    levels: rows(20, (level) => (level === 1 ? ["Second Wind 2/day"] : [])),
+  }),
+]);
+
+const HOUSE = houseRulesSchema.parse({});
+
+function sheetFor(classId: string, level: number, cha = 10) {
+  const character = characterSchema.parse({
+    id: "t",
+    name: "Testfigur",
+    raceId: "srd:race:human",
+    abilities: { base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha } },
+    levels: Array.from({ length: level }, () => ({ classId, hpRoll: "avg" as const })),
+  });
+  return deriveSheet(character, COMPENDIUM, HOUSE);
+}
+
+const suggestionFor = (classId: string, level: number, key: string, cha = 10) =>
+  suggestTrackers(sheetFor(classId, level, cha)).find((s) => s.key === key);
+
+describe("suggestTrackers", () => {
+  it("Untote vertreiben: 3 + CH-Modifikator, mindestens 1", () => {
+    expect(suggestionFor("srd:class:cleric", 1, "turn-undead", 16)?.max).toBe(6);
+    expect(suggestionFor("srd:class:cleric", 1, "turn-undead", 10)?.max).toBe(3);
+    // CH 6 → −2 → 1 statt 0: ein Zähler mit Maximum 0 wäre sinnlos.
+    expect(suggestionFor("srd:class:cleric", 1, "turn-undead", 6)?.max).toBe(1);
+  });
+
+  it("Paladin vertreibt erst ab Stufe 4", () => {
+    expect(suggestionFor("srd:class:paladin", 3, "turn-undead")).toBeUndefined();
+    expect(suggestionFor("srd:class:paladin", 4, "turn-undead")?.max).toBe(3);
+  });
+
+  it("Böses niederstrecken: 1/Tag, +1 auf Stufe 5, 10, 15, 20", () => {
+    expect(suggestionFor("srd:class:paladin", 1, "smite-evil")?.max).toBe(1);
+    expect(suggestionFor("srd:class:paladin", 4, "smite-evil")?.max).toBe(1);
+    expect(suggestionFor("srd:class:paladin", 5, "smite-evil")?.max).toBe(2);
+    expect(suggestionFor("srd:class:paladin", 20, "smite-evil")?.max).toBe(5);
+  });
+
+  it("Bardenmusik: einmal je Bardenstufe", () => {
+    expect(suggestionFor("srd:class:bard", 7, "bardic-music")?.max).toBe(7);
+  });
+
+  it("Raserei: 1/Tag, +1 auf Stufe 4, 8, 12, 16, 20", () => {
+    expect(suggestionFor("srd:class:barbarian", 1, "rage")?.max).toBe(1);
+    expect(suggestionFor("srd:class:barbarian", 4, "rage")?.max).toBe(2);
+    expect(suggestionFor("srd:class:barbarian", 11, "rage")?.max).toBe(3);
+    expect(suggestionFor("srd:class:barbarian", 20, "rage")?.max).toBe(6);
+  });
+
+  it("Betäubender Schlag: der Mönch darf einmal je Mönchsstufe", () => {
+    // Die „einmal je vier Stufen“ im Talenttext gelten für Nicht-Mönche.
+    expect(suggestionFor("srd:class:monk", 6, "stunning-fist")?.max).toBe(6);
+  });
+
+  it("Tiergestalt folgt der Druiden-Tabelle, nicht einer Formel", () => {
+    const uses = (level: number) => suggestionFor("srd:class:druid", level, "wild-shape")?.max;
+    expect(uses(4)).toBeUndefined();
+    expect(uses(5)).toBe(1);
+    expect(uses(6)).toBe(2);
+    expect(uses(7)).toBe(3);
+    expect(uses(9)).toBe(3);
+    expect(uses(10)).toBe(4);
+    expect(uses(14)).toBe(5);
+    expect(uses(18)).toBe(6);
+    expect(uses(20)).toBe(6);
+  });
+
+  it("Klassenfähigkeiten mit „X/day“ im Namen werden übernommen", () => {
+    const found = suggestTrackers(sheetFor("srd:class:fighter", 1)).find((s) =>
+      s.name.includes("Second Wind"),
+    );
+    expect(found?.max).toBe(2);
+    expect(found?.note).toContain("Fighter");
+  });
+
+  it("Klassen ohne eindeutige Formel bekommen keinen Vorschlag", () => {
+    // Nichts erfinden: ein falscher Vorschlag ist schlimmer als keiner.
+    expect(suggestTrackers(sheetFor("srd:class:cleric", 5)).map((s) => s.key)).toEqual([
+      "turn-undead",
+    ]);
+  });
+
+  it("Schlüssel sind eindeutig — sonst wird derselbe Zähler zweimal angeboten", () => {
+    const keys = suggestTrackers(sheetFor("srd:class:paladin", 20)).map((s) => s.key);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});
