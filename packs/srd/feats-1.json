@@ -2,6 +2,7 @@
   {
     "data": {
       "benefit": "Choose one of the creature's special attacks.\n\n**Benefit:** Add +2 to the DC for all saving throws against the special attack on which the creature focuses.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -34,6 +35,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Jump checks and Tumble checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -73,6 +75,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Choose one type of magic item that has a limit on the number a character can simultaneously wear and gain its benefit. The character can now wear one more magic item of this type and also gain its benefit.",
+      "extraUses": [],
       "featType": "Epic",
       "normalText": "Without this feat, a character is limited to one headband, hat, or helmet; one pair of eye lenses or goggles; one cloak, cape, or mantle; one amulet, brooch, medallion, necklace, periapt, or scarab; one suit of armor; one robe; one vest, vestment, or shirt; one pair of bracers or bracelets; one pair of gloves or gauntlets; two rings; one belt; and one pair of boots.",
       "prerequisites": [],
@@ -96,6 +99,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Balance checks and Escape Artist checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -135,6 +139,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Listen checks and Spot checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -175,6 +180,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Handle Animal checks and Ride checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -214,6 +220,7 @@
   {
     "data": {
       "benefit": "Your spells are more potent when used against psionic characters and creatures.\n\n**Benefit:** You get a get a +2 bonus on caster level checks made to overcome a psionic creature's power resistance.\n\nThis bonus stacks with the bonus conferred by Spell Penetration and Greater Spell Penetration. Moreover, whenever a psionic creature attempts to dispel a spell you cast, it makes its manifester level check against a DC of 13 + its manifester level.\n\nThe benefits of this feat apply only to power resistance.\n\nThe bonus does not apply to spell resistance. This is an exception to the psionics-magic transparency rule.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -247,6 +254,7 @@
   {
     "data": {
       "benefit": "**Benefit:** See Armor Proficiency (light).",
+      "extraUses": [],
       "featType": "General",
       "normalText": "See Armor Proficiency (light).",
       "prerequisites": [
@@ -284,6 +292,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When you wear a type of armor with which you are proficient, the armor check penalty for that armor applies only to Balance, Climb, Escape Artist, Hide, Jump, Move Silently, Sleight of Hand, and Tumble checks.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "A character who is wearing armor with which she is not proficient applies its armor check penalty to attack rolls and to all skill checks that involve moving, including Ride.",
       "prerequisites": [],
@@ -312,6 +321,7 @@
   {
     "data": {
       "benefit": "**Benefit:** See Armor Proficiency (light).",
+      "extraUses": [],
       "featType": "General",
       "normalText": "See Armor Proficiency (light).",
       "prerequisites": [
@@ -345,6 +355,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character gains a +1 natural armor bonus to Armor Class, or his or her existing natural armor bonus increases by 1.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -367,6 +378,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Climb checks and Swim checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -406,6 +418,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Each creature you conjure with any *summon* spell gains a +4 enhancement bonus to Strength and Constitution for the duration of the spell that summoned it.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -437,6 +450,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Whenever creating an alchemical item or substance, the character can choose to make it more powerful than normal by adding +20 to the DC required to create it and multiplying its price by 5. If the item or substance deals damage, double the damage dealt. If the item or substance doesn't deal damage, double the duration of its effect. If the item or substance doesn't deal damage and doesn't have a specific listed duration (or has an instantaneous duration), double all dimensions of its area. If the item or substance doesn't fit any of these categories, then it cannot be affected by this feat. See the Craft (alchemy) skill description.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -469,6 +483,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character may cast all 0-, 1st-, 2nd-, and 3rd-level spells as quickened spells without using higher-level spell slots. The normal limit to the number of quickened spells a character may cast per round applies. Spells with a casting time of more than 1 full round can't be quickened.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -505,6 +520,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character may cast all 0-, 1st-, 2nd-, and 3rd-level spells as silent spells without using higher-level spell slots.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -541,6 +557,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character may cast all 0-, 1st-, 2nd-, and 3rd-level spells as stilled spells without using higher-level spell slots.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -577,6 +594,7 @@
   {
     "data": {
       "benefit": "You have a knack for psionic self-sufficiency.\n\n**Benefit:** You get a +2 bonus on all Autohypnosis checks and Knowledge (psionics) checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -603,6 +621,7 @@
   {
     "data": {
       "benefit": "**Benefit:** As a standard action, the creature may choose to subtract 4 from its melee attack roll and deliver an awesome blow. If the creature hits a corporeal opponent smaller than itself with an awesome blow, its opponent must succeed on a Reflex save (DC = damage dealt) or be knocked flying 10 feet in a direction of the attacking creature's choice and fall prone. The attacking creature can only push the opponent in a straight line, and the opponent can't move closer to the attacking creature than the square it started in. If an obstacle prevents the completion of the opponent's move, the opponent and the obstacle each take 1d6 points of damage, and the opponent stops in the space adjacent to the obstacle.",
+      "extraUses": [],
       "featType": "General, Fighter",
       "prerequisites": [
         {
@@ -648,6 +667,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Any weapon the character wields against one of his or her favored enemies is treated as a bane weapon for that creature type (thus, its enhancement bonus is increased by +2 and it deals +2d6 points of damage). This ability doesn't stack with similar abilities.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -679,6 +699,7 @@
   {
     "data": {
       "benefit": "**Benefit:** In melee, every time you miss because of concealment, you can reroll your miss chance percentile roll one time to see if you actually hit.\n\nAn invisible attacker gets no advantages related to hitting you in melee. That is, you don't lose your Dexterity bonus to Armor Class, and the attacker doesn't get the usual +2 bonus for being invisible. The invisible attacker's bonuses do still apply for ranged attacks, however.\n\nYou take only half the usual penalty to speed for being unable to see. Darkness and poor visibility in general reduces your speed to three-quarters normal, instead of one-half.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Regular attack roll modifiers for invisible attackers trying to hit you apply, and you lose your Dexterity bonus to AC. The speed reduction for darkness and poor visibility also applies.",
       "prerequisites": [],
@@ -707,6 +728,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can act as if *hasted* for 5 rounds each day. The duration of the effect need not be consecutive rounds. Activating this power is a free action.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -735,6 +757,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Using senses such as acute hearing and sensitivity to vibrations, you detect the location of opponents who are no more than 5 feet away from you. *Invisibility* and *darkness* are irrelevant, though it you discern incorporeal beings.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -775,6 +798,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Choose an additional domain from the character's deity's domain list. The character now has access to that domain's spells as normal for his or her domain spells and the domain's granted powers.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -807,6 +831,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can create a potion of any 3rd-level or lower spell that you know and that targets one or more creatures. Brewing a potion takes one day. When you create a potion, you set the caster level, which must be sufficient to cast the spell in question and no higher than your own level. The base price of a potion is its spell level x ?its caster level x 50 gp. To brew a potion, you must spend 1/25 of this base price in XP and use up raw materials costing one half this base price.\n\nWhen you create a potion, you make any choices that you would normally make when casting the spell. Whoever drinks the potion is the target of the spell.\n\nAny potion that stores a spell with a costly material component or an XP cost also carries a commensurate cost. In addition to the costs derived from the base price, you must expend the material component or pay the XP when creating the potion.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -838,6 +863,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's defensive stance bonuses increase to +4 Strength, +6 Constitution, +4 resistance bonus on all saves, and +6 dodge bonus to AC.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -869,6 +895,7 @@
   {
     "data": {
       "benefit": "The turbulence of your thoughts prevents others from gaining insight into your actions.\n\n**Benefit:** Creatures and characters who have an insight bonus on their attack rolls, an insight bonus to their Armor Class, or an insight bonus on skill checks or ability checks do not gain those bonuses against you.\n\nThe benefit of this feat applies only to insight bonuses gained from psionic powers and psi-like abilities. This is an exception to the psionics-magic transparency rule.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -906,6 +933,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Any weapon the character wields while in a rage is treated as an anarchic weapon (it is chaos-aligned and deals an extra 2d6 points of damage against creatures of lawful alignment). This ability does not stack with similar abilities.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -936,6 +964,7 @@
   {
     "data": {
       "benefit": "**Benefit:** If you deal a creature enough damage to make it drop (typically by dropping it to below 0 hit points or killing it), you get an immediate, extra melee attack against another creature within reach. You cannot take a 5-foot step before making this extra attack. The extra attack is with the same weapon and at the same bonus as the attack that dropped the previous creature. You can use this ability once per round.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -973,6 +1002,7 @@
   {
     "data": {
       "benefit": "You are skilled at using optical tricks to make yourself seem to be where you are not.\n\n**Benefit:** You can take a move action to obscure your exact position. Until your next turn, you have concealment. Alternatively, you can take a full-round action to entirely obscure your exact position. Until your next action, you have total concealment.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -1010,6 +1040,7 @@
   {
     "data": {
       "benefit": "Your mind is better able to resist psionics than normal.\n\n**Benefit:** You get a +2 bonus on all saving throws to resist powers.\n\nThe benefit of this feat applies only to psionic powers and psi-like abilities. This is an exception to the psionics-magic transparency rule.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -1037,6 +1068,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can use his or her *wild shape* to take the shape of a Colossal animal.",
+      "extraUses": [],
       "featType": "Wild, Epic",
       "normalText": "Without this feat, a character cannot wild shape into an animal of greater than Huge size.",
       "prerequisites": [
@@ -1065,6 +1097,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character does not incur any attacks of opportunity for firing a bow when threatened.",
+      "extraUses": [],
       "featType": "Epic",
       "normalText": "Without this feat, a character incurs an attack of opportunity from all opponents who threaten him or her whenever he or she uses a bow.",
       "prerequisites": [
@@ -1100,6 +1133,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +4 bonus on Concentration checks made to cast a spell or use a spell-like ability while on the defensive or while you are grappling or pinned.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -1126,6 +1160,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When you use the attack action or the full attack action in melee, you can take a penalty of as much as -5 on your attack roll and add the same number (+5 or less) as a dodge bonus to your Armor Class. This number may not exceed your base attack bonus. The changes to attack rolls and Armor Class last until your next action.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "A character without the Combat Expertise feat can fight defensively while using the attack or full attack action to take a -4 penalty on attack rolls and gain a +2 dodge bonus to Armor Class.",
       "prerequisites": [
@@ -1160,6 +1195,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You may make a number of additional attacks of opportunity equal to your Dexterity bonus.\n\nWith this feat, you may also make attacks of opportunity while flat-footed.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "A character without this feat can make only one attack of opportunity per round and can't make attacks of opportunity while flat-footed.",
       "prerequisites": [],
@@ -1188,6 +1224,7 @@
   {
     "data": {
       "benefit": "You can create psionic *cognizance crystals* that store power points.\n\n**Benefit:** You can create a *cognizance crystal*. Doing so takes one day for each 1,000 gp in its base price. The base price of a *cognizance crystal* is equal to the highest-level power it could manifest using all its stored power points, squared, multiplied by 1,000 gp. To create a *cognizance crystal*, you must spend 1/25 of its base price in XP and use up raw materials costing one-half its base price.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1219,6 +1256,7 @@
   {
     "data": {
       "benefit": "**Benefit:** A creature with this feat can create any construct whose prerequisites it meets. Enchanting a construct takes one day for each 1,000 gp in its market price. To enchant a construct, a spellcaster must spend 1/25 the item's price in XP and use up raw materials costing half of this price (see individual construct monster entries for details).\n\nA creature with this feat can repair constructs that have taken damage. In one day of work, the creature can repair up to 20 points of damage by expending 50 gp per point of damage repaired.\n\nA newly created construct has average hit points for its Hit Dice.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1254,6 +1292,7 @@
   {
     "data": {
       "benefit": "You can create slender crystal wands called dorjes than manifest powers when charges are expended.\n\n**Benefit:** You can create a dorje of any psionic power you know (barring exceptions, such as *bestow power*, as noted in a power's description). Crafting a dorje takes one day for each 1,000 gp in its base price. The base price of a dorje is its manifester level x the power level x 750 gp. To craft a dorje, you must spend 1/25 of this base price in XP and use up raw materials costing one-half of this base price.\n\nA newly created dorje has 50 charges.\n\nAny dorje that stores a power with an XP cost also carries a commensurate cost. In addition to the XP cost derived from the base price, you must pay fifty times the XP cost.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1285,6 +1324,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can craft magic arms and armor which exceed the normal limits for such items",
+      "extraUses": [],
       "featType": "Item Creation, Epic",
       "prerequisites": [
         {
@@ -1322,6 +1362,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can craft rods that exceed the normal limits for such items.",
+      "extraUses": [],
       "featType": "Item Creation, Epic",
       "prerequisites": [
         {
@@ -1359,6 +1400,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can craft staffs that exceed the normal limits for such items.",
+      "extraUses": [],
       "featType": "Item Creation, Epic",
       "prerequisites": [
         {
@@ -1396,6 +1438,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can craft wondrous items that exceed the normal limits for such items.",
+      "extraUses": [],
       "featType": "Item Creation, Epic",
       "prerequisites": [
         {
@@ -1433,6 +1476,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can create any magic weapon, armor, or shield whose prerequisites you meet. Enhancing a weapon, suit of armor, or shield takes one day for each 1,000 gp in the price of its magical features. To enhance a weapon, suit of armor, or shield, you must spend 1/25 of its features' total price in XP and use up raw materials costing one-half of this total price.\n\nThe weapon, armor, or shield to be enhanced must be a masterwork item that you provide. Its cost is not included in the above cost.\n\nYou can also mend a broken magic weapon, suit of armor, or shield if it is one that you could make. Doing so costs half the XP, half the raw materials, and half the time it would take to craft that item in the first place.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1464,6 +1508,7 @@
   {
     "data": {
       "benefit": "You can create psicrowns, which have multiple psionic effects.\n\n**Benefit:** You can create any psicrown whose prerequisites you meet. Crafting a psicrown takes one day for each 1,000 gp in its base price. To craft a psicrown, you must spend 1/25 of its base price in XP and use up raw materials costing one-half of its base price. Some psicrowns incur extra costs in XP as noted in their descriptions. These costs are in addition to those derived from the psicrown's base price.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1495,6 +1540,7 @@
   {
     "data": {
       "benefit": "You can create psionic weapons, armor, and shields.\n\n**Benefit:** You can create any psionic weapon, armor, or shield whose prerequisites you meet. Enhancing a weapon, suit of armor, or shield takes one day for each 1,000 gp in the price of its psionic features. To enhance a weapon, you must spend 1/25 of its features' total price in XP and use up raw materials costing one-half of this total price.\n\nThe weapon, armor, or shield to be enhanced must be a masterwork item that you provide. Its cost is not included in the above cost.\n\nYou can also mend a broken psionic weapon, suit of armor, or shield if it is one that you could make. Doing so costs half the XP, half the raw materials, and half the time it would take to enhance that item in the first place.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1526,6 +1572,7 @@
   {
     "data": {
       "benefit": "You can create golems and other psionic automatons that obey your orders.\n\n**Benefit:** You can create any psionic construct whose prerequisites you meet. Creating a construct takes one day for each 1,000 gp in its base price. To create a construct, you must spend 1/25 of the construct's base price in XP and use up raw materials costing one-half of this price. A newly created construct has average hit points for its Hit Dice.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1561,6 +1608,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can create any rod whose prerequisites you meet. Crafting a rod takes one day for each 1,000 gp in its base price. To craft a rod, you must spend 1/25 of its base price in XP and use up raw materials costing one-half of its base price.\n\nSome rods incur extra costs in material components or XP, as noted in their descriptions. These costs are in addition to those derived from the rod's base price.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1592,6 +1640,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can create any staff whose prerequisites you meet.\n\nCrafting a staff takes one day for each 1,000 gp in its base price. To craft a staff, you must spend 1/25 of its base price in XP and use up raw materials costing one-half of its base price. A newly created staff has 50 charges.\n\nSome staffs incur extra costs in material components or XP, as noted in their descriptions. These costs are in addition to those derived from the staff's base price.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1623,6 +1672,7 @@
   {
     "data": {
       "benefit": "You can create universal psionic items.\n\n**Benefit:** You can create any universal psionic item whose prerequisites you meet. Crafting a universal psionic item takes one day for each 1,000 gp in its base price. To craft a universal psionic item, you must spend 1/25 of the item's base price in XP and use up raw materials costing one-half of this price.\n\nYou can also mend a broken universal item if it is one that you could make. Doing so costs half the XP, half the raw materials, and half the time it would take to craft that item in the first place.\n\nSome universal items incur extra costs in XP, as noted in their descriptions. These costs are in addition to those derived from the item's base price. You must pay such a cost to create an item or to mend a broken one.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1654,6 +1704,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can create a wand of any 4th-level or lower spell that you know. Crafting a wand takes one day for each 1,000 gp in its base price. The base price of a wand is its caster level x ?the spell level x 750 gp. To craft a wand, you must spend 1/25 of this base price in XP and use up raw materials costing one-half of this base price. A newly created wand has 50 charges.\n\nAny wand that stores a spell with a costly material component or an XP cost also carries a commensurate cost. In addition to the cost derived from the base price, you must expend fifty copies of the material component or pay fifty times the XP cost.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1685,6 +1736,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can create any wondrous item whose prerequisites you meet. Enchanting a wondrous item takes one day for each 1,000 gp in its price. To enchant a wondrous item, you must spend 1/25 of the item's price in XP and use up raw materials costing half of this price.\n\nYou can also mend a broken wondrous item if it is one that you could make. Doing so costs half the XP, half the raw materials, and half the time it would take to craft that item in the first place.\n\nSome wondrous items incur extra costs in material components or XP, as noted in their descriptions. These costs are in addition to those derived from the item's base price. You must pay such a cost to create an item or to mend a broken one.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -1716,6 +1768,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character gains damage reduction 3/-. This does not stack with damage reduction granted by magic items or nonpermanent magical effects, but it does stack with any damage reduction granted by permanent magical effects, class features, or this feat itself.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -1744,6 +1797,7 @@
   {
     "data": {
       "benefit": "You empty your mind of all distracting emotion, becoming an instrument of deadly precision.\n\n**Benefit:** You have deadly accuracy with your sneak attacks. You can reroll any result of 1 on your sneak attack's extra damage dice. You must keep the result of the reroll, even if it is another 1.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -1780,6 +1834,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can use song or poetics to temporarily deafen all enemies within a 30-foot spread from him or her. A successful Fortitude save (DC 10 + 1/2 the character's class level + the character's Charisma modifier) negates the effect. The deafening effect lasts for as long as the character continues the deafening song. The character can choose to exclude any characters from this effect. The character may sing, play, or recite a deafening song while taking other mundane actions, but not magical ones (see the bard's inspire courage ability for more details). The character may keep up the deafening song for a maximum of 10 rounds. Using the deafening song counts as one of the character's uses of song or poetics for the day.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -1811,6 +1866,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Any time the character scores a critical hit against one of his or her favored enemies, it must make a Fortitude save (DC 10 + 1/2 character's ranger class level + character's Wisdom modifier) or die instantly.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -1847,6 +1903,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Disguise checks and Forgery checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -1886,6 +1943,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You must have at least one hand free (holding nothing) to use this feat. Once per round when you would normally be hit with a ranged weapon, you may deflect it so that you take no damage from it. You must be aware of the attack and not flat-footed.\n\nAttempting to deflect a ranged weapon doesn't count as an action. Unusually massive ranged weapons and ranged attacks generated by spell effects can't be deflected.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -1923,6 +1981,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Sleight of Hand checks and Use Rope checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -1962,6 +2021,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Whenever the character scores a critical hit with the chosen weapon, the target must make a Fortitude save (DC 10 + 1/2 character level + character's Strength modifier) or die instantly. (Creatures immune to critical hits can't be affected by this feat.)",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -2014,6 +2074,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Once per round, when targeted by an effect that requires a Fortitude saving throw, the character may make a Reflex save instead to avoid the effect (evasion is not applicable).",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -2045,6 +2106,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Once per round, when targeted by an effect that requires a Will saving throw, the character may make a Reflex save instead to avoid the effect (evasion is not applicable).",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -2076,6 +2138,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When reduced to between -1 and -9 hit points, you automatically become stable. You don't have to roll d% to see if you lose 1 hit point each round.\n\nWhen reduced to negative hit points, you may choose to act as if you were disabled, rather than dying. You must make this decision as soon as you are reduced to negative hit points (even if it isn't your turn). If you do not choose to act as if you were disabled, you immediately fall unconscious.\n\nWhen using this feat, you can take either a single move or standard action each turn, but not both, and you cannot take a full round action. You can take a move action without further injuring yourself, but if you perform any standard action (or any other action deemed as strenuous, including some free actions, such as casting a quickened spell) you take 1 point of damage after completing the act. If you reach -10 hit points, you immediately die.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "A character without this feat who is reduced to between -1 and -9 hit points is unconscious and dying.",
       "prerequisites": [
@@ -2108,6 +2171,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Appraise checks and Decipher Script checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -2147,6 +2211,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can use *wild shape* to take the shape of a Diminutive animal.",
+      "extraUses": [],
       "featType": "Wild, Epic",
       "normalText": "Without this feat, a character cannot wild shape into an animal of smaller than Tiny size.",
       "prerequisites": [
@@ -2175,6 +2240,7 @@
   {
     "data": {
       "benefit": "**Benefit:** If the character charges a foe during the first round of combat (or the surprise round, if the character is allowed to act in it), he or she can make a full attack against the opponent charged.",
+      "extraUses": [],
       "featType": "Epic",
       "normalText": "Without this feat, a character may only make a single attack as part of a charge.",
       "prerequisites": [
@@ -2202,6 +2268,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You have mastered the art of casting spells unobtrusively, mingling verbal and somatic components into its music and performances so that others rarely catch you in the act of casting a spell. Like a silent, stilled spell, a disguised spell can't be identified through Spellcraft. Your performance is obvious to everyone in the vicinity, but the fact that you are casting a spell isn't. Unless the spell visibly emanates from you or observers have some other means of determining its source, they don't know where the effect came from. A disguised spell uses up a spell slot one level higher than the spell's actual level.",
+      "extraUses": [],
       "featType": "Metamagic",
       "prerequisites": [
         {
@@ -2238,6 +2305,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character may throw or fire a ranged weapon at any target within line of sight, with no penalty for range.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -2278,6 +2346,7 @@
   {
     "data": {
       "benefit": "**Benefit:** As a free action, spend one of your turn or rebuke undead attempts to add your Charisma bonus to your weapon damage for 1 full round.",
+      "extraUses": [],
       "featType": "Divine",
       "prerequisites": [
         {
@@ -2318,6 +2387,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can spend one of your turn undead attempts to add 2d6 points of sacred energy damage to all your successful melee attacks against undead until the end of your next action. This is a supernatural ability.",
+      "extraUses": [],
       "featType": "Divine",
       "prerequisites": [
         {
@@ -2353,6 +2423,7 @@
   {
     "data": {
       "benefit": "**Benefit:** During your action, you designate an opponent and receive a +1 dodge bonus to Armor Class against attacks from that opponent. You can select a new opponent on any action.\n\nA condition that makes you lose your Dexterity bonus to Armor Class (if any) also makes you lose dodge bonuses. Also, dodge bonuses stack with each other, unlike most other types of bonuses.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -2394,6 +2465,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character may use *wild shape* to change into a dragon (black, blue, green, red, white, brass, bronze, copper, gold, or silver). The size limitation is the same as the character's limitation on animal size. The character gains all extraordinary and supernatural abilities of the dragon whose form he or she takes.",
+      "extraUses": [],
       "featType": "Wild, Epic",
       "prerequisites": [
         {
@@ -2431,6 +2503,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Select an item creation feat. Creating a magic item using that feat requires one day per 10,000 gp of the item's market price, with a minimum of one day.",
+      "extraUses": [],
       "featType": "Epic",
       "normalText": "Without this feat, creating a magic item requires one day for each 1,000 gp of the item's market price.",
       "prerequisites": [
@@ -2469,6 +2542,7 @@
   {
     "data": {
       "benefit": "**Benefit:** All variable, numeric effects of an empowered spell are increased by one-half.\n\nSaving throws and opposed rolls are not affected, nor are spells without random variables. An empowered spell uses up a spell slot two levels higher than the spell's actual level.",
+      "extraUses": [],
       "featType": "Metamagic",
       "prerequisites": [],
       "requiresChoice": false,
@@ -2495,6 +2569,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Choose one of the creature's spell-like abilities, subject to the restrictions below. The creature can use that ability as an empowered spell-like ability three times per day (or less, if the ability is normally usable only once or twice per day).\n\nWhen a creature uses an empowered spell-like ability, all variable, numeric effects of the spell-like ability are increased by one half. Saving throws and opposed rolls are not affected. Spell-like abilities without random variables are not affected.\n\nThe creature can only select a spell-like ability duplicating a spell with a level less than or equal to half its caster level (round down) -2. For a summary, see the table in the description of the Quicken Spell-Like Ability feat.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -2527,6 +2602,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You gain a +4 bonus on the following checks and saves: Swim checks made to resist nonlethal damage, Constitution checks made to continue running, Constitution checks made to avoid nonlethal damage from a forced march, Constitution checks made to hold your breath, Constitution checks made to avoid nonlethal damage from starvation or thirst, Fortitude saves made to avoid nonlethal damage from hot or cold environments, and Fortitude saves made to resist damage from suffocation. Also, you may sleep in light or medium armor without becoming fatigued.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "A character without this feat who sleeps in medium or heavier armor is automatically fatigued the next day.",
       "prerequisites": [],
@@ -2555,6 +2631,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Choose a type of energy (acid, cold, electricity, fire, or sonic). The character gains resistance 10 to that type of energy, or the character's existing resistance to that type of energy increases by 10. This feat does not stack with energy resistance granted by magic items or nonpermanent magical effects.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -2577,6 +2654,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You choose one type of energy: acid, cold, electricity, fire, or sonic. When employing a spell with the acid, cold, electricity, fire, or sonic designator, you can modify the spell to use your chosen type of energy instead. The altered spell uses a spell slot of the spell's normal level.\n\nThe altered spell works normally in all respects except the type of damage dealt.",
+      "extraUses": [],
       "featType": "Metamagic",
       "prerequisites": [
         {
@@ -2614,6 +2692,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The damage cap for the character's spells increases by 10 dice (for spells that deal a number of dice of damage equal to caster level) or by 5 dice (for spells that deal a number of dice of damage equal to half caster level). An enhanced spell uses up a spell slot four levels higher than the spell's actual level. This feat has no effect on spells that don't specifically deal a number of dice of damage equal to the caster's level or half level, even if the spell's effect is largely dictated by the caster's level.",
+      "extraUses": [],
       "featType": "Metamagic, Epic",
       "normalText": "Without this feat, use the damage dice caps indicated in the spell's description.",
       "prerequisites": [
@@ -2643,6 +2722,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can alter a spell with a range of close, medium, or long to increase its range by 100%. An enlarged spell with a range of close now has a range of 50 ft. + 5 ft./level, while medium-range spells have a range of 200 ft. + 20 ft./level and long-range spells have a range of 800 ft. + 80 ft./level. An enlarged spell uses up a spell slot one level higher than the spell's actual level.\n\nSpells whose ranges are not defined by distance, as well as spells whose ranges are not close, medium, or long, do not have increased ranges.",
+      "extraUses": [],
       "featType": "Metamagic",
       "prerequisites": [],
       "requiresChoice": false,
@@ -2669,6 +2749,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Once per round, when struck by an attack from an opponent the character has designated as the object of his or her dodge, the character may automatically avoid all damage from the attack.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -2713,6 +2794,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Whenever the character makes a check for performing a physical action that extends over a period of time, he or she gets a +10 bonus on the check.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -2744,6 +2826,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character gains a +4 bonus on all Fortitude saving throws.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": false,
@@ -2765,6 +2848,7 @@
   {
     "data": {
       "benefit": "**Benefit:** All competence bonuses, dodge bonuses, and morale bonuses granted by the character's bardic music ability increase by +1. If you have the inspire greatness bardic music ability, it grants one additional bonus HD.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -2802,6 +2886,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character attracts a cohort and followers as shown below on Table: Epic Leadership. In all other ways Epic Leadership functions as the Leadership feat.\n\n**Table: Epic Leadership Leadership Score** | **Cohort Level** | **----------Number of Followers by Level --------- 1st** | **2nd** | **3rd** | **4th** | **5th** | **6th** | **7th** | **8th** | **9th** | **10th**\n25 | 17th | 135 | 13 | 7 | 4 | 2 | 2 | 1 | - | - | -\n26 | 18th | 160 | 16 | 8 | 4 | 2 | 2 | 1 | - | - | -\n27 | 18th | 190 | 19 | 10 | 5 | 3 | 2 | 1 | - | - | -\n28 | 19th | 220 | 22 | 11 | 6 | 3 | 2 | 1 | - | - | -\n29 | 19th | 260 | 26 | 13 | 7 | 4 | 2 | 1 | - | - | -\n30 | 20th | 300 | 30 | 15 | 8 | 4 | 2 | 1 | - | - | -\n31 | 20th | 350 | 35 | 18 | 9 | 5 | 3 | 2 | 1 | - | -\n32 | 21st | 400 | 40 | 20 | 10 | 5 | 3 | 2 | 1 | - | -\n33 | 21st | 460 | 46 | 23 | 12 | 6 | 3 | 2 | 1 | - | -\n34 | 22nd | 520 | 52 | 26 | 13 | 6 | 3 | 2 | 1 | - | -\n35 | 22nd | 590 | 59 | 30 | 15 | 8 | 4 | 2 | 1 | - | -\n36 | 23rd | 660 | 66 | 33 | 17 | 9 | 5 | 3 | 2 | 1 | -\n37 | 23rd | 740 | 74 | 37 | 19 | 10 | 5 | 3 | 2 | 1 | -\n38 | 24th | 820 | 82 | 41 | 21 | 11 | 6 | 3 | 2 | 1 | -\n39 | 24th | 910 | 91 | 46 | 23 | 12 | 6 | 3 | 2 | 1 | -\n40 | 25th | 1000 | 100 | 50 | 25 | 13 | 7 | 4 | 2 | 1 | -\nper +1 | +1/2* | +100** | **!** | **!** | **!** | **!** | **!** | **!** | **!** | **!** | **! Leadership Score:** A character's Leadership score equals his or her level plus any Charisma modifier. Outside factors can affect a character's Leadership score, as detailed in the Leadership feat.\n\n**Cohort Level:** The character can attract a cohort of up to this level. Regardless of the character's Leadership score, he or she can't recruit a cohort of his or her level or higher.\n\n**Number of Followers by Level:** The character can lead up to the indicated number of characters of each level.\n\n*The maximum cohort level increases by 1 for every 2 points of Leadership above 40. **The number of 1st-level followers increases by 100 for every point of Leadership above 40.\n\n**!**A character can command one-tenth as many 2nd-level followers as 1st-level followers. A character can command one-half as many 3rd-level followers as 2nd-level followers, one-half as many 4th-level followers as 3rd-level followers, and so on (round fractions up, except any fraction less than 1 rounds to 0). A character can't have a follower of higher than 20th level.\n\nTable: Example Special Epic Cohorts presents some creatures that make good cohorts for epic characters.\n\n**Table: Example Special Epic Cohorts Creature** | **Alignment** | **Level Equivalent**\nAngel, astral deva | Any good | 20nd\nDragon, ancient silver | Lawful good | 42nd\nCouatl | Lawful good | 16th\nGiant, cloud | Neutral good | 24th\nGhaele | Chaotic good | 20st\nGiant, storm | Chaotic good | 28th\nDragon, wyrm brass | Chaotic good | 42th\nDragon turtle | Neutral | 21st\nHydra, 12-headed | Neutral | 19th\nRoc | Neutral | 23rd\nDragon, ancient green | Lawful evil | 40th\nDevil, ice (gelugon) | Lawful evil | 21st\nGiant, cloud | Neutral evil | 24th\nDemon, glabrezu | Chaotic evil | 23rd\nDemon, succubus | Chaotic evil | 12th\nDragon, wyrm white | Chaotic evil | 41th",
+      "extraUses": [],
       "featType": "Epic",
       "normalText": "The Leadership feat provides no benefit for leadership scores beyond 25.",
       "prerequisites": [
@@ -2838,6 +2923,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Gain a +1 bonus on all attacks.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -2860,6 +2946,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character gains a +4 bonus on all Reflex saving throws.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": false,
@@ -2881,6 +2968,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character gains a +4 bonus on Bluff, Diplomacy, Gather Information, Intimidate, and Perform checks.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": false,
@@ -2902,6 +2990,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character gains a +10 bonus on all skill checks with that skill.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -2929,6 +3018,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's speed increases by 30 feet. This benefit does not stack with increased speed granted by magic items or nonpermanent magical effects.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -2961,6 +3051,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Add +1 to the Difficulty Class for all saving throws against spells from the school of magic the character selects to focus on. This stacks with the bonuses from Spell Focus and Greater Spell Focus.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -2992,6 +3083,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character gets a +2 bonus on caster level checks to beat a creature's spell resistance. This stacks with the bonuses from Spell Penetration and Greater Spell Penetration.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -3022,6 +3114,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character may develop and cast epic spells. If the character is an arcane spellcaster, he or she may cast a number of epic spells per day equal to his or her ranks in Knowledge (arcana) divided by 10. If the character is a divine spellcaster, he or she may cast a number of epic spells per day equal to his or her ranks in Knowledge (religion) or Knowledge (nature) divided by 10.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -3077,6 +3170,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character gains +30 hit points.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -3099,6 +3193,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Add a +2 bonus to all attack rolls the character makes using the selected weapon.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -3126,6 +3221,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Add +4 to all damage the character deals using the selected weapon. If the weapon is a ranged weapon, the damage bonus only applies if the target is within 30 feet.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -3161,6 +3257,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character gains a +4 bonus on all Will saving throws.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": false,
@@ -3182,6 +3279,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can cast any spell that has a material component costing 1 gp or less without needing that component. (The casting of the spell still provokes attacks of opportunity as normal.) If the spell requires a material component that costs more than 1 gp, you must have the material component at hand to cast the spell, just as normal.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -3208,6 +3306,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can deflect any ranged attacks (including spells that require ranged touch attacks) as if they were arrows.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -3248,6 +3347,7 @@
   {
     "data": {
       "benefit": "Choose a type of exotic weapon. You understand how to use that type of exotic weapon in combat.\n\n**Benefit:** You make attack rolls with the weapon normally.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "A character who uses a weapon with which he or she is not proficient takes a -4 penalty on attack rolls.",
       "prerequisites": [
@@ -3281,6 +3381,7 @@
   {
     "data": {
       "benefit": "**Benefit:** An extended spell lasts twice as long as normal. A spell with a duration of concentration, instantaneous, or permanent is not affected by this feat. An extended spell uses up a spell slot one level higher than the spell's actual level.",
+      "extraUses": [],
       "featType": "Metamagic",
       "prerequisites": [],
       "requiresChoice": false,
@@ -3307,6 +3408,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Add one-half the maximum result of the character's race's maximum age modifier to the character's normal middle age, old, and venerable age categories. Calculate the character's maximum age using the new venerable number. This feat can't lower the character's current age category.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -3329,6 +3431,12 @@
   {
     "data": {
       "benefit": "**Benefit:** You can use your bardic music four extra times per day.",
+      "extraUses": [
+        {
+          "mechanic": "bardic-music",
+          "perInstance": 4
+        }
+      ],
       "featType": "General",
       "normalText": "Bards without the Extra Music feat can use bardic music once per day per level.",
       "prerequisites": [
@@ -3362,6 +3470,12 @@
   {
     "data": {
       "benefit": "**Benefit:** Each time you take this feat, you can use your ability to turn or rebuke creatures four more times per day than normal.\n\nIf you have the ability to turn or rebuke more than one kind of creature each of your turning or rebuking abilities gains four additional uses per day.",
+      "extraUses": [
+        {
+          "mechanic": "turn-undead",
+          "perInstance": 4
+        }
+      ],
       "featType": "General",
       "normalText": "Without this feat, a character can typically turn or rebuke undead (or other creatures) a number of times per day equal to 3 + his or her Charisma modifier.",
       "prerequisites": [
@@ -3395,6 +3509,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Attackers do not gain the usual +2 attack bonus when flanking you. This feat grants no effect whenever you are attacked without benefit of your Dexterity modifier to AC, such as when you are flat-footed or when you are the target of a rogue's sneak attack.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -3431,6 +3546,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Choose one arcane spell the character knows of 8th level or lower. The character's familiar can now use this spell once per day as a spell-like ability, at a caster level equal to the character's caster level. A character cannot bestow a spell to his or her familiar if the spell normally has a material component cost of more than 1 gp or an XP cost.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -3458,6 +3574,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When you use a projectile weapon, such as a bow, its range increment increases by one-half (multiply by 1-1/2). When you use a thrown weapon, its range increment is doubled.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -3490,6 +3607,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character gains fast healing 3, or the character's existing fast healing increases by 3. This feat does not stack with fast healing granted by magic items or nonpermanent magical effects.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -3518,6 +3636,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can use his or her *wild shape* to take the shape of a Fine animal.",
+      "extraUses": [],
       "featType": "Wild, Epic",
       "normalText": "Without this feat, a character cannot wild shape into an animal smaller than Tiny size.",
       "prerequisites": [
@@ -3546,6 +3665,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When running or charging, you can make a single direction change of 90 degrees or less. You can't use this feat while wearing medium or heavy armor, or when carrying a medium or heavy load. If you are charging, you must move in a straight line for 10 feet after the turn to maintain the charge.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, you can run or charge only in a straight line.",
       "prerequisites": [
@@ -3583,6 +3703,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When flying, the creature can take a move action (including a dive) and another standard action at any point during the move. The creature cannot take a second move action during a round when it makes a flyby attack.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, the creature takes a standard action either before or after its move.",
       "prerequisites": [
@@ -3615,6 +3736,7 @@
   {
     "data": {
       "benefit": "You are able to resist psionic attacks with extreme force of will.\n\n**Benefit:** Once per round, when targeted by a psionic effect that allows a Reflex save or a Fortitude save, you can instead make a Will saving throw to avoid the effect.\n\nThe benefit of this feat applies only to psionic powers and psi-like abilities. This is an exception to the psionics-magic transparency rule.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -3647,6 +3769,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can forge magic rings that exceed the normal limits for such items.",
+      "extraUses": [],
       "featType": "Item Creation, Epic",
       "prerequisites": [
         {
@@ -3684,6 +3807,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can create any ring whose prerequisites you meet. Crafting a ring takes one day for each 1,000 gp in its base price. To craft a ring, you must spend 1/25 of its base price in XP and use up raw materials costing one-half of its base price.\n\nYou can also mend a broken ring if it is one that you could make. Doing so costs half the XP, half the raw materials, and half the time it would take to forge that ring in the first place.\n\nSome magic rings incur extra costs in material components or XP, as noted in their descriptions. You must pay such a cost to forge such a ring or to mend a broken one.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -3715,6 +3839,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can use your *wild shape* to take the shape of a Gargantuan animal.",
+      "extraUses": [],
       "featType": "Wild, Epic",
       "normalText": "Without this feat, a character cannot wild shape into an animal greater than Huge size.",
       "prerequisites": [
@@ -3743,6 +3868,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's Charisma increases by 1 point.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -3765,6 +3891,7 @@
   {
     "data": {
       "benefit": "**Benefit:** This feat works like Cleave, except that there is no limit to the number of times you can use it per round.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -3810,6 +3937,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's Constitution increases by 1 point.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -3832,6 +3960,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's Dexterity increases by 1 point.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -3854,6 +3983,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Fortitude saving throws.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -3887,6 +4017,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's Intelligence increases by 1 point.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -3909,6 +4040,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Whenever the character makes a successful smite attack, add twice the appropriate level to damage (rather than just the character's level).",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -3941,6 +4073,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's Strength increases by 1 point.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -3963,6 +4096,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's Wisdom increases by 1 point.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [],
       "requiresChoice": true,
@@ -3985,6 +4119,7 @@
   {
     "data": {
       "benefit": "You are skilled at firing many arrows at once, even at different opponents.\n\n**Benefit:** When you use the Manyshot feat, you can fire each arrow at a different target instead of firing all of them at the same target. You make a separate attack roll for each arrow, regardless of whether you fire them at separate targets or the same target. Your precision-based damage applies to each arrow fired, and, if you score a critical hit with more than one of the arrows, each critical hit deals critical damage.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -4034,6 +4169,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The creature may make up to three extra attacks with each extra offhand weapon it wields, albeit at a -10 penalty on the third attack with each weapon.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -4083,6 +4219,7 @@
   {
     "data": {
       "benefit": "Choose a school of magic to which you already have applied the Spell Focus feat.\n\n**Benefit:** Add +1 to the Difficulty Class for all saving throws against spells from the school of magic you select. This bonus stacks with the bonus from Spell Focus.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": true,
@@ -4110,6 +4247,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on caster level checks (1d20 + caster level) made to overcome a creature's spell resistance. This bonus stacks with the one from Spell Penetration.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -4141,6 +4279,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a third attack with your off-hand weapon, albeit at a -10 penalty.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -4186,6 +4325,7 @@
   {
     "data": {
       "benefit": "Choose one type of weapon for which you have already selected Weapon Focus. You can also choose unarmed strike or grapple as your weapon for purposes of this feat.\n\n**Benefit:** You gain a +1 bonus on all attack rolls you make using the selected weapon. This bonus stacks with other bonuses on attack rolls, including the one from Weapon Focus (see below).",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -4235,6 +4375,7 @@
   {
     "data": {
       "benefit": "Choose one type of weapon for which you have already selected Weapon Specialization. You can also choose unarmed strike or grapple as your weapon for purposes of this feat.\n\n**Benefit:** You gain a +2 bonus on all damage rolls you make using the selected weapon. This bonus stacks with other bonuses on damage rolls, including the one from Weapon Specialization (see below).",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -4292,6 +4433,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The number of allies the character can affect with his or her inspire competence or inspire greatness bardic music ability doubles. When inspiring competence in multiple allies, the character can choose different skills to inspire for different allies.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4324,6 +4466,7 @@
   {
     "data": {
       "benefit": "**Benefit:** A heightened spell has a higher spell level than normal (up to a maximum of 9th level). Unlike other metamagic feats, Heighten Spell actually increases the effective level of the spell that it modifies. All effects dependent on spell level (such as saving throw DCs and ability to penetrate a *lesser globe of invulnerability*) are calculated according to the heightened level. The heightened spell is as difficult to prepare and cast as a spell of its effective level.",
+      "extraUses": [],
       "featType": "Metamagic",
       "prerequisites": [],
       "requiresChoice": false,
@@ -4350,6 +4493,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can use song or poetics to hinder enemy spellcasters within a 30-foot spread from the character. To successfully cast a spell within this area, a spellcaster must make a Concentration check as if he or she were casting defensively, and all such checks have a penalty equal to half the character's level. The character can choose to exclude any characters from this effect. The character may sing, play, or recite a hindering song while taking other mundane actions, but not magical ones (see the bard's inspire courage ability for more details). The character may keep up the hindering song for a maximum of 10 rounds. Using the hindering song counts as one of the character's uses of song or poetics for the day.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4385,6 +4529,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You may make an attack of opportunity against a chagin opponent who enters an atea you threaten. Your attack of opportunity happens immediately before the charge attack is resolved.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "You only get an attack of opportunity against a character that exits a square you threaten.",
       "prerequisites": [
@@ -4421,6 +4566,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Any weapon the character wields is treated as a holy weapon (is good-aligned and deals an extra 2d6 points of damage against creatures of evil alignment). If the weapon already has an alignment, this feat has no effect on the weapon.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4451,6 +4597,7 @@
   {
     "data": {
       "benefit": "Your mind recoils violently against those who use psionics against you.\n\n**Benefit:** Whenever you are subject to a power from the telepathy discipline (regardless of whether the power is harmful or beneficial to you), the manifester must make a Will saving throw against a DC of 10 + 1/2 your character level + your Charisma bonus or take 2d6 points of damage.\n\nThe benefit of this feat applies only to psionic powers and psi-like abilities. This is an exception to the psionics-magic transparency rule.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -4484,6 +4631,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When flying, the creature can halt its forward motion and hover in place as a move action. It can then fly in any direction, including straight down or straight up, at half speed, regardless of its maneuverability.\n\nIf a creature begins its turn hovering, it can hover in place for the turn and take a full-round action. A hovering creature cannot make wing attacks, but it can attack with all other limbs and appendages it could use in a full attack. The creature can instead use a breath weapon or cast a spell instead of making physical attacks, if it could normally do so.\n\nIf a creature of Large size or larger hovers within 20 feet of the ground in an area with lots of loose debris, the draft from its wings creates a hemispherical cloud with a radius of 60 feet. The winds so generated can snuff torches, small campfires, exposed lanterns, and other small, open flames of non-magical origin. Clear vision within the cloud is limited to 10 feet. Creatures have concealment at 15 to 20 feet (20% miss chance). At 25 feet or more, creatures have total concealment (50% miss chance, and opponents cannot use sight to locate the creature).\n\nThose caught in the cloud must succeed on a Concentration check (DC 10 + 1/2 creature's HD) to cast a spell.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, a creature must keep moving while flying unless it has perfect maneuverability.",
       "prerequisites": [
@@ -4516,6 +4664,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character may cast spells without any material components. This feat does not affect the need for a focus or divine focus.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4551,6 +4700,7 @@
   {
     "data": {
       "benefit": "You can create power stones to store psionic powers.\n\n**Benefit:** You can create a power stone of any power that you know. Encoding a power stone takes one day for each 1,000 gp in its base price. The base price of a power stone is the level of the stored power x its manifester level x 25 gp. To imprint a power stone, you must spend 1/25 of this base price in XP and use up raw materials costing one-half of this base price.\n\nAny power stone that stores a power with an XP cost also carries a commensurate cost. In addition to the costs derived from the base price, you must pay the XP when encoding the stone.",
+      "extraUses": [],
       "featType": "Item Creation",
       "prerequisites": [
         {
@@ -4582,6 +4732,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Select an alignment-based domain (Chaos, Evil, Good, or Law) to which the character has access. The character casts spells with that alignment descriptor at +3 caster level.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4629,6 +4780,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Add +2 to the DC of the character's arrows of death. This feat may be taken multiple times. Its effects stack.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4673,6 +4825,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's aura of courage grants a +8 morale bonus on saving throws against fear effects.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4704,6 +4857,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's aura of despair causes a -4 morale penalty on all saving throws.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4735,6 +4889,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When you perform a bull rush you do not provoke an attack of opportunity from the defender. You also gain a +4 bonus on the opposed Strength check you make to push back the defender.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -4772,6 +4927,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character doesn't incur attacks of opportunity for casting spells when threatened.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4803,6 +4959,7 @@
   {
     "data": {
       "benefit": "**Benefit:** There is no limit to the number of attacks of opportunity the character can make in one round. (the character still can't make more than one attack of opportunity for a given oppertunity.)",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4834,6 +4991,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When counterspelling, you may use a spell of the same school that is one or more spell levels higher than the target spell.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, you may counter a spell only with the same spell or with a spell specifically designated as countering the target spell.",
       "prerequisites": [],
@@ -4861,6 +5019,7 @@
   {
     "data": {
       "benefit": "Choose one type of weapon.\n\n**Benefit:** When using the weapon you selected, your threat range is doubled.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -4897,6 +5056,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The range of the character's darkvision doubles. This feat does not stack with darkvision granted by magic items or nonpermanent magical effects.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4924,6 +5084,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Add +2 to the DC of the character's death attack.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -4955,6 +5116,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You do not provoke an attack of opportunity when you attempt to disarm an opponent, nor does the opponent have a chance to disarm you. You also gain a +4 bonus on the opposed attack roll you make to disarm your opponent.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "See the normal disarm rules.",
       "prerequisites": [
@@ -4993,6 +5155,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's ability to *wild shape* into an elemental is expanded to include all elemental creatures (not just air, earth, fire, and water elementals) of any size that the character can take when using *wild shape* to become an animal. The character gains all extraordinary and supernatural abilities of the elemental whose form he or she takes.",
+      "extraUses": [],
       "featType": "Wild, Epic",
       "normalText": "Without this feat, a character may only wild shape into a Small, Medium-size, or Large air, earth, fire, or water elemental.",
       "prerequisites": [
@@ -5026,6 +5189,7 @@
   {
     "data": {
       "benefit": "This feat allows spellcasters to acquire a new familiar from a nonstandard list, but only when they could normally acquire a new familiar.\n\n**Benefit:** When choosing a familiar, the creatures listed below are also available to the spellcaster. The spellcaster may choose a familiar with an alignment up to one step away on each of the alignment axes (lawful through chaotic, good through evil).\n\n**Familiar** | **Alignment** | **Arcane Spellcaster Level**\nShocker lizard | Neutral | 5th\nStirge | Neutral | 5th\nFormian worker | Lawful neutral | 7th\nImp | Lawful evil | 7th\nPseudodragon | Neutral good | 7th\nQuasit | Chaotic evil | 7th\n\nImproved familiars otherwise use the rules for regular familiars, with two exceptions: If the creature's type is something other than animal, its type does not change; and improved familiars do not gain the ability to speak with other creatures of their kind (although many of them already have the ability to communicate).\n\nThe list in the table above presents only a few possible improved familiars. Almost any creature of the same general size and power as those on the list makes a suitable familiar. Nor is the master's alignment the only possible categorization. For instance, improved familiars could be assigned by the master's creature type or subtype, as shown below.\n\n**Familiar** | **Type/Subtype** | **Arcane Spellcaster Level**\nCelestial hawk**1** | Good | 3rd\nFiendish Tiny viper snake**2** | Evil | 3rd\nAir elemental, Small | Air | 5th\nEarth elemental, Small | Earth | 5th\nFire elemental, Small | Fire | 5th\nShocker lizard | Electricity | 5th\nWater elemental, Small | Water | 5th\nHomunculus**3** | Undead | 7th\nIce mephit | Cold | 7th\n1 Or other celestial animal from the standard familiar list.\n2 Or other fiendish animal from the standard familiar list.\n3 The master must first create the homunculus, substituting ichor or another part of the master's body for blood if necessary.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -5065,6 +5229,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Add +1 to the bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks and damage rolls against all the character's favored enemies.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -5092,6 +5257,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can make a Bluff check to feint in combat as a move action.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Feinting in combat is a standard action. A fighter may select Improved Feint as one of his fighter bonus feats.",
       "prerequisites": [
@@ -5129,6 +5295,7 @@
   {
     "data": {
       "benefit": "**Benefit:** If the standard action taken by a creature during a round in which it uses Flyby Attack is a melee attack, the creature provokes no attacks of opportunity from moving out of squares threatened by its target.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, a creature making an attack as part of a Flyby Attack maneuver provokes attacks of opportunity as normal from moving out of squares threatened by its target.",
       "prerequisites": [
@@ -5173,6 +5340,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You do not provoke an attack of opportunity when you make a touch attack to start a grapple. You also gain a +4 bonus on all grapple checks, regardless of whether you started the grapple.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, you provoke an attack of opportunity when you make a touch attack to start a grapple.",
       "prerequisites": [
@@ -5211,6 +5379,7 @@
   {
     "data": {
       "benefit": "**Benefit:** As Heighten Spell, but there is no limit to the level to which the character can heighten the spell.",
+      "extraUses": [],
       "featType": "Epic",
       "normalText": "Without this feat, a spell can only be heightened to a maximum of 9th level.",
       "prerequisites": [
@@ -5243,6 +5412,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +4 bonus on initiative checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -5277,6 +5447,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's unarmed strikes are treated as epic magic weapons for the purposes of damage reduction.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -5308,6 +5479,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The range of the character's low-light vision doubles. This feat does not stack with low-light vision granted by magic items or nonpermanent magical effects.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -5335,6 +5507,7 @@
   {
     "data": {
       "benefit": "**Benefits:** As Manyshot, but the number of arrows the character can fire is limited only by his or her base attack bonus (two arrows, plus one arrow for every 5 points of base attack bonus above +6).",
+      "extraUses": [],
       "featType": "Epic",
       "normalText": "With the Manyshot feat, the character is limited to a maximum of four arrows fired (when the character's base attack bonus is +16 or higher).",
       "prerequisites": [
@@ -5380,6 +5553,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The spell slot modifier of all the character's metamagic feats is reduced by one level, to a minimum of +1. This feat has no effect on metamagic feats whose spell slot modifier is +1 or less.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -5412,6 +5586,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The creature's secondary attacks with natural weapons have no penalty. They still add only one-half the creature's Strength bonus, if any, to damage dealt.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, the creature's secondary natural attacks have a -5 penalty (or a -2 penalty if it has the Multiattack feat).",
       "prerequisites": [
@@ -5448,6 +5623,7 @@
   {
     "data": {
       "benefit": "**Benefit:** In addition to the single extra attack a creature gets with each extra weapon from Multiweapon Fighting, it gets a second attack with each extra weapon, albeit at a -5 penalty.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "With only Multiweapon Fighting, a creater can only get a single attack with each extra weapon.",
       "prerequisites": [
@@ -5494,6 +5670,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The creature's natural armor bonus increases by 1.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -5531,6 +5708,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Choose one of the creature's natural attack forms. The damage for this natural weapon increases by one step, as if the creature's size had increased by one category: 1d2, 1d3, 1d4, 1d6, 1d8, 2d6, 3d6, 4d6, 6d6, 8d6, 12d6.\n\nA weapon or attack that deals 1d10 points of damage increases as follows: 1d10, 2d8, 3d8, 4d8, 6d8, 8d8, 12d8.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -5566,6 +5744,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When you attempt to overrun an opponent, the target may not choose to avoid you. You also gain a +4 bonus on your Strength check to knock down your opponent.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, the target of an overrun can choose to avoid you or to block you.",
       "prerequisites": [
@@ -5604,6 +5783,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Your ranged attacks ignore the AC bonus granted to targets by anything less than total cover, and the miss chance granted to targets by anything less than total concealment. Total cover and total concealment provide their normal benefits against your ranged attacks.\n\nIn addition, when you shoot or throw ranged weapons at a grappling opponent, you automatically strike at the opponent you have chosen.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "See the normal rules on the effects of cover and concealment. Without this feat, a character who shoots or throws a ranged weapon at a target involved in a grapple must roll randomly to see which grappling combatant the attack strikes.",
       "prerequisites": [
@@ -5650,6 +5830,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When you perform a shield bash, you may still apply the shield's shield bonus to your AC.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, a character who performs a shield bash loses the shield's shield bonus to AC until his or her next turn.",
       "prerequisites": [
@@ -5683,6 +5864,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Add +1d6 to the character's sneak attack damage.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -5710,6 +5892,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When the character selects this feat, he or she gains one spell slot per day of any level up to one level higher than the highest-level spell the character can already cast in a particular class. The character must still have the requisite ability score (10 + spell level) in order to cast any spell stored in this slot. If the character has a high enough ability modifier to gain one or more bonus spells for this spell level, he or she also gains the bonus spells for this spell level. The character must use the spell slot as a member of the class in which he or she can already cast spells of the normal maximum spell level.\n\n**Spell Slots Above 9th Level**\n\nThe Improved Spell Capacity feat allows characters to gain spell slots above 9th level (which can be used to hold lower-level spells or spells whose level has been increased beyond 9th by the use of metamagic feats).\n\nA character with a very high score in the ability associated with his or her spellcasting (Intelligence for wizards; Wisdom for clerics, druids, paladins, and rangers; or Charisma for bards and sorcerers) may receive bonus spells of those levels, as shown on Table: Expanded Ability Modifiers and Bonus Spells, but only if they already have at least one spell slot of that level (such as from the Improved Spell Capacity feat). A character without any spell slots of a level can't receive any bonus spells of that level, even if the appropriate ability score is high enough to award them.\n\nEven though the table only includes ability scores up to 61 and spell slots up to 25th level, the progression continues infinitely in both directions. For ability scores beyond 61, or for spell slots above 25th level, expand the table to follow the same patterns as shown.\n\n**Table: Expanded Ability Modifiers and Bonus Spells --------------- Spells per Day ------------------- Score** | **Modifier** | **10th** | **11th** | **12th** | **13th** | **14th** | **15th** | **16th** | **17th** | **18th** | **19th** | **20th** | **21st** | **22nd** | **23rd** | **24th** | **25th**\n10-11 | +0 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n12-13 | +1 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n14-15 | +2 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n16-17 | +3 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n18-19 | +4 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n20-21 | +5 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n22-23 | +6 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n24-25 | +7 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n26-27 | +8 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n28-29 | +9 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n30-31 | +10 | 1 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n32-33 | +11 | 1 | 1 | - | - | - | - | - | - | - | - | - | - | - | - | - | -\n34-35 | +12 | 1 | 1 | 1 | - | - | - | - | - | - | - | - | - | - | - | - | -\n36-37 | +13 | 1 | 1 | 1 | 1 | - | - | - | - | - | - | - | - | - | - | - | -\n38-39 | +14 | 2 | 1 | 1 | 1 | 1 | - | - | - | - | - | - | - | - | - | - | -\n40-41 | +15 | 2 | 2 | 1 | 1 | 1 | 1 | - | - | - | - | - | - | - | - | - | -\n42-43 | +16 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | - | - | - | - | - | - | - | - | -\n44-45 | +17 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | - | - | - | - | - | - | - | -\n46-47 | +18 | 3 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | - | - | - | - | - | - | -\n48-49 | +19 | 3 | 3 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | - | - | - | - | - | -\n50-51 | +20 | 3 | 3 | 3 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | - | - | - | - | -\n52-53 | +21 | 3 | 3 | 3 | 3 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | - | - | - | -\n54-55 | +22 | 4 | 3 | 3 | 3 | 3 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | - | - | -\n56-57 | +23 | 4 | 4 | 3 | 3 | 3 | 3 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | - | -\n58-59 | +24 | 4 | 4 | 4 | 3 | 3 | 3 | 3 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1 | -\n60-61 | +25 | 4 | 4 | 4 | 4 | 3 | 3 | 3 | 3 | 2 | 2 | 2 | 2 | 1 | 1 | 1 | 1\netc. . .",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -5737,6 +5920,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character's spell resistance increases by +2.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -5772,6 +5956,7 @@
   {
     "data": {
       "benefit": "**Benefit:** Add +2 to the DC of the character's stunning attack.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -5813,6 +5998,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When you strike at an object held or carried by an opponent (such as a weapon or shield), you do not provoke an attack of opportunity.\n\nYou also gain a +4 bonus on any attack roll made to attack an object held or carried by another character.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, you provoke an attack of opportunity when you strike at an object held or carried by another character.",
       "prerequisites": [
@@ -5851,6 +6037,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You do not provoke an attack of opportunity when you attempt to trip an opponent while you are unarmed. You also gain a +4 bonus on your Strength check to trip your opponent.\n\nIf you trip an opponent in melee combat, you immediately get a melee attack against that opponent as if you hadn't used your attack for the trip attempt.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, you provoke an attack of opportunity when you attempt to trip an opponent while you are unarmed.",
       "prerequisites": [
@@ -5889,6 +6076,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You turn or rebuke creatures as if you were one level higher than you are in the class that grants you the ability.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -5920,6 +6108,7 @@
   {
     "data": {
       "benefit": "**Benefit:** In addition to the standard single extra attack you get with an off-hand weapon, you get a second attack with it, albeit at a -5 penalty.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, you can only get a single extra attack with an off-hand weapon.",
       "prerequisites": [
@@ -5962,6 +6151,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You are considered to be armed even when unarmed -that is, you do not provoke attacks or opportunity from armed opponents when you attack them while unarmed. However, you still get an attack of opportunity against any opponent who makes an unarmed attack on you.\n\nIn addition, your unarmed strikes can deal lethal or nonlethal damage, at your option.",
+      "extraUses": [],
       "featType": "General",
       "normalText": "Without this feat, you are considered unarmed when attacking with an unarmed strike, and you can deal only nonlethal damage with such an attack.",
       "prerequisites": [],
@@ -5990,6 +6180,7 @@
   {
     "data": {
       "benefit": "**Benefit:** As a standard action, the character can make one melee attack for every five points of his or her base attack bonus (including epic attack bonus, round fractions down).\n\nThe character cannot attack any one opponent more than once as part of this action. These attacks (as well as all other attacks made until the start of the character's next turn) suffer a -4 penalty.\n\nWhen using the Improved Whirlwind feat, the character also forfeits any bonus or extra attacks granted by other spells or abilities (such as Cleave or the haste spell).\n\nSince these attacks are made as part of a standard action the character can't make a 5-foot step between any two of the attacks.",
+      "extraUses": [],
       "featType": "Epic",
       "normalText": "Without this feat, using the Whirlwind Attack feat requires a full attack action, and the character can take a 5-foot step between any two of the attacks.",
       "prerequisites": [
@@ -6043,6 +6234,7 @@
   {
     "data": {
       "benefit": "**Benefit:** When the character enters a rage, he or she can incite a barbarian rage in any or all allies within 60 feet. (Any ally who doesn't wish to become enraged is unaffected.) The ally gains +4 to Strength, +4 to Constitution, and a +2 morale bonus on Will saves, but takes a -2 penalty to AC, for as long as the character remains raging. The rage of affected allies lasts a number of rounds equal to 3 + their Constitution modifier, regardless of whether they remain within 60 feet of the character. This is otherwise identical with normal barbarian rage (including the fatigue at its end).",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -6075,6 +6267,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character may perform any number of deflections each round, as the Deflect Arrows feat.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -6114,6 +6307,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character can use song or poetics to grant a bonus to one ability score to his or her allies. To be affected, an ally must hear the bard sing for 1 full round. The effect lasts as long as the bard sings and for 5 rounds after the bard stops singing (or 5 rounds after the ally can no longer hear the bard). While singing, the bard can fight but cannot cast spells, activate magic items by spell completion (such as scrolls), or activate magic items by command word (such as wands). Each ally to be inspired gains a +4 competence bonus to the same ability score, which the character must choose before he or she begins inspiring. Inspire excellence is a supernatural, mind-affecting ability. Use of this feat counts as one of the character's bardic music uses for the day.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -6146,6 +6340,7 @@
   {
     "data": {
       "benefit": "**Benefit:** The character may fire the selected type of crossbow at his or her full normal attack rate. Reloading the crossbow does not provoke attacks of opportunity.",
+      "extraUses": [],
       "featType": "Epic",
       "prerequisites": [
         {
@@ -6181,6 +6376,7 @@
   {
     "data": {
       "benefit": "**Benefit:** All variable, numeric effects of an intensified spell are maximized, then doubled. An intensified spell deals twice maximum damage, cures twice the maximum number of hit points, affects twice the maximum number of targets, and so forth, as appropriate. Saving throws and opposed rolls are not affected. An intensified spell uses up a spell slot seven levels higher than the spell's actual level. A character can't combine the effects of this feat with any other feat that affects the variable, numeric effects of a spell.",
+      "extraUses": [],
       "featType": "Metamagic, Epic",
       "prerequisites": [
         {
@@ -6221,6 +6417,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Gather Information checks and Search checks.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -6260,6 +6457,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You get a +2 bonus on all Will saving throws.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [],
       "requiresChoice": false,
@@ -6293,6 +6491,7 @@
   {
     "data": {
       "benefit": "**Benefit:** You can use any skill untrained, even those that normally require training.",
+      "extraUses": [],
       "featType": "General",
       "prerequisites": [
         {
@@ -6318,125 +6517,6 @@
     "source": "srd",
     "tags": [
       "general"
-    ],
-    "updatedAt": ""
-  },
-  {
-    "data": {
-      "benefit": "**Benefit:** The character's unarmed strike has a critical threat range of 18-20 and deals slashing damage (at the character's option any attack can deal bludgeoning damage, but cannot then take advantage of the enhanced threat range). This ability doesn't stack with other abilities that expand that character's unarmed strike's threat range.",
-      "featType": "Epic",
-      "prerequisites": [
-        {
-          "ability": "str",
-          "type": "minAbility",
-          "value": 23
-        },
-        {
-          "ability": "wis",
-          "type": "minAbility",
-          "value": 23
-        },
-        {
-          "featId": "srd:feat:improved-critical",
-          "type": "hasFeat"
-        },
-        {
-          "featId": "srd:feat:improved-unarmed-strike",
-          "type": "hasFeat"
-        },
-        {
-          "featId": "srd:feat:stunning-fist",
-          "type": "hasFeat"
-        },
-        {
-          "text": "ki strike (adamantine)",
-          "type": "custom"
-        }
-      ],
-      "requiresChoice": false,
-      "stackable": false
-    },
-    "description": "Keen Strike [Epic]\n\n**Prerequisites:** Str 23, Wis 23, Improved Critical (unarmed strike), Improved Unarmed Strike, Stunning fist, *ki* strike (adamantine).\n\n**Benefit:** The character's unarmed strike has a critical threat range of 18-20 and deals slashing damage (at the character's option any attack can deal bludgeoning damage, but cannot then take advantage of the enhanced threat range). This ability doesn't stack with other abilities that expand that character's unarmed strike's threat range.",
-    "effects": [],
-    "id": "srd:feat:keen-strike",
-    "kind": "feat",
-    "name": "Keen Strike",
-    "rev": 1,
-    "schemaVersion": 1,
-    "source": "srd",
-    "tags": [
-      "epic"
-    ],
-    "updatedAt": ""
-  },
-  {
-    "data": {
-      "benefit": "**Benefit:** Whenever you deal 10 or more points of damage to your opponent in melee, you make a trip attack as a free action against the same target.",
-      "featType": "General",
-      "prerequisites": [
-        {
-          "type": "minBab",
-          "value": 2
-        },
-        {
-          "featId": "srd:feat:improved-trip",
-          "type": "hasFeat"
-        },
-        {
-          "ability": "str",
-          "type": "minAbility",
-          "value": 15
-        }
-      ],
-      "requiresChoice": false,
-      "stackable": false
-    },
-    "description": "Knock-Down [General]\n\n**Prerequisites:** Base attack bonus +2, Improved Trip, Str 15.\n\n**Benefit:** Whenever you deal 10 or more points of damage to your opponent in melee, you make a trip attack as a free action against the same target.",
-    "effects": [],
-    "id": "srd:feat:knock-down",
-    "kind": "feat",
-    "localized": {
-      "de": {
-        "summary": "Fügst du im Nahkampf 10 oder mehr Schaden zu, folgt als freie Aktion ein Umwerf-Versuch gegen dasselbe Ziel."
-      }
-    },
-    "name": "Knock-Down",
-    "rev": 1,
-    "schemaVersion": 1,
-    "source": "srd",
-    "tags": [
-      "general"
-    ],
-    "updatedAt": ""
-  },
-  {
-    "data": {
-      "benefit": "**Benefit:** The effects of the character's bardic music inspiration abilities last for ten times as long as normal after he or she stops singing. This feat has no effect on inspiration abilities that have no duration after the character stops singing.",
-      "featType": "Epic",
-      "prerequisites": [
-        {
-          "ranks": 25,
-          "skillId": "srd:skill:perform",
-          "type": "minSkillRanks"
-        },
-        {
-          "text": "bardic music class feature",
-          "type": "custom"
-        }
-      ],
-      "requiresChoice": false,
-      "stackable": false
-    },
-    "description": "Lasting Inspiration [Epic]\n\n**Prerequisite:** Perform 25 ranks, bardic music class feature.\n\n**Benefit:** The effects of the character's bardic music inspiration abilities last for ten times as long as normal after he or she stops singing. This feat has no effect on inspiration abilities that have no duration after the character stops singing.",
-    "effects": [],
-    "id": "srd:feat:lasting-inspiration",
-    "kind": "feat",
-    "name": "Lasting Inspiration",
-    "rev": 1,
-    "schemaVersion": 1,
-    "source": "srd",
-    "tags": [
-      "epic"
     ],
     "updatedAt": ""
   }

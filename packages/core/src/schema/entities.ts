@@ -182,6 +182,23 @@ export const featDataSchema = z.object({
   benefit: z.string().optional(),
   normalText: z.string().optional(),
   specialText: z.string().optional(),
+  /**
+   * „Vier zusätzliche Versuche pro Tag" — welche Tages-Mechanik das Talent
+   * aufwertet und um wie viel. Als DATEN, nicht als Sonderfall im Code: damit
+   * zählt ein Homebrew-Talent genauso mit wie Extra Turning.
+   *
+   * `mechanic` ist der Schlüssel des Zähler-Vorschlags (engine/trackers.ts),
+   * z.B. „turn-undead" oder „bardic-music". `perInstance` gilt je Eintrag des
+   * Talents am Charakter — Extra Turning ist mehrfach nehmbar und stapelt.
+   */
+  extraUses: z
+    .array(
+      z.object({
+        mechanic: z.string(),
+        perInstance: z.number().int(),
+      }),
+    )
+    .default([]),
 });
 export type FeatData = z.infer<typeof featDataSchema>;
 

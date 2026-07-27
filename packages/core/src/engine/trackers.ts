@@ -32,6 +32,11 @@ const CLASS_IDS = {
   sorcerer: "srd:class:sorcerer",
 } as const;
 
+const FEAT_IDS = {
+  /** Der Mönch trägt es ab Stufe 1, andere wählen es — die Zahl unterscheidet sich. */
+  stunningFist: "srd:feat:stunning-fist",
+} as const;
+
 function levelOf(sheet: DerivedSheet, classId: string): number {
   return sheet.classLevels.find((c) => c.classId === classId)?.level ?? 0;
 }
@@ -40,26 +45,46 @@ function abilityMod(sheet: DerivedSheet, ability: Ability): number {
   return sheet.abilities[ability]?.mod ?? 0;
 }
 
+const signed = (value: number): string => `${value >= 0 ? "+" : ""}${value}`;
+
 export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
   const out: TrackerSuggestion[] = [];
   const cha = abilityMod(sheet, "cha");
+
+  /**
+   * Talente, die dieselbe Mechanik aufwerten, kommen aus den DATEN
+   * (`extraUses` am Talent), nicht aus einer Namensliste hier — sonst zählt
+   * Extra Turning mit und ein Homebrew-Talent nicht.
+   */
+  const push = (suggestion: TrackerSuggestion) => {
+    const extra = sheet.extraUses[suggestion.key] ?? 0;
+    if (extra === 0) {
+      out.push(suggestion);
+      return;
+    }
+    out.push({
+      ...suggestion,
+      max: Math.max(1, suggestion.max + extra),
+      note: `${suggestion.note} · ${signed(extra)} aus Talenten`,
+    });
+  };
 
   // Untote vertreiben: 3 + CH-Modifikator pro Tag (Kleriker, Paladin ab Stufe 4).
   const cleric = levelOf(sheet, CLASS_IDS.cleric);
   const paladin = levelOf(sheet, CLASS_IDS.paladin);
   if (cleric > 0 || paladin >= 4) {
-    out.push({
+    push({
       key: "turn-undead",
       name: "Untote vertreiben",
       max: Math.max(1, 3 + cha),
-      note: `3 + CH-Modifikator (${cha >= 0 ? "+" : ""}${cha}) pro Tag`,
+      note: `3 + CH-Modifikator (${signed(cha)}) pro Tag`,
     });
   }
 
   // Böses niederstrecken: 1/Tag ab Stufe 1, +1 auf Stufe 5, 10, 15, 20.
   if (paladin >= 1) {
     const smites = 1 + Math.floor(paladin / 5);
-    out.push({
+    push({
       key: "smite-evil",
       name: "Böses niederstrecken",
       max: smites,
@@ -70,7 +95,7 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
   // Bardenmusik: einmal pro Bardenstufe und Tag.
   const bard = levelOf(sheet, CLASS_IDS.bard);
   if (bard > 0) {
-    out.push({
+    push({
       key: "bardic-music",
       name: "Bardenmusik",
       max: bard,
@@ -81,7 +106,7 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
   // Raserei: 1/Tag, +1 auf Stufe 4, 8, 12, 16, 20.
   const barbarian = levelOf(sheet, CLASS_IDS.barbarian);
   if (barbarian > 0) {
-    out.push({
+    push({
       key: "rage",
       name: "Raserei",
       max: 1 + Math.floor(barbarian / 4),
@@ -89,15 +114,31 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
     });
   }
 
-  // Betäubender Schlag: der MÖNCH darf einmal je Mönchsstufe pro Tag. Die
-  // „einmal je vier Stufen" im Talenttext gelten für Nicht-Mönche.
+  /**
+   * Betäubender Schlag. Der Mönch bekommt das Talent auf Stufe 1 geschenkt und
+   * darf einmal je MÖNCHSSTUFE plus einmal je vier Stufen anderer Klassen. Wer
+   * das Talent regulär gewählt hat, darf einmal je vier Stufen — das ist die
+   * Zahl aus dem Talenttext.
+   */
   const monk = levelOf(sheet, CLASS_IDS.monk);
+  const hasStunningFist = sheet.featIds.includes(FEAT_IDS.stunningFist);
   if (monk > 0) {
-    out.push({
+    const other = Math.max(0, sheet.totalLevel - monk);
+    push({
       key: "stunning-fist",
       name: "Betäubender Schlag",
-      max: monk,
-      note: `Mönch ${monk}: einmal je Mönchsstufe pro Tag`,
+      max: monk + Math.floor(other / 4),
+      note:
+        other >= 4
+          ? `Mönch ${monk} + je 4 Stufen anderer Klassen (${other})`
+          : `einmal je Mönchsstufe (${monk}) pro Tag`,
+    });
+  } else if (hasStunningFist && Math.floor(sheet.totalLevel / 4) > 0) {
+    push({
+      key: "stunning-fist",
+      name: "Betäubender Schlag",
+      max: Math.floor(sheet.totalLevel / 4),
+      note: `Talent: einmal je 4 Stufen (Stufe ${sheet.totalLevel})`,
     });
   }
 
@@ -106,7 +147,7 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
   if (druid >= 5) {
     // 5.: 1× · 6.: 2× · 7.: 3× · 10.: 4× · 14.: 5× · 18.: 6×
     const uses = druid >= 18 ? 6 : druid >= 14 ? 5 : druid >= 10 ? 4 : druid >= 7 ? 3 : druid >= 6 ? 2 : 1;
-    out.push({
+    push({
       key: "wild-shape",
       name: "Tiergestalt",
       max: uses,
@@ -114,13 +155,13 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
     });
   }
 
-  // Klassenfähigkeiten mit „X/day" im Namen sind aus dem Datensatz eindeutig.
+  // Klassenfähigkeiten mit „X/day“ im Namen sind aus dem Datensatz eindeutig.
   for (const feature of sheet.features) {
     const match = /(\d+)\s*\/\s*day/i.exec(feature.name);
     if (!match?.[1]) continue;
     const key = `feature:${feature.key}`;
     if (out.some((entry) => entry.key === key)) continue;
-    out.push({
+    push({
       key,
       name: feature.name,
       max: Number.parseInt(match[1], 10),

@@ -43,7 +43,28 @@ function classEntity(id: string, name: string, extra: Partial<Record<string, unk
   });
 }
 
+function featEntity(id: string, name: string, data: Record<string, unknown> = {}) {
+  return entitySchema.parse({ id, kind: "feat", name, source: "srd", data });
+}
+
 const COMPENDIUM = resolveCompendium([
+  featEntity("srd:feat:extra-turning", "Extra Turning", {
+    stackable: true,
+    extraUses: [{ mechanic: "turn-undead", perInstance: 4 }],
+  }),
+  featEntity("srd:feat:extra-music", "Extra Music", {
+    stackable: true,
+    extraUses: [{ mechanic: "bardic-music", perInstance: 4 }],
+  }),
+  featEntity("srd:feat:stunning-fist", "Stunning Fist"),
+  // Homebrew nimmt am selben Mechanismus teil — nichts im Code kennt Talent-Namen.
+  entitySchema.parse({
+    id: "hb:feat:segen-des-tempels",
+    kind: "feat",
+    name: "Segen des Tempels",
+    source: "homebrew",
+    data: { extraUses: [{ mechanic: "turn-undead", perInstance: 2 }] },
+  }),
   entitySchema.parse({
     id: "srd:race:human",
     kind: "race",
@@ -65,13 +86,26 @@ const COMPENDIUM = resolveCompendium([
 
 const HOUSE = houseRulesSchema.parse({});
 
-function sheetFor(classId: string, level: number, cha = 10) {
+function sheetFor(
+  classId: string,
+  level: number,
+  cha = 10,
+  opts: { feats?: string[]; plus?: { classId: string; level: number } } = {},
+) {
+  const levels = [
+    ...Array.from({ length: level }, () => ({ classId, hpRoll: "avg" as const })),
+    ...Array.from({ length: opts.plus?.level ?? 0 }, () => ({
+      classId: opts.plus!.classId,
+      hpRoll: "avg" as const,
+    })),
+  ];
   const character = characterSchema.parse({
     id: "t",
     name: "Testfigur",
     raceId: "srd:race:human",
     abilities: { base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha } },
-    levels: Array.from({ length: level }, () => ({ classId, hpRoll: "avg" as const })),
+    levels,
+    feats: (opts.feats ?? []).map((featId) => ({ featId })),
   });
   return deriveSheet(character, COMPENDIUM, HOUSE);
 }
@@ -113,6 +147,81 @@ describe("suggestTrackers", () => {
   it("Betäubender Schlag: der Mönch darf einmal je Mönchsstufe", () => {
     // Die „einmal je vier Stufen“ im Talenttext gelten für Nicht-Mönche.
     expect(suggestionFor("srd:class:monk", 6, "stunning-fist")?.max).toBe(6);
+  });
+
+  it("Betäubender Schlag: Mönch plus je 4 Stufen anderer Klassen", () => {
+    // SRD: „a number of times per day equal to her monk level, plus one more
+    // time per day for every four levels she has in classes other than monk“.
+    const sheet = sheetFor("srd:class:monk", 6, 10, {
+      plus: { classId: "srd:class:fighter", level: 4 },
+    });
+    const found = suggestTrackers(sheet).find((s) => s.key === "stunning-fist");
+    expect(found?.max).toBe(7);
+    expect(found?.note).toContain("anderer Klassen");
+  });
+
+  it("Betäubender Schlag ohne Mönch: einmal je 4 Stufen, nur MIT dem Talent", () => {
+    const withFeat = sheetFor("srd:class:fighter", 8, 10, {
+      feats: ["srd:feat:stunning-fist"],
+    });
+    expect(suggestTrackers(withFeat).find((s) => s.key === "stunning-fist")?.max).toBe(2);
+
+    // Ohne das Talent gibt es die Mechanik nicht.
+    const without = sheetFor("srd:class:fighter", 8);
+    expect(suggestTrackers(without).some((s) => s.key === "stunning-fist")).toBe(false);
+
+    // Stufe 3 mit Talent: 0 Einsätze — dann lieber kein Vorschlag als „max 0“.
+    const tooLow = sheetFor("srd:class:fighter", 3, 10, { feats: ["srd:feat:stunning-fist"] });
+    expect(suggestTrackers(tooLow).some((s) => s.key === "stunning-fist")).toBe(false);
+  });
+
+  describe("Talente werten die Mechanik auf (aus den Daten, nicht per Namensliste)", () => {
+    it("Extra Turning gibt vier Versuche mehr und stapelt", () => {
+      const once = sheetFor("srd:class:cleric", 5, 16, { feats: ["srd:feat:extra-turning"] });
+      const found = suggestTrackers(once).find((s) => s.key === "turn-undead");
+      // 3 + CH 3 = 6, plus 4 aus dem Talent
+      expect(found?.max).toBe(10);
+      expect(found?.note).toContain("+4 aus Talenten");
+
+      const twice = sheetFor("srd:class:cleric", 5, 16, {
+        feats: ["srd:feat:extra-turning", "srd:feat:extra-turning"],
+      });
+      expect(suggestTrackers(twice).find((s) => s.key === "turn-undead")?.max).toBe(14);
+    });
+
+    it("Extra Music gibt vier Einsätze mehr", () => {
+      const sheet = sheetFor("srd:class:bard", 7, 10, { feats: ["srd:feat:extra-music"] });
+      expect(suggestTrackers(sheet).find((s) => s.key === "bardic-music")?.max).toBe(11);
+    });
+
+    it("Ein Talent für eine andere Mechanik lässt den Vorschlag unberührt", () => {
+      const sheet = sheetFor("srd:class:cleric", 5, 10, { feats: ["srd:feat:extra-music"] });
+      const found = suggestTrackers(sheet).find((s) => s.key === "turn-undead");
+      expect(found?.max).toBe(3);
+      expect(found?.note).not.toContain("Talenten");
+    });
+
+    it("Ein Homebrew-Talent zählt genauso mit wie ein SRD-Talent", () => {
+      const sheet = sheetFor("srd:class:cleric", 5, 10, {
+        feats: ["hb:feat:segen-des-tempels", "srd:feat:extra-turning"],
+      });
+      const found = suggestTrackers(sheet).find((s) => s.key === "turn-undead");
+      // 3 + CH 0 = 3, plus 2 (Homebrew) plus 4 (Extra Turning)
+      expect(found?.max).toBe(9);
+      expect(found?.note).toContain("+6 aus Talenten");
+    });
+
+    it("Die Engine sammelt extraUses und featIds für die Vorschläge", () => {
+      const sheet = sheetFor("srd:class:cleric", 5, 10, {
+        feats: ["srd:feat:extra-turning", "srd:feat:extra-turning", "srd:feat:extra-music"],
+      });
+      expect(sheet.extraUses).toEqual({ "turn-undead": 8, "bardic-music": 4 });
+      expect(sheet.featIds).toEqual([
+        "srd:feat:extra-turning",
+        "srd:feat:extra-turning",
+        "srd:feat:extra-music",
+      ]);
+    });
   });
 
   it("Tiergestalt folgt der Druiden-Tabelle, nicht einer Formel", () => {
