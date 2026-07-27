@@ -213,6 +213,21 @@ export const S = {
     suggestAdd: "anlegen",
   },
 
+  /*
+    Aufräumen nach einem Fehler im Abgleich, der aus einem Charakter eine Reihe
+    identischer Kopien gemacht hat. Der Text sagt, was passiert ist und warum das
+    Löschen hier gefahrlos ist — nach dem verlorenen Hike hat er ein Recht darauf,
+    dass die App bei so etwas nicht schweigt.
+  */
+  cleanup: {
+    title: (n: number) => `${n} identische Konfliktkopien gefunden`,
+    why: (name: string) =>
+      `Inhaltlich sind sie Zeichen für Zeichen „${name}" — entstanden durch einen Fehler im Geräte-Abgleich, der behoben ist. Kopien mit eigenem Inhalt sind hier NICHT dabei, die bleiben in jedem Fall.`,
+    action: (n: number) => `${n} Kopien wegräumen`,
+    confirm: (n: number) => `Ja, ${n} Kopien löschen`,
+    done: (n: number) => `${n} Konfliktkopien weggeräumt.`,
+  },
+
   notes: {
     sections: "Abschnitte",
     addSection: "Abschnitt anlegen",

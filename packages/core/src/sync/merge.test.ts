@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { mergeDocSets, type SyncDoc } from "./merge.js";
+import {
+  conflictCopiesNeeded,
+  conflictCopyName,
+  contentFingerprint,
+  mergeDocSets,
+  redundantConflictCopies,
+  stripConflictSuffix,
+  type SyncConflict,
+  type SyncDoc,
+} from "./merge.js";
 
 interface Doc extends SyncDoc {
   name: string;
@@ -220,5 +229,172 @@ describe("mergeDocSets", () => {
 
     expect(rounds).toBeLessThan(10);
     expect(JSON.stringify(deviceA)).toBe(JSON.stringify(deviceB));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Konfliktkopien
+// ---------------------------------------------------------------------------
+
+describe("Beschriftung von Konfliktkopien", () => {
+  it(`schneidet ein vorhandenes Anhängsel ab, statt es zu stapeln`, () => {
+    expect(stripConflictSuffix("Hike Greatbush")).toBe("Hike Greatbush");
+    expect(stripConflictSuffix("Hike Greatbush (Konflikt iPhone, 2026-07-27)")).toBe("Hike Greatbush");
+    // Kopie einer Kopie einer Kopie — genau so sahen die Namen in seiner Liste aus.
+    expect(
+      stripConflictSuffix("Hike (Konflikt hier, 2026-07-27) (Konflikt anderes Gerät, 2026-07-27)"),
+    ).toBe("Hike");
+    expect(conflictCopyName("Hike (Konflikt hier, 2026-07-26)", "iPhone", "2026-07-27")).toBe(
+      "Hike (Konflikt iPhone, 2026-07-27)",
+    );
+  });
+
+  it(`lässt einen Namen stehen, der NUR aus einem Anhängsel besteht`, () => {
+    // Sonst hieße die Kopie „ (Konflikt …)" und wäre in der Liste unsichtbar.
+    expect(stripConflictSuffix("(Konflikt hier, 2026-07-27)")).toBe("(Konflikt hier, 2026-07-27)");
+  });
+});
+
+describe("contentFingerprint", () => {
+  it(`ignoriert Buchhaltung und id — dieselbe Arbeit ist dieselbe Arbeit`, () => {
+    const a = doc("original", 5, "2026-07-27T10:00:00Z", "Hike");
+    const b = doc("kopie", 1, "2026-07-27T12:00:00Z", "Hike");
+    expect(contentFingerprint(a)).toBe(contentFingerprint(b));
+  });
+
+  it(`erkennt die Kopie am Anhängsel wieder`, () => {
+    const loser = doc("a", 5, "2026-07-27T10:00:00Z", "Hike Greatbush");
+    const copy = doc("b", 1, "2026-07-27T12:00:00Z", "Hike Greatbush (Konflikt iPhone, 2026-07-27)");
+    expect(contentFingerprint(copy)).toBe(contentFingerprint(loser));
+  });
+
+  it(`hält eine echte Umbenennung für eine echte Änderung`, () => {
+    const before = doc("a", 5, "2026-07-27T10:00:00Z", "Hike Greatbush");
+    const renamed = doc("a", 5, "2026-07-27T10:00:00Z", "Hike der Priester");
+    expect(contentFingerprint(renamed)).not.toBe(contentFingerprint(before));
+  });
+});
+
+describe("conflictCopiesNeeded", () => {
+  const conflict = (loser: Doc, winner: Doc): SyncConflict<Doc> => ({
+    id: winner.id,
+    winner,
+    loser,
+    loserSide: "remote",
+  });
+
+  it(`rettet einen Stand, den es sonst nirgends gibt`, () => {
+    const winner = doc("a", 6, "2026-07-27T12:00:00Z", "iPad");
+    const loser = doc("a", 5, "2026-07-27T10:00:00Z", "Handy");
+    expect(conflictCopiesNeeded([conflict(loser, winner)], [winner])).toHaveLength(1);
+  });
+
+  it(`macht keine Kopie aus einer Löschung`, () => {
+    const winner = doc("a", 6, "2026-07-27T12:00:00Z", "A");
+    const dead = doc("a", 5, "2026-07-27T10:00:00Z", "A", "2026-07-27T10:00:00Z");
+    expect(conflictCopiesNeeded([conflict(dead, winner)], [winner])).toHaveLength(0);
+  });
+
+  it(`macht aus zwei gleichen Verlierern in einem Lauf EINE Kopie`, () => {
+    const w1 = doc("a", 6, "2026-07-27T12:00:00Z", "neu");
+    const w2 = doc("b", 6, "2026-07-27T12:00:00Z", "neu");
+    const l1 = doc("a", 5, "2026-07-27T10:00:00Z", "alt");
+    const l2 = doc("b", 5, "2026-07-27T10:00:00Z", "alt");
+    expect(conflictCopiesNeeded([conflict(l1, w1), conflict(l2, w2)], [w1, w2])).toHaveLength(1);
+  });
+
+  /**
+   * DER Regressionstest. Nachbau des Fehlers, der aus einem Hike Greatbush
+   * sieben gemacht hat:
+   *
+   * Die Gegenseite wurde beim Lesen immer durchs Schema geschickt, die eigene
+   * Zeile kam ROH aus der Datenbank. Fehlt in der rohen Zeile ein Feld, das das
+   * Schema inzwischen mit einem Standardwert füllt, sind beide Seiten bei
+   * GLEICHER rev inhaltlich verschieden — also Konflikt, und weil die Ursache
+   * beim nächsten Abgleich unverändert dasteht: wieder Konflikt. Bei Auto-Sync
+   * (beim Öffnen, bei Rückkehr in den Vordergrund, nach jeder Änderung) sind
+   * das binnen Minuten ein halbes Dutzend Kopien.
+   *
+   * Hier läuft genau diese Ursache zehn Runden lang weiter — und es darf
+   * trotzdem bei EINER Kopie bleiben.
+   */
+  it(`vervielfältigt sich nicht, wenn dieselbe Ursache bei jedem Abgleich wiederkehrt`, () => {
+    interface Row extends SyncDoc {
+      name: string;
+      trackers?: string[];
+    }
+    /** Die Gegenseite wird geparst: ein neues Schema-Feld bekommt seinen Standardwert. */
+    const parse = (row: Row): Row => ({ ...row, trackers: row.trackers ?? [] });
+
+    // Die lokale Zeile ist alt und kennt `trackers` nicht.
+    let local: Row[] = [{ id: "hike", rev: 5, updatedAt: "2026-07-27T10:00:00Z", name: "Hike" }];
+    let remote: Row[] = [{ id: "hike", rev: 5, updatedAt: "2026-07-27T10:00:00Z", name: "Hike" }];
+    const copies: Row[] = [];
+
+    for (let round = 0; round < 10; round++) {
+      const out = mergeDocSets(local, remote.map(parse));
+      const needed = conflictCopiesNeeded(out.conflicts, out.merged);
+      for (const c of needed) {
+        copies.push({ ...c.loser, id: `copy-${copies.length}`, rev: 1, name: `${c.loser.name} (Konflikt hier, 2026-07-27)` });
+      }
+      // Anwenden wie die App: lokal schreiben, hochschreiben, Kopien auf beide Seiten.
+      local = [
+        ...local.filter((d) => !out.toLocal.some((w) => w.id === d.id)),
+        ...out.toLocal,
+        ...copies.filter((c) => !local.some((d) => d.id === c.id)),
+      ];
+      remote = [
+        ...remote.filter((d) => !out.toRemote.some((w) => w.id === d.id)),
+        ...out.toRemote,
+        ...copies.filter((c) => !remote.some((d) => d.id === c.id)),
+      ];
+    }
+
+    expect(copies).toHaveLength(1);
+    // Und die Liste bleibt bei zwei Zeilen: der Figur und der einen Kopie.
+    expect(local.filter((d) => d.deletedAt === undefined)).toHaveLength(2);
+  });
+});
+
+describe("redundantConflictCopies", () => {
+  const copy = (id: string, name: string) =>
+    doc(id, 1, "2026-07-27T12:00:00Z", `${name} (Konflikt iPhone, 2026-07-27)`);
+
+  it(`räumt die Kopien weg, deren Inhalt schon beim Original liegt`, () => {
+    // Die Lage in seiner Liste: ein Hike und fünf Kopien davon.
+    const original = doc("hike", 9, "2026-07-27T10:00:00Z", "Hike Greatbush");
+    const copies = [1, 2, 3, 4, 5].map((n) => copy(`c${n}`, "Hike Greatbush"));
+    const redundant = redundantConflictCopies([original, ...copies]);
+    expect(redundant.map((d) => d.id).sort()).toEqual(["c1", "c2", "c3", "c4", "c5"]);
+  });
+
+  it(`lässt eine Kopie mit eigenem Inhalt in Ruhe — dafür ist sie da`, () => {
+    const original = doc("hike", 9, "2026-07-27T10:00:00Z", "Hike Greatbush");
+    const rescued = copy("c1", "Hike der Priester"); // andere Arbeit, nicht dieselbe
+    expect(redundantConflictCopies([original, rescued])).toHaveLength(0);
+  });
+
+  it(`lässt ohne Original eine Kopie übrig, und auf beiden Geräten dieselbe`, () => {
+    const copies = [copy("c3", "Hike"), copy("c1", "Hike"), copy("c2", "Hike")];
+    const redundant = redundantConflictCopies(copies);
+    expect(redundant.map((d) => d.id).sort()).toEqual(["c2", "c3"]);
+    // Andere Reihenfolge, gleiche Entscheidung — sonst löschen zwei Geräte
+    // verschiedene Kopien und keine bleibt.
+    expect(redundantConflictCopies([...copies].reverse()).map((d) => d.id).sort()).toEqual([
+      "c2",
+      "c3",
+    ]);
+  });
+
+  it(`fasst Doppelte OHNE Anhängsel nicht an — die hat ein Mensch angelegt`, () => {
+    const a = doc("a", 1, "2026-07-27T10:00:00Z", "Hike Greatbush");
+    const b = doc("b", 1, "2026-07-27T11:00:00Z", "Hike Greatbush");
+    expect(redundantConflictCopies([a, b])).toHaveLength(0);
+  });
+
+  it(`zählt Gelöschtes nicht mit`, () => {
+    const original = doc("hike", 9, "2026-07-27T10:00:00Z", "Hike");
+    const dead = doc("c1", 2, "2026-07-27T12:00:00Z", "Hike (Konflikt iPhone, 2026-07-27)", "2026-07-27T12:00:00Z");
+    expect(redundantConflictCopies([original, dead])).toHaveLength(0);
   });
 });

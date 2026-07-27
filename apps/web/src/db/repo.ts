@@ -40,6 +40,38 @@ export function migrateAndParseEntity(raw: unknown): Entity {
   return entitySchema.parse(runMigrations(raw as Record<string, unknown>, entityMigrations));
 }
 
+/**
+ * Eine gespeicherte Zeile auf den heutigen Schema-Stand bringen — die EINE
+ * Stelle dafür, damit Anzeige, Export und Abgleich nie verschiedene Wahrheiten
+ * über denselben Datensatz haben.
+ *
+ * Warum das wichtig genug für einen eigenen Namen ist: in der Datenbank steht
+ * eine Zeile so, wie eine frühere App-Version sie geschrieben hat. Kommt im
+ * Schema ein Feld dazu, fehlt es dort. Wer die rohe Zeile mit einer geparsten
+ * vergleicht, findet einen Unterschied, der keiner ist — im Abgleich hat genau
+ * das eine Lawine von Konfliktkopien ausgelöst.
+ *
+ * Bei einem echten Datenfehler nicht die App anhalten: Rohdaten durchlassen und
+ * laut protokollieren.
+ */
+export function hydrateCharacterRow(raw: Character): Character {
+  try {
+    return migrateAndParseCharacter(raw);
+  } catch (error) {
+    console.error(`Charakter ${raw.id} passt nicht zum Schema, nutze Rohdaten:`, error);
+    return raw;
+  }
+}
+
+export function hydrateEntityRow(raw: Entity): Entity {
+  try {
+    return migrateAndParseEntity(raw);
+  } catch (error) {
+    console.error(`Eintrag ${raw.id} passt nicht zum Schema, nutze Rohdaten:`, error);
+    return raw;
+  }
+}
+
 const now = () => new Date().toISOString();
 
 /** „Hike Greatbush (Entwurf)" → „Hike Greatbush". */

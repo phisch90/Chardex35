@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { displayName, type Character } from "@codex35/core";
+import {
+  displayName,
+  redundantConflictCopies,
+  stripConflictSuffix,
+  type Character,
+} from "@codex35/core";
 import { S } from "../strings.js";
 import { useCharacters, useCompendium, useSheet } from "../lib/hooks.js";
 import { CharacterRepo } from "../db/repo.js";
@@ -35,6 +40,8 @@ export function CharacterListPage() {
       </div>
 
       <ImportBar />
+
+      <ConflictCleanupCard characters={characters ?? []} />
 
       {characters === undefined && <p className="text-slate-400">{S.misc.loading}</p>}
       {characters?.length === 0 && (
@@ -115,6 +122,64 @@ function ImportBar() {
       )}
       {error && <p className="text-center text-xs text-red-400">Import fehlgeschlagen: {error}</p>}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Aufräumen nach der Konfliktkopien-Lawine
+// ---------------------------------------------------------------------------
+
+/**
+ * Ein Fehler im Abgleich hat aus einem Charakter eine Reihe gleicher Kopien
+ * gemacht (behoben — beide Seiten gehen jetzt vor dem Vergleich durchs Schema).
+ * Was bereits entstanden ist, liegt aber in der Datenbank und muss von Hand weg.
+ * Dieses Angebot erscheint nur, wenn es wirklich etwas wegzuräumen gibt, und
+ * ausschließlich für Kopien, deren Inhalt nachweislich schon anderswo liegt.
+ */
+function ConflictCleanupCard({ characters }: { characters: Character[] }) {
+  const redundant = useMemo(() => redundantConflictCopies(characters), [characters]);
+  const [armed, setArmed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [removed, setRemoved] = useState(0);
+
+  if (redundant.length === 0) {
+    return removed === 0 ? null : (
+      <p className="text-center text-xs text-emerald-400">{S.cleanup.done(removed)}</p>
+    );
+  }
+
+  const cleanUp = async () => {
+    setBusy(true);
+    try {
+      for (const copy of redundant) await CharacterRepo.remove(copy);
+      setRemoved((count) => count + redundant.length);
+    } finally {
+      setBusy(false);
+      setArmed(false);
+    }
+  };
+
+  const kept = stripConflictSuffix(redundant[0]?.name ?? "");
+
+  return (
+    <Card className="border-amber-700 bg-amber-950/30">
+      <p className="text-sm font-semibold text-amber-200">{S.cleanup.title(redundant.length)}</p>
+      <p className="mt-1 text-xs leading-relaxed text-amber-100/80">{S.cleanup.why(kept)}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {armed ? (
+          <button
+            onClick={() => void cleanUp()}
+            disabled={busy}
+            className="rounded-lg border border-red-500 bg-red-900/70 px-3 py-1.5 text-sm font-semibold text-red-100"
+          >
+            {busy ? "räume auf …" : S.cleanup.confirm(redundant.length)}
+          </button>
+        ) : (
+          <GhostButton onClick={() => setArmed(true)}>{S.cleanup.action(redundant.length)}</GhostButton>
+        )}
+        {armed && !busy && <GhostButton onClick={() => setArmed(false)}>{S.actions.cancel}</GhostButton>}
+      </div>
+    </Card>
   );
 }
 
