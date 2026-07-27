@@ -1,17 +1,46 @@
-# tools/extract — private Inhalte (NICHT committen!)
+# tools/extract — eigene Buchinhalte (Output NIEMALS committen!)
 
-Hier entstehen Konverter, die **eigene Buchinhalte** (PDFs, Excel-Listen) in private
-Kompendium-Pakete verwandeln — JSON-Dateien im Homebrew-Format, die in der App
-importiert werden (Einstellungen → Import).
+Wandelt **eigene Regelwerke** (PDF) in private Kompendium-Pakete: JSON im
+Homebrew-Format, das in der App importiert wird (Einstellungen → JSON
+importieren).
 
-**Wichtig:** Der Output (`out/`, `private/`, `*.private.json`) ist per `.gitignore`
-ausgeschlossen und darf nie ins Repo oder in den App-Build gelangen. Die Original-
-Bücher sind urheberrechtlich geschützt; die Pakete sind nur für den privaten
-Gebrauch der Gruppe bestimmt und leben z.B. im OneDrive neben den PDFs.
+**Wichtig:** `out/`, `private/` und `*.private.json` sind per `.gitignore`
+ausgeschlossen und dürfen nie ins Repo oder in den App-Build gelangen. Nur das
+freie SRD (`packs/srd`) gehört ins Repository. Die Originalbücher sind
+urheberrechtlich geschützt; die Pakete sind für den privaten Gebrauch der Gruppe
+und leben neben den PDFs, z. B. im OneDrive.
 
-Geplante Konverter (Phase 2+):
+## Was fertig ist
 
-1. **Excel-Zauberliste** („Halbling Druide.xlsx") → deutsches Übersetzungs-Overlay
-   (`localized.de.summary`) für die SRD-Zauber
-2. **Complete-Bände (PDF)** → Feats/Prestigeklassen/Zauber als Homebrew-Pakete
-   je Buch (halbautomatisch mit Review)
+- **PDF lesen** (`src/pdf.ts`): Zweispaltigkeit, Leserichtung, laufende Kopf- und
+  Fußzeilen weg.
+- **Einträge erkennen** (`src/segment.ts`): verankert an den Feldnamen
+  („Prerequisite:", „Level:"), nicht an Schriftgrößen — die sind von Buch zu Buch
+  verschieden. Absatzgrenzen über die Geometrie, inkl. Erkennung, ob das Buch im
+  Blocksatz gesetzt ist.
+- **Talente** (`src/parse/feats.ts`): Art, Voraussetzungen (als echte
+  Verknüpfung gegen das SRD), Benefit/Normal/Special.
+- **Namensauflösung** (`src/lookup.ts`) gegen `packs/srd`.
+
+## Grundhaltung
+
+Lieber ein Talent **ohne** mechanische Wirkung übernehmen als eine Wirkung
+erfinden. Ein erratener Bonus verändert stillschweigend Werte auf dem
+Charakterbogen, und ein falscher Bonus, den niemand bemerkt, ist schlimmer als
+ein fehlender, der beim Spielen auffällt. Abgeleitet wird nur der eine völlig
+regelmäßige Satzbau („+2 bonus on all Hide checks and Move Silently checks");
+alles andere landet als Text im Eintrag und als Hinweis im Prüfbericht.
+
+## Prüfen ohne Buch
+
+`test/makePdf.ts` erzeugt ein Regelwerk-artiges PDF (zwei Spalten, laufende
+Kopfzeile, fette Feldnamen) aus **SRD-Text** — frei verwendbar. Das Soll steht in
+`test/fixtures.ts`; wo möglich wird gegen die geprüften Einträge in `packs/srd`
+verglichen statt gegen ein selbst ausgedachtes Ergebnis.
+
+## Noch offen
+
+- Zauber und Prestigeklassen (Prestige braucht die Stufentabelle — Gitterlayout).
+- CLI, die eine PDF-Datei zu `out/<name>.private.json` plus Prüfbericht macht.
+- Feinabstimmung an einem **echten** Buch: Layouts unterscheiden sich, und ohne
+  eine Beispieldatei ist jede weitere Annahme geraten.
