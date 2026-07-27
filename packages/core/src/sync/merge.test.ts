@@ -36,7 +36,8 @@ describe("mergeDocSets", () => {
     expect(out.toRemote).toHaveLength(0); // nichts kaputt-Überschreiben
     expect(out.conflicts).toHaveLength(0);
     // Und ein Tombstone in der Ablage bleibt ein Tombstone — kein Zombie.
-    const withTombstone = mergeDocSets([], [doc("weg", 3, "2026-07-27T10:00:00Z", "Weg", true)]);
+    const tombstone = doc("weg", 3, "2026-07-27T10:00:00Z", "Weg", "2026-07-27T09:00:00Z");
+    const withTombstone = mergeDocSets([], [tombstone]);
     expect(withTombstone.toLocal[0]?.deletedAt).toBeDefined();
   });
 
