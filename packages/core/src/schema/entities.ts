@@ -374,6 +374,32 @@ export function displayName(entity: Pick<Entity, "name" | "localized">): string 
   return entity.localized?.de?.name ?? entity.name;
 }
 
+export type ClassCategory = "base" | "npc" | "prestige";
+
+/**
+ * Basis-, NPC- oder Prestigeklasse.
+ *
+ * Die Unterscheidung steckt in den Tags der Packs, und dort tragen die
+ * NPC-Klassen BEIDES: `base` und `npc`. Das ist inhaltlich richtig — Adept,
+ * Aristocrat, Commoner, Expert und Warrior sind wie Basisklassen gebaut, 20
+ * Stufen, keine Einstiegsvoraussetzungen. Für die Anzeige zählt aber `npc`,
+ * sonst steht der Commoner zwischen Kleriker und Druide und man wählt ihn im
+ * Vorbeiscrollen aus.
+ *
+ * Homebrew ohne Tags gilt als Basisklasse: wer eine eigene Klasse baut, meint
+ * fast immer eine spielbare.
+ */
+export function classCategory(entity: Pick<Entity, "tags">): ClassCategory {
+  if (entity.tags.includes("npc")) return "npc";
+  if (entity.tags.includes("prestige")) return "prestige";
+  return "base";
+}
+
+/** Epische Prestigeklasse — Einstieg erst jenseits Stufe 20. */
+export function isEpicClass(entity: Pick<Entity, "tags">): boolean {
+  return entity.tags.includes("epic");
+}
+
 /**
  * Schlüssel für `skillRanks`. Teilgebiete hängen mit `#` an der Fertigkeits-ID,
  * damit „Knowledge (arcana)" und „Knowledge (religion)" getrennte Ränge haben.

@@ -122,6 +122,8 @@ export const S = {
     slotsLeft: "Slots übrig",
     standardArray: "Standardreihe (15/14/13/12/10/8)",
     rollAll: "🎲 Alle würfeln (4W6, niedrigster fällt)",
+    /** NPC-Klassen sind kein Spielerfutter — aber erreichbar, für Gefolge und NSCs. */
+    showNpcClasses: "auch NPC-Klassen",
   },
 
   settings: {
@@ -168,6 +170,17 @@ export const S = {
     sourceSrd: "SRD",
     sourceHomebrew: "Homebrew",
     empty: "Nichts gefunden.",
+    classGroups: {
+      base: "Basisklassen",
+      npc: "NPC-Klassen",
+      prestige: "Prestigeklassen",
+    } as Record<string, string>,
+    classGroupHints: {
+      base: "Die spielbaren elf.",
+      npc: "Für Bewohner der Welt: Adept, Aristocrat, Commoner, Expert, Warrior. Schwächer gebaut als Spielerklassen.",
+      prestige: "Einstieg erst mit erfüllten Voraussetzungen.",
+    } as Record<string, string>,
+    epic: "episch",
   },
 
   dice: {

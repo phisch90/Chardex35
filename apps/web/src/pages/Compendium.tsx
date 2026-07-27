@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import {
+  classCategory,
   displayName,
+  isEpicClass,
+  type ClassCategory,
   type ClassEntity,
   type Entity,
   type EntityKind,
@@ -63,33 +66,66 @@ export function CompendiumPage() {
 
       {list === undefined && <p className="text-slate-400">{S.misc.loading}</p>}
       {list?.length === 0 && <p className="py-8 text-center text-slate-400">{S.compendium.empty}</p>}
-      <ul className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-900/50">
-        {list?.map((entity) => (
-          <li key={entity.id}>
-            <Link
-              to="/kompendium/$kind/$entityId"
-              params={{ kind, entityId: entity.id }}
-              className="flex items-baseline justify-between gap-2 px-3 py-2.5 hover:bg-slate-800/60"
-            >
-              <div className="min-w-0">
-                <div className="truncate text-sm font-medium">{displayName(entity)}</div>
-                {entity.localized?.de?.name && (
-                  <div className="truncate text-xs text-slate-500">{entity.name}</div>
-                )}
-                {shortInfo(entity) && (
-                  <div className="truncate text-xs text-slate-400">{shortInfo(entity)}</div>
-                )}
+
+      {/* Klassen kommen in Gruppen: die 5 NPC-Klassen (Commoner, Warrior …)
+          zwischen den spielbaren zu haben, war nur Rauschen. */}
+      {list !== undefined && kind === "class"
+        ? CLASS_GROUPS.map((group) => {
+            const members = list.filter((e) => classCategory(e) === group);
+            if (members.length === 0) return null;
+            return (
+              <div key={group}>
+                <h2 className="mb-1 mt-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
+                  {S.compendium.classGroups[group]} ({members.length})
+                </h2>
+                <p className="mb-1 text-xs text-slate-500">{S.compendium.classGroupHints[group]}</p>
+                <EntityList entities={members} kind={kind} />
               </div>
+            );
+          })
+        : list !== undefined && <EntityList entities={list} kind={kind} />}
+    </div>
+  );
+}
+
+/** Reihenfolge der Klassen-Gruppen: erst das, was Spieler:innen wählen. */
+const CLASS_GROUPS: ClassCategory[] = ["base", "prestige", "npc"];
+
+function EntityList({ entities, kind }: { entities: Entity[]; kind: EntityKind }) {
+  return (
+    <ul className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-900/50">
+      {entities.map((entity) => (
+        <li key={entity.id}>
+          <Link
+            to="/kompendium/$kind/$entityId"
+            params={{ kind, entityId: entity.id }}
+            className="flex items-baseline justify-between gap-2 px-3 py-2.5 hover:bg-slate-800/60"
+          >
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium">{displayName(entity)}</div>
+              {entity.localized?.de?.name && (
+                <div className="truncate text-xs text-slate-500">{entity.name}</div>
+              )}
+              {shortInfo(entity) && (
+                <div className="truncate text-xs text-slate-400">{shortInfo(entity)}</div>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              {entity.kind === "class" && isEpicClass(entity) && (
+                <span className="rounded bg-violet-900/60 px-1.5 py-0.5 text-[10px] text-violet-300">
+                  {S.compendium.epic}
+                </span>
+              )}
               {entity.source === "homebrew" && (
-                <span className="shrink-0 rounded bg-emerald-900/60 px-1.5 py-0.5 text-[10px] text-emerald-300">
+                <span className="rounded bg-emerald-900/60 px-1.5 py-0.5 text-[10px] text-emerald-300">
                   HB
                 </span>
               )}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
 
