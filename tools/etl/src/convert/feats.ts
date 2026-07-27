@@ -48,6 +48,21 @@ const CURATED_EFFECTS: Record<string, Effect[]> = {
 
 const SKILL_PAIR_RE = /\+2 bonus on all ([A-Z][a-zA-Z ]*?) checks and ([A-Z][a-zA-Z ]*?) checks/;
 
+/**
+ * Talente, die eine Tages-Mechanik aufwerten. `mechanic` ist der Schlüssel des
+ * Zähler-Vorschlags (core/engine/trackers.ts), die Zahl gilt je Eintrag am
+ * Charakter — beide Talente sind laut SRD mehrfach nehmbar und stapeln.
+ *
+ * Bewusst kurz: nur diese zwei SRD-Talente sagen eine eindeutige Zahl. Alles
+ * andere („mehr Einsätze“) bleibt Text, den man am Tisch liest.
+ */
+const EXTRA_USES: Record<string, { mechanic: string; perInstance: number }[]> = {
+  // „you can use your ability to turn or rebuke creatures four more times per day“
+  "extra-turning": [{ mechanic: "turn-undead", perInstance: 4 }],
+  // „You can use your bardic music four extra times per day.“
+  "extra-music": [{ mechanic: "bardic-music", perInstance: 4 }],
+};
+
 export function convertFeats(ctx: ConvertContext): FeatEntity[] {
   const table = requireTable(ctx.db, "feat");
   const out: FeatEntity[] = [];
@@ -124,6 +139,7 @@ export function convertFeats(ctx: ConvertContext): FeatEntity[] {
         ...(benefit !== "" ? { benefit } : {}),
         ...(normalText !== "" ? { normalText } : {}),
         ...(specialText !== "" ? { specialText } : {}),
+        extraUses: EXTRA_USES[slug] ?? [],
       },
     });
   }

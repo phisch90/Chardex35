@@ -142,6 +142,13 @@ export interface DerivedSheet {
   skills: SkillLine[];
   skillPoints: { available: number; spent: number };
   featSlots: { available: number; used: number };
+  /** Talent-IDs wie am Charakter eingetragen — Mehrfachnennungen inklusive. */
+  featIds: string[];
+  /**
+   * Zusätzliche Einsätze pro Tag aus Talenten, Schlüssel wie in den
+   * Zähler-Vorschlägen („turn-undead" → 4 durch Extra Turning).
+   */
+  extraUses: Record<string, number>;
   spellcasting: SpellcastingBlock[];
   encumbrance: EncumbranceBlock;
   xp: { current: number; nextLevelAt: number | null };

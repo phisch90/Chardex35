@@ -577,6 +577,21 @@ export function deriveSheetValues(
     used: character.feats.length,
   };
 
+  /**
+   * Zusätzliche Einsätze pro Tag aus Talenten (Extra Turning: viermal mehr
+   * vertreiben, mehrfach nehmbar). Wird hier gezählt, weil hier die Talent-
+   * Entities schon aufgelöst sind — die Zähler-Vorschläge lesen dann nur noch
+   * Zahlen und kennen keine Talent-Namen.
+   */
+  const featIds = resolved.feats.map((feat) => feat.featId);
+  const extraUses: Record<string, number> = {};
+  for (const feat of resolved.feats) {
+    if (feat.entity?.kind !== "feat") continue;
+    for (const bonus of feat.entity.data.extraUses) {
+      extraUses[bonus.mechanic] = (extraUses[bonus.mechanic] ?? 0) + bonus.perInstance;
+    }
+  }
+
   // --- Zauber ---------------------------------------------------------------------
   const spellcasting: SpellcastingBlock[] = [];
   for (const [classId, cls] of resolved.classes) {
@@ -661,6 +676,8 @@ export function deriveSheetValues(
     skills,
     skillPoints: { available: skillPointsAvailable, spent: skillPointsSpent },
     featSlots,
+    featIds,
+    extraUses,
     spellcasting,
     encumbrance,
     xp: {

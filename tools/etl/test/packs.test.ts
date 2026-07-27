@@ -13,10 +13,38 @@ describe("packs/srd", () => {
   const manifest = loadManifest();
 
   it("manifest listet Dateien und counts", () => {
-    expect(manifest.srdRev).toBe(7);
+    expect(manifest.srdRev).toBe(8);
     expect(manifest.files.length).toBeGreaterThan(0);
     expect([...manifest.files].sort()).toEqual(manifest.files);
     expect(manifest.files).not.toContain("manifest.json");
+  });
+
+  /**
+   * Talente, die eine Tages-Mechanik aufwerten, tragen die Zahl als DATEN
+   * (`data.extraUses`). Der Schlüssel muss zu den Zähler-Vorschlägen in
+   * core/engine/trackers.ts passen — ein Tippfehler wäre in der App unsichtbar:
+   * der Vorschlag stünde einfach ohne den Bonus da.
+   */
+  it("Extra Turning und Extra Music tragen extraUses mit gültigem Schlüssel", () => {
+    const feats = [...loadEntities(manifest).values()].filter((e) => e.kind === "feat");
+    const byId = new Map(feats.map((e) => [e.id, e]));
+    const extraUses = (id: string) =>
+      (byId.get(id)?.data as { extraUses?: { mechanic: string; perInstance: number }[] }).extraUses ?? [];
+
+    expect(extraUses("srd:feat:extra-turning")).toEqual([{ mechanic: "turn-undead", perInstance: 4 }]);
+    expect(extraUses("srd:feat:extra-music")).toEqual([{ mechanic: "bardic-music", perInstance: 4 }]);
+
+    // Beide sind laut SRD mehrfach nehmbar — sonst stapelt der Bonus nicht.
+    expect((byId.get("srd:feat:extra-turning")?.data as { stackable: boolean }).stackable).toBe(true);
+    expect((byId.get("srd:feat:extra-music")?.data as { stackable: boolean }).stackable).toBe(true);
+
+    // Jeder verwendete Schlüssel ist einer, den suggestTrackers auch vergibt.
+    const known = new Set(["turn-undead", "smite-evil", "bardic-music", "rage", "stunning-fist", "wild-shape"]);
+    for (const feat of feats) {
+      for (const bonus of extraUses(feat.id)) {
+        expect(known, `${feat.id} → ${bonus.mechanic}`).toContain(bonus.mechanic);
+      }
+    }
   });
 
   /**
