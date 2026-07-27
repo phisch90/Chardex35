@@ -587,7 +587,13 @@ export function deriveSheetValues(
   const extraUses: Record<string, number> = {};
   for (const feat of resolved.feats) {
     if (feat.entity?.kind !== "feat") continue;
-    for (const bonus of feat.entity.data.extraUses) {
+    /**
+     * Nicht auf Schema-Standardwerte verlassen: das Kompendium kommt aus der
+     * Datenbank des Geräts, und Einträge, die eine ÄLTERE App-Version dort
+     * abgelegt hat, kennen ein neu ergänztes Feld noch nicht. Genau daran ist
+     * die App beim ersten Start nach diesem Update abgestürzt.
+     */
+    for (const bonus of feat.entity.data?.extraUses ?? []) {
       extraUses[bonus.mechanic] = (extraUses[bonus.mechanic] ?? 0) + bonus.perInstance;
     }
   }

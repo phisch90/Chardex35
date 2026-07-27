@@ -211,6 +211,58 @@ describe("suggestTrackers", () => {
       expect(found?.note).toContain("+6 aus Talenten");
     });
 
+    /**
+     * Der Absturz vom ersten Start nach dem Update: das Kompendium kommt aus der
+     * Geräte-Datenbank, und eine Zeile, die eine ältere App-Version dort abgelegt
+     * hat, kennt `extraUses` nicht. Ein solcher Eintrag darf die Ableitung nicht
+     * umbringen — deshalb wird hier bewusst am Schema vorbei gebaut.
+     */
+    it("Eine Talent-Zeile ohne extraUses (alte Datenbank) stürzt nicht ab", () => {
+      const legacyFeat = {
+        id: "srd:feat:extra-turning",
+        kind: "feat",
+        name: "Extra Turning",
+        source: "srd",
+        schemaVersion: 1,
+        rev: 1,
+        updatedAt: "",
+        tags: [],
+        effects: [],
+        // Genau wie eine Zeile aus der Zeit vor dem Feld: data ohne extraUses.
+        data: { prerequisites: [], featType: "General", stackable: true, requiresChoice: false },
+      } as unknown as Parameters<typeof resolveCompendium>[0][number];
+
+      const compendium = resolveCompendium([
+        legacyFeat,
+        entitySchema.parse({
+          id: "srd:race:human",
+          kind: "race",
+          name: "Human",
+          source: "srd",
+          data: { size: "medium", speedFt: 30 },
+        }),
+        classEntity("srd:class:cleric", "Cleric"),
+      ]);
+      const character = characterSchema.parse({
+        id: "t",
+        name: "Testfigur",
+        raceId: "srd:race:human",
+        abilities: { base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 } },
+        levels: [{ classId: "srd:class:cleric", hpRoll: "avg" as const }],
+        feats: [{ featId: "srd:feat:extra-turning" }],
+      });
+
+      const sheet = deriveSheet(character, compendium, HOUSE);
+      // Ohne die Daten kann der Bonus nicht bekannt sein — der Vorschlag steht
+      // dann eben auf dem Regelwert, statt dass die App abstürzt.
+      expect(sheet.extraUses).toEqual({});
+      expect(suggestTrackers(sheet).find((s) => s.key === "turn-undead")?.max).toBe(3);
+
+      // Und mit einer sauber geparsten Zeile ist der Bonus wieder da.
+      const fresh = sheetFor("srd:class:cleric", 1, 10, { feats: ["srd:feat:extra-turning"] });
+      expect(suggestTrackers(fresh).find((s) => s.key === "turn-undead")?.max).toBe(7);
+    });
+
     it("Die Engine sammelt extraUses und featIds für die Vorschläge", () => {
       const sheet = sheetFor("srd:class:cleric", 5, 10, {
         feats: ["srd:feat:extra-turning", "srd:feat:extra-turning", "srd:feat:extra-music"],
