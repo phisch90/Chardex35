@@ -170,13 +170,18 @@ export const S = {
     sourceSrd: "SRD",
     sourceHomebrew: "Homebrew",
     empty: "Nichts gefunden.",
+    emptyHomebrew: "Hier liegt noch nichts Eigenes — Homebrew-Einträge erscheinen, sobald du welche anlegst oder importierst.",
+    /** Warum „nur SRD" nichts ändert, solange es nichts anderes gibt. */
+    allSrd: "Alles hier kommt aus dem SRD — die Quellen-Knöpfe trennen erst etwas, wenn eigene Einträge dazukommen.",
+    capped: (shown: number, total: number) =>
+      `Zeigt ${shown} von ${total} — tipp einen Namen ins Suchfeld, um den Rest zu erreichen.`,
     classGroups: {
       base: "Basisklassen",
       npc: "NPC-Klassen",
       prestige: "Prestigeklassen",
     } as Record<string, string>,
     classGroupHints: {
-      base: "Die spielbaren elf.",
+      base: "Was Spieler:innen wählen.",
       npc: "Für Bewohner der Welt: Adept, Aristocrat, Commoner, Expert, Warrior. Schwächer gebaut als Spielerklassen.",
       prestige: "Einstieg erst mit erfüllten Voraussetzungen.",
     } as Record<string, string>,
