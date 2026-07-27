@@ -155,6 +155,21 @@ export const S = {
       "iPhone/iPad: Safari und die Startbildschirm-App haben GETRENNTE Speicher — was du in einem anlegst, fehlt im anderen. Und löschst du das Symbol vom Startbildschirm, nimmt iOS die dortigen Daten mit. Vorher exportieren oder den Geräte-Abgleich einrichten, der beide Seiten zusammenhält.",
   },
 
+  /*
+    Versionsanzeige. Auf dem iPhone ist einer Startbildschirm-App nicht
+    anzusehen, welchen Stand sie geladen hat — und der Service Worker meldet ein
+    Update verzögert und auf iOS unzuverlässig. Deshalb fragt die App selbst nach
+    und sagt es hier.
+  */
+  version: {
+    outdated: "⟳ neuere Version verfügbar — tippen zum Neuladen",
+    /** Kurzform für die enge Kopfzeile. */
+    outdatedShort: "⟳ Update",
+    currentHint: "Das ist der veröffentlichte Stand.",
+    unknownHint: "Nicht geprüft (offline?) — das ist der geladene Stand.",
+    title: "Version",
+  },
+
   compendium: {
     kinds: {
       race: "Völker",

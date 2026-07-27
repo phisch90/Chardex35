@@ -11,6 +11,7 @@ import { useCharacters, useCompendium, useSheet } from "../lib/hooks.js";
 import { CharacterRepo } from "../db/repo.js";
 import { importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton } from "../ui/bits.js";
+import { VersionBadge } from "../ui/VersionBadge.js";
 import { CharacterActionsSheet, DiscardDraftButton } from "../ui/CharacterActions.js";
 
 export function CharacterListPage() {
@@ -29,8 +30,11 @@ export function CharacterListPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">{S.nav.characters}</h1>
+      {/* Version zwischen Titel und Knopf — dort sieht er sie jedes Mal, ohne
+          dafür in die Einstellungen zu müssen. */}
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="shrink-0 text-xl font-bold">{S.nav.characters}</h1>
+        <VersionBadge compact />
         <Link
           to="/charaktere/neu"
           className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-500"

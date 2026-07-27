@@ -10,6 +10,7 @@ import { useAppSettings, useHouseRules } from "../lib/hooks.js";
 import { buildExport, downloadExport, importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton, PrimaryButton, SectionTitle } from "../ui/bits.js";
 import { SyncCard } from "./SyncCard.js";
+import { VersionBadge } from "../ui/VersionBadge.js";
 import { SYNC_SETTINGS_KEY, isSyncConfigured, parseSyncSettings } from "../sync/syncSettings.js";
 
 const oglText = Object.values(
@@ -83,6 +84,9 @@ export function SettingsPage() {
           className="h-40 w-40 rounded-2xl"
         />
         <p className="text-xs text-slate-500">{S.settings.tagline}</p>
+        {/* Zweite Heimat der Versionsanzeige: hier sucht man sie, wenn man sie
+            bewusst nachsehen will. */}
+        <VersionBadge />
       </div>
 
       <Card>
