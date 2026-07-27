@@ -3,6 +3,8 @@ import {
   CURRENT_SCHEMA_VERSION,
   canonicalJson,
   characterSchema,
+  conflictCopiesNeeded,
+  conflictCopyName,
   entitySchema,
   mergeDocSets,
   type Character,
@@ -10,7 +12,12 @@ import {
   type SyncConflict,
 } from "@codex35/core";
 import { db } from "../db/db.js";
-import { migrateAndParseCharacter, migrateAndParseEntity } from "../db/repo.js";
+import {
+  hydrateCharacterRow,
+  hydrateEntityRow,
+  migrateAndParseCharacter,
+  migrateAndParseEntity,
+} from "../db/repo.js";
 import {
   CHAR_PREFIX,
   HOMEBREW_PREFIX,
@@ -178,19 +185,32 @@ async function runOnce(cfg: SyncSettings): Promise<SyncReport> {
 
   // Tombstones MÜSSEN mit — sonst kommt ein gelöschter Charakter vom anderen
   // Gerät bei jedem Abgleich zurück.
-  const localChars = await db.characters.toArray();
-  const localEntities = await db.entities.where("source").equals("homebrew").toArray();
+  //
+  // Und BEIDE Seiten gehen vor dem Vergleich durchs Schema. Das ist keine
+  // Kosmetik, sondern die Lehre aus einem echten Datenschaden: die Gegenseite
+  // wurde beim Lesen immer geparst (oben migrateAndParse…), die eigene Zeile kam
+  // roh aus IndexedDB. Fehlt in dieser Zeile ein Feld, das das Schema inzwischen
+  // mit einem Standardwert füllt, sind beide Seiten bei GLEICHER rev inhaltlich
+  // verschieden — Konflikt. Und weil die Ursache beim nächsten Abgleich
+  // unverändert dasteht: wieder Konflikt. Aus einem Hike Greatbush wurden so
+  // sieben, eine Kopie pro Abgleich.
+  const localChars = (await db.characters.toArray()).map(hydrateCharacterRow);
+  const localEntities = (await db.entities.where("source").equals("homebrew").toArray()).map(
+    hydrateEntityRow,
+  );
 
   const chars = mergeDocSets(localChars, remoteChars);
   const entities = mergeDocSets(localEntities, remoteEntities);
 
   const now = new Date();
-  const charCopies = chars.conflicts
-    .filter((c) => c.loser.deletedAt === undefined)
-    .map((c) => copyCharacter(c, cfg, now));
-  const entityCopies = entities.conflicts
-    .filter((c) => c.loser.deletedAt === undefined)
-    .map((c) => copyEntity(c, cfg, now));
+  // Zweite Sicherung gegen dieselbe Klasse von Fehler: eine Kopie entsteht nur,
+  // wenn ihr Inhalt nicht sowieso schon im Bestand liegt (siehe core).
+  const charCopies = conflictCopiesNeeded(chars.conflicts, chars.merged).map((c) =>
+    copyCharacter(c, cfg, now),
+  );
+  const entityCopies = conflictCopiesNeeded(entities.conflicts, entities.merged).map((c) =>
+    copyEntity(c, cfg, now),
+  );
   const conflicts = [...charCopies, ...entityCopies].map((doc) => doc.name);
 
   // 1. Lokal schreiben. Konfliktkopien gehören auf BEIDE Seiten, damit sie
@@ -277,7 +297,7 @@ function copyCharacter(
     id: crypto.randomUUID(),
     rev: 1,
     updatedAt: now.toISOString(),
-    name: `${conflict.loser.name} ${conflictLabel(conflict.loserSide, cfg, now)}`,
+    name: copyName(conflict, cfg, now),
   });
 }
 
@@ -292,14 +312,18 @@ function copyEntity(conflict: SyncConflict<Entity>, cfg: SyncSettings, now: Date
     id: crypto.randomUUID(),
     rev: 1,
     updatedAt: now.toISOString(),
-    name: `${conflict.loser.name} ${conflictLabel(conflict.loserSide, cfg, now)}`,
+    name: copyName(conflict, cfg, now),
   });
 }
 
-function conflictLabel(side: "local" | "remote", cfg: SyncSettings, now: Date): string {
-  const from = side === "local" ? cfg.deviceName || "hier" : "anderes Gerät";
-  const day = now.toISOString().slice(0, 10);
-  return `(Konflikt ${from}, ${day})`;
+/**
+ * `conflictCopyName` schneidet ein vorhandenes Anhängsel ab, bevor es das neue
+ * anhängt — sonst hieße die Kopie einer Kopie „Hike (Konflikt hier, …) (Konflikt
+ * anderes Gerät, …)". Dieselbe Funktion erkennt die Kopie später wieder.
+ */
+function copyName(conflict: SyncConflict<{ name: string }>, cfg: SyncSettings, now: Date): string {
+  const from = conflict.loserSide === "local" ? cfg.deviceName || "hier" : "anderes Gerät";
+  return conflictCopyName(conflict.loser.name, from, now.toISOString().slice(0, 10));
 }
 
 // ---------------------------------------------------------------------------

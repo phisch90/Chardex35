@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   DEFAULT_HOUSE_RULES,
-  characterSchema,
   deriveSheet,
   houseRulesSchema,
   resolveCompendium,
@@ -13,6 +12,7 @@ import {
 } from "@codex35/core";
 import { db } from "../db/db.js";
 import { hydrateEntities } from "../db/hydrateEntities.js";
+import { hydrateCharacterRow } from "../db/repo.js";
 import { APP_SETTINGS_KEY, parseAppSettings, type AppSettings } from "../db/appSettings.js";
 
 export function useAllEntities(): Entity[] | undefined {
@@ -28,24 +28,15 @@ export function useCompendium(): Map<string, Entity> | undefined {
   return useMemo(() => (entities ? resolveCompendium(entities) : undefined), [entities]);
 }
 
-/**
- * Beim Laden durchs Schema schicken: so füllen neu ergänzte Felder ihre
- * Standardwerte (Zähler, Notiz-Abschnitte) und Migrationen greifen lazy —
- * ohne dass die App an einem alten Datensatz scheitert.
- */
-function hydrate(raw: Character): Character {
-  const parsed = characterSchema.safeParse(raw);
-  if (parsed.success) return parsed.data;
-  console.error("Charakter passt nicht zum Schema, nutze Rohdaten:", parsed.error.issues[0]);
-  return raw;
-}
-
 export function useCharacters(): Character[] | undefined {
+  // hydrateCharacterRow: dieselbe Aufbereitung wie im Abgleich und im Export —
+  // drei Wege, die verschiedene Fassungen derselben Zeile sehen, waren die
+  // Ursache der Konfliktkopien-Lawine.
   return useLiveQuery(
     async () =>
       (await db.characters.toArray())
         .filter((c) => !c.deletedAt)
-        .map(hydrate)
+        .map(hydrateCharacterRow)
         .sort((a, b) => a.name.localeCompare(b.name)),
     [],
   );
@@ -54,7 +45,7 @@ export function useCharacters(): Character[] | undefined {
 export function useCharacter(id: string): Character | undefined | null {
   return useLiveQuery(async () => {
     const character = await db.characters.get(id);
-    return character && !character.deletedAt ? hydrate(character) : null;
+    return character && !character.deletedAt ? hydrateCharacterRow(character) : null;
   }, [id]);
 }
 

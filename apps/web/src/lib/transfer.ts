@@ -9,17 +9,29 @@ import {
   type HouseRules,
 } from "@codex35/core";
 import { db } from "../db/db.js";
-import { SettingsRepo, migrateAndParseCharacter, migrateAndParseEntity } from "../db/repo.js";
+import {
+  SettingsRepo,
+  hydrateCharacterRow,
+  hydrateEntityRow,
+  migrateAndParseCharacter,
+  migrateAndParseEntity,
+} from "../db/repo.js";
 
 /**
  * Export: ein kanonisch sortiertes JSON-Envelope. Homebrew wird immer
  * eingebettet, SRD nie (Slugs lösen beim Empfänger auf).
  */
 export async function buildExport(): Promise<string> {
-  const characters = (await db.characters.toArray()).filter((c) => !c.deletedAt);
-  const homebrewEntities = (await db.entities.where("source").equals("homebrew").toArray()).filter(
-    (e) => !e.deletedAt,
-  );
+  // Erst durchs Schema, dann in die Datei: eine Sicherung soll den Stand
+  // enthalten, den die App auch anzeigt — nicht die Rohzeile, die eine ältere
+  // Version einmal geschrieben hat. Sonst führt schon Export → Import zu zwei
+  // Fassungen desselben Charakters, die sich für den Abgleich unterscheiden.
+  const characters = (await db.characters.toArray())
+    .filter((c) => !c.deletedAt)
+    .map(hydrateCharacterRow);
+  const homebrewEntities = (await db.entities.where("source").equals("homebrew").toArray())
+    .filter((e) => !e.deletedAt)
+    .map(hydrateEntityRow);
   const houseRules = await SettingsRepo.getHouseRules();
   const envelope: ExportEnvelope = {
     formatVersion: CURRENT_EXPORT_FORMAT_VERSION,
