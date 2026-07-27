@@ -10,6 +10,7 @@ import { S } from "../../strings.js";
 import { toPortraitDataUrl } from "../../lib/image.js";
 import { FeatText } from "../../ui/FeatText.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
+import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import type { TabProps } from "./index.js";
@@ -82,10 +83,9 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
           {row.equipped ? S.sheet.equipped : S.sheet.stowed}
         </Chip>
         {editMode && (
-          <GhostButton
-            danger
-            title={`${name} entfernen`}
-            onClick={() => {
+          <ConfirmDeleteButton
+            label={name}
+            onConfirm={() => {
               const snapshot = structuredClone(row);
               const at = character.inventory.findIndex((r) => r.id === row.id);
               save((c) => void (c.inventory = c.inventory.filter((r) => r.id !== row.id)));
@@ -99,9 +99,7 @@ export function InventoryTab({ character, sheet, save }: TabProps) {
                 }),
               );
             }}
-          >
-            ✕
-          </GhostButton>
+          />
         )}
       </li>
     );
@@ -338,17 +336,14 @@ export function FeatsTab({ character, sheet, save }: TabProps) {
                     </GhostButton>
                   )}
                   {editMode && (
-                    <GhostButton
-                      danger
-                      title={`${label} entfernen`}
-                      onClick={() => {
+                    <ConfirmDeleteButton
+                      label={label}
+                      onConfirm={() => {
                         const snapshot = structuredClone(feat);
                         save((c) => void c.feats.splice(index, 1));
                         undo.offer(label, () => save((c) => void c.feats.splice(index, 0, snapshot)));
                       }}
-                    >
-                      ✕
-                    </GhostButton>
+                    />
                   )}
                 </div>
               </li>

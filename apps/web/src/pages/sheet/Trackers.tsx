@@ -6,6 +6,7 @@ import { useAppSettings } from "../../lib/hooks.js";
 import { useDiceStore } from "../../lib/diceStore.js";
 import { Card, Chip, GhostButton, SectionTitle } from "../../ui/bits.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
+import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import type { TabProps } from "./index.js";
 
 type Tracker = Character["trackers"][number];
@@ -233,9 +234,9 @@ function TrackerEditor({
       >
         ✎
       </GhostButton>
-      <GhostButton
-        danger
-        onClick={() => {
+      <ConfirmDeleteButton
+        label={tracker.name}
+        onConfirm={() => {
           const snapshot = structuredClone(tracker);
           save((c) => void (c.trackers = c.trackers.filter((t) => t.id !== tracker.id)));
           onDeleted(tracker.name, () =>
@@ -244,9 +245,7 @@ function TrackerEditor({
             }),
           );
         }}
-      >
-        ✕
-      </GhostButton>
+      />
     </div>
   );
 }
