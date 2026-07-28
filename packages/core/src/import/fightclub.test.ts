@@ -264,7 +264,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
   });
 
   it("berichtet Abweichungen statt sie zu verbiegen (Initiative)", () => {
-    // Fight Club listet hier nur den GE-Modifikator, die App zählt
+    // Fight Club listet hier nur den DEX-Modifikator, die App zählt
     // 'Improved Initiative' mit.
     const init = comparisons.find((c) => c.label === "Initiative")!;
     expect(init.imported).toBe(1);

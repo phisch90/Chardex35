@@ -3,13 +3,14 @@ import type { Prerequisite } from "../schema/entities.js";
 import type { ResolvedCharacter, TimelineResult } from "./internal.js";
 import type { DerivedSheet } from "./types.js";
 
+/** Englische Regelkürzel wie in den Büchern — nicht „GE", das muss man übersetzen. */
 const ABILITY_LABEL: Record<Ability, string> = {
-  str: "ST",
-  dex: "GE",
-  con: "KO",
-  int: "IN",
-  wis: "WE",
-  cha: "CH",
+  str: "STR",
+  dex: "DEX",
+  con: "CON",
+  int: "INT",
+  wis: "WIS",
+  cha: "CHA",
 };
 
 /**

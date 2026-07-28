@@ -69,7 +69,7 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
     });
   };
 
-  // Untote vertreiben: 3 + CH-Modifikator pro Tag (Kleriker, Paladin ab Stufe 4).
+  // Untote vertreiben: 3 + CHA-Modifikator pro Tag (Kleriker, Paladin ab Stufe 4).
   const cleric = levelOf(sheet, CLASS_IDS.cleric);
   const paladin = levelOf(sheet, CLASS_IDS.paladin);
   if (cleric > 0 || paladin >= 4) {
@@ -77,7 +77,7 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
       key: "turn-undead",
       name: "Untote vertreiben",
       max: Math.max(1, 3 + cha),
-      note: `3 + CH-Modifikator (${signed(cha)}) pro Tag`,
+      note: `3 + CHA-Modifikator (${signed(cha)}) pro Tag`,
     });
   }
 
