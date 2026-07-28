@@ -21,6 +21,16 @@ export interface RawEntry {
   fields: { label: string; text: string }[];
   /** Absätze ohne Feldnamen (der eigentliche Beschreibungstext). */
   body: string[];
+  /**
+   * Felder und Absätze in der Reihenfolge, in der sie im Buch stehen.
+   *
+   * Nötig, weil bei Klassen dasselbe Feld zweimal vorkommt und je nach Stelle
+   * etwas anderes bedeutet: „Skills:" unter „Requirements" ist eine
+   * Einstiegsvoraussetzung, „Skills:" unter „Class Features" beschreibt eine
+   * Klassenfähigkeit. Aus `fields` und `body` allein ist das nicht mehr
+   * erkennbar — die beiden Listen verlieren genau diese Verschränkung.
+   */
+  sequence: { kind: "field" | "body"; index: number }[];
   page: number;
 }
 
@@ -102,27 +112,45 @@ export function segmentEntries(lines: Line[], options: SegmentOptions): RawEntry
       ...(start.bracket === undefined ? {} : { bracket: start.bracket }),
       fields: [],
       body: [],
+      sequence: [],
       page: lines[start.headingIndex]?.page ?? 0,
     };
+
+    /*
+      Wohin gehört eine Fortsetzungszeile? An das, was ZULETZT begonnen hat —
+      nicht an „das letzte Feld, solange es noch keinen Fließtext gibt". Diese
+      Annahme stimmte nur für Talente. Bei Zaubern steht die Schulzeile
+      („Evocation [Fire]") VOR den Feldern und ist Fließtext; damit landete der
+      umbrochene Rest von „Level: Brd 1, Clr 1, … Rgr 2" im Beschreibungstext
+      statt im Feld — und die Beschreibung selbst hing am letzten Feld. Drei
+      Tests haben das gleichzeitig gemeldet.
+    */
+    let lastTarget: { kind: "field" | "body"; index: number } | null = null;
 
     for (let i = start.headingIndex + 1; i < end; i++) {
       const text = texts[i]!;
       const field = FIELD.exec(text);
       if (field) {
         entry.fields.push({ label: field[1]!.trim(), text: field[2]!.trim() });
+        lastTarget = { kind: "field", index: entry.fields.length - 1 };
+        entry.sequence.push(lastTarget);
         continue;
       }
       // Fortsetzung oder neuer Absatz? Das entscheidet die Geometrie, nicht der
       // Text — siehe findParagraphStarts.
       const newParagraph = paragraphStart[i] === true;
-      const lastField = entry.fields[entry.fields.length - 1];
-      if (!newParagraph && entry.body.length === 0 && lastField) {
-        lastField.text = `${lastField.text} ${text}`.trim();
-      } else if (!newParagraph && entry.body.length > 0) {
-        entry.body[entry.body.length - 1] = `${entry.body[entry.body.length - 1]} ${text}`.trim();
-      } else {
-        entry.body.push(text);
+      if (!newParagraph && lastTarget !== null) {
+        if (lastTarget.kind === "field") {
+          const target = entry.fields[lastTarget.index]!;
+          target.text = `${target.text} ${text}`.trim();
+        } else {
+          entry.body[lastTarget.index] = `${entry.body[lastTarget.index]} ${text}`.trim();
+        }
+        continue;
       }
+      entry.body.push(text);
+      lastTarget = { kind: "body", index: entry.body.length - 1 };
+      entry.sequence.push(lastTarget);
     }
     out.push(entry);
   }
@@ -153,7 +181,6 @@ export function findParagraphStarts(lines: Line[]): boolean[] {
     columnRight.set(key, Math.max(columnRight.get(key) ?? 0, line.right));
   }
 
-  // Üblicher Zeilenabstand = Median der Abstände innerhalb einer Spalte.
   const gaps: number[] = [];
   for (let i = 1; i < lines.length; i++) {
     const previous = lines[i - 1]!;
@@ -162,8 +189,7 @@ export function findParagraphStarts(lines: Line[]): boolean[] {
     const gap = previous.y - line.y;
     if (gap > 0) gaps.push(gap);
   }
-  gaps.sort((a, b) => a - b);
-  const leading = gaps[Math.floor(gaps.length / 2)] ?? 0;
+  const leading = lineLeading(gaps);
 
   /*
     Die „kurze Zeile beendet den Absatz"-Regel gilt NUR bei Blocksatz. Bei
@@ -191,6 +217,34 @@ export function findParagraphStarts(lines: Line[]): boolean[] {
     out[i] = shortLine || bigGap;
   }
   return out;
+}
+
+/**
+ * Üblicher Zeilenabstand INNERHALB eines Absatzes.
+ *
+ * Der Median wäre das Naheliegende und ist falsch. Ein Zauber-Eintrag besteht
+ * fast nur aus einzeiligen Absätzen („Range: Touch", „Duration: Instantaneous"),
+ * also ist der häufigste Abstand dort der ABSATZ-Abstand — der Median liefert
+ * genau den Wert, gegen den unterschieden werden soll, und dann beginnt kein
+ * einziger neuer Absatz mehr. Genau daran hing die Beschreibung von Fireball
+ * noch am Feld „Spell Resistance".
+ *
+ * Gesucht ist deshalb der KLEINSTE Abstand, der regelmäßig vorkommt: Zeilen
+ * innerhalb eines Absatzes stehen enger als Absätze zueinander. „Regelmäßig"
+ * hält Ausreißer heraus (hoch- und tiefgestellte Zeichen, Tabellenzeilen), die
+ * sonst den Maßstab kaputtmachen würden.
+ */
+function lineLeading(gaps: number[]): number {
+  if (gaps.length === 0) return 0;
+  const counts = new Map<number, number>();
+  for (const gap of gaps) {
+    const bucket = Math.round(gap * 2) / 2; // 0,5 pt — feiner ist nur Rauschen
+    counts.set(bucket, (counts.get(bucket) ?? 0) + 1);
+  }
+  const enough = Math.max(3, gaps.length * 0.05);
+  const regular = [...counts.entries()].filter(([, count]) => count >= enough).map(([g]) => g);
+  if (regular.length === 0) return Math.min(...counts.keys());
+  return Math.min(...regular);
 }
 
 /** Feld eines Eintrags holen (erster Treffer, Groß-/Kleinschreibung egal). */

@@ -186,3 +186,80 @@ export const SPELL_EXPECTED = [
     spellResistance: "No",
   },
 ] as const;
+
+/**
+ * Der Assassine als Buchseite: erst der Text, dann die Stufentabelle über die
+ * ganze Seitenbreite. Die Spalte „Special" ist absichtlich so schmal, dass
+ * mindestens eine Zeile umbricht — im Buch ist das der Normalfall, und eine
+ * Tabelle, in der jede Zelle einzeilig ist, prüft die Fortsetzungszeilen nicht.
+ */
+export const CLASS_BLOCKS: Block[] = [
+  { heading: "Assassin" },
+  { label: "Hit Die:", text: "d6." },
+  { text: "Requirements" },
+  {
+    text: "To qualify to become an assassin, a character must fulfill all the following criteria.",
+  },
+  { label: "Alignment:", text: "Any evil." },
+  { label: "Skills:", text: "Disguise 4 ranks, Hide 8 ranks, Move Silently 8 ranks." },
+  {
+    label: "Special:",
+    text: "The character must kill someone for no other reason than to join the assassins.",
+  },
+  { text: "Class Skills" },
+  {
+    text:
+      "The assassin's class skills (and the key ability for each skill) are Balance (Dex), " +
+      "Bluff (Cha), Climb (Str), Craft (Int), Decipher Script (Int), Diplomacy (Cha), " +
+      "Disable Device (Int), Disguise (Cha), Escape Artist (Dex), Forgery (Int), " +
+      "Gather Information (Cha), Hide (Dex), Intimidate (Cha), Jump (Str), Listen (Wis), " +
+      "Move Silently (Dex), Open Lock (Dex), Search (Int), Sense Motive (Wis), " +
+      "Sleight of Hand (Dex), Spot (Wis), Swim (Str), Tumble (Dex), Use Magic Device (Cha), " +
+      "and Use Rope (Dex).",
+  },
+  { label: "Skill Points at Each Level:", text: "4 + Int modifier." },
+  {
+    table: {
+      columns: [0, 40, 78, 110, 142, 176, 340, 368, 396, 424],
+      header: [
+        ["", "Base", "", "", "", "", "Spells per Day"],
+        ["Class", "Attack", "Fort", "Ref", "Will"],
+        ["Level", "Bonus", "Save", "Save", "Save", "Special", "1st", "2nd", "3rd", "4th"],
+      ],
+      rows: [
+        ["1st", "+0", "+0", "+2", "+0", "Sneak attack +1d6, death attack, poison use, spells", "0", "—", "—", "—"],
+        ["2nd", "+1", "+0", "+3", "+0", "+1 save against poison, uncanny dodge", "1", "—", "—", "—"],
+        ["3rd", "+2", "+1", "+3", "+1", "Sneak attack +2d6", "2", "0", "—", "—"],
+        ["4th", "+3", "+1", "+4", "+1", "+2 save against poison", "3", "1", "—", "—"],
+        ["5th", "+3", "+1", "+4", "+1", "Improved uncanny dodge, sneak attack +3d6", "3", "2", "0", "—"],
+        ["6th", "+4", "+2", "+5", "+2", "+3 save against poison", "3", "3", "1", "—"],
+        ["7th", "+5", "+2", "+5", "+2", "Sneak attack +4d6", "3", "3", "2", "0"],
+        ["8th", "+6", "+2", "+6", "+2", "+4 save against poison, hide in plain sight", "3", "3", "3", "1"],
+        ["9th", "+6", "+3", "+6", "+3", "Sneak attack +5d6", "3", "3", "3", "2"],
+        ["10th", "+7", "+3", "+7", "+3", "+5 save against poison", "3", "3", "3", "3"],
+      ],
+    },
+  },
+  { text: "Class Features" },
+  { text: "All of the following are Class Features of the assassin prestige class." },
+  {
+    label: "Weapon and Armor Proficiency:",
+    text:
+      "Assassins are proficient with the crossbow (hand, light, or heavy), dagger (any type), " +
+      "dart, rapier, sap, shortbow (normal and composite), and short sword. Assassins are " +
+      "proficient with light armor but not with shields.",
+  },
+  {
+    label: "Spells:",
+    text:
+      "An assassin casts arcane spells drawn from the assassin spell list. She can cast any " +
+      "spell she has prepared. To learn or cast a spell, an assassin must have an Intelligence " +
+      "score of at least 10 + the spell's level.",
+  },
+  {
+    label: "Sneak Attack:",
+    text:
+      "This is exactly like the rogue ability of the same name. The extra damage dealt " +
+      "increases by +1d6 every other level.",
+  },
+];

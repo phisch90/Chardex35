@@ -12,8 +12,10 @@ import {
   resolveSkillId,
   type Effect,
   type Entity,
+  type EntityInput,
   type Prerequisite,
 } from "@codex35/core";
+import { finishEntity } from "../finish.js";
 import type { SrdIndex } from "../lookup.js";
 import { field, type RawEntry } from "../segment.js";
 
@@ -104,7 +106,7 @@ export function parseFeat(
     warnings.push("ohne mechanische Wirkung übernommen — Effekte bei Bedarf von Hand ergänzen");
   }
 
-  const entity: Entity = {
+  const entity: EntityInput = {
     id: crypto.randomUUID(),
     name: entry.name,
     kind: "feat",
@@ -128,5 +130,5 @@ export function parseFeat(
     },
   };
 
-  return { entity, inferred, warnings };
+  return { entity: finishEntity(entity), inferred, warnings };
 }

@@ -89,24 +89,49 @@ export async function readPdfPages(path: string): Promise<PdfPage[]> {
 
 /**
  * Spaltengrenze finden: die x-Mitte der Seite ist eine Vermutung, kein Fakt.
- * Belegt wird sie über die tatsächlichen Zeilenanfänge — liegen genug davon
- * deutlich rechts der Mitte UND ist dazwischen ein leerer Streifen, ist die Seite
- * zweispaltig. Sonst wird nicht getrennt (Tabellen, Titelseiten).
+ *
+ * Entschieden wird an einer einzigen Frage: laufen ZEILEN durch die Mitte? Bei
+ * zwei Spalten tut das keine, bei einer Spalte fast jede. Das ist der ganze
+ * Unterschied, und er ist messbar.
+ *
+ * Zwei frühere Regeln standen hier und waren beide falsch:
+ *
+ *  - „Kein STÜCK darf die Mitte kreuzen": pdf.js liefert Wörter, keine Zeilen.
+ *    Ein einzelnes Wort ist nie 70 pt breit, also kreuzte nie etwas, und die
+ *    Regel konnte nichts erkennen.
+ *  - „Beide Spalten müssen ein Viertel des Textes tragen": das klingt vernünftig
+ *    und zerstört genau die Seiten, auf denen eine Tabelle den größten Teil des
+ *    Platzes frisst und in der zweiten Spalte nur fünf Zeilen übrig sind. Dann
+ *    wurde nicht getrennt — und Zeilen aus beiden Spalten flossen zu einer
+ *    zusammen („caster level (maximum +5). (Int), Sense Motive (Wis), …"). Ein
+ *    Zauber ist dabei komplett verlorengegangen, weil sein Name plötzlich nicht
+ *    mehr über seinen Feldern stand.
+ *
+ * Ein paar durchlaufende Zeilen sind erlaubt: eine Kapitelüberschrift über zwei
+ * Spalten ist üblich und macht die Seite nicht einspaltig.
  */
 export function findColumnSplit(pieces: TextPiece[], pageWidth: number): number | null {
   if (pieces.length < 20) return null;
   const middle = pageWidth / 2;
-  const starts = pieces.map((p) => p.x);
-  const left = starts.filter((x) => x < middle).length;
-  const right = starts.filter((x) => x >= middle).length;
-  // Beide Seiten müssen ordentlich gefüllt sein, sonst ist es keine Spalte.
-  if (left < pieces.length * 0.25 || right < pieces.length * 0.25) return null;
-
-  // Der Streifen um die Mitte, in dem KEIN Text beginnt oder durchläuft.
   const band = pageWidth * 0.06;
-  const crossing = pieces.filter((p) => p.x < middle - band && p.x + p.width > middle + band);
-  if (crossing.length > pieces.length * 0.02) return null; // Text läuft durch → einspaltig
-  return middle;
+
+  // Stücke zu Zeilen bündeln — nur für diese Entscheidung, nach y.
+  const rows = new Map<number, { left: number; right: number }>();
+  for (const piece of pieces) {
+    const key = Math.round(piece.y / LINE_TOLERANCE);
+    const row = rows.get(key);
+    if (row === undefined) rows.set(key, { left: piece.x, right: piece.x + piece.width });
+    else {
+      row.left = Math.min(row.left, piece.x);
+      row.right = Math.max(row.right, piece.x + piece.width);
+    }
+  }
+  if (rows.size < 4) return null;
+
+  const crossing = [...rows.values()].filter(
+    (row) => row.left < middle - band && row.right > middle + band,
+  ).length;
+  return crossing > rows.size * 0.15 ? null : middle;
 }
 
 /** Stücke einer Seite zu Zeilen bündeln, Spalte für Spalte, von oben nach unten. */
