@@ -13,21 +13,8 @@ export interface ConvertContext {
   warnings: Warnings;
 }
 
-/** Kommasplit, der Klammern respektiert: "Knowledge (all skills, taken individually), Ride" → 2 Teile. */
-export function splitTopLevel(text: string): string[] {
-  const parts: string[] = [];
-  let depth = 0;
-  let current = "";
-  for (const ch of text) {
-    if (ch === "(" || ch === "[") depth++;
-    else if (ch === ")" || ch === "]") depth = Math.max(0, depth - 1);
-    if (ch === "," && depth === 0) {
-      parts.push(current.trim());
-      current = "";
-    } else {
-      current += ch;
-    }
-  }
-  if (current.trim() !== "") parts.push(current.trim());
-  return parts.filter((p) => p !== "");
-}
+/**
+ * Kommasplit, der Klammern respektiert. Die Regel steht in core — hier nur
+ * weiterreichen, damit die vorhandenen Importe im ETL unverändert bleiben.
+ */
+export { splitTopLevel } from "@codex35/core";
