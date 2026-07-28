@@ -620,7 +620,11 @@ export function mapFightClubPc(
       });
       continue;
     }
-    feats.push(hit.rest === "" ? { featId: hit.id } : { featId: hit.id, choice: hit.rest });
+    feats.push(
+      hit.rest === ""
+        ? { featId: hit.id, extraEffects: [] }
+        : { featId: hit.id, choice: hit.rest, extraEffects: [] },
+    );
   }
   const unmatchedFeats = pc.featTokens.filter((t) => matchName(featIndex, t) === null);
 

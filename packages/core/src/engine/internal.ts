@@ -22,6 +22,8 @@ export interface ResolvedCharacter {
     choice: string | undefined;
     /** Gegenstands-ID, auf die sich `choice` bezieht (siehe Charakter-Schema). */
     choiceRef: string | undefined;
+    /** Eigene Modifikatoren an DIESEM Talent (siehe Charakter-Schema). */
+    extraEffects: Character["feats"][number]["extraEffects"];
     entity: FeatEntity | null;
   }[];
   items: { instance: Character["inventory"][number]; entity: ItemEntity | null }[];

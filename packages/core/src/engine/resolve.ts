@@ -56,6 +56,7 @@ export function resolve(
     featId: f.featId,
     choice: f.choice,
     choiceRef: f.choiceRef,
+    extraEffects: f.extraEffects,
     entity: get(f.featId, "feat", "Talent"),
   }));
 

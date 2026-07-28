@@ -169,6 +169,23 @@ export const characterSchema = z.object({
          * für `srd:item:sword-short`).
          */
         choiceRef: z.string().optional(),
+        /**
+         * EIGENE Modifikatoren an diesem Talent — das, was Fight Club unter
+         * „Modifiers" anbietet.
+         *
+         * Warum am Charakter und nicht am Kompendium-Eintrag: 300 der 327
+         * SRD-Talente bringen gar keine Wirkung mit, weil ihr Regeltext Prosa ist
+         * („du darfst einmal pro Runde …"). Was hier eingetragen wird, ist die
+         * Entscheidung DIESES Charakters — bei Hausregeln mit eigenen Zahlen ist
+         * das der Normalfall. Ein Eintrag am Kompendium würde für alle Charaktere
+         * gelten und wäre eine Hausregel; das ist eine andere Sache und bekommt
+         * später einen eigenen Weg (Kompendium-Editor).
+         *
+         * Genau dieselbe Bauform gibt es schon bei `inventory[].extraEffects`
+         * (das +1 des individuellen Schwertes). Zwei Wege für dieselbe Sache
+         * wären ein Fehler.
+         */
+        extraEffects: z.array(effectSchema).default([]),
       }),
     )
     .default([]),

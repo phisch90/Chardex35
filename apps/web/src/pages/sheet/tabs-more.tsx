@@ -15,6 +15,7 @@ import {
 import { S } from "../../strings.js";
 import { toPortraitDataUrl } from "../../lib/image.js";
 import { FeatText } from "../../ui/FeatText.js";
+import { FeatModifiers } from "../../ui/FeatModifiers.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
 import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
@@ -267,6 +268,7 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
 
 export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
   const entities = useAllEntities();
+  const skillEntities = (entities ?? []).filter((e) => e.kind === "skill" && !e.deletedAt);
   const [query, setQuery] = useState("");
   // Talente sind Stufenaufstiege in Papierform — die dürfen nicht auf einen Tap
   // verschwinden. Ändern und Löschen nur im Bearbeiten-Modus.
@@ -321,6 +323,23 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
                       )}
                     </div>
                   )}
+                  {/*
+                    Eigene Modifikatoren — der Weg, wie ein Talent aus einem
+                    eigenen Buch (oder eine Hausregel) überhaupt etwas bewirkt.
+                    300 der 327 SRD-Talente bringen von sich aus keine Zahl mit.
+                  */}
+                  <FeatModifiers
+                    entity={entity}
+                    own={feat.extraEffects}
+                    skills={skillEntities}
+                    editMode={editMode}
+                    onChange={(next) =>
+                      save((c) => {
+                        const row = c.feats[index];
+                        if (row) row.extraEffects = next;
+                      })
+                    }
+                  />
                 </div>
                 <div className="flex gap-1">
                   {needsItem && (
@@ -409,7 +428,7 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
                 <span className="font-medium">{displayName(feat)}</span>
                 <FeatText entity={feat} />
               </div>
-              <GhostButton onClick={() => save((c) => void c.feats.push({ featId: feat.id }))}>
+              <GhostButton onClick={() => save((c) => void c.feats.push({ featId: feat.id, extraEffects: [] }))}>
                 {S.actions.add}
               </GhostButton>
             </li>
