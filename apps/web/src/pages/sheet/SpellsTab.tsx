@@ -208,71 +208,85 @@ function CasterBlock({ block, character, save }: TabProps & { block: Spellcastin
                     ? !canPrepareAt(level)
                     : !canLearnAt(level);
                 return (
-                  <li key={entry.spellId} className="flex items-center gap-2 py-1.5">
-                    <button
-                      onClick={() =>
-                        isPrepared
-                          ? togglePrepared(entry.spellId, level)
-                          : toggleKnown(entry.spellId, level)
-                      }
-                      disabled={blocked}
-                      aria-label={
-                        active
+                  /*
+                    Beschriftete Knöpfe statt Symbole. Sein Einwand war richtig:
+                    dass ◉ „vorbereitet" heißt und ✨ „wirken", errät niemand —
+                    und eine Legende darunter ist keine Antwort, wenn die zwei
+                    wichtigsten Handgriffe am Zauber-Reiter dahinter stecken.
+
+                    Die Knöpfe stehen in einer zweiten Zeile unter dem Namen. Auf
+                    einem 390 px breiten Handy wäre „Vorbereiten" neben Name und
+                    Untertitel nicht unterzubringen, ohne wieder abzukürzen.
+                  */
+                  <li key={entry.spellId} className="py-1.5">
+                    <div className="flex items-baseline gap-2">
+                      <Link
+                        to="/kompendium/$kind/$entityId"
+                        params={{ kind: "spell", entityId: entry.spellId }}
+                        className="min-w-0 flex-1 hover:text-amber-300"
+                      >
+                        <div className={`truncate text-sm ${active ? "font-semibold text-amber-200" : ""}`}>
+                          {entry.spell ? displayName(entry.spell) : entry.spellId}
+                          {count > 1 && <span className="text-slate-400"> ×{count}</span>}
+                        </div>
+                        <div className="truncate text-[11px] text-slate-500">
+                          {spellSubline(entry.spell)}
+                        </div>
+                      </Link>
+                      {active && (
+                        <span className="shrink-0 text-[11px] text-amber-400">
+                          {isPrepared ? S.spells.isPrepared : S.spells.isKnown}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      {/* Wirken zuerst und hervorgehoben — das ist der Handgriff
+                          am Spieltisch. */}
+                      {active && (
+                        <button
+                          disabled={!canCastAt(level)}
+                          onClick={() => castAt(level)}
+                          className="rounded-lg bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white disabled:bg-slate-700 disabled:text-slate-500"
+                        >
+                          {S.spells.cast}
+                        </button>
+                      )}
+                      <GhostButton
+                        disabled={blocked}
+                        onClick={() =>
+                          isPrepared
+                            ? togglePrepared(entry.spellId, level)
+                            : toggleKnown(entry.spellId, level)
+                        }
+                      >
+                        {active
                           ? isPrepared
                             ? S.spells.unprepare
                             : S.spells.unlearn
                           : isPrepared
                             ? S.spells.prepare
-                            : S.spells.learn
-                      }
-                      className={`w-6 shrink-0 text-center text-base leading-none ${
-                        active ? "text-amber-400" : blocked ? "text-slate-700" : "text-slate-500"
-                      }`}
-                    >
-                      {active ? "◉" : "○"}
-                    </button>
-                    <Link
-                      to="/kompendium/$kind/$entityId"
-                      params={{ kind: "spell", entityId: entry.spellId }}
-                      className="min-w-0 flex-1 hover:text-amber-300"
-                    >
-                      <div className={`truncate text-sm ${active ? "font-semibold" : ""}`}>
-                        {entry.spell ? displayName(entry.spell) : entry.spellId}
-                        {count > 1 && <span className="text-slate-400"> ×{count}</span>}
-                      </div>
-                      <div className="truncate text-[11px] text-slate-500">
-                        {spellSubline(entry.spell)}
-                      </div>
-                    </Link>
-                    {isPrepared && count > 0 && (
-                      <GhostButton
-                        disabled={!canPrepareAt(level)}
-                        onClick={() =>
-                          mutate((s) => void s.prepared.push({ spellId: entry.spellId, slotLevel: level }))
-                        }
-                        title={S.spells.another}
-                      >
-                        ＋
+                            : S.spells.learn}
                       </GhostButton>
-                    )}
-                    {active && (
-                      <GhostButton
-                        disabled={!canCastAt(level)}
-                        onClick={() => castAt(level)}
-                        title={S.spells.cast}
-                      >
-                        ✨
-                      </GhostButton>
-                    )}
-                    {usesSpellbook && (
-                      <GhostButton
-                        danger
-                        onClick={() => mutate((s) => void (s.known = s.known.filter((id) => id !== entry.spellId)))}
-                        title={S.spells.removeFromSpellbook}
-                      >
-                        ✕
-                      </GhostButton>
-                    )}
+                      {isPrepared && count > 0 && (
+                        <GhostButton
+                          disabled={!canPrepareAt(level)}
+                          onClick={() =>
+                            mutate((s) => void s.prepared.push({ spellId: entry.spellId, slotLevel: level }))
+                          }
+                        >
+                          {S.spells.another}
+                        </GhostButton>
+                      )}
+                      {usesSpellbook && (
+                        <GhostButton
+                          danger
+                          onClick={() => mutate((s) => void (s.known = s.known.filter((id) => id !== entry.spellId)))}
+                        >
+                          {S.spells.removeFromSpellbook}
+                        </GhostButton>
+                      )}
+                    </div>
                   </li>
                 );
               })}
@@ -337,44 +351,28 @@ function CasterBlock({ block, character, save }: TabProps & { block: Spellcastin
       {isPrepared && <p className="mt-3 text-[10px] text-slate-500">{S.spells.preparedHint}</p>}
 
       {/*
-        Legende. Die Zeichen sind kompakt genug für ein Handy, aber niemand
-        errät, dass ◉ „vorbereitet“ und 🌙 „Rast“ heißt — einmal pro
-        Klassen-Karte erklärt, unten, wo sie nicht im Weg steht.
+        Legende. Nur noch für die Zeichen, die wirklich Zeichen bleiben: die
+        Slot-Punkte im Grad-Kopf und die Rast. Vorbereiten und Wirken stehen
+        jetzt als Wort am Zauber — dafür braucht es keine Erklärung mehr.
       */}
       <details className="mt-3 border-t border-slate-800 pt-2">
         <summary className="cursor-pointer text-xs text-slate-400">Zeichen-Legende</summary>
         <ul className="mt-1.5 space-y-1 text-xs leading-snug text-slate-500">
           <li>
-            <span className="text-amber-400">◉</span> / <span className="text-slate-500">○</span> —{" "}
-            {isPrepared ? "vorbereitet / nicht vorbereitet" : "bekannt / nicht bekannt"}; antippen
-            schaltet um
-          </li>
-          <li>
             <span className="text-amber-400">●</span> / <span className="text-slate-500">○</span> im
             Grad-Kopf — verbrauchter / freier Slot dieses Grads
-          </li>
-          <li>
-            <span className="text-slate-300">✨</span> — wirken: zählt einen Slot des Grads als
-            verbraucht
           </li>
           <li>
             <span className="text-slate-300">＋</span> / <span className="text-slate-300">−</span> im
             Grad-Kopf — Slot von Hand verbrauchen bzw. zurückgeben
           </li>
-          {isPrepared && (
-            <li>
-              <span className="text-slate-300">＋</span> an einem Zauber — denselben Zauber ein
-              weiteres Mal vorbereiten (×2 hinter dem Namen)
-            </li>
-          )}
           <li>
             <span className="text-slate-300">🌙</span> — Rast: setzt alle verbrauchten Slots dieser
             Klasse zurück
           </li>
           {usesSpellbook && (
             <li>
-              <span className="text-slate-300">📖</span> — Zauberbuch erweitern ·{" "}
-              <span className="text-red-400">✕</span> — Zauber aus dem Buch nehmen
+              <span className="text-slate-300">📖</span> — Zauberbuch erweitern
             </li>
           )}
           <li>

@@ -72,6 +72,14 @@ export const S = {
     xp: "EP",
     nextLevel: "nächste Stufe",
     attacks: "Angriffe",
+    /*
+      „+8 / +3" sagt niemandem etwas, der es nicht schon weiß. Auf dem Handy
+      steht der kurze Hinweis, auf breiten Schirmen (iPad) gleich der ganze Satz
+      — sein Wunsch: „kann in der iPad-Version gerne schon danebenstehen".
+    */
+    iterativeShort: (n: number) => `${n} Angriffe pro Runde — antippen erklärt es`,
+    iterativeHint: (mods: string[]) =>
+      `Volle Attacke: ${mods.length} Angriffe hintereinander mit ${mods.join(" und ")} — jeder weitere liegt 5 niedriger. Ein einzelner Angriff (Standard-Aktion) nutzt immer ${mods[0]}.`,
     damage2: "Schaden",
     critical: "Krit.",
     ranks: "Ränge",
@@ -94,6 +102,9 @@ export const S = {
     casterLevel: "Zauberstufe",
     breakdownSuppressed: "wirkt nicht",
     portrait: "Porträt",
+    /** Der Punkt an einer Attributs-Kachel und was er bedeutet. */
+    abilityDotHint: "• = da kommt etwas dazu (Volk, Talent, Gegenstand) — antippen zeigt, was.",
+    abilityHasBonus: "Grundwert plus alles, was darauf wirkt.",
     editModeOn: "Bearbeiten: Ränge, Talente, Ausrüstung, Zähler",
   },
 
@@ -294,7 +305,10 @@ export const S = {
     addToSpellbook: "Zauberbuch erweitern",
     emptySpellbook: "Noch keine Zauber im Buch — unten aus der Klassenliste wählen.",
     noneAtLevel: "Kein Zauber dieses Grades gefunden.",
-    another: "noch einmal vorbereiten",
+    another: "noch einmal",
+    /** Zustandsmarker in der Zeile, seit die Symbole weg sind. */
+    isPrepared: "vorbereitet",
+    isKnown: "bekannt",
     unprepare: "Vorbereitung lösen",
     unlearn: "Vergessen",
     removeFromSpellbook: "Aus dem Zauberbuch nehmen",
