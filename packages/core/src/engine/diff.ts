@@ -97,8 +97,8 @@ export function diffSheets(before: DerivedSheet, after: DerivedSheet): SheetDiff
   const defense: SheetDiffEntry[] = [];
   pushNumber(defense, "Trefferpunkte (max)", before.hp.max, after.hp.max);
   pushNumber(defense, "Rüstungsklasse", before.ac.total.total, after.ac.total.total);
-  pushNumber(defense, "RK berührt", before.ac.touch, after.ac.touch);
-  pushNumber(defense, "RK auf dem falschen Fuß", before.ac.flatFooted, after.ac.flatFooted);
+  pushNumber(defense, "RK berührt", before.ac.touch.total, after.ac.touch.total);
+  pushNumber(defense, "RK auf dem falschen Fuß", before.ac.flatFooted.total, after.ac.flatFooted.total);
   groups.push(...group("Trefferpunkte & Verteidigung", defense));
 
   // --- Rettungswürfe ------------------------------------------------------

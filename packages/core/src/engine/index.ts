@@ -38,4 +38,5 @@ export * from "./spells.js";
 export * from "./tables.js";
 export * from "./trackers.js";
 export * from "./types.js";
-export { stackContributions } from "./stack.js";
+export { stackContributions, withoutContributions } from "./stack.js";
+export { conflictingEquipIds, itemSlot, type EquipCandidate, type ItemSlot } from "./equipment.js";

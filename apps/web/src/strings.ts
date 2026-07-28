@@ -64,6 +64,8 @@ export const S = {
     ac: "RK",
     touch: "Touch",
     flatFooted: "Flat-Footed",
+    touchHint: "Gegen Berührungsangriffe: Rüstung, Schild und natürliche Rüstung zählen nicht.",
+    flatFootedHint: "Überrascht, vor der ersten Aktion: kein DEX-Bonus, kein Ausweichen.",
     init: "Initiative",
     speed: "Bewegung",
     bab: "GAB",
@@ -89,6 +91,13 @@ export const S = {
     ranged: "Fernkampf",
     equipped: "Angelegt",
     stowed: "Rucksack",
+    /** Gruppen in der Ausrüstung — nach Körperstelle, nicht alles in einem Topf. */
+    slots2: {
+      armor: "Rüstung",
+      shield: "Schild",
+      weapon: "Waffen",
+      other: "Sonstiges",
+    } as Record<string, string>,
     skillFilter: { all: "Alle", trained: "Trainiert", class: "Klasse" } as Record<string, string>,
     subtype: "Teilgebiet",
     addSubtype: "Teilgebiet anlegen",

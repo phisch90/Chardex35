@@ -345,7 +345,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     // Original: RK 16, Berührung 12 → +4 Rüstung (nicht gegen Berührung)
     // und +1 Ablenkung (auch gegen Berührung).
     expect(sheet.ac.total.total).toBe(16);
-    expect(sheet.ac.touch).toBe(12);
+    expect(sheet.ac.touch.total).toBe(12);
     const types = character.miscModifiers
       .filter((m) => m.target === "ac")
       .map((m) => `${m.bonusType}${m.value >= 0 ? "+" : ""}${m.value}`)
@@ -362,7 +362,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     const result = importFightClubXml(monk, compendium, { idFactory: () => `m-${++n}` }).results[0]!;
     const monkSheet = deriveSheet(result.character, compendium);
     expect(monkSheet.ac.total.total).toBe(17);
-    expect(monkSheet.ac.touch).toBe(17);
+    expect(monkSheet.ac.touch.total).toBe(17);
   });
 
   it("legt für Nicht-SRD-Völker ein Platzhalter-Volk an statt einen kaputten Bogen", () => {

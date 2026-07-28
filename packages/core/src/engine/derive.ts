@@ -16,6 +16,7 @@ import {
   stackPaths,
   toBuckets,
   toContribution,
+  withoutContributions,
   type Buckets,
 } from "./stack.js";
 import {
@@ -260,19 +261,24 @@ export function deriveSheetValues(
   const acTotal = stackContributions(acContributions);
   const stackedDex = acTotal.contributions[dexIndex];
 
-  // Touch: ohne Rüstung, Schild, natürliche Rüstung (und deren Verzauberung).
+  /*
+    Touch und „auf dem falschen Fuß" sind DIESELBE Rechnung wie die RK, nur mit
+    weggelassenen Beiträgen. Beide geben deshalb einen vollen StatValue heraus
+    und nicht bloß eine Zahl: sonst kann die Oberfläche nicht zeigen, WAS
+    weggefallen ist — und müsste die Regel nachbauen, um es zu erklären. Regeln
+    gehören in die Engine.
+
+    Weggelassene Beiträge bleiben als `applied: false` in der Liste stehen. Das
+    ist genau die Darstellung, die die Aufschlüsselung ohnehin kennt
+    („durchgestrichen, wirkt nicht hier").
+  */
   const NOT_TOUCH = new Set(["armor", "shield", "natural", "enhancement"]);
-  const touch = acTotal.contributions.reduce(
-    (sum, c) => sum + (c.applied && !NOT_TOUCH.has(c.bonusType) ? c.value : 0),
-    0,
+  const touch = withoutContributions(acTotal, (c) => NOT_TOUCH.has(c.bonusType));
+  // Auf dem falschen Fuß: ohne DEX-BONUS (ein Malus bleibt!) und ohne Dodge.
+  const flatFooted = withoutContributions(
+    acTotal,
+    (c) => (c === stackedDex && c.value > 0) || c.bonusType === "dodge",
   );
-  // Auf dem falschen Fuß: ohne GE-Bonus (Malus bleibt!) und ohne Dodge.
-  const flatFooted = acTotal.contributions.reduce((sum, c) => {
-    if (!c.applied) return sum;
-    if (c === stackedDex && c.value > 0) return sum;
-    if (c.bonusType === "dodge") return sum;
-    return sum + c.value;
-  }, 0);
 
   // --- Initiative, Rettungswürfe, Ringkampf --------------------------------
   const init = stackPaths(buckets, ["init"], [baseContribution("DEX-Modifikator", dexMod)]);

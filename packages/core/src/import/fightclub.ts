@@ -861,7 +861,7 @@ export function mapFightClubPc(
       });
     } else {
       const touchDelta =
-        pc.touch !== undefined ? Math.max(0, Math.min(acDelta, pc.touch - sheet.ac.touch)) : 0;
+        pc.touch !== undefined ? Math.max(0, Math.min(acDelta, pc.touch - sheet.ac.touch.total)) : 0;
       const armorDelta = acDelta - touchDelta;
       comparisons.push({
         label: "RK",
