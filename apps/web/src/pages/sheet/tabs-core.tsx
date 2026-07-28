@@ -14,22 +14,45 @@ export function StatsTab(props: TabProps) {
     <div className="space-y-3">
       <Card>
         <SectionTitle>Attribute</SectionTitle>
-        {/* Nicht antippbar: der Wert steht schon da, groß der Modifikator und
-            klein die Punktzahl. Ein Tap zeigte nur dasselbe noch einmal. */}
+        {/*
+          Antippbar nur, wenn es etwas zu zeigen gibt.
+
+          Erst hatte jede Kachel einen Tap, der bloß denselben Wert nochmal
+          zeigte — weg damit, das war seine Ansage. Aber sobald ein Bonus aus
+          einem Talent, einem Gegenstand oder einem Effekt dazukommt, MUSS man
+          das sehen können: die Kachel bekommt dann einen Punkt und wird
+          antippbar. Ein Knopf, der auf Tap nichts tut, verspricht etwas, das
+          nicht kommt — und ein Bonus, den nichts anzeigt, fehlt am Tisch.
+        */}
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {ABILITIES.map((ability) => {
             const block = sheet.abilities[ability];
+            // Mehr als der Grundwert? Dann steckt etwas dahinter.
+            const hasExtra = block.score.contributions.length > 1;
             return (
               <StatButton
                 key={ability}
                 big
-                label={S.abilities[ability] ?? ability}
+                label={`${S.abilities[ability] ?? ability}${hasExtra ? " •" : ""}`}
                 value={fmtMod(block.mod)}
                 sub={`${block.score.total}`}
+                {...(hasExtra
+                  ? {
+                      onClick: () =>
+                        props.openBreakdown(S.abilityNames[ability] ?? ability, block.score, {
+                          rollable: false,
+                          absolute: true,
+                          note: S.sheet.abilityHasBonus,
+                        }),
+                    }
+                  : {})}
               />
             );
           })}
         </div>
+        {ABILITIES.some((a) => sheet.abilities[a].score.contributions.length > 1) && (
+          <p className="mt-1 text-[10px] text-slate-500">{S.sheet.abilityDotHint}</p>
+        )}
       </Card>
 
       <Card>
@@ -159,7 +182,16 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
               <div className="flex items-center justify-between gap-2">
                 <button
                   className="min-w-0 flex-1 text-left"
-                  onClick={() => openBreakdown(attack.label, attack.attack, { rollable: false })}
+                  onClick={() =>
+                    openBreakdown(attack.label, attack.attack, {
+                      rollable: false,
+                      // Beim Antippen die Angriffsfolge erklären — das ist der Weg
+                      // auf dem Handy, wo der ganze Satz nicht in die Zeile passt.
+                      ...(attack.bonuses.length > 1
+                        ? { note: S.sheet.iterativeHint(attack.bonuses.map(fmtMod)) }
+                        : {}),
+                    })
+                  }
                 >
                   <div className="truncate text-sm font-semibold">{attack.label}</div>
                   <div className="text-xs text-slate-400">
@@ -171,6 +203,16 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
                       </>
                     )}
                   </div>
+                  {attack.bonuses.length > 1 && (
+                    <div className="text-[10px] leading-snug text-slate-500">
+                      <span className="sm:hidden">
+                        {S.sheet.iterativeShort(attack.bonuses.length)}
+                      </span>
+                      <span className="hidden sm:inline">
+                        {S.sheet.iterativeHint(attack.bonuses.map(fmtMod))}
+                      </span>
+                    </div>
+                  )}
                   {attack.notes.map((note, i) => (
                     <div key={i} className="text-[10px] text-slate-500">
                       {note}
