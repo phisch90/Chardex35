@@ -4,19 +4,24 @@ import {
   ABILITIES,
   characterSchema,
   classCategory,
+  conflictingEquipIds,
   deriveSheet,
   displayName,
   maxRanks,
+  nextSlot,
   skillPointCost,
   type Ability,
   type Character,
   type Entity,
+  type EquipSlot,
   type SkillLine,
 } from "@codex35/core";
 import { S } from "../strings.js";
 import { CharacterRepo } from "../db/repo.js";
 import { useAllEntities, useCompendium, useHouseRules } from "../lib/hooks.js";
 import { Card, Chip, GhostButton, PrimaryButton, SearchInput, fmtMod } from "../ui/bits.js";
+import { EquipMark } from "../ui/EquipMark.js";
+import { itemSummary } from "../ui/itemSummary.js";
 import { FeatText } from "../ui/FeatText.js";
 import { ClassInfo, RaceInfo, classDetailLine, raceDetailLine } from "../ui/RaceClassInfo.js";
 
@@ -29,7 +34,7 @@ interface Draft {
   skillRanks: Record<string, number>;
   skillSubtypes: { skillId: string; subtype: string }[];
   featIds: { featId: string; choice?: string }[];
-  inventory: { id: string; itemId: string; qty: number; equipped: boolean }[];
+  inventory: { id: string; itemId: string; qty: number; slot: EquipSlot }[];
 }
 
 const INITIAL: Draft = {
@@ -510,19 +515,38 @@ function GearStep(props: { draft: Draft; setDraft: (d: Draft) => void; entities:
                   {row.qty > 1 ? ` ×${row.qty}` : ""}
                 </span>
                 <span className="flex items-center gap-2">
-                  <Chip
-                    active={row.equipped}
-                    onClick={() =>
+                  {/*
+                    Dieselbe Marke wie im Bogen. Vorher stand hier ein eigener
+                    Chip mit einem Ja/Nein — man konnte im Assistenten zwei
+                    Rüstungen anlegen, und die wanderten so in den Charakter.
+                  */}
+                  <EquipMark
+                    slot={row.slot}
+                    onClick={() => {
+                      const target = nextSlot(
+                        entity?.kind === "item" ? entity : undefined,
+                        row.slot,
+                      );
+                      const verdrängt =
+                        target === "none"
+                          ? []
+                          : conflictingEquipIds(
+                              draft.inventory.map((r) => ({ id: r.id, slot: r.slot })),
+                              row.id,
+                              target,
+                            );
                       setDraft({
                         ...draft,
                         inventory: draft.inventory.map((r) =>
-                          r.id === row.id ? { ...r, equipped: !r.equipped } : r,
+                          r.id === row.id
+                            ? { ...r, slot: target }
+                            : verdrängt.includes(r.id)
+                              ? { ...r, slot: "none" as EquipSlot }
+                              : r,
                         ),
-                      })
-                    }
-                  >
-                    {row.equipped ? S.actions.unequip : S.actions.equip}
-                  </Chip>
+                      });
+                    }}
+                  />
                   <GhostButton
                     danger
                     onClick={() =>
@@ -546,10 +570,11 @@ function GearStep(props: { draft: Draft; setDraft: (d: Draft) => void; entities:
               {item.kind === "item" && (
                 <div className="text-xs text-slate-500">
                   {[
+                    itemSummary(item),
                     item.data.costGp !== undefined ? `${item.data.costGp} gp` : null,
                     item.data.weightLb ? `${item.data.weightLb} lb` : null,
                   ]
-                    .filter(Boolean)
+                    .filter((part) => part !== null && part !== "")
                     .join(" · ")}
                 </div>
               )}
@@ -560,7 +585,7 @@ function GearStep(props: { draft: Draft; setDraft: (d: Draft) => void; entities:
                   ...draft,
                   inventory: [
                     ...draft.inventory,
-                    { id: crypto.randomUUID(), itemId: item.id, qty: 1, equipped: false },
+                    { id: crypto.randomUUID(), itemId: item.id, qty: 1, slot: "none" },
                   ],
                 })
               }

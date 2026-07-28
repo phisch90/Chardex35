@@ -1,3 +1,4 @@
+import { isEquipped } from "../schema/character.js";
 import { displayName, type Effect } from "../schema/entities.js";
 import type { ActiveEffect, ResolvedCharacter, TimelineResult } from "./internal.js";
 import { effectKey } from "./internal.js";
@@ -76,7 +77,7 @@ export function collectEffects(
   // Keys sind INSTANZ-bezogen (zwei Langschwerter → getrennte Toggles).
   for (const { instance, entity } of resolved.items) {
     const label = instance.customName ?? (entity ? displayName(entity) : "Gegenstand");
-    const equipped = instance.equipped;
+    const equipped = isEquipped(instance);
     entity?.effects.forEach((e, i) =>
       add(e, label, effectKey(instance.id, "e", i), {
         equipped,

@@ -96,17 +96,27 @@ export function StatsTab(props: TabProps) {
         </div>
       </Card>
 
-      {sheet.issues.length > 0 && (
-        <Card className="border-amber-800/60">
-          <SectionTitle>{S.misc.issues}</SectionTitle>
-          <ul className="list-inside list-disc space-y-1 text-xs text-amber-300">
-            {sheet.issues.map((issue, i) => (
-              <li key={i}>{issue.message}</li>
-            ))}
-          </ul>
-        </Card>
-      )}
+      {/*
+        Kampfoptions-Warnungen stehen im KAMPF-Reiter, wo auch der Regler ist.
+        Vorher landeten sie hier, zwei Reiter entfernt von der Ursache.
+      */}
+      <IssueCard issues={sheet.issues.filter((i) => i.code !== "combat-option")} />
     </div>
+  );
+}
+
+/** Warnungen als Karte — an der Stelle, an der man etwas dagegen tun kann. */
+function IssueCard({ issues }: { issues: TabProps["sheet"]["issues"] }) {
+  if (issues.length === 0) return null;
+  return (
+    <Card className="border-amber-800/60">
+      <SectionTitle>{S.misc.issues}</SectionTitle>
+      <ul className="list-inside list-disc space-y-1 text-xs text-amber-300">
+        {issues.map((issue, i) => (
+          <li key={i}>{issue.message}</li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 
@@ -117,6 +127,7 @@ export function CombatTab(props: TabProps) {
   const { ignoreEncumbrance } = useHouseRules();
   return (
     <div className="space-y-3">
+      <IssueCard issues={sheet.issues.filter((i) => i.code === "combat-option")} />
       <Card>
         <SectionTitle>{S.sheet.ac}</SectionTitle>
         <div className="grid grid-cols-3 gap-2">

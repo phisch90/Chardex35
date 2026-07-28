@@ -1,5 +1,5 @@
 import { ABILITIES, type Ability, type Size, type StatPath } from "../schema/common.js";
-import type { HouseRules } from "../schema/character.js";
+import { isEquipped, type EquipSlot, type HouseRules } from "../schema/character.js";
 import {
   displayName,
   parseSkillKey,
@@ -9,6 +9,7 @@ import {
   type SkillEntity,
 } from "../schema/entities.js";
 import { applyCombatOptions } from "./combatOptions.js";
+import { isNaturalOrUnarmed } from "./equipment.js";
 import type { ActiveEffect, ResolvedCharacter, TimelineResult } from "./internal.js";
 import {
   baseContribution,
@@ -126,12 +127,19 @@ export function deriveSheetValues(
 
   // --- Ausgerüstete Rüstung/Schilde --------------------------------------
   const equippedArmor: EquippedArmorInfo[] = [];
-  const equippedWeapons: { entity: ItemEntity; instanceId: string; label: string }[] = [];
+  const equippedWeapons: {
+    entity: ItemEntity;
+    instanceId: string;
+    label: string;
+    slot: EquipSlot;
+  }[] = [];
   for (const { instance, entity } of resolved.items) {
-    if (!instance.equipped || !entity) continue;
+    if (!isEquipped(instance) || !entity) continue;
     const label = instance.customName ?? displayName(entity);
     if (entity.data.armor) equippedArmor.push({ entity, instanceId: instance.id, label });
-    if (entity.data.weapon) equippedWeapons.push({ entity, instanceId: instance.id, label });
+    if (entity.data.weapon) {
+      equippedWeapons.push({ entity, instanceId: instance.id, label, slot: instance.slot });
+    }
   }
 
   /**
@@ -399,9 +407,15 @@ export function deriveSheetValues(
     key: string,
     label: string,
     mode: "melee" | "ranged",
-    weapon: { entity: ItemEntity; instanceId: string } | null,
+    weapon: { entity: ItemEntity; instanceId: string; slot?: EquipSlot } | null,
   ): AttackLine => {
     const weaponData = weapon?.entity.data.weapon;
+    /*
+      Zweihändig GEFÜHRT, nicht „zweihändige Waffe": ein Langschwert in beiden
+      Händen zählt bei Power Attack doppelt und gibt STR×1,5. Das steht im
+      Ausrüstungs-Slot, nicht in den Waffendaten.
+    */
+    const wieldedInTwoHands = weapon?.slot === "bothHands" || weaponData?.handedness === "two";
     const isLight = weaponData?.handedness === "light";
     const useDex = mode === "ranged" || (weaponFinesse && isLight);
     const abilityLabel = useDex ? "DEX-Modifikator" : "STR-Modifikator";
@@ -416,7 +430,13 @@ export function deriveSheetValues(
     }
     const paths: StatPath[] =
       mode === "melee" ? ["attack.melee", "attack.all"] : ["attack.ranged", "attack.all"];
-    const contributions = [...base, ...combat.attack];
+    // Power Attack und Kampfgeschick gelten nur im Nahkampf — vorher fiel der
+    // Langbogen von +8/+3 auf +4/−1, sobald Power Attack eingestellt war.
+    const contributions = [
+      ...base,
+      ...combat.attack,
+      ...(mode === "melee" ? combat.meleeAttack : []),
+    ];
     for (const path of paths) {
       for (const effect of buckets.get(path) ?? []) contributions.push(toContribution(effect));
     }
@@ -435,7 +455,7 @@ export function deriveSheetValues(
     const damageContributions: Contribution[] = [];
     const notes: string[] = [];
     if (weaponData) {
-      const strFactor = mode === "ranged" ? 0 : weaponData.handedness === "two" ? 1.5 : 1;
+      const strFactor = mode === "ranged" ? 0 : wieldedInTwoHands ? 1.5 : 1;
       const strDamage = Math.floor(mod("str") * strFactor);
       if (strFactor > 0 && strDamage !== 0) {
         damageContributions.push({
@@ -446,7 +466,13 @@ export function deriveSheetValues(
           condition: undefined,
         });
       }
-      damageContributions.push(...combat.meleeDamage({ handedness: weaponData.handedness }));
+      damageContributions.push(
+        ...combat.meleeDamage({
+          handedness: weaponData.handedness,
+          wieldedInTwoHands,
+          naturalOrUnarmed: isNaturalOrUnarmed(weapon?.entity),
+        }),
+      );
       if (mode === "ranged") notes.push("Kein ST-Bonus auf Fernkampfschaden (außer Wurfwaffen/Kompositbögen).");
       const damagePaths: StatPath[] =
         mode === "melee" ? ["damage.melee", "damage.all"] : ["damage.ranged", "damage.all"];

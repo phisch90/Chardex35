@@ -314,7 +314,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
       "srd:item:greatsword",
       "srd:item:dagger",
     ]);
-    expect(character.inventory.every((i) => i.equipped)).toBe(true);
+    expect(character.inventory.every((i) => i.slot !== "none")).toBe(true);
     // Jede angelegte Waffe erzeugt eine eigene Angriffszeile im Bogen.
     for (const label of ["Sword, short", "Templer Schwert", "Greatsword", "Dagger"]) {
       expect(sheet.attacks.some((a) => a.label === label), label).toBe(true);
@@ -478,7 +478,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(weapon!.data.weapon).toMatchObject({ damage: "1d6", critRange: "19-20", critMult: "x2" });
     // Sie ist angelegt und erzeugt damit eine Angriffszeile.
     const row = character.inventory.find((i) => i.itemId === weapon!.id);
-    expect(row?.equipped).toBe(true);
+    expect(row?.slot).not.toBe("none");
     expect(sheet.attacks.some((a) => a.label === "Templer Schwert")).toBe(true);
   });
 

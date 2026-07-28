@@ -98,6 +98,31 @@ export const S = {
       weapon: "Waffen",
       other: "Sonstiges",
     } as Record<string, string>,
+    /**
+     * Die Marken in der Ausrüstungsliste — kurz, weil sie in einen Kreis passen
+     * müssen. Bewusst dieselben Kürzel wie in Fight Club: A, 1H, OH. Wer von dort
+     * kommt, muss nichts neu lernen, und die Regelkürzel bleiben englisch (wie bei
+     * DEX statt GE).
+     */
+    equipMark: {
+      none: "—",
+      armor: "A",
+      mainHand: "1H",
+      offHand: "OH",
+      bothHands: "2H",
+      worn: "E",
+    } as Record<string, string>,
+    /** Langform für die Erklärzeile und den Vorlese-Text. */
+    equipSlot: {
+      none: "nicht angelegt",
+      armor: "als Rüstung getragen",
+      mainHand: "in der Haupthand",
+      offHand: "in der Schildhand",
+      bothHands: "in beiden Händen",
+      worn: "getragen",
+    } as Record<string, string>,
+    equipLegend: "A Rüstung · 1H Haupthand · OH Schildhand · 2H beidhändig · E getragen",
+    equipHint: "Auf die Marke tippen wechselt den Platz.",
     skillFilter: { all: "Alle", trained: "Trainiert", class: "Klasse" } as Record<string, string>,
     subtype: "Teilgebiet",
     addSubtype: "Teilgebiet anlegen",

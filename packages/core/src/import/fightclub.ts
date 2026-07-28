@@ -3,10 +3,11 @@ import {
   CURRENT_SCHEMA_VERSION,
   characterSchema,
   type Character,
+  type EquipSlot,
   type HouseRules,
 } from "../schema/character.js";
 import { displayName, skillKey, type Entity } from "../schema/entities.js";
-import { deriveSheet } from "../engine/index.js";
+import { allowedSlots, deriveSheet } from "../engine/index.js";
 
 /**
  * Importer für Charakter-Exporte der App „Fight Club" (Lion's Den), 3.5-Edition:
@@ -415,6 +416,20 @@ function slugifyName(name: string): string {
  * nehmen einhändig an, weil der Schadensbonus dann nicht zu hoch ausfällt, und
  * sagen es in der Beschreibung.
  */
+/**
+ * Wohin gehört ein importierter Gegenstand?
+ *
+ * Die FC-Datei sagt es nicht — sie listet Angriffszeilen, keine Hände. Genommen
+ * wird deshalb der erste Platz, der für die Art überhaupt in Frage kommt: Waffe
+ * in die Haupthand, Rüstung an den Körper, Schild in die Schildhand. Das ist eine
+ * ANNAHME, aber eine, die man mit einem Tap ändert — und sie ist besser als
+ * „irgendwie angelegt", weil daran die Führungsart und damit Power Attack hängt.
+ */
+function importSlot(entity: Entity | undefined): EquipSlot {
+  if (entity === undefined || entity.kind !== "item") return "worn";
+  return allowedSlots(entity)[0] ?? "worn";
+}
+
 function buildHomebrewWeapon(action: FightClubAction, id: string): Entity {
   const critical = action.critical ?? "";
   const rangeMatch = /^(\d+)(?:\s*[-–]\s*(\d+))?/.exec(critical);
@@ -673,14 +688,21 @@ export function mapFightClubPc(
   const itemIndex = buildIndex(compendium, "item");
   const inventory: Character["inventory"] = pc.actions.map((action) => {
     const hit = matchName(itemIndex, action.name);
+    const entity = hit && hit.rest === "" ? compendium.get(hit.id) : undefined;
     if (hit && hit.rest === "") {
-      return { id: idFactory(), itemId: hit.id, qty: 1, equipped: true, extraEffects: [] };
+      return {
+        id: idFactory(),
+        itemId: hit.id,
+        qty: 1,
+        slot: importSlot(entity),
+        extraEffects: [],
+      };
     }
     // Eigene Namen („Templer Schwert") werden zu Homebrew-Waffen, damit sie im
     // Kampf-Reiter als Angriff auftauchen und nicht bloß als Notiz im Rucksack.
     const weapon = buildHomebrewWeapon(action, `homebrew:item:${slugifyName(action.name)}`);
     entities.push(weapon);
-    return { id: idFactory(), itemId: weapon.id, qty: 1, equipped: true, extraEffects: [] };
+    return { id: idFactory(), itemId: weapon.id, qty: 1, slot: importSlot(weapon), extraEffects: [] };
   });
   /*
     Talent-Auswahlen auf Gegenstände verweisen — erst jetzt, weil die

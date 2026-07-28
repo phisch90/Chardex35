@@ -39,7 +39,15 @@ export * from "./tables.js";
 export * from "./trackers.js";
 export * from "./types.js";
 export { stackContributions, withoutContributions } from "./stack.js";
-export { conflictingEquipIds, itemSlot, type EquipCandidate, type ItemSlot } from "./equipment.js";
+export {
+  allowedSlots,
+  conflictingEquipIds,
+  isNaturalOrUnarmed,
+  itemKind,
+  nextSlot,
+  type EquipCandidate,
+  type ItemKind,
+} from "./equipment.js";
 export {
   COMBAT_EXPERTISE_MAX,
   applyCombatOptions,
