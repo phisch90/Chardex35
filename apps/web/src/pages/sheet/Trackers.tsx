@@ -63,7 +63,7 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
               <div className="truncate font-medium">{tracker.name}</div>
               <div className="text-xs text-slate-500">
                 {/* Bei vorgeschlagenen Zählern steht hier die Herkunft der Zahl
-                    („3 + CH-Modifikator …“) statt der nackten Art. */}
+                    („3 + CHA-Modifikator …“) statt der nackten Art. */}
                 {tracker.note ?? S.trackers.kinds[tracker.kind]}
                 {tracker.kind === "roll" && tracker.formula ? ` · ${tracker.formula}` : ""}
                 {tracker.max !== undefined ? ` · max. ${tracker.max}` : ""}

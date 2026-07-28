@@ -914,7 +914,7 @@ export function mapFightClubPc(
   report("Ringkampf", pc.grapple, sheet.grapple.total, { always: true });
   report("Initiative", pc.init, sheet.init.total, {
     always: true,
-    hint: `Die App zählt Talent-Boni wie „Improved Initiative" mit; Fight Club listet hier oft nur den GE-Modifikator.`,
+    hint: `Die App zählt Talent-Boni wie „Improved Initiative" mit; Fight Club listet hier oft nur den DEX-Modifikator.`,
   });
   for (const [key, total] of skillTotals) {
     // Fielen zwei Export-Zeilen doch auf denselben Schlüssel, ist der Wert

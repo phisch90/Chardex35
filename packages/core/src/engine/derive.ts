@@ -226,7 +226,7 @@ export function deriveSheetValues(
   const clampedDex = maxDex !== null ? Math.min(dexMod, maxDex) : dexMod;
   const acContributions: Contribution[] = [baseContribution("Basis", 10)];
   const dexContribution: Contribution = {
-    source: maxDex !== null && dexMod > maxDex ? `GE-Modifikator (MaxGE ${maxDex})` : "GE-Modifikator",
+    source: maxDex !== null && dexMod > maxDex ? `DEX-Modifikator (max. DEX ${maxDex})` : "DEX-Modifikator",
     bonusType: "untyped",
     value: clampedDex,
     applied: true,
@@ -275,24 +275,24 @@ export function deriveSheetValues(
   }, 0);
 
   // --- Initiative, Rettungswürfe, Ringkampf --------------------------------
-  const init = stackPaths(buckets, ["init"], [baseContribution("GE-Modifikator", dexMod)]);
+  const init = stackPaths(buckets, ["init"], [baseContribution("DEX-Modifikator", dexMod)]);
   const saves = {
     fort: stackPaths(buckets, ["save.fort", "save.all"], [
       baseContribution("Basis", timeline.saves.fort),
-      baseContribution("KO-Modifikator", mod("con")),
+      baseContribution("CON-Modifikator", mod("con")),
     ]),
     ref: stackPaths(buckets, ["save.ref", "save.all"], [
       baseContribution("Basis", timeline.saves.ref),
-      baseContribution("GE-Modifikator", dexMod),
+      baseContribution("DEX-Modifikator", dexMod),
     ]),
     will: stackPaths(buckets, ["save.will", "save.all"], [
       baseContribution("Basis", timeline.saves.will),
-      baseContribution("WE-Modifikator", mod("wis")),
+      baseContribution("WIS-Modifikator", mod("wis")),
     ]),
   };
   const grapple = stackPaths(buckets, ["grapple"], [
     baseContribution("BAB", timeline.bab),
-    baseContribution("ST-Modifikator", mod("str")),
+    baseContribution("STR-Modifikator", mod("str")),
     baseContribution("Größe (Ringkampf)", GRAPPLE_SIZE_MODIFIER[size]),
   ]);
 
@@ -341,7 +341,7 @@ export function deriveSheetValues(
     else if (roll === "max") rolled = die;
     else if (roll === "avg") rolled = averageHitDie(die);
     else rolled = roll;
-    // RAW: pro TW mindestens 1 TP, egal wie negativ der KO-Modifikator ist.
+    // RAW: pro TW mindestens 1 TP, egal wie negativ der CON-Modifikator ist.
     hpMax += Math.max(1, rolled + conMod);
   });
   const hpBucket = stackPaths(buckets, ["hp.max"]);
@@ -380,7 +380,7 @@ export function deriveSheetValues(
     const weaponData = weapon?.entity.data.weapon;
     const isLight = weaponData?.handedness === "light";
     const useDex = mode === "ranged" || (weaponFinesse && isLight);
-    const abilityLabel = useDex ? "GE-Modifikator" : "ST-Modifikator";
+    const abilityLabel = useDex ? "DEX-Modifikator" : "STR-Modifikator";
     const abilityValue = useDex ? dexMod : mod("str");
 
     const base: Contribution[] = [
@@ -415,7 +415,7 @@ export function deriveSheetValues(
       const strDamage = Math.floor(mod("str") * strFactor);
       if (strFactor > 0 && strDamage !== 0) {
         damageContributions.push({
-          source: strFactor === 1.5 ? "ST-Modifikator (×1,5 zweihändig)" : "ST-Modifikator",
+          source: strFactor === 1.5 ? "STR-Modifikator (×1,5 zweihändig)" : "STR-Modifikator",
           bonusType: "untyped",
           value: strDamage,
           applied: true,
@@ -553,7 +553,7 @@ export function deriveSheetValues(
     };
   });
 
-  // --- Fertigkeitspunkte (vereinfachend mit finalem IN-Modifikator) -----------
+  // --- Fertigkeitspunkte (vereinfachend mit finalem INT-Modifikator) -----------
   const intMod = mod("int");
   const extraPointsPerLevel = stackPaths(buckets, ["skills.pointsPerLevel"]).total;
   let skillPointsAvailable = 0;

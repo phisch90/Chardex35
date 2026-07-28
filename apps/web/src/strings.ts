@@ -12,13 +12,18 @@ export const S = {
     settings: "Einstellungen",
   },
 
+  /*
+    Englische Regelkürzel, keine deutschen. „GE-Modifikator" war eine
+    Eigenerfindung, die man erst übersetzen muss; DEX steht so in den Büchern, in
+    der Gruppen-Excel und in Fight Club. Seine Entscheidung.
+  */
   abilities: {
-    str: "ST",
-    dex: "GE",
-    con: "KO",
-    int: "IN",
-    wis: "WE",
-    cha: "CH",
+    str: "STR",
+    dex: "DEX",
+    con: "CON",
+    int: "INT",
+    wis: "WIS",
+    cha: "CHA",
   } as Record<string, string>,
   abilityNames: {
     str: "Stärke",

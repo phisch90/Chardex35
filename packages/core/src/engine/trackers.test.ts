@@ -114,7 +114,7 @@ const suggestionFor = (classId: string, level: number, key: string, cha = 10) =>
   suggestTrackers(sheetFor(classId, level, cha)).find((s) => s.key === key);
 
 describe("suggestTrackers", () => {
-  it("Untote vertreiben: 3 + CH-Modifikator, mindestens 1", () => {
+  it("Untote vertreiben: 3 + CHA-Modifikator, mindestens 1", () => {
     expect(suggestionFor("srd:class:cleric", 1, "turn-undead", 16)?.max).toBe(6);
     expect(suggestionFor("srd:class:cleric", 1, "turn-undead", 10)?.max).toBe(3);
     // CH 6 → −2 → 1 statt 0: ein Zähler mit Maximum 0 wäre sinnlos.

@@ -4,7 +4,7 @@ import type { Character, DerivedSheet, StatValue } from "@codex35/core";
 import { applyHpChange, displayName } from "@codex35/core";
 import { S } from "../../strings.js";
 import { CharacterRepo } from "../../db/repo.js";
-import { useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
+import { useAppSettings, useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
 import { useDiceStore } from "../../lib/diceStore.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
@@ -66,6 +66,7 @@ export function CharacterSheetPage() {
     note?: string | undefined;
   } | null>(null);
   const roll = useDiceStore((s) => s.roll);
+  const { diceEnabled } = useAppSettings();
 
   if (character === undefined) return <p className="text-slate-400">{S.misc.loading}</p>;
   if (character === null) return <p className="text-slate-400">Charakter nicht gefunden.</p>;
@@ -301,8 +302,15 @@ export function CharacterSheetPage() {
         value={breakdown?.value ?? null}
         absolute={breakdown?.absolute ?? false}
         note={breakdown?.note}
+        /*
+          Die Einstellung „Würfeln in der App" gilt AUCH hier. Sie wurde an den
+          Würfel-Knöpfen am Bogen und am Würfel-Reiter beachtet, aber nicht in
+          dieser Aufschlüsselung — beim Antippen eines Rettungswurfs stand der
+          Knopf trotzdem da. Eine Einstellung, die an einer Stelle nicht gilt,
+          ist keine Einstellung.
+        */
         onRoll={
-          breakdown?.rollable
+          diceEnabled && breakdown?.rollable
             ? () => {
                 const mod = breakdown.value.total;
                 roll(`1d20${mod >= 0 ? "+" : ""}${mod}`, `${character.name}: ${breakdown.title}`);
