@@ -179,6 +179,33 @@ export const characterSchema = z.object({
   /** Aktive Toggles; Key = `${entityId}#${effectIndex}` (z.B. Rage an). */
   toggledEffectKeys: z.array(z.string()).default([]),
 
+  /**
+   * Kampfoptionen: was man von Runde zu Runde WÄHLT. Steht hier und nicht als
+   * Effekt an einem Talent, weil Power Attack und Kampfgeschick eine wählbare
+   * HÖHE haben — feste Effekt-Zahlen können das nicht ausdrücken. Die Regeln
+   * dazu stehen in engine/combatOptions.ts.
+   */
+  combatOptions: z
+    .object({
+      /** Wie viel vom Angriff auf den Nahkampfschaden umgelegt wird. 0 = aus. */
+      powerAttack: z.number().int().default(0),
+      /** Wie viel vom Angriff auf die RK umgelegt wird (max. 5). 0 = aus. */
+      combatExpertise: z.number().int().default(0),
+      /** −4 Angriff, +2 RK. */
+      fightingDefensively: z.boolean().default(false),
+      /** +4 RK, kein Angriff in dieser Runde. */
+      totalDefense: z.boolean().default(false),
+      /** Gegen wen der Dodge-Bonus gilt (Freitext, leer = aus). */
+      dodgeTarget: z.string().default(""),
+    })
+    .default({
+      powerAttack: 0,
+      combatExpertise: 0,
+      fightingDefensively: false,
+      totalDefense: false,
+      dodgeTarget: "",
+    }),
+
   /** DER Notausgang — Provenienz „manuell". Macht Homebrew ab Tag 1 spielbar. */
   miscModifiers: z
     .array(
@@ -236,6 +263,7 @@ export const characterSchema = z.object({
   x: z.record(z.string(), z.unknown()).optional(),
 });
 export type Character = z.infer<typeof characterSchema>;
+export type CombatOptions = Character["combatOptions"];
 
 /**
  * Export-Envelope. Referenziertes Homebrew wird immer eingebettet, SRD nie

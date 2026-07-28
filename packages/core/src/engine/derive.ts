@@ -8,6 +8,7 @@ import {
   type ItemEntity,
   type SkillEntity,
 } from "../schema/entities.js";
+import { applyCombatOptions } from "./combatOptions.js";
 import type { ActiveEffect, ResolvedCharacter, TimelineResult } from "./internal.js";
 import {
   baseContribution,
@@ -222,6 +223,22 @@ export function deriveSheetValues(
   // PHB S. 162: Rüstungsmalus aus Rüstung und Last stacken nicht — der schlechtere zählt.
   const acp = Math.min(armorAcpSum, loadLimit?.acp ?? 0);
 
+  /*
+    Kampfoptionen zuerst: RK, Angriff und Schaden hängen alle daran, und die
+    Regeln dazu (inklusive der Verdopplung von Power Attack bei zweihändiger
+    Führung) stehen gesammelt in combatOptions.ts.
+  */
+  const featIdSet = new Set(resolved.feats.map((f) => f.featId));
+  const combat = applyCombatOptions(character.combatOptions, {
+    bab: timeline.bab,
+    hasPowerAttack: featIdSet.has("srd:feat:power-attack"),
+    hasCombatExpertise: featIdSet.has("srd:feat:combat-expertise"),
+    hasDodge: featIdSet.has("srd:feat:dodge"),
+  });
+  for (const message of combat.warnings) {
+    issues.push({ severity: "warning", code: "combat-option", message });
+  }
+
   // --- RK -------------------------------------------------------------------
   const dexMod = mod("dex");
   const clampedDex = maxDex !== null ? Math.min(dexMod, maxDex) : dexMod;
@@ -243,6 +260,7 @@ export function deriveSheetValues(
       condition: undefined,
     });
   }
+  acContributions.push(...combat.ac);
   for (const { entity, label } of equippedArmor) {
     const armor = entity.data.armor;
     if (!armor) continue;
@@ -398,7 +416,7 @@ export function deriveSheetValues(
     }
     const paths: StatPath[] =
       mode === "melee" ? ["attack.melee", "attack.all"] : ["attack.ranged", "attack.all"];
-    const contributions = [...base];
+    const contributions = [...base, ...combat.attack];
     for (const path of paths) {
       for (const effect of buckets.get(path) ?? []) contributions.push(toContribution(effect));
     }
@@ -428,6 +446,7 @@ export function deriveSheetValues(
           condition: undefined,
         });
       }
+      damageContributions.push(...combat.meleeDamage({ handedness: weaponData.handedness }));
       if (mode === "ranged") notes.push("Kein ST-Bonus auf Fernkampfschaden (außer Wurfwaffen/Kompositbögen).");
       const damagePaths: StatPath[] =
         mode === "melee" ? ["damage.melee", "damage.all"] : ["damage.ranged", "damage.all"];

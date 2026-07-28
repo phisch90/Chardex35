@@ -40,3 +40,10 @@ export * from "./trackers.js";
 export * from "./types.js";
 export { stackContributions, withoutContributions } from "./stack.js";
 export { conflictingEquipIds, itemSlot, type EquipCandidate, type ItemSlot } from "./equipment.js";
+export {
+  COMBAT_EXPERTISE_MAX,
+  applyCombatOptions,
+  canAttackThisRound,
+  type CombatOptionContext,
+  type CombatOptionOutcome,
+} from "./combatOptions.js";
