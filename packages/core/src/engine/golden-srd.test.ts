@@ -189,6 +189,64 @@ describe.skipIf(!packsAvailable)("Golden-Tests gegen die SRD-Packs", () => {
     expect(fireball.description ?? "").not.toBe("");
   });
 
+  /**
+   * Kampfoptionen durch den GANZEN Bogen, mit echten SRD-Daten. Der Test, den es
+   * braucht: dass Power Attack nicht nur eine Zahl in einem Modul verschiebt,
+   * sondern am Ende auf Angriff UND Schaden der konkreten Waffe landet — und
+   * beim Zweihänder doppelt.
+   */
+  it("Power Attack wirkt auf Angriff und Schaden, zweihändig doppelt", () => {
+    const basis = {
+      id: "combat-1",
+      name: "Regdar am Zweihänder",
+      raceId: "srd:race:human",
+      abilities: { base: { str: 18, dex: 12, con: 14, int: 10, wis: 10, cha: 8 } },
+      levels: Array.from({ length: 6 }, () => ({ classId: "srd:class:fighter", hpRoll: "max" })),
+      feats: [{ featId: "srd:feat:power-attack" }],
+      inventory: [{ id: "w1", itemId: "srd:item:greatsword", qty: 1, equipped: true }],
+    };
+
+    const ohne = deriveSheet(C(basis), compendium);
+    const mit = deriveSheet(
+      C({ ...basis, combatOptions: { powerAttack: 4 } }),
+      compendium,
+    );
+
+    const linie = (sheet: typeof ohne) => sheet.attacks.find((a) => a.label.includes("Greatsword"));
+    const a0 = linie(ohne);
+    const a1 = linie(mit);
+    expect(a0, "Greatsword-Zeile fehlt").toBeDefined();
+
+    // GAB 6, STR +4 → +10; mit Power Attack 4 → +6. Zweite Attacke 5 tiefer.
+    expect(a0!.bonuses[0]).toBe(10);
+    expect(a1!.bonuses[0]).toBe(6);
+    expect(a1!.bonuses[1]).toBe(1);
+
+    // Schaden: STR ×1,5 = +6, dazu Power Attack ×2 = +8 → 2d6+14.
+    expect(a0!.damageText).toBe("2d6+6");
+    expect(a1!.damageText).toBe("2d6+14");
+  });
+
+  it("Kampfgeschick nimmt vom Angriff und gibt auf die RK", () => {
+    const basis = {
+      id: "combat-2",
+      name: "Kampfgeschickt",
+      raceId: "srd:race:human",
+      abilities: { base: { str: 14, dex: 14, con: 12, int: 13, wis: 10, cha: 10 } },
+      levels: Array.from({ length: 4 }, () => ({ classId: "srd:class:fighter", hpRoll: "max" })),
+      feats: [{ featId: "srd:feat:combat-expertise" }],
+      inventory: [{ id: "w1", itemId: "srd:item:longsword", qty: 1, equipped: true }],
+    };
+    const ohne = deriveSheet(C(basis), compendium);
+    const mit = deriveSheet(C({ ...basis, combatOptions: { combatExpertise: 3 } }), compendium);
+
+    expect(mit.ac.total.total).toBe(ohne.ac.total.total + 3);
+    const nahkampf = (s: typeof ohne) => s.attacks.find((a) => a.key === "melee")!.attack.total;
+    expect(nahkampf(mit)).toBe(nahkampf(ohne) - 3);
+    // Ausweichen-Bonus: fällt „auf dem falschen Fuß" weg.
+    expect(mit.ac.flatFooted.total).toBe(ohne.ac.flatFooted.total);
+  });
+
   it("Waffen-Daten: Longsword 15 gp, 1d8, 19-20/x2, 4 lb", () => {
     const longsword = get("srd:item:longsword");
     if (longsword.kind !== "item") throw new Error("kind");

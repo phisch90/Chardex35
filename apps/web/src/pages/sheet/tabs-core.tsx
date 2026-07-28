@@ -6,6 +6,7 @@ import { Card, Chip, GhostButton, SectionTitle, StatButton, fmtMod } from "../..
 import { useDiceStore } from "../../lib/diceStore.js";
 import { useAppSettings, useCompendium, useHouseRules } from "../../lib/hooks.js";
 import { TrackersCard } from "./Trackers.js";
+import { CombatOptionsCard } from "./CombatOptions.js";
 import type { TabProps } from "./index.js";
 
 export function StatsTab(props: TabProps) {
@@ -109,7 +110,8 @@ export function StatsTab(props: TabProps) {
   );
 }
 
-export function CombatTab({ sheet, openBreakdown }: TabProps) {
+export function CombatTab(props: TabProps) {
+  const { sheet, openBreakdown } = props;
   const roll = useDiceStore((s) => s.roll);
   const { diceEnabled } = useAppSettings();
   const { ignoreEncumbrance } = useHouseRules();
@@ -171,6 +173,8 @@ export function CombatTab({ sheet, openBreakdown }: TabProps) {
             ))}
         </ul>
       </Card>
+
+      <CombatOptionsCard {...props} />
 
       <Card>
         <div className="grid grid-cols-4 gap-2">

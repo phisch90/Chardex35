@@ -195,6 +195,26 @@ export const S = {
     title: "Version",
   },
 
+  /*
+    Kampfoptionen: Rundenweise Entscheidungen. Angeboten wird nur, was der
+    Charakter laut Talenten darf — ein Schalter für etwas Unerlaubtes ist keine
+    Hilfe, sondern eine Falle.
+  */
+  combat: {
+    title: "Kampfoptionen",
+    hint: "Gilt für diese Runde. Die Werte oben ändern sich mit.",
+    reset: "alles zurück",
+    powerAttack: "Power Attack",
+    powerAttackHint: (bab: number) =>
+      `Vom Angriff auf den Schaden, höchstens ${bab} (dein GAB). Zweihändig zählt der Schaden doppelt, mit leichter Waffe gar nicht.`,
+    combatExpertise: "Kampfgeschick",
+    combatExpertiseHint: (max: number) => `Vom Angriff auf die RK, höchstens ${max}.`,
+    fightingDefensively: "Defensiv kämpfen (−4 / +2 RK)",
+    totalDefense: "Totale Verteidigung (+4 RK, kein Angriff)",
+    dodgeTarget: "Dodge gilt gegen",
+    dodgePlaceholder: "z.B. Ogerhäuptling",
+  },
+
   compendium: {
     kinds: {
       race: "Völker",
