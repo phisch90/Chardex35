@@ -227,6 +227,74 @@ describe.skipIf(!packsAvailable)("Golden-Tests gegen die SRD-Packs", () => {
     expect(a1!.damageText).toBe("2d6+14");
   });
 
+  /**
+   * Der Fehler, den Philipp auf dem Bogen gesehen hat: Power Attack zog auch von
+   * Fernkampfangriffen ab. Aus +8/+3 mit dem Langbogen wurde +4/−1.
+   *
+   * Warum die Einzeltests das nicht gefunden haben: `applyCombatOptions` gab EINE
+   * Liste „attack" heraus, und der Test dazu prüfte nur ihre Summe. Erst der Weg
+   * durch `deriveSheet` zeigt, auf welche ZEILE sie landet. Deshalb steht dieser
+   * Fall hier und nicht dort.
+   */
+  it("Power Attack lässt Fernkampfangriffe unberührt", () => {
+    const basis = {
+      id: "combat-1b",
+      name: "Bogenschütze mit Power Attack",
+      raceId: "srd:race:human",
+      abilities: { base: { str: 16, dex: 16, con: 14, int: 10, wis: 10, cha: 8 } },
+      levels: Array.from({ length: 6 }, () => ({ classId: "srd:class:fighter", hpRoll: "max" })),
+      feats: [{ featId: "srd:feat:power-attack" }],
+      inventory: [
+        { id: "b1", itemId: "srd:item:longbow", qty: 1, slot: "bothHands" },
+        { id: "w1", itemId: "srd:item:longsword", qty: 1, slot: "mainHand" },
+      ],
+    };
+    const ohne = deriveSheet(C(basis), compendium);
+    const mit = deriveSheet(C({ ...basis, combatOptions: { powerAttack: 4 } }), compendium);
+
+    const bogen = (s: typeof ohne) => s.attacks.find((a) => a.label.includes("Longbow"))!;
+    expect(bogen(ohne).bonuses).toEqual(bogen(mit).bonuses);
+    expect(bogen(mit).damageText).toBe(bogen(ohne).damageText);
+    // Die Fernkampf-Sammelzeile darf genauso wenig fallen.
+    const fern = (s: typeof ohne) => s.attacks.find((a) => a.key === "ranged")!.attack.total;
+    expect(fern(mit)).toBe(fern(ohne));
+
+    // Gegenprobe: im Nahkampf wirkt es sehr wohl.
+    const schwert = (s: typeof ohne) => s.attacks.find((a) => a.label.includes("Longsword"))!;
+    expect(schwert(mit).bonuses[0]).toBe(schwert(ohne).bonuses[0]! - 4);
+  });
+
+  /**
+   * Ein Langschwert in beiden Händen: einhändige Waffe, zweihändig geführt.
+   * Vorher war das nicht ausdrückbar — es gab nur „angelegt".
+   */
+  it("Einhandwaffe beidhändig geführt: STR ×1,5 und Power Attack doppelt", () => {
+    const basis = {
+      id: "combat-1c",
+      name: "Langschwert in beiden Händen",
+      raceId: "srd:race:human",
+      abilities: { base: { str: 18, dex: 12, con: 14, int: 10, wis: 10, cha: 8 } },
+      levels: Array.from({ length: 6 }, () => ({ classId: "srd:class:fighter", hpRoll: "max" })),
+      feats: [{ featId: "srd:feat:power-attack" }],
+      combatOptions: { powerAttack: 4 },
+    };
+    const einhand = deriveSheet(
+      C({ ...basis, inventory: [{ id: "w1", itemId: "srd:item:longsword", qty: 1, slot: "mainHand" }] }),
+      compendium,
+    );
+    const beidhand = deriveSheet(
+      C({ ...basis, inventory: [{ id: "w1", itemId: "srd:item:longsword", qty: 1, slot: "bothHands" }] }),
+      compendium,
+    );
+    const zeile = (s: typeof einhand) => s.attacks.find((a) => a.label.includes("Longsword"))!;
+
+    // STR +4 → einhändig +4, beidhändig +6. Power Attack 4 → einfach bzw. doppelt.
+    expect(zeile(einhand).damageText).toBe("1d8+8");
+    expect(zeile(beidhand).damageText).toBe("1d8+14");
+    // Der Angriffsmalus ist in beiden Fällen derselbe.
+    expect(zeile(beidhand).bonuses[0]).toBe(zeile(einhand).bonuses[0]);
+  });
+
   it("Kampfgeschick nimmt vom Angriff und gibt auf die RK", () => {
     const basis = {
       id: "combat-2",

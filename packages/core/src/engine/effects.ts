@@ -1,3 +1,4 @@
+import { isEquipped } from "../schema/character.js";
 import { displayName, type Effect } from "../schema/entities.js";
 import type { ActiveEffect, ResolvedCharacter, TimelineResult } from "./internal.js";
 import { effectKey } from "./internal.js";
@@ -63,20 +64,30 @@ export function collectEffects(
     );
   }
 
-  // Talente.
-  for (const feat of resolved.feats) {
+  // Talente: Kompendium-Effekte + eigene Modifikatoren am Charakter.
+  for (const [fi, feat] of resolved.feats.entries()) {
     if (!feat.entity) continue;
     const label = feat.choice
       ? `Talent: ${displayName(feat.entity)} (${feat.choice})`
       : `Talent: ${displayName(feat.entity)}`;
     feat.entity.effects.forEach((e, i) => add(e, label, effectKey(feat.entity!.id, i)));
+    /*
+      Eigene Modifikatoren tragen dasselbe Etikett wie das Talent selbst. Das ist
+      der ganze Punkt gegenüber den „Sonstigen Modifikatoren" im Notizen-Reiter:
+      dort stand in der Aufschlüsselung „Manuell: …", und man sah nicht, WOHER der
+      Bonus kommt. Der Schlüssel hängt am Listenplatz, damit zwei Instanzen
+      desselben Talents (Toughness zweimal) getrennt bleiben.
+    */
+    feat.extraEffects.forEach((e, i) =>
+      add(e, label, effectKey(feat.entity!.id, "x", fi, i)),
+    );
   }
 
   // Gegenstände: Kompendium-Effekte + individuelle extraEffects.
   // Keys sind INSTANZ-bezogen (zwei Langschwerter → getrennte Toggles).
   for (const { instance, entity } of resolved.items) {
     const label = instance.customName ?? (entity ? displayName(entity) : "Gegenstand");
-    const equipped = instance.equipped;
+    const equipped = isEquipped(instance);
     entity?.effects.forEach((e, i) =>
       add(e, label, effectKey(instance.id, "e", i), {
         equipped,

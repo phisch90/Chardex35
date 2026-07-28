@@ -29,6 +29,63 @@ export type HouseRules = z.infer<typeof houseRulesSchema>;
 export const DEFAULT_HOUSE_RULES: HouseRules = houseRulesSchema.parse({});
 
 /**
+ * WO ein Gegenstand getragen wird — nicht bloß OB.
+ *
+ * Vorher stand hier ein `equipped: boolean`, und das war zu wenig für zwei
+ * Dinge, die am Tisch dauernd vorkommen: ein Schild gehört in die Schildhand,
+ * und ein Langschwert in beiden Händen macht bei Power Attack den doppelten
+ * Schaden. Beides ist aus einem Ja/Nein nicht ableitbar.
+ *
+ * `worn` heißt „angelegt, ohne festen Platz" — Ring, Amulett, Umhang. Es ist
+ * gleichzeitig das Ziel für Altbestand: ein alter `equipped: true`-Eintrag wird
+ * dazu, weil das Schema allein nicht wissen kann, ob dahinter eine Rüstung oder
+ * ein Dolch stand. Mechanisch ändert das nichts (angelegt bleibt angelegt), und
+ * die genaue Hand kann man mit einem Tap nachtragen.
+ */
+export const EQUIP_SLOTS = ["none", "armor", "mainHand", "offHand", "bothHands", "worn"] as const;
+export const equipSlotSchema = z.enum(EQUIP_SLOTS);
+export type EquipSlot = z.infer<typeof equipSlotSchema>;
+
+/**
+ * Eine Zeile im Gepäck.
+ *
+ * Das `preprocess` ist die Altbestands-Schleuse: Charaktere in der Datenbank,
+ * in Exportdateien und in Gists tragen noch `equipped: true|false`. Übersetzt
+ * wird an EINER Stelle — dem Schema, durch das ohnehin jede Zeile läuft, bevor
+ * die App sie sieht. Zwei Felder gleichzeitig zu führen wäre die Alternative
+ * gewesen, und genau daraus entstehen die Widersprüche, die diese App schon
+ * einmal teuer bezahlt hat (angelegt laut einem Feld, nicht angelegt laut dem
+ * anderen).
+ */
+export const inventoryItemSchema = z.preprocess(
+  (raw) => {
+    if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return raw;
+    const row = raw as Record<string, unknown>;
+    if (row["slot"] !== undefined) return row;
+    return { ...row, slot: row["equipped"] === true ? "worn" : "none" };
+  },
+  z.object({
+    /** Instanz-ID (ein Charakter kann zwei Langschwerter tragen). */
+    id: z.string(),
+    /** Kompendium-Referenz; fehlt bei komplett freien Zeilen. */
+    itemId: z.string().optional(),
+    customName: z.string().optional(),
+    qty: z.number().int().default(1),
+    slot: equipSlotSchema.default("none"),
+    weightLbOverride: z.number().optional(),
+    /** z.B. das +1 des individuellen Schwertes. */
+    extraEffects: z.array(effectSchema).default([]),
+    notes: z.string().optional(),
+  }),
+);
+export type InventoryItem = z.infer<typeof inventoryItemSchema>;
+
+/** Angelegt = irgendwo getragen. Die eine Stelle, die das entscheidet. */
+export function isEquipped(item: { slot: EquipSlot }): boolean {
+  return item.slot !== "none";
+}
+
+/**
  * Charakter speichert nur ROHE Entscheidungen — nichts Abgeleitetes.
  * Alles Berechnete kommt aus deriveSheet().
  */
@@ -112,27 +169,28 @@ export const characterSchema = z.object({
          * für `srd:item:sword-short`).
          */
         choiceRef: z.string().optional(),
+        /**
+         * EIGENE Modifikatoren an diesem Talent — das, was Fight Club unter
+         * „Modifiers" anbietet.
+         *
+         * Warum am Charakter und nicht am Kompendium-Eintrag: 300 der 327
+         * SRD-Talente bringen gar keine Wirkung mit, weil ihr Regeltext Prosa ist
+         * („du darfst einmal pro Runde …"). Was hier eingetragen wird, ist die
+         * Entscheidung DIESES Charakters — bei Hausregeln mit eigenen Zahlen ist
+         * das der Normalfall. Ein Eintrag am Kompendium würde für alle Charaktere
+         * gelten und wäre eine Hausregel; das ist eine andere Sache und bekommt
+         * später einen eigenen Weg (Kompendium-Editor).
+         *
+         * Genau dieselbe Bauform gibt es schon bei `inventory[].extraEffects`
+         * (das +1 des individuellen Schwertes). Zwei Wege für dieselbe Sache
+         * wären ein Fehler.
+         */
+        extraEffects: z.array(effectSchema).default([]),
       }),
     )
     .default([]),
 
-  inventory: z
-    .array(
-      z.object({
-        /** Instanz-ID (ein Charakter kann zwei Langschwerter tragen). */
-        id: z.string(),
-        /** Kompendium-Referenz; fehlt bei komplett freien Zeilen. */
-        itemId: z.string().optional(),
-        customName: z.string().optional(),
-        qty: z.number().int().default(1),
-        equipped: z.boolean().default(false),
-        weightLbOverride: z.number().optional(),
-        /** z.B. das +1 des individuellen Schwertes. */
-        extraEffects: z.array(effectSchema).default([]),
-        notes: z.string().optional(),
-      }),
-    )
-    .default([]),
+  inventory: z.array(inventoryItemSchema).default([]),
 
   money: z
     .object({

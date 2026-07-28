@@ -131,7 +131,18 @@ function Stepper(props: {
       >
         {props.value}
       </span>
-      <GhostButton onClick={() => props.onChange(props.value + 1)}>+</GhostButton>
+      {/*
+        Bei der Obergrenze ist Schluss. Die Engine wendet einen höheren Wert
+        weiterhin an und warnt (Importe und ältere Stände können ihn mitbringen) —
+        aber ANBIETEN darf die Oberfläche ihn nicht. Ungebremst kam man hier auf
+        „Nahkampf −89, Schaden 2d6+204".
+      */}
+      <GhostButton
+        disabled={props.value >= props.max}
+        onClick={() => props.onChange(props.value + 1)}
+      >
+        +
+      </GhostButton>
     </div>
   );
 }

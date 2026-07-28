@@ -1,21 +1,27 @@
 import { useState } from "react";
 import {
   BONUS_TYPES,
+  allowedSlots,
   conflictingEquipIds,
   displayName,
   isStatPath,
-  itemSlot,
+  itemKind,
+  nextSlot,
   type BonusType,
-  type ItemSlot,
+  type EquipSlot,
+  type ItemKind,
   type StatPath,
 } from "@codex35/core";
 import { S } from "../../strings.js";
 import { toPortraitDataUrl } from "../../lib/image.js";
 import { FeatText } from "../../ui/FeatText.js";
+import { FeatModifiers } from "../../ui/FeatModifiers.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
 import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
+import { EquipMark } from "../../ui/EquipMark.js";
+import { itemLabel, itemSummary } from "../../ui/itemSummary.js";
 import type { TabProps } from "./index.js";
 
 export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
@@ -34,56 +40,52 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
       : [];
 
   // Angelegt zuerst, wie in Fight Club — was am Körper hängt, zählt im Kampf.
-  const equipped = character.inventory.filter((row) => row.equipped);
-  const stowed = character.inventory.filter((row) => !row.equipped);
+  const equipped = character.inventory.filter((row) => row.slot !== "none");
+  const stowed = character.inventory.filter((row) => row.slot === "none");
 
-  const slotOf = (row: (typeof character.inventory)[number]): ItemSlot => {
-    const entity = row.itemId ? entities?.find((e) => e.id === row.itemId) : undefined;
-    return itemSlot(entity?.kind === "item" ? entity : undefined);
+  const entityOf = (row: { itemId?: string | undefined }) => {
+    const hit = row.itemId ? entities?.find((e) => e.id === row.itemId) : undefined;
+    return hit?.kind === "item" ? hit : undefined;
   };
+  const kindOf = (row: { itemId?: string | undefined }): ItemKind => itemKind(entityOf(row));
 
   /**
-   * An- und Ablegen mit der einen Regel, die 3.5 dazu kennt: eine Rüstung und
-   * ein Schild am Körper. Legt er die Platte an, geht das Kettenhemd von selbst
-   * aus — sonst zählte die App beide Rüstungsboni, und die RK wäre falsch, ohne
-   * dass irgendetwas darauf hinweist. Waffen bleiben unbegrenzt.
+   * Ein Tap auf die Marke rückt einen Platz weiter: nicht angelegt → erster
+   * erlaubter Platz → … → wieder ab. Welche Plätze erlaubt sind, sagt der
+   * Gegenstand (Schild nur Schildhand, Zweihänder nur beidhändig).
+   *
+   * Verdrängt wird, was körperlich im Weg ist: eine Rüstung über der anderen geht
+   * nicht, und zwei Hände sind zwei Hände. Vorher waren Waffen unbegrenzt — fünf
+   * angelegte Zweihänder ergaben fünf Angriffszeilen auf dem Bogen.
    */
-  const toggleEquipped = (id: string) =>
+  const cycleSlot = (id: string) =>
     save((c) => {
       const item = c.inventory.find((r) => r.id === id);
       if (!item) return;
-      const nowEquipped = !item.equipped;
-      item.equipped = nowEquipped;
-      if (!nowEquipped) return;
+      const target = nextSlot(entityOf(item), item.slot);
+      item.slot = target;
+      if (target === "none") return;
       const verdrängt = conflictingEquipIds(
-        c.inventory.map((r) => ({ id: r.id, slot: slotOf(r), equipped: r.equipped })),
+        c.inventory.map((r) => ({ id: r.id, slot: r.slot })),
         id,
+        target,
       );
       for (const otherId of verdrängt) {
         const other = c.inventory.find((r) => r.id === otherId);
-        if (other) other.equipped = false;
+        if (other) other.slot = "none";
       }
     });
 
   const renderRow = (row: (typeof character.inventory)[number]) => {
-    const entity = row.itemId ? entities?.find((e) => e.id === row.itemId) : undefined;
-    const name = row.customName ?? (entity ? displayName(entity) : "—");
-    const weight =
-      row.weightLbOverride ?? (entity?.kind === "item" ? (entity.data.weightLb ?? 0) : 0);
+    const entity = entityOf(row);
+    const name = itemLabel(row, entity);
+    const weight = row.weightLbOverride ?? entity?.data.weightLb ?? 0;
     // Was das Stück bringt, gehört an das Stück — sonst muss man raten, warum
-    // die RK sich beim Ablegen ändert.
-    const armor = entity?.kind === "item" ? entity.data.armor : undefined;
-    const wirkung = armor
-      ? [
-          `RK ${fmtMod(armor.acBonus)}`,
-          armor.maxDex === null ? "" : `max. DEX ${armor.maxDex}`,
-          armor.acp ? `Malus −${armor.acp}` : "",
-        ]
-          .filter((p) => p !== "")
-          .join(" · ")
-      : "";
+    // die RK sich beim Ablegen ändert. Jetzt auch bei Waffen (Schaden, Kritisch).
+    const wirkung = itemSummary(entity);
     return (
       <li key={row.id} className="flex items-center gap-2 py-1.5 text-sm">
+        <EquipMark slot={row.slot} onClick={() => cycleSlot(row.id)} />
         <div className="min-w-0 flex-1">
           <div className="truncate">{name}</div>
           <div className="text-xs text-slate-500">
@@ -117,9 +119,6 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
         >
           +
         </GhostButton>
-        <GhostButton onClick={() => toggleEquipped(row.id)}>
-          {row.equipped ? S.actions.unequip : S.actions.equip}
-        </GhostButton>
         {editMode && (
           <ConfirmDeleteButton
             label={name}
@@ -151,13 +150,14 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
         </SectionTitle>
         <UndoBar pending={undo.pending} onUndo={undo.undo} onDismiss={undo.dismiss} />
         {/*
-          Nach Körperstelle gruppiert. Vorher war alles eine Liste, und ob eine
-          Rüstung an war, musste man sich aus den Namen zusammensuchen — bei
-          einem Wert, der von genau dieser Frage abhängt.
+          Nach Art gruppiert, und links an jeder Zeile der PLATZ. Vorher war alles
+          eine Liste mit einem Knopf „Anlegen"/„Ablegen": daraus ging hervor, ob
+          etwas angelegt ist, nicht wo — und der Platz entscheidet über Werte.
         */}
+        <p className="text-[11px] text-slate-500">{S.sheet.equipLegend}</p>
         {equipped.length === 0 && <p className="py-2 text-sm text-slate-500">Nichts angelegt.</p>}
         {(["armor", "shield", "weapon", "other"] as const).map((slot) => {
-          const rows = equipped.filter((row) => slotOf(row) === slot);
+          const rows = equipped.filter((row) => kindOf(row) === slot);
           if (rows.length === 0) return null;
           return (
             <div key={slot} className="mt-1">
@@ -178,10 +178,20 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
             {stowed.length === 0 && <li className="py-2 text-sm text-slate-500">Leer.</li>}
           </ul>
         </div>
+        {/*
+          Traglast direkt unter der Liste, mit den Grenzen — genau hier stellt sich
+          die Frage („passt das noch rein?"), und nicht zwei Reiter weiter.
+        */}
         {!ignoreEncumbrance && (
-          <p className="mt-2 text-xs text-slate-400">
-            Gesamt {sheet.encumbrance.loadLb} lb — {S.sheet.encumbrance[sheet.encumbrance.level]}
-          </p>
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-slate-800 pt-2 text-xs">
+            <span className="text-slate-300">
+              {sheet.encumbrance.loadLb} lb — {S.sheet.encumbrance[sheet.encumbrance.level]}
+            </span>
+            <span className="text-slate-500">
+              leicht bis {sheet.encumbrance.lightMaxLb} · mittel bis{" "}
+              {sheet.encumbrance.mediumMaxLb} · schwer bis {sheet.encumbrance.heavyMaxLb}
+            </span>
+          </div>
         )}
       </Card>
 
@@ -199,7 +209,7 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
                       id: crypto.randomUUID(),
                       itemId: item.id,
                       qty: 1,
-                      equipped: false,
+                      slot: "none",
                       extraEffects: [],
                     }),
                   );
@@ -224,7 +234,7 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
                 customName: name,
                 weightLbOverride: weight,
                 qty: 1,
-                equipped: false,
+                slot: "none",
                 extraEffects: [],
               }),
             );
@@ -258,6 +268,7 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
 
 export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
   const entities = useAllEntities();
+  const skillEntities = (entities ?? []).filter((e) => e.kind === "skill" && !e.deletedAt);
   const [query, setQuery] = useState("");
   // Talente sind Stufenaufstiege in Papierform — die dürfen nicht auf einen Tap
   // verschwinden. Ändern und Löschen nur im Bearbeiten-Modus.
@@ -312,6 +323,23 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
                       )}
                     </div>
                   )}
+                  {/*
+                    Eigene Modifikatoren — der Weg, wie ein Talent aus einem
+                    eigenen Buch (oder eine Hausregel) überhaupt etwas bewirkt.
+                    300 der 327 SRD-Talente bringen von sich aus keine Zahl mit.
+                  */}
+                  <FeatModifiers
+                    entity={entity}
+                    own={feat.extraEffects}
+                    skills={skillEntities}
+                    editMode={editMode}
+                    onChange={(next) =>
+                      save((c) => {
+                        const row = c.feats[index];
+                        if (row) row.extraEffects = next;
+                      })
+                    }
+                  />
                 </div>
                 <div className="flex gap-1">
                   {needsItem && (
@@ -400,7 +428,7 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
                 <span className="font-medium">{displayName(feat)}</span>
                 <FeatText entity={feat} />
               </div>
-              <GhostButton onClick={() => save((c) => void c.feats.push({ featId: feat.id }))}>
+              <GhostButton onClick={() => save((c) => void c.feats.push({ featId: feat.id, extraEffects: [] }))}>
                 {S.actions.add}
               </GhostButton>
             </li>

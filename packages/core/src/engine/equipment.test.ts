@@ -1,8 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { conflictingEquipIds, itemSlot, type EquipCandidate } from "./equipment.js";
+import {
+  allowedSlots,
+  conflictingEquipIds,
+  isNaturalOrUnarmed,
+  itemKind,
+  nextSlot,
+  type EquipCandidate,
+} from "./equipment.js";
 import type { ItemEntity } from "../schema/entities.js";
 
-const item = (data: Partial<ItemEntity["data"]>): ItemEntity =>
+const item = (data: Partial<ItemEntity["data"]>, over: Partial<ItemEntity> = {}): ItemEntity =>
   ({
     id: "x",
     name: "X",
@@ -14,48 +21,129 @@ const item = (data: Partial<ItemEntity["data"]>): ItemEntity =>
     tags: [],
     effects: [],
     data: { category: "gear", ...data },
+    ...over,
   }) as ItemEntity;
 
-describe("itemSlot", () => {
+const weapon = (handedness: string, extra: Record<string, unknown> = {}) =>
+  item({ weapon: { damage: "1d8", critical: "20/×2", handedness, ...extra } as never });
+
+describe("itemKind", () => {
   it(`trennt Schild von Rüstung — beide stehen im Datenmodell unter armor`, () => {
-    expect(itemSlot(item({ armor: { kind: "shield", acBonus: 2, maxDex: null, acp: 1, asf: 0 } }))).toBe("shield");
-    expect(itemSlot(item({ armor: { kind: "medium", acBonus: 5, maxDex: 3, acp: 4, asf: 0 } }))).toBe("armor");
+    expect(itemKind(item({ armor: { kind: "shield", acBonus: 2, maxDex: null, acp: 1, asf: 0 } }))).toBe("shield");
+    expect(itemKind(item({ armor: { kind: "medium", acBonus: 5, maxDex: 3, acp: 4, asf: 0 } }))).toBe("armor");
   });
 
   it(`erkennt Waffen und lässt alles andere „other"`, () => {
-    expect(itemSlot(item({ weapon: { damage: "1d8", critical: "20/×2" } as never }))).toBe("weapon");
-    expect(itemSlot(item({}))).toBe("other");
-    expect(itemSlot(undefined)).toBe("other");
+    expect(itemKind(weapon("one"))).toBe("weapon");
+    expect(itemKind(item({}))).toBe("other");
+    expect(itemKind(undefined)).toBe("other");
+  });
+});
+
+describe("allowedSlots", () => {
+  it(`steckt den Schild in die Schildhand, nicht in einen eigenen Schild-Platz`, () => {
+    // Genau so zeigt es Fight Club: am Schild steht „OH".
+    expect(allowedSlots(item({ armor: { kind: "shield", acBonus: 2, maxDex: null, acp: 1, asf: 0 } }))).toEqual([
+      "offHand",
+    ]);
+  });
+
+  it(`erlaubt einer einhändigen Waffe beide Hände`, () => {
+    // Der Normalfall am Tisch: Langschwert zweihändig zuschlagen. Ohne diesen
+    // Platz gäbe es den doppelten Power-Attack-Schaden nicht.
+    expect(allowedSlots(weapon("one"))).toEqual(["mainHand", "offHand", "bothHands"]);
+  });
+
+  it(`lässt eine zweihändige Waffe nur beidhändig zu`, () => {
+    expect(allowedSlots(weapon("two"))).toEqual(["bothHands"]);
+  });
+
+  it(`gibt allem anderen den Platz „getragen"`, () => {
+    expect(allowedSlots(item({}))).toEqual(["worn"]);
+    expect(allowedSlots(item({ armor: { kind: "medium", acBonus: 5, maxDex: 3, acp: 4, asf: 0 } }))).toEqual([
+      "armor",
+    ]);
+  });
+});
+
+describe("nextSlot", () => {
+  it(`tippt sich durch die erlaubten Plätze und wieder heraus`, () => {
+    const sword = weapon("one");
+    expect(nextSlot(sword, "none")).toBe("mainHand");
+    expect(nextSlot(sword, "mainHand")).toBe("offHand");
+    expect(nextSlot(sword, "offHand")).toBe("bothHands");
+    expect(nextSlot(sword, "bothHands")).toBe("none");
+  });
+
+  it(`legt einen Altbestands-Platz einmal ab, statt hängen zu bleiben`, () => {
+    // „worn" an einer Rüstung stammt aus der Umstellung von equipped: true.
+    const plate = item({ armor: { kind: "heavy", acBonus: 8, maxDex: 1, acp: 6, asf: 0 } });
+    expect(nextSlot(plate, "worn")).toBe("none");
+    expect(nextSlot(plate, "none")).toBe("armor");
+  });
+});
+
+describe("isNaturalOrUnarmed", () => {
+  it(`erkennt den unbewaffneten Schlag an seiner SRD-Kennung`, () => {
+    // Über weapon.category geht es NICHT: dort steht „simple", wie beim Dolch.
+    expect(isNaturalOrUnarmed(item({}, { id: "srd:item:unarmed-strike" }))).toBe(true);
+    expect(isNaturalOrUnarmed(weapon("light", { category: "simple" }))).toBe(false);
+  });
+
+  it(`nimmt eigene natürliche Waffen über Waffenart oder Schlagwort`, () => {
+    expect(isNaturalOrUnarmed(weapon("light", { category: "natural" }))).toBe(true);
+    expect(isNaturalOrUnarmed(item({}, { tags: ["natural"] }))).toBe(true);
+    expect(isNaturalOrUnarmed(undefined)).toBe(false);
   });
 });
 
 describe("conflictingEquipIds", () => {
-  const rüstung = (id: string, equipped: boolean): EquipCandidate => ({ id, slot: "armor", equipped });
-  const schild = (id: string, equipped: boolean): EquipCandidate => ({ id, slot: "shield", equipped });
-  const waffe = (id: string, equipped: boolean): EquipCandidate => ({ id, slot: "weapon", equipped });
+  const armor = (id: string, slot: EquipCandidate["slot"]): EquipCandidate => ({ id, slot });
 
   it(`zieht die alte Rüstung aus, wenn eine neue angelegt wird`, () => {
-    const items = [rüstung("kettenhemd", true), rüstung("platte", false)];
-    expect(conflictingEquipIds(items, "platte")).toEqual(["kettenhemd"]);
+    const items = [armor("kettenhemd", "armor"), armor("platte", "none")];
+    expect(conflictingEquipIds(items, "platte", "armor")).toEqual(["kettenhemd"]);
   });
 
   it(`fasst den Schild dabei NICHT an — der gehört an den anderen Arm`, () => {
-    const items = [rüstung("kettenhemd", true), schild("buckler", true), rüstung("platte", false)];
-    expect(conflictingEquipIds(items, "platte")).toEqual(["kettenhemd"]);
+    const items = [armor("kettenhemd", "armor"), armor("buckler", "offHand"), armor("platte", "none")];
+    expect(conflictingEquipIds(items, "platte", "armor")).toEqual(["kettenhemd"]);
   });
 
-  it(`und umgekehrt: ein zweiter Schild verdrängt nur den ersten`, () => {
-    const items = [rüstung("kettenhemd", true), schild("buckler", true), schild("turmschild", false)];
-    expect(conflictingEquipIds(items, "turmschild")).toEqual(["buckler"]);
+  it(`erlaubt Zweiwaffenkampf: Haupthand und Schildhand stören sich nicht`, () => {
+    const items = [armor("kurzschwert", "mainHand"), armor("dolch", "none")];
+    expect(conflictingEquipIds(items, "dolch", "offHand")).toEqual([]);
   });
 
-  it(`lässt Waffen in Ruhe — Zweiwaffenkampf ist ein normaler Fall`, () => {
-    const items = [waffe("kurzschwert", true), waffe("dolch", false)];
-    expect(conflictingEquipIds(items, "dolch")).toEqual([]);
+  it(`räumt beide Hände frei, wenn beidhändig geführt wird`, () => {
+    const items = [
+      armor("kurzschwert", "mainHand"),
+      armor("buckler", "offHand"),
+      armor("zweihänder", "none"),
+    ];
+    expect(conflictingEquipIds(items, "zweihänder", "bothHands")).toEqual([
+      "kurzschwert",
+      "buckler",
+    ]);
+  });
+
+  it(`verdrängt die beidhändige Waffe, sobald eine Hand gebraucht wird`, () => {
+    const items = [armor("zweihänder", "bothHands"), armor("dolch", "none")];
+    expect(conflictingEquipIds(items, "dolch", "mainHand")).toEqual(["zweihänder"]);
+  });
+
+  it(`tauscht in derselben Hand`, () => {
+    const items = [armor("kurzschwert", "mainHand"), armor("axt", "none")];
+    expect(conflictingEquipIds(items, "axt", "mainHand")).toEqual(["kurzschwert"]);
+  });
+
+  it(`lässt Getragenes unbegrenzt — Ringe und Amulette brauchen keine Hand`, () => {
+    const items = [armor("ring1", "worn"), armor("ring2", "worn"), armor("amulett", "none")];
+    expect(conflictingEquipIds(items, "amulett", "worn")).toEqual([]);
   });
 
   it(`verlangt nichts, wenn nichts im Weg ist`, () => {
-    expect(conflictingEquipIds([rüstung("platte", false)], "platte")).toEqual([]);
-    expect(conflictingEquipIds([], "gibtsnicht")).toEqual([]);
+    expect(conflictingEquipIds([armor("platte", "none")], "platte", "armor")).toEqual([]);
+    expect(conflictingEquipIds([], "gibtsnicht", "mainHand")).toEqual([]);
   });
 });

@@ -458,6 +458,94 @@ describe("deriveSheet — RK, Rüstung, MaxGE", () => {
   });
 });
 
+/**
+ * Eigene Modifikatoren AM TALENT — was Fight Club unter „Modifiers" anbietet.
+ *
+ * Der Grund, warum das nötig ist: 300 der 327 SRD-Talente bringen keine Wirkung
+ * mit, weil ihr Regeltext Prosa ist. Ohne diesen Weg bleibt jede Hausregel und
+ * jedes Buch-Talent mechanisch stumm — oder landet als „Manuell: …" im
+ * Notizen-Reiter, ohne Bezug zum Talent.
+ */
+describe("deriveSheet — eigene Modifikatoren am Talent", () => {
+  it("rechnet einen selbst eingetragenen Bonus mit", () => {
+    const c = fighterDwarf4({
+      feats: [
+        {
+          featId: "test:feat:dodge",
+          extraEffects: [{ target: "init", bonusType: "untyped", value: 4 }],
+        },
+      ],
+    });
+    const ohne = deriveSheet(fighterDwarf4({ feats: [{ featId: "test:feat:dodge" }] }), COMPENDIUM, HOUSE);
+    const sheet = deriveSheet(c, COMPENDIUM, HOUSE);
+    expect(sheet.init.total).toBe(ohne.init.total + 4);
+  });
+
+  it(`schreibt das TALENT als Herkunft, nicht „Manuell“`, () => {
+    // Genau das ist der Unterschied zu den sonstigen Modifikatoren: in der
+    // Aufschlüsselung muss stehen, WOHER der Bonus kommt.
+    const c = fighterDwarf4({
+      feats: [
+        {
+          featId: "test:feat:dodge",
+          extraEffects: [{ target: "init", bonusType: "untyped", value: 4 }],
+        },
+      ],
+    });
+    const sheet = deriveSheet(c, COMPENDIUM, HOUSE);
+    expect(sheet.init.contributions.some((x) => x.source === "Talent: Dodge")).toBe(true);
+  });
+
+  it("hält zwei Instanzen desselben Talents getrennt", () => {
+    // Toughness ist mehrfach nehmbar. Würden die Schlüssel kollidieren, zählte
+    // nur einer der beiden Einträge.
+    const c = fighterDwarf4({
+      feats: [
+        { featId: "test:feat:toughness", extraEffects: [{ target: "hp.max", bonusType: "untyped", value: 1 }] },
+        { featId: "test:feat:toughness", extraEffects: [{ target: "hp.max", bonusType: "untyped", value: 2 }] },
+      ],
+    });
+    const ohne = deriveSheet(
+      fighterDwarf4({ feats: [{ featId: "test:feat:toughness" }, { featId: "test:feat:toughness" }] }),
+      COMPENDIUM,
+      HOUSE,
+    );
+    const sheet = deriveSheet(c, COMPENDIUM, HOUSE);
+    expect(sheet.hp.max).toBe(ohne.hp.max + 3);
+  });
+
+  it("nimmt auch Abzüge — eine Hausregel darf wehtun", () => {
+    const c = fighterDwarf4({
+      feats: [
+        {
+          featId: "test:feat:dodge",
+          extraEffects: [{ target: "save.will", bonusType: "untyped", value: -2 }],
+        },
+      ],
+    });
+    const ohne = deriveSheet(fighterDwarf4({ feats: [{ featId: "test:feat:dodge" }] }), COMPENDIUM, HOUSE);
+    const sheet = deriveSheet(c, COMPENDIUM, HOUSE);
+    expect(sheet.saves.will.total).toBe(ohne.saves.will.total - 2);
+  });
+
+  it("lässt die Wirkung des Kompendium-Talents daneben stehen", () => {
+    // Der eigene Modifikator ERSETZT nichts. Sonst würde ein Zusatz still eine
+    // Wirkung abschalten, die im Regeltext steht.
+    const c = fighterDwarf4({
+      feats: [
+        {
+          featId: "test:feat:toughness",
+          extraEffects: [{ target: "hp.max", bonusType: "untyped", value: 5 }],
+        },
+      ],
+    });
+    const sheet = deriveSheet(c, COMPENDIUM, HOUSE);
+    const nackt = deriveSheet(fighterDwarf4(), COMPENDIUM, HOUSE);
+    // Toughness bringt selbst +3 (Kompendium), der eigene Eintrag +5 → +8.
+    expect(sheet.hp.max).toBe(nackt.hp.max + 8);
+  });
+});
+
 describe("deriveSheet — Multiclass (der klassische Fan-Tool-Bug)", () => {
   const multiclass = C({
     id: "char-2",
@@ -599,7 +687,7 @@ describe("deriveSheet — Fertigkeiten", () => {
 
     it("wirkt nur mit der Waffe, auf die choiceRef zeigt", () => {
       const c = armed([
-        { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword" },
+        { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword", extraEffects: [] },
       ]);
       // GAB 4 + ST 3 = 7; mit Talent 8 — aber nur beim Langschwert.
       expect(attack(c, "Longsword").total).toBe(8);
@@ -607,13 +695,13 @@ describe("deriveSheet — Fertigkeiten", () => {
     });
 
     it("greift auch über den Auswahltext, wenn kein Verweis gesetzt ist", () => {
-      const c = armed([{ featId: "test:feat:weapon-focus", choice: "greatsword" }]);
+      const c = armed([{ featId: "test:feat:weapon-focus", choice: "greatsword", extraEffects: [] }]);
       expect(attack(c, "Greatsword").total).toBe(8);
       expect(attack(c, "Longsword").total).toBe(7);
     });
 
     it("wirkt gar nicht, wenn die Auswahl zu keiner Waffe passt", () => {
-      const c = armed([{ featId: "test:feat:weapon-focus", choice: "Kurzschwert" }]);
+      const c = armed([{ featId: "test:feat:weapon-focus", choice: "Kurzschwert", extraEffects: [] }]);
       expect(attack(c, "Longsword").total).toBe(7);
       expect(attack(c, "Greatsword").total).toBe(7);
     });
@@ -621,7 +709,7 @@ describe("deriveSheet — Fertigkeiten", () => {
     it("der Verweis schlägt den Auswahltext", () => {
       // Text sagt Langschwert, Verweis zeigt auf den Zweihänder — der Verweis gilt.
       const c = armed([
-        { featId: "test:feat:weapon-focus", choice: "Longsword", choiceRef: "test:item:greatsword" },
+        { featId: "test:feat:weapon-focus", choice: "Longsword", choiceRef: "test:item:greatsword", extraEffects: [] },
       ]);
       expect(attack(c, "Greatsword").total).toBe(8);
       expect(attack(c, "Longsword").total).toBe(7);
@@ -649,7 +737,7 @@ describe("deriveSheet — Fertigkeiten", () => {
         abilities: { base: { str: 16, dex: 13, con: 14, int: 10, wis: 12, cha: 8 } },
         levels: Array.from({ length: 4 }, () => ({ classId: "test:class:fighter", hpRoll: "avg" as const })),
         feats: [
-          { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword" },
+          { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword", extraEffects: [] },
         ],
         inventory: [
           { id: "v1", itemId: "homebrew:item:templer-schwert", equipped: true },
@@ -669,6 +757,7 @@ describe("deriveSheet — Fertigkeiten", () => {
           featId: "test:feat:weapon-specialization",
           choice: "Langschwert",
           choiceRef: "test:item:longsword",
+          extraEffects: [],
         },
       ]);
       // 1d8 + ST 3 + 2 aus dem Talent; der Zweihänder bleibt bei ×1,5 ST.
@@ -678,8 +767,8 @@ describe("deriveSheet — Fertigkeiten", () => {
 
     it("zwei Talente auf zwei Waffen wirken getrennt", () => {
       const c = armed([
-        { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword" },
-        { featId: "test:feat:weapon-focus", choice: "Zweihänder", choiceRef: "test:item:greatsword" },
+        { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword", extraEffects: [] },
+        { featId: "test:feat:weapon-focus", choice: "Zweihänder", choiceRef: "test:item:greatsword", extraEffects: [] },
       ]);
       expect(attack(c, "Longsword").total).toBe(8);
       expect(attack(c, "Greatsword").total).toBe(8);
@@ -687,7 +776,7 @@ describe("deriveSheet — Fertigkeiten", () => {
 
     it("die Herkunft steht in der Aufschlüsselung", () => {
       const c = armed([
-        { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword" },
+        { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword", extraEffects: [] },
       ]);
       const line = deriveSheet(c, COMPENDIUM, HOUSE).attacks.find((a) => a.label === "Longsword")!;
       expect(line.attack.contributions.some((x) => x.source === "Weapon Focus (Langschwert)")).toBe(

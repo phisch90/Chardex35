@@ -22,10 +22,20 @@ const context = (patch: Partial<CombatOptionContext> = {}): CombatOptionContext 
 const sum = (list: { value: number }[]) => list.reduce((a, c) => a + c.value, 0);
 
 describe("Power Attack", () => {
-  it(`nimmt vom Angriff und gibt auf den Schaden`, () => {
+  it(`nimmt vom NAHKAMPF-Angriff und gibt auf den Schaden`, () => {
     const out = applyCombatOptions(options({ powerAttack: 4 }), context());
-    expect(sum(out.attack)).toBe(-4);
+    expect(sum(out.meleeAttack)).toBe(-4);
     expect(sum(out.meleeDamage({ handedness: "one" }))).toBe(4);
+  });
+
+  it(`lässt Fernkampfangriffe in Ruhe — das ist der Fehler, der auf dem Bogen stand`, () => {
+    /*
+      Im SRD steht „subtract a number from all MELEE attack rolls". Vorher gab es
+      nur eine Liste für alle Angriffe, und damit fiel der Langbogen von +8/+3
+      auf +4/−1, sobald Power Attack eingestellt war.
+    */
+    const out = applyCombatOptions(options({ powerAttack: 4 }), context());
+    expect(out.attack).toEqual([]);
   });
 
   it(`zählt zweihändig DOPPELT — das ist der Grund, warum man es nicht im Kopf rechnet`, () => {
@@ -37,7 +47,22 @@ describe("Power Attack", () => {
   it(`gibt mit einer LEICHTEN Waffe keinen Schaden, der Angriffsmalus bleibt aber`, () => {
     const out = applyCombatOptions(options({ powerAttack: 3 }), context());
     expect(sum(out.meleeDamage({ handedness: "light" }))).toBe(0);
-    expect(sum(out.attack)).toBe(-3);
+    expect(sum(out.meleeAttack)).toBe(-3);
+  });
+
+  it(`macht für unbewaffnet und natürliche Waffen die SRD-Ausnahme`, () => {
+    // „except with unarmed strikes or natural weapon attacks" — sonst kassiert
+    // ein waffenloser Mönch den Malus und bekommt nichts dafür.
+    const out = applyCombatOptions(options({ powerAttack: 3 }), context());
+    expect(sum(out.meleeDamage({ handedness: "light", naturalOrUnarmed: true }))).toBe(3);
+  });
+
+  it(`zählt eine EINHÄNDIGE Waffe doppelt, wenn sie beidhändig geführt wird`, () => {
+    // Langschwert in beiden Händen: der häufigste Fall am Tisch, und vorher gab
+    // es dafür +4 statt +8.
+    const out = applyCombatOptions(options({ powerAttack: 4 }), context());
+    expect(sum(out.meleeDamage({ handedness: "one", wieldedInTwoHands: true }))).toBe(8);
+    expect(sum(out.meleeDamage({ handedness: "one" }))).toBe(4);
   });
 
   it(`wirkt nicht auf Fernkampfschaden`, () => {
@@ -47,24 +72,43 @@ describe("Power Attack", () => {
 
   it(`meldet eine Höhe über dem GAB, wendet sie aber an (der DM hat Recht)`, () => {
     const out = applyCombatOptions(options({ powerAttack: 9 }), context({ bab: 6 }));
-    expect(sum(out.attack)).toBe(-9);
+    expect(sum(out.meleeAttack)).toBe(-9);
     expect(out.warnings.join(" ")).toContain("über dem Grundangriffsbonus");
   });
 
   it(`tut ohne das Talent gar nichts und sagt das`, () => {
     const out = applyCombatOptions(options({ powerAttack: 4 }), context({ hasPowerAttack: false }));
     expect(out.attack).toEqual([]);
+    expect(out.meleeAttack).toEqual([]);
     expect(sum(out.meleeDamage({ handedness: "one" }))).toBe(0);
     expect(out.warnings.join(" ")).toContain("hat das Talent nicht");
   });
 });
 
 describe("Kampfgeschick", () => {
-  it(`nimmt vom Angriff und gibt auf die RK, als Ausweichen-Bonus`, () => {
+  it(`nimmt vom NAHKAMPF-Angriff und gibt auf die RK, als Ausweichen-Bonus`, () => {
     const out = applyCombatOptions(options({ combatExpertise: 3 }), context());
-    expect(sum(out.attack)).toBe(-3);
+    expect(sum(out.meleeAttack)).toBe(-3);
     expect(sum(out.ac)).toBe(3);
     expect(out.ac[0]?.bonusType).toBe("dodge");
+    // „when you use the attack action … in melee" — der Bogen bleibt unberührt.
+    expect(out.attack).toEqual([]);
+  });
+
+  it(`ERSETZT das defensive Kämpfen, statt sich dazuzuaddieren`, () => {
+    /*
+      Der „Normal"-Absatz des Talents sagt, was ein Charakter OHNE Kampfgeschick
+      kann: defensiv kämpfen für −4/+2. Es ist also die Alternative, nicht ein
+      Zusatz. Vorher kamen −7 Angriff und +5 RK heraus.
+    */
+    const out = applyCombatOptions(
+      options({ combatExpertise: 3, fightingDefensively: true }),
+      context(),
+    );
+    expect(sum(out.meleeAttack)).toBe(-3);
+    expect(sum(out.attack)).toBe(0);
+    expect(sum(out.ac)).toBe(3);
+    expect(out.warnings.join(" ")).toContain("ERSETZT");
   });
 
   it(`meldet die Grenze von 5`, () => {
@@ -79,9 +123,11 @@ describe("Kampfgeschick", () => {
 });
 
 describe("Defensiv kämpfen und totale Verteidigung", () => {
-  it(`defensiv: −4 Angriff, +2 RK`, () => {
+  it(`defensiv: −4 auf ALLE Angriffe, +2 RK`, () => {
+    // Hier steht im SRD wirklich „all attacks", also auch Fernkampf.
     const out = applyCombatOptions(options({ fightingDefensively: true }), context());
     expect(sum(out.attack)).toBe(-4);
+    expect(sum(out.meleeAttack)).toBe(0);
     expect(sum(out.ac)).toBe(2);
   });
 
@@ -100,7 +146,7 @@ describe("Defensiv kämpfen und totale Verteidigung", () => {
     );
     expect(sum(out.ac)).toBe(4); // nicht 6
     expect(sum(out.attack)).toBe(0);
-    expect(out.warnings.join(" ")).toContain("nicht zusätzlich");
+    expect(out.warnings.join(" ")).toContain("kein weiterer Angriff-gegen-RK-Tausch");
   });
 });
 
@@ -124,19 +170,27 @@ describe("Dodge", () => {
 });
 
 describe("Zusammenspiel", () => {
-  it(`Power Attack und Kampfgeschick summieren ihre Angriffsmali`, () => {
+  it(`Power Attack und Kampfgeschick summieren ihre Nahkampf-Mali`, () => {
     const out = applyCombatOptions(
       options({ powerAttack: 2, combatExpertise: 2 }),
       context({ bab: 6 }),
     );
-    expect(sum(out.attack)).toBe(-4);
+    expect(sum(out.meleeAttack)).toBe(-4);
     expect(sum(out.ac)).toBe(2);
     expect(sum(out.meleeDamage({ handedness: "one" }))).toBe(2);
+    expect(out.attack).toEqual([]);
+  });
+
+  it(`totale Verteidigung schluckt auch das Kampfgeschick`, () => {
+    const out = applyCombatOptions(options({ totalDefense: true, combatExpertise: 4 }), context());
+    expect(sum(out.ac)).toBe(4); // nicht 8
+    expect(out.meleeAttack).toEqual([]);
   });
 
   it(`nichts eingestellt heißt: kein einziger Beitrag und keine Meldung`, () => {
     const out = applyCombatOptions(options(), context());
     expect(out.attack).toEqual([]);
+    expect(out.meleeAttack).toEqual([]);
     expect(out.ac).toEqual([]);
     expect(out.warnings).toEqual([]);
     expect(canAttackThisRound(options())).toBe(true);

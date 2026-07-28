@@ -359,6 +359,16 @@ export const entitySchema = z.discriminatedUnion("kind", [
 ]);
 
 export type Entity = z.infer<typeof entitySchema>;
+
+/**
+ * Was man dem Schema HINEINGIBT — mit allen Feldern, die einen Default haben,
+ * als optional. Wichtig für alles, was Entities baut (Konverter, ETL): dort ist
+ * `Entity` der falsche Typ. `Entity` ist das Ergebnis NACH dem Parsen und
+ * verlangt deshalb Felder, die das Schema selbst einsetzt. Wer gegen `Entity`
+ * baut, muss diese Defaults von Hand wiederholen — und genau dabei laufen sie
+ * auseinander.
+ */
+export type EntityInput = z.input<typeof entitySchema>;
 export type RaceEntity = z.infer<typeof raceEntitySchema>;
 export type ClassEntity = z.infer<typeof classEntitySchema>;
 export type FeatEntity = z.infer<typeof featEntitySchema>;

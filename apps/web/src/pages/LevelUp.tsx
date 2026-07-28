@@ -79,7 +79,7 @@ export function LevelUpPage() {
     }
     copy.skillRanks = { ...ranks };
     copy.skillSubtypes = [...copy.skillSubtypes, ...newSubtypes];
-    copy.feats = [...copy.feats, ...newFeatIds.map((featId) => ({ featId }))];
+    copy.feats = [...copy.feats, ...newFeatIds.map((featId) => ({ featId, extraEffects: [] }))];
     if (newKnown.length > 0) {
       const state = (copy.spellState[classId] ??= { known: [], prepared: [], usedSlots: [] });
       state.known = [...state.known, ...newKnown.filter((id) => !state.known.includes(id))];

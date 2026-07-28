@@ -15,6 +15,21 @@ export interface Block {
   /** Fließtext-Absatz. `label` wird fett vorangestellt („Benefit:"). */
   label?: string;
   text?: string;
+  /** Eine Tabelle über die ganze Seitenbreite (Klassentabelle). */
+  table?: Table;
+}
+
+/**
+ * Eine Tabelle, wie Regelwerke sie setzen: über die ganze Seitenbreite, kleinere
+ * Schrift als der Fließtext, feste Spalten-x, und eine zu lange Zelle bricht
+ * innerhalb ihrer Spalte um (die Spalte „Special" tut das ständig).
+ */
+export interface Table {
+  /** Spaltenanfänge als Abstand vom linken Seitenrand. */
+  columns: number[];
+  /** Kopfzeilen (können mehrere sein: „Base" über „Attack Bonus"). */
+  header: string[][];
+  rows: string[][];
 }
 
 const MARGIN = 54;
@@ -39,6 +54,8 @@ export async function makeRulebookPdf(options: {
   let column = 0;
   let y = 0;
   let pageNumber = 0;
+  /** Oberkante der Textspalten — unter einer Tabelle liegt sie tiefer. */
+  let columnTop = 0;
 
   const columnX = () => MARGIN + column * (columnWidth + GUTTER);
   const bottom = () => MARGIN;
@@ -60,13 +77,14 @@ export async function makeRulebookPdf(options: {
       font: body,
     });
     column = 0;
-    y = pageHeight - MARGIN;
+    columnTop = pageHeight - MARGIN;
+    y = columnTop;
   };
 
   const nextColumn = () => {
     if (column === 0) {
       column = 1;
-      y = pageHeight - MARGIN;
+      y = columnTop;
     } else {
       newPage();
     }
@@ -88,7 +106,70 @@ export async function makeRulebookPdf(options: {
     y -= LEADING;
   };
 
+  /**
+   * Tabelle setzen. Die Zellen werden WORTWEISE gezeichnet, nicht als ein Stück:
+   * so entstehen dieselben vielen kleinen Textstücke wie in einem echten PDF, und
+   * der Konverter muss sie tatsächlich anhand der Abstände zu Zellen bündeln.
+   * Zeichnete der Prüf-PDF jede Zelle als ein Stück, wäre die Zellen-Erkennung
+   * mitgetestet-aber-nicht-geprüft.
+   */
+  const drawTable = (table: Table) => {
+    const size = FONT_SIZE * 0.78; // Tabellenschrift ist kleiner als Fließtext
+    const leading = size * 1.25;
+    const widthOf = (index: number) => {
+      const next = table.columns[index + 1];
+      const end = next === undefined ? pageWidth - MARGIN : MARGIN + next - 3;
+      return end - (MARGIN + table.columns[index]!);
+    };
+
+    const drawRow = (cells: string[], font: PDFFont) => {
+      // Zellen umbrechen, bevor irgendetwas gezeichnet wird — die Zeilenhöhe
+      // richtet sich nach der höchsten Zelle.
+      const wrapped = cells.map((cell, index) => {
+        const limit = widthOf(index);
+        const out: string[] = [];
+        let line = "";
+        for (const word of cell.split(/\s+/).filter((w) => w !== "")) {
+          const candidate = line === "" ? word : `${line} ${word}`;
+          if (font.widthOfTextAtSize(candidate, size) > limit && line !== "") {
+            out.push(line);
+            line = word;
+          } else line = candidate;
+        }
+        if (line !== "") out.push(line);
+        return out;
+      });
+      const height = Math.max(...wrapped.map((w) => w.length), 1) * leading;
+      if (page === null || y - height < bottom()) newPage();
+
+      wrapped.forEach((linesOfCell, index) => {
+        linesOfCell.forEach((line, row) => {
+          let x = MARGIN + table.columns[index]!;
+          // Wortweise zeichnen, mit dem Vorschub, den die Schrift vorgibt.
+          for (const word of line.split(" ")) {
+            page!.drawText(word, { x, y: y - row * leading, size, font });
+            x += font.widthOfTextAtSize(`${word} `, size);
+          }
+        });
+      });
+      y -= height;
+    };
+
+    // Eine Tabelle wird nie über einen Spaltenwechsel gerissen: sie steht als
+    // Ganzes oben auf einer Seite, und der Text fließt darunter weiter — genau so
+    // stehen Klassentabellen im Buch.
+    newPage();
+    for (const header of table.header) drawRow(header, bold);
+    for (const row of table.rows) drawRow(row, body);
+    y -= LEADING * 0.5;
+    columnTop = y;
+  };
+
   for (const block of options.blocks) {
+    if (block.table !== undefined) {
+      drawTable(block.table);
+      continue;
+    }
     if (block.heading !== undefined) {
       // Überschrift nie als letzte Zeile einer Spalte stehen lassen.
       ensure(LEADING * 3);

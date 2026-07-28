@@ -276,11 +276,12 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
 
   it("ordnet Talente zu und rettet deutsche Waffennamen in die Auswahl", () => {
     expect(character.feats).toHaveLength(6);
-    expect(character.feats).toContainEqual({ featId: "srd:feat:dodge" });
+    expect(character.feats).toContainEqual({ featId: "srd:feat:dodge", extraEffects: [] });
     // Die Auswahl trägt zusätzlich den Verweis auf die Waffe — nur damit wirkt
     // der Bonus (siehe eigener Test weiter unten).
     expect(character.feats).toContainEqual({
       featId: "srd:feat:weapon-focus",
+      extraEffects: [],
       choice: "Kurzschwert",
       choiceRef: "srd:item:sword-short",
     });
@@ -288,6 +289,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
       featId: "srd:feat:weapon-focus",
       choice: "Zweihänder",
       choiceRef: "srd:item:greatsword",
+      extraEffects: [],
     });
     // „Weapon Focus" darf NICHT mit „Greater/Epic Weapon Focus" verwechselt werden.
     expect(character.feats.some((f) => f.featId.includes("greater"))).toBe(false);
@@ -314,7 +316,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
       "srd:item:greatsword",
       "srd:item:dagger",
     ]);
-    expect(character.inventory.every((i) => i.equipped)).toBe(true);
+    expect(character.inventory.every((i) => i.slot !== "none")).toBe(true);
     // Jede angelegte Waffe erzeugt eine eigene Angriffszeile im Bogen.
     for (const label of ["Sword, short", "Templer Schwert", "Greatsword", "Dagger"]) {
       expect(sheet.attacks.some((a) => a.label === label), label).toBe(true);
@@ -478,7 +480,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(weapon!.data.weapon).toMatchObject({ damage: "1d6", critRange: "19-20", critMult: "x2" });
     // Sie ist angelegt und erzeugt damit eine Angriffszeile.
     const row = character.inventory.find((i) => i.itemId === weapon!.id);
-    expect(row?.equipped).toBe(true);
+    expect(row?.slot).not.toBe("none");
     expect(sheet.attacks.some((a) => a.label === "Templer Schwert")).toBe(true);
   });
 

@@ -28,11 +28,50 @@ export interface CombatOptionContext {
 /** Kampfgeschick ist laut SRD auf 5 begrenzt, zusätzlich zum GAB. */
 export const COMBAT_EXPERTISE_MAX = 5;
 
+/**
+ * Wie eine Waffe in dieser Runde geführt wird — das entscheidet über den
+ * Schadensbonus von Power Attack.
+ *
+ * `wieldedInTwoHands` ist nicht dasselbe wie „die Waffe IST zweihändig": ein
+ * Langschwert (`one`) in beiden Händen zählt für Power Attack doppelt, und genau
+ * das war vorher nicht ausdrückbar. Die Angabe kommt aus dem Ausrüstungs-Slot,
+ * nicht aus den Waffendaten.
+ */
+export interface WieldContext {
+  handedness: "light" | "one" | "two" | "ranged";
+  /**
+   * Unbewaffneter Schlag oder natürliche Waffe? Das ist die einzige Ausnahme von
+   * „leichte Waffe bekommt keinen Power-Attack-Schaden".
+   *
+   * Bewusst ein Ja/Nein und nicht die Waffenart: `weapon.category` ist in den
+   * Packs die Vertrautheits-Klasse (simple/martial/exotic) und sagt darüber
+   * nichts. Wer das daraus ableiten wollte, bekäme für jeden Dolch dasselbe
+   * Ergebnis wie für einen Faustschlag.
+   */
+  naturalOrUnarmed?: boolean;
+  /** Wird sie in dieser Runde mit beiden Händen geführt? */
+  wieldedInTwoHands?: boolean;
+}
+
 export interface CombatOptionOutcome {
-  /** Auf JEDEN Angriffswurf (immer negativ oder 0). */
+  /**
+   * Auf JEDEN Angriffswurf, egal ob Nah- oder Fernkampf (immer ≤ 0).
+   * Hier steht nur, was laut Regeln wirklich für alles gilt — defensiv kämpfen
+   * und totale Verteidigung.
+   */
   attack: Contribution[];
-  /** Auf den Nahkampfschaden. `twoHanded` verdoppelt Power Attack. */
-  meleeDamage: (weapon: { handedness: "light" | "one" | "two" | "ranged" }) => Contribution[];
+  /**
+   * NUR auf Nahkampf-Angriffswürfe.
+   *
+   * Diese Trennung ist der Kern eines behobenen Regelfehlers: vorher gab es nur
+   * `attack`, und der Abzug von Power Attack landete damit auch auf dem Bogen
+   * beim Langbogen — aus +8/+3 wurde +4/−1. Im SRD steht ausdrücklich „subtract a
+   * number from all MELEE attack rolls"; dasselbe gilt für Kampfgeschick („when
+   * you use the attack action … in melee").
+   */
+  meleeAttack: Contribution[];
+  /** Auf den Nahkampfschaden. Zweihändige Führung verdoppelt Power Attack. */
+  meleeDamage: (weapon: WieldContext) => Contribution[];
   /** Auf die RK — immer Ausweichen-Boni, die sich also summieren. */
   ac: Contribution[];
   /** Hinweise für den Bogen (Übertretung der Obergrenzen, kein Angriff …). */
@@ -44,6 +83,7 @@ export function applyCombatOptions(
   context: CombatOptionContext,
 ): CombatOptionOutcome {
   const attack: Contribution[] = [];
+  const meleeAttack: Contribution[] = [];
   const ac: Contribution[] = [];
   const warnings: string[] = [];
 
@@ -68,26 +108,42 @@ export function applyCombatOptions(
     );
   }
 
+  // Power Attack gilt NUR im Nahkampf (siehe meleeAttack).
   if (powerAttack > 0) {
-    attack.push(mod("Power Attack", -powerAttack));
-  }
-  if (expertise > 0) {
-    attack.push(mod("Kampfgeschick", -expertise));
-    ac.push(dodge("Kampfgeschick", expertise));
+    meleeAttack.push(mod("Power Attack", -powerAttack));
   }
 
   /*
-    Defensiv kämpfen und totale Verteidigung schließen sich aus — beides
-    gleichzeitig ist keine Regel, sondern ein Bedienfehler. Totale Verteidigung
-    gewinnt, weil sie die stärkere Aussage ist („ich greife gar nicht an").
+    Drei Wege, Angriff gegen RK zu tauschen — und alle drei schließen sich
+    gegenseitig aus:
+
+      totale Verteidigung  > Kampfgeschick > defensiv kämpfen
+
+    Dass Kampfgeschick das defensive Kämpfen ERSETZT und nicht dazukommt, steht
+    im SRD im „Normal"-Absatz des Talents: „A character without the Combat
+    Expertise feat can fight defensively … to take a −4 penalty on attack rolls
+    and gain a +2 dodge bonus." Vorher addierte sich beides zu −7 Angriff und
+    +5 RK — ein Wert, den es in 3.5 nicht gibt.
+
+    Gesperrt wird nichts: die stärkere Option gewinnt und der Rest wird gemeldet.
   */
   if (options.totalDefense) {
     ac.push(dodge("Totale Verteidigung", 4));
     warnings.push("Totale Verteidigung: in dieser Runde kein Angriff.");
+    if (options.fightingDefensively || expertise > 0) {
+      warnings.push("Neben der totalen Verteidigung zählt kein weiterer Angriff-gegen-RK-Tausch.");
+    }
+  } else if (expertise > 0) {
+    // Nur im Nahkampf — „when you use the attack action … in melee".
+    meleeAttack.push(mod("Kampfgeschick", -expertise));
+    ac.push(dodge("Kampfgeschick", expertise));
     if (options.fightingDefensively) {
-      warnings.push("Defensiv kämpfen zählt nicht zusätzlich zur totalen Verteidigung.");
+      warnings.push(
+        "Kampfgeschick ERSETZT das defensive Kämpfen (−4/+2) und wird nicht zusätzlich gerechnet.",
+      );
     }
   } else if (options.fightingDefensively) {
+    // Das gilt laut SRD für ALLE Angriffe der Runde, nicht nur im Nahkampf.
     attack.push(mod("Defensiv kämpfen", -4));
     ac.push(dodge("Defensiv kämpfen", 2));
   }
@@ -111,16 +167,29 @@ export function applyCombatOptions(
   const meleeDamage: CombatOptionOutcome["meleeDamage"] = (weapon) => {
     if (powerAttack === 0 || weapon.handedness === "ranged") return [];
     /*
-      SRD: mit einer zweihändig geführten Waffe zählt der Schadensbonus
-      DOPPELT; mit einer leichten Waffe gibt es keinen Schadensbonus — der
-      Angriffsmalus bleibt trotzdem. Genau diese Asymmetrie macht Power Attack
-      aus, und sie von Hand zu rechnen ist die Fehlerquelle am Tisch.
+      SRD, wörtlich: „If you attack with a two-handed weapon, or with a
+      one-handed weapon wielded in two hands, instead add twice the number
+      subtracted from your attack rolls. You can't add the bonus from Power
+      Attack to the damage dealt with a light weapon (except with unarmed strikes
+      or natural weapon attacks)."
+
+      Daraus drei Fälle, und alle drei waren vorher falsch oder nicht
+      ausdrückbar:
+
+       1. zweihändig GEFÜHRT zählt doppelt — nicht nur „die Waffe ist
+          zweihändig". Ein Langschwert in beiden Händen ist der häufigste Fall am
+          Tisch und ergab vorher +4 statt +8.
+       2. leichte Waffe: kein Schadensbonus, der Angriffsmalus bleibt.
+       3. AUSNAHME zu 2: unbewaffnet und natürliche Waffen bekommen den Bonus,
+          obwohl sie als „light" geführt sind. Ohne diese Ausnahme kassiert ein
+          waffenloser Mönch den Malus und bekommt nichts dafür.
     */
-    if (weapon.handedness === "light") return [];
-    const factor = weapon.handedness === "two" ? 2 : 1;
+    if (weapon.handedness === "light" && weapon.naturalOrUnarmed !== true) return [];
+    const twoHanded = weapon.handedness === "two" || weapon.wieldedInTwoHands === true;
+    const factor = twoHanded ? 2 : 1;
     return [
       {
-        source: factor === 2 ? "Power Attack (×2 zweihändig)" : "Power Attack",
+        source: factor === 2 ? "Power Attack (×2 zweihändig geführt)" : "Power Attack",
         bonusType: "untyped",
         value: powerAttack * factor,
         applied: true,
@@ -129,7 +198,7 @@ export function applyCombatOptions(
     ];
   };
 
-  return { attack, meleeDamage, ac, warnings };
+  return { attack, meleeAttack, meleeDamage, ac, warnings };
 }
 
 /** Gilt in dieser Runde überhaupt ein Angriff? */
