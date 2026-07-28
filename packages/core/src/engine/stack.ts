@@ -96,3 +96,26 @@ export function baseContribution(source: string, value: number): Contribution {
 export function flagSet(buckets: Buckets, flag: `flag:${string}`): boolean {
   return (buckets.get(flag) ?? []).reduce((sum, e) => sum + e.value, 0) > 0;
 }
+
+/**
+ * Dieselbe Rechnung, aber ohne die Beiträge, auf die `drop` zutrifft — für
+ * Werte, die eine Teilmenge sind: Touch-RK (ohne Rüstung und Schild) und RK auf
+ * dem falschen Fuß (ohne DEX-Bonus und Ausweichen).
+ *
+ * Die weggelassenen Beiträge verschwinden NICHT, sie werden auf
+ * `applied: false` gesetzt. So kann die Aufschlüsselung zeigen, was hier gerade
+ * nicht zählt, statt es stillschweigend zu unterschlagen — und niemand muss die
+ * Regel in der Oberfläche nachbauen.
+ */
+export function withoutContributions(
+  value: StatValue,
+  drop: (contribution: Contribution) => boolean,
+): StatValue {
+  let total = 0;
+  const contributions = value.contributions.map((c) => {
+    const dropped = drop(c);
+    if (c.applied && !dropped) total += c.value;
+    return dropped ? { ...c, applied: false } : c;
+  });
+  return { total, contributions };
+}

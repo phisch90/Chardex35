@@ -113,7 +113,7 @@ describe.skipIf(!packsAvailable)("Golden-Tests gegen die SRD-Packs", () => {
     expect(sheet.saves.will.total).toBe(1 + 1);
     // Kettenhemd +4, GE +1 (MaxGE 4 klemmt nicht).
     expect(sheet.ac.total.total).toBe(15);
-    expect(sheet.ac.touch).toBe(11);
+    expect(sheet.ac.touch.total).toBe(11);
     // Mensch: 1 (Basis L1) + 1 (L3) + 1 (Volk) + 1 (Kämpfer-Bonustalent L1)
     //       + 1 (Kämpfer-Bonustalent L2) + 1 (L4) = 6
     expect(sheet.featSlots.available).toBe(6);

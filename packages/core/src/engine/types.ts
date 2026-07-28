@@ -25,8 +25,10 @@ export interface AbilityBlock {
 
 export interface AcBlock {
   total: StatValue;
-  touch: number;
-  flatFooted: number;
+  /** Ohne Rüstung, Schild und natürliche Rüstung — mit Aufschlüsselung. */
+  touch: StatValue;
+  /** Ohne DEX-Bonus und Ausweichen-Bonus — mit Aufschlüsselung. */
+  flatFooted: StatValue;
 }
 
 export interface AttackLine {

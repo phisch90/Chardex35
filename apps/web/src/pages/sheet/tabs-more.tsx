@@ -1,9 +1,12 @@
 import { useState } from "react";
 import {
   BONUS_TYPES,
+  conflictingEquipIds,
   displayName,
   isStatPath,
+  itemSlot,
   type BonusType,
+  type ItemSlot,
   type StatPath,
 } from "@codex35/core";
 import { S } from "../../strings.js";
@@ -34,18 +37,63 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
   const equipped = character.inventory.filter((row) => row.equipped);
   const stowed = character.inventory.filter((row) => !row.equipped);
 
+  const slotOf = (row: (typeof character.inventory)[number]): ItemSlot => {
+    const entity = row.itemId ? entities?.find((e) => e.id === row.itemId) : undefined;
+    return itemSlot(entity?.kind === "item" ? entity : undefined);
+  };
+
+  /**
+   * An- und Ablegen mit der einen Regel, die 3.5 dazu kennt: eine Rüstung und
+   * ein Schild am Körper. Legt er die Platte an, geht das Kettenhemd von selbst
+   * aus — sonst zählte die App beide Rüstungsboni, und die RK wäre falsch, ohne
+   * dass irgendetwas darauf hinweist. Waffen bleiben unbegrenzt.
+   */
+  const toggleEquipped = (id: string) =>
+    save((c) => {
+      const item = c.inventory.find((r) => r.id === id);
+      if (!item) return;
+      const nowEquipped = !item.equipped;
+      item.equipped = nowEquipped;
+      if (!nowEquipped) return;
+      const verdrängt = conflictingEquipIds(
+        c.inventory.map((r) => ({ id: r.id, slot: slotOf(r), equipped: r.equipped })),
+        id,
+      );
+      for (const otherId of verdrängt) {
+        const other = c.inventory.find((r) => r.id === otherId);
+        if (other) other.equipped = false;
+      }
+    });
+
   const renderRow = (row: (typeof character.inventory)[number]) => {
     const entity = row.itemId ? entities?.find((e) => e.id === row.itemId) : undefined;
     const name = row.customName ?? (entity ? displayName(entity) : "—");
     const weight =
       row.weightLbOverride ?? (entity?.kind === "item" ? (entity.data.weightLb ?? 0) : 0);
+    // Was das Stück bringt, gehört an das Stück — sonst muss man raten, warum
+    // die RK sich beim Ablegen ändert.
+    const armor = entity?.kind === "item" ? entity.data.armor : undefined;
+    const wirkung = armor
+      ? [
+          `RK ${fmtMod(armor.acBonus)}`,
+          armor.maxDex === null ? "" : `max. DEX ${armor.maxDex}`,
+          armor.acp ? `Malus −${armor.acp}` : "",
+        ]
+          .filter((p) => p !== "")
+          .join(" · ")
+      : "";
     return (
       <li key={row.id} className="flex items-center gap-2 py-1.5 text-sm">
         <div className="min-w-0 flex-1">
           <div className="truncate">{name}</div>
           <div className="text-xs text-slate-500">
-            {!ignoreEncumbrance && weight ? `${weight * row.qty} lb` : ""}
-            {row.extraEffects.length > 0 && " · verzaubert"}
+            {[
+              wirkung,
+              !ignoreEncumbrance && weight ? `${weight * row.qty} lb` : "",
+              row.extraEffects.length > 0 ? "verzaubert" : "",
+            ]
+              .filter((p) => p !== "")
+              .join(" · ")}
           </div>
         </div>
         <GhostButton
@@ -69,17 +117,9 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
         >
           +
         </GhostButton>
-        <Chip
-          active={row.equipped}
-          onClick={() =>
-            save((c) => {
-              const item = c.inventory.find((r) => r.id === row.id);
-              if (item) item.equipped = !item.equipped;
-            })
-          }
-        >
-          {row.equipped ? S.sheet.equipped : S.sheet.stowed}
-        </Chip>
+        <GhostButton onClick={() => toggleEquipped(row.id)}>
+          {row.equipped ? S.actions.unequip : S.actions.equip}
+        </GhostButton>
         {editMode && (
           <ConfirmDeleteButton
             label={name}
@@ -110,12 +150,24 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           {S.sheet.equipped} ({equipped.length})
         </SectionTitle>
         <UndoBar pending={undo.pending} onUndo={undo.undo} onDismiss={undo.dismiss} />
-        <ul className="divide-y divide-slate-800">
-          {equipped.map(renderRow)}
-          {equipped.length === 0 && (
-            <li className="py-2 text-sm text-slate-500">Nichts angelegt.</li>
-          )}
-        </ul>
+        {/*
+          Nach Körperstelle gruppiert. Vorher war alles eine Liste, und ob eine
+          Rüstung an war, musste man sich aus den Namen zusammensuchen — bei
+          einem Wert, der von genau dieser Frage abhängt.
+        */}
+        {equipped.length === 0 && <p className="py-2 text-sm text-slate-500">Nichts angelegt.</p>}
+        {(["armor", "shield", "weapon", "other"] as const).map((slot) => {
+          const rows = equipped.filter((row) => slotOf(row) === slot);
+          if (rows.length === 0) return null;
+          return (
+            <div key={slot} className="mt-1">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                {S.sheet.slots2[slot]}
+              </div>
+              <ul className="divide-y divide-slate-800">{rows.map(renderRow)}</ul>
+            </div>
+          );
+        })}
 
         <div className="mt-3">
           <SectionTitle>

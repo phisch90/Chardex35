@@ -417,8 +417,8 @@ describe("deriveSheet — RK, Rüstung, MaxGE", () => {
     const sheet = deriveSheet(c, COMPENDIUM, HOUSE);
     // 10 + 4 Rüstung + 2 Schild + 1 GE = 17
     expect(sheet.ac.total.total).toBe(17);
-    expect(sheet.ac.touch).toBe(11);
-    expect(sheet.ac.flatFooted).toBe(16);
+    expect(sheet.ac.touch.total).toBe(11);
+    expect(sheet.ac.flatFooted.total).toBe(16);
   });
 
   it("Vollplatte klemmt den GE-Bonus auf MaxGE 1", () => {
@@ -445,7 +445,7 @@ describe("deriveSheet — RK, Rüstung, MaxGE", () => {
     )!;
     expect(suppressed.applied).toBe(false);
     // Deflection wirkt auch auf Berührung.
-    expect(sheet.ac.touch).toBe(10 + 1 + 3);
+    expect(sheet.ac.touch.total).toBe(10 + 1 + 3);
   });
 
   it("situative Boni (Dodge mit condition-Text) zählen nicht in den Total", () => {
