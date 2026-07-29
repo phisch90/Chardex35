@@ -25,7 +25,7 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
     options.combatExpertise > 0 ||
     options.fightingDefensively ||
     options.totalDefense ||
-    options.dodgeTarget.trim() !== "";
+    options.dodgeActive;
 
   return (
     <Card className={anyActive ? "border-amber-700/70" : ""}>
@@ -39,6 +39,7 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
                 combatExpertise: 0,
                 fightingDefensively: false,
                 totalDefense: false,
+                dodgeActive: false,
                 dodgeTarget: "",
               })
             }
@@ -86,16 +87,32 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
           </Chip>
         </div>
 
+        {/*
+          Dodge als SCHALTER, und zwar in derselben Reihe wie die anderen
+          Kampfoptionen — nicht als Textfeld weiter unten. Vorher entstand der
+          Bonus nur, wenn man einen Gegnernamen eintippte; im Kampf tippt niemand,
+          und damit war das Talent praktisch aus. Der Name bleibt möglich, ist aber
+          freiwillig und erscheint erst, wenn der Schalter an ist.
+        */}
         {has("srd:feat:dodge") && (
-          <label className="block pt-1">
-            <span className="text-xs text-slate-400">{S.combat.dodgeTarget}</span>
-            <input
-              value={options.dodgeTarget}
-              onChange={(e) => set({ dodgeTarget: e.target.value })}
-              placeholder={S.combat.dodgePlaceholder}
-              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm"
-            />
-          </label>
+          <>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Chip active={options.dodgeActive} onClick={() => set({ dodgeActive: !options.dodgeActive })}>
+                {S.combat.dodge}
+              </Chip>
+            </div>
+            {options.dodgeActive && (
+              <label className="block">
+                <span className="text-xs text-slate-400">{S.combat.dodgeTarget}</span>
+                <input
+                  value={options.dodgeTarget}
+                  onChange={(e) => set({ dodgeTarget: e.target.value })}
+                  placeholder={S.combat.dodgePlaceholder}
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm"
+                />
+              </label>
+            )}
+          </>
         )}
       </div>
     </Card>

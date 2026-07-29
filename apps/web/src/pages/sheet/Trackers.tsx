@@ -1,4 +1,11 @@
-import { parseDice, rollDice, suggestTrackers, type Character } from "@codex35/core";
+import {
+  effectiveTrackerMax,
+  parseDice,
+  rollDice,
+  suggestTrackers,
+  trackerMaxNote,
+  type Character,
+} from "@codex35/core";
 import { S } from "../../strings.js";
 import { cryptoRng } from "../../lib/rng.js";
 import { useAppSettings } from "../../lib/hooks.js";
@@ -28,6 +35,12 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
     (s) => !taken.has(s.key) && !taken.has(`name:${s.name.toLowerCase()}`),
   );
 
+  /**
+   * Die Grenze, die WIRKLICH gilt — aus dem Vorschlag, wenn der Zähler daraus
+   * entstanden ist und niemand die Grenze angefasst hat.
+   */
+  const maxOf = (tracker: Tracker) => effectiveTrackerMax(tracker, sheet);
+
   const mutate = (id: string, fn: (t: Tracker) => void) =>
     save((c) => {
       const target = c.trackers.find((t) => t.id === id);
@@ -43,6 +56,7 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
         name,
         kind: "counter",
         value: 0,
+        maxManual: false,
       }),
     );
   };
@@ -64,9 +78,9 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
               <div className="text-xs text-slate-500">
                 {/* Bei vorgeschlagenen Zählern steht hier die Herkunft der Zahl
                     („3 + CHA-Modifikator …“) statt der nackten Art. */}
-                {tracker.note ?? S.trackers.kinds[tracker.kind]}
+                {trackerMaxNote(tracker, sheet) ?? tracker.note ?? S.trackers.kinds[tracker.kind]}
                 {tracker.kind === "roll" && tracker.formula ? ` · ${tracker.formula}` : ""}
-                {tracker.max !== undefined ? ` · max. ${tracker.max}` : ""}
+                {maxOf(tracker) !== undefined ? ` · max. ${maxOf(tracker)}` : ""}
               </div>
             </div>
 
@@ -93,8 +107,8 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
               <>
                 <span className="w-14 text-right font-mono text-lg font-bold tabular-nums">
                   {tracker.value}
-                  {tracker.max !== undefined && (
-                    <span className="text-xs font-normal text-slate-500">/{tracker.max}</span>
+                  {maxOf(tracker) !== undefined && (
+                    <span className="text-xs font-normal text-slate-500">/{maxOf(tracker)}</span>
                   )}
                 </span>
                 {tracker.kind === "counter" && (
@@ -107,7 +121,8 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
                     <GhostButton
                       onClick={() =>
                         mutate(tracker.id, (t) => {
-                          t.value = t.max !== undefined ? Math.min(t.max, t.value + 1) : t.value + 1;
+                          const grenze = maxOf(tracker);
+                          t.value = grenze !== undefined ? Math.min(grenze, t.value + 1) : t.value + 1;
                         })
                       }
                     >
@@ -126,6 +141,7 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
                 <TrackerEditor
                   tracker={tracker}
                   character={character}
+                  sheet={sheet}
                   save={save}
                   onDeleted={undo.offer}
                 />
@@ -158,7 +174,10 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
                         name: suggestion.name,
                         kind: "counter",
                         value: suggestion.max,
-                        max: suggestion.max,
+                        // Kein `max` mitschreiben: der Zähler folgt dem
+                        // Vorschlag, damit Stufenaufstiege und Talente wie Extra
+                        // Turning weiterhin greifen.
+                        maxManual: false,
                         note: suggestion.note,
                         suggestedFrom: suggestion.key,
                       }),
@@ -185,11 +204,13 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
 
 function TrackerEditor({
   tracker,
+  sheet,
   save,
   onDeleted,
 }: {
   tracker: Tracker;
   character: Character;
+  sheet: TabProps["sheet"];
   save: TabProps["save"];
   onDeleted: (label: string, restore: () => void) => void;
 }) {
@@ -209,7 +230,7 @@ function TrackerEditor({
         onClick={() => {
           const name = prompt(S.trackers.name, tracker.name);
           if (name === null) return;
-          const max = prompt(S.trackers.max, tracker.max?.toString() ?? "");
+          const max = prompt(S.trackers.max, effectiveTrackerMax(tracker, sheet)?.toString() ?? "");
           const formula =
             tracker.kind === "roll"
               ? prompt(S.trackers.formula, tracker.formula ?? "")
@@ -218,8 +239,18 @@ function TrackerEditor({
             const target = c.trackers.find((t) => t.id === tracker.id);
             if (!target) return;
             if (name.trim()) target.name = name.trim();
+            /*
+              Von Hand gesetzt heißt von Hand gesetzt: ab jetzt gewinnt der eigene
+              Wert und der Zähler folgt dem Vorschlag nicht mehr. Leer geräumt
+              bedeutet umgekehrt „wieder dem Vorschlag folgen".
+            */
             const parsedMax = max === null || max.trim() === "" ? undefined : Number(max);
-            target.max = parsedMax !== undefined && Number.isFinite(parsedMax) ? parsedMax : undefined;
+            const gültig = parsedMax !== undefined && Number.isFinite(parsedMax);
+            target.max = gültig ? parsedMax : undefined;
+            const ausVorschlag = suggestTrackers(sheet).find(
+              (v) => v.key === tracker.suggestedFrom,
+            )?.max;
+            target.maxManual = gültig && parsedMax !== ausVorschlag;
             target.formula = formula && formula.trim() !== "" ? formula.trim() : undefined;
           });
         }}

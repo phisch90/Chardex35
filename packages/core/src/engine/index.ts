@@ -42,6 +42,7 @@ export { stackContributions, withoutContributions } from "./stack.js";
 export {
   allowedSlots,
   conflictingEquipIds,
+  cycleEquipSlot,
   isNaturalOrUnarmed,
   itemKind,
   nextSlot,

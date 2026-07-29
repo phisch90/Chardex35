@@ -18,6 +18,7 @@ import { CompareDraftPage } from "./pages/CompareDraft.js";
 import { ImportPage } from "./pages/ImportPage.js";
 import { CompendiumPage, EntityDetailPage } from "./pages/Compendium.js";
 import { DicePage } from "./pages/DicePage.js";
+import { GroupSheetPage } from "./pages/GroupSheet.js";
 import { SettingsPage } from "./pages/SettingsPage.js";
 
 const rootRoute = createRootRoute({ component: Layout });
@@ -67,6 +68,11 @@ const entityDetailRoute = createRoute({
   path: "/kompendium/$kind/$entityId",
   component: EntityDetailPage,
 });
+const groupSheetRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/gruppe/$gistId/$charId",
+  component: GroupSheetPage,
+});
 const diceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/wuerfel",
@@ -88,6 +94,7 @@ const routeTree = rootRoute.addChildren([
   compendiumRoute,
   compendiumKindRoute,
   entityDetailRoute,
+  groupSheetRoute,
   diceRoute,
   settingsRoute,
 ]);

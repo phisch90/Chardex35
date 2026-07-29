@@ -5,8 +5,8 @@ import {
   conflictingEquipIds,
   displayName,
   isStatPath,
+  cycleEquipSlot,
   itemKind,
-  nextSlot,
   type BonusType,
   type EquipSlot,
   type ItemKind,
@@ -21,6 +21,7 @@ import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import { EquipMark } from "../../ui/EquipMark.js";
+import { HandsCard } from "./Hands.js";
 import { itemLabel, itemSummary } from "../../ui/itemSummary.js";
 import type { TabProps } from "./index.js";
 
@@ -50,6 +51,19 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
   const kindOf = (row: { itemId?: string | undefined }): ItemKind => itemKind(entityOf(row));
 
   /**
+   * Fehlt die Rüstung, obwohl der Import die RK künstlich hochhält?
+   *
+   * Beides zusammen ist eindeutig: ein Ausgleichs-Modifikator auf die RK bedeutet
+   * „hier steckt Ausrüstung, die wir nicht kennen", und wenn dazu kein
+   * Rüstungs-Gegenstand angelegt ist, sieht man in der Liste schlicht nichts.
+   * Genau daran hat Philipp gemerkt, dass etwas fehlt — die App hat dazu bisher
+   * geschwiegen.
+   */
+  const missingArmor =
+    character.miscModifiers.some((m) => m.target === "ac" && /Fight-Club/i.test(m.note ?? "")) &&
+    !character.inventory.some((row) => row.slot === "armor");
+
+  /**
    * Ein Tap auf die Marke rückt einen Platz weiter: nicht angelegt → erster
    * erlaubter Platz → … → wieder ab. Welche Plätze erlaubt sind, sagt der
    * Gegenstand (Schild nur Schildhand, Zweihänder nur beidhändig).
@@ -62,7 +76,11 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
     save((c) => {
       const item = c.inventory.find((r) => r.id === id);
       if (!item) return;
-      const target = nextSlot(entityOf(item), item.slot);
+      const target = cycleEquipSlot(
+        entityOf(item),
+        c.inventory.map((r) => ({ id: r.id, slot: r.slot })),
+        id,
+      );
       item.slot = target;
       if (target === "none") return;
       const verdrängt = conflictingEquipIds(
@@ -90,6 +108,7 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           <div className="truncate">{name}</div>
           <div className="text-xs text-slate-500">
             {[
+              row.qty > 1 ? `×${row.qty}` : "",
               wirkung,
               !ignoreEncumbrance && weight ? `${weight * row.qty} lb` : "",
               row.extraEffects.length > 0 ? "verzaubert" : "",
@@ -98,27 +117,38 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               .join(" · ")}
           </div>
         </div>
-        <GhostButton
-          onClick={() =>
-            save((c) => {
-              const item = c.inventory.find((r) => r.id === row.id);
-              if (item) item.qty = Math.max(1, item.qty - 1);
-            })
-          }
-        >
-          −
-        </GhostButton>
-        <span className="w-6 text-center font-mono">{row.qty}</span>
-        <GhostButton
-          onClick={() =>
-            save((c) => {
-              const item = c.inventory.find((r) => r.id === row.id);
-              if (item) item.qty += 1;
-            })
-          }
-        >
-          +
-        </GhostButton>
+        {/*
+          Die Menge stand hier als −/+ neben jeder Zeile und nahm den Platz von
+          etwas Wichtigerem ein. Philipp: „dass man mehr als ein Kurzschwert dabei
+          hat, ist nicht so relevant, das muss nicht so prominent da." Also: die
+          Zahl steht als „×3" beim Gewicht, und geändert wird sie im
+          Bearbeiten-Modus.
+        */}
+        {editMode && (
+          <>
+            <GhostButton
+              onClick={() =>
+                save((c) => {
+                  const item = c.inventory.find((r) => r.id === row.id);
+                  if (item) item.qty = Math.max(1, item.qty - 1);
+                })
+              }
+            >
+              −
+            </GhostButton>
+            <span className="w-6 text-center font-mono">{row.qty}</span>
+            <GhostButton
+              onClick={() =>
+                save((c) => {
+                  const item = c.inventory.find((r) => r.id === row.id);
+                  if (item) item.qty += 1;
+                })
+              }
+            >
+              +
+            </GhostButton>
+          </>
+        )}
         {editMode && (
           <ConfirmDeleteButton
             label={name}
@@ -144,6 +174,39 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
 
   return (
     <div className="space-y-3">
+      {/*
+        Geld GANZ OBEN. Vorher stand der Block unter der Gegenstandsliste und
+        unter „Hinzufügen" — bei einem Charakter mit 15 Zeilen war er außer Sicht,
+        und seit die Zeilen eine Marke und eine Wirkungszeile tragen, sind sie
+        deutlich höher. Philipp hat ihn schlicht nicht mehr gefunden.
+      */}
+      <Card>
+        <SectionTitle>{S.sheet.money}</SectionTitle>
+        {/*
+          Raster, keine Zeile: bei 390 px Breite lief das vierte Feld (CP) rechts
+          aus dem Bild. Vier gleich breite Spalten passen immer.
+        */}
+        <div className="grid grid-cols-4 gap-2">
+          {(["pp", "gp", "sp", "cp"] as const).map((coin) => (
+            <label key={coin} className="flex items-center gap-1">
+              <span className="w-5 shrink-0 text-[11px] uppercase text-slate-500">{coin}</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={character.money[coin]}
+                onChange={(e) =>
+                  save((c) => void (c.money[coin] = Math.max(0, e.target.valueAsNumber || 0)))
+                }
+                className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-1.5 py-1 text-right text-sm tabular-nums"
+              />
+            </label>
+          ))}
+        </div>
+      </Card>
+
+      {/* Wählen, was in welcher Hand liegt — statt sich durch Marken zu tippen. */}
+      <HandsCard character={character} save={save} entities={entities ?? []} />
+
       <Card>
         <SectionTitle>
           {S.sheet.equipped} ({equipped.length})
@@ -155,6 +218,18 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           etwas angelegt ist, nicht wo — und der Platz entscheidet über Werte.
         */}
         <p className="text-[11px] text-slate-500">{S.sheet.equipLegend}</p>
+        {/*
+          Der Fight-Club-Export enthält KEINE Ausrüstung — nur Angriffszeilen.
+          Deshalb hat ein importierter Charakter gar kein Rüstungs- und kein
+          Schild-Objekt, und in der Liste ist einfach nichts zu sehen. Der
+          Ausgleichs-Modifikator hält die RK auf dem Importwert; das ist der
+          verlässliche Hinweis darauf, dass hier etwas fehlt.
+        */}
+        {missingArmor && (
+          <p className="mt-1 rounded-lg border border-amber-800/60 bg-amber-950/30 p-2 text-xs text-amber-300">
+            {S.sheet.noArmorHint}
+          </p>
+        )}
         {equipped.length === 0 && <p className="py-2 text-sm text-slate-500">Nichts angelegt.</p>}
         {(["armor", "shield", "weapon", "other"] as const).map((slot) => {
           const rows = equipped.filter((row) => kindOf(row) === slot);
@@ -244,24 +319,6 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
         </GhostButton>
       </Card>
 
-      <Card>
-        <SectionTitle>Geld</SectionTitle>
-        <div className="grid grid-cols-4 gap-2">
-          {(["pp", "gp", "sp", "cp"] as const).map((coin) => (
-            <label key={coin} className="flex flex-col gap-1">
-              <span className="text-xs uppercase text-slate-400">{coin}</span>
-              <input
-                type="number"
-                value={character.money[coin]}
-                onChange={(e) =>
-                  save((c) => void (c.money[coin] = Math.max(0, e.target.valueAsNumber || 0)))
-                }
-                className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm"
-              />
-            </label>
-          ))}
-        </div>
-      </Card>
     </div>
   );
 }

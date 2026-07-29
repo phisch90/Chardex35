@@ -122,7 +122,30 @@ export const S = {
       worn: "getragen",
     } as Record<string, string>,
     equipLegend: "A Rüstung · 1H Haupthand · OH Schildhand · 2H beidhändig · E getragen",
+    money: "Geld",
+    /** Wenn ein RK-Ausgleich aus dem Import da ist, aber keine Rüstung angelegt. */
+    noArmorHint:
+      `Keine Rüstung angelegt. Der Fight-Club-Export enthält keine Ausrüstung — deine Rüstung und dein Schild sind deshalb nie mitgekommen. Trag sie unten unter „Hinzufügen“ ein; danach rechnet die App die RK selbst und der Ausgleichs-Modifikator kann weg.`,
     equipHint: "Auf die Marke tippen wechselt den Platz.",
+    hands: "Rüstung und Hände",
+    /** Die drei Plätze, um die man sich im Kampf kümmert — als Frage, nicht als Zustand. */
+    handsRows: { armor: "Rüstung", mainHand: "Haupthand", offHand: "Schildhand" } as Record<
+      string,
+      string
+    >,
+    handsFree: "— frei —",
+    handsTwoHanded: (name: string) => `${name} (beidhändig)`,
+    handsHint:
+      "Eine beidhändig geführte Waffe belegt beide Hände. Am Gegenstand selbst wechselt ein Tap auf die Marke den Platz.",
+    /** Für die Nur-Lesen-Ansicht: dieselben Kürzel wie an den Gegenständen. */
+    slotMark: {
+      none: "—",
+      armor: "A",
+      mainHand: "1H",
+      offHand: "OH",
+      bothHands: "2H",
+      worn: "E",
+    } as Record<string, string>,
     skillFilter: { all: "Alle", trained: "Trainiert", class: "Klasse" } as Record<string, string>,
     subtype: "Teilgebiet",
     addSubtype: "Teilgebiet anlegen",
@@ -146,6 +169,7 @@ export const S = {
     create: "Anlegen",
     save: "Speichern",
     cancel: "Abbrechen",
+    send: "Abschicken",
     delete: "Löschen",
     edit: "Bearbeiten",
     add: "Hinzufügen",
@@ -225,6 +249,83 @@ export const S = {
     Charakter laut Talenten darf — ein Schalter für etwas Unerlaubtes ist keine
     Hilfe, sondern eine Falle.
   */
+  /**
+   * Die Gruppe. Wortwahl bewusst ohne Fachjargon: „Regal" statt Gist, „Kennwort"
+   * statt Passphrase, „Auftrag" statt Patch. Philipp ist kein Programmierer, und
+   * seine Mitspieler noch weniger.
+   */
+  group: {
+    title: "Gruppe",
+    hint: "Jeder Bogen liegt bei dem, der ihn spielt. Ihr sieht euch gegenseitig, aber niemand kann einen fremden Bogen ändern.",
+
+    // Eigenes Regal
+    mine: "Mein Regal",
+    myName: "Mein Name in der Gruppe",
+    myNamePlaceholder: "z.B. Philipp",
+    iAmGamemaster: "Ich leite die Gruppe",
+    iAmGamemasterHint:
+      "Nur als Spielleiter kannst du fremde Bögen bearbeiten. Die anderen müssen das in ihrer App zusätzlich erlauben.",
+    passphrase: "Kennwort für mein Regal",
+    passphraseHint:
+      "Gib es zusammen mit dem Link weiter — beides zusammen sind die Zugangsdaten. Ohne Kennwort könnte jeder mit dem Link mitlesen, auch dein eigenes Regelwerk.",
+    passphraseMissing: "Ohne Kennwort ist dein Regal für jeden lesbar, der den Link hat.",
+    share: "Freigeben",
+    shared: (count: number) => `${count} ${count === 1 ? "Bogen" : "Bögen"} freigegeben`,
+    publish: "Regal aktualisieren",
+    publishing: "wird geschrieben …",
+    publishedAt: (when: string) => `zuletzt geschrieben ${when}`,
+    copyInvite: "Einladung kopieren",
+    inviteCopied: "Einladung kopiert — jetzt einfügen und abschicken.",
+    inviteText: (name: string, link: string, passphrase: string) =>
+      `${name} lädt dich in Chardex35 ein.\n\nLink: ${link}\nKennwort: ${passphrase}\n\nIn der App unter Einstellungen → Gruppe → „Regal abonnieren" eintragen.`,
+    noneShared: "Noch nichts freigegeben. Wähle unten aus, welche Bögen die Gruppe sehen darf.",
+
+    // Abos
+    subscriptions: "Regale der anderen",
+    add: "Regal abonnieren",
+    addLink: "Link oder Kennung",
+    addLinkPlaceholder: "https://gist.github.com/… oder die Kennung",
+    addPassphrase: "Kennwort",
+    addLabel: "Name (freiwillig)",
+    acceptOrders: "Darf meine Bögen bearbeiten",
+    acceptOrdersHint:
+      "Nur für den Spielleiter. Dann kommen seine Änderungen an deinen Charakteren bei dir an — Trefferpunkte, verbrauchte Zauber und Notizen bleiben aber deine.",
+    badLink: "Darin steckt keine Kennung. Kopiere den ganzen Link.",
+    duplicate: "Dieses Regal ist schon abonniert.",
+    refresh: "Abholen",
+    refreshing: "wird abgeholt …",
+    remove: "Abo entfernen",
+    lastRead: (when: string) => `abgeholt ${when}`,
+    neverRead: "noch nicht abgeholt",
+    empty: "Noch keine Regale abonniert. Lass dir von den anderen Link und Kennwort schicken.",
+    readReport: (chars: number, orders: number) =>
+      orders === 0
+        ? `${chars} ${chars === 1 ? "Bogen" : "Bögen"} abgeholt.`
+        : `${chars} ${chars === 1 ? "Bogen" : "Bögen"} abgeholt, ${orders} ${orders === 1 ? "Änderung" : "Änderungen"} vom Spielleiter übernommen.`,
+    rescuedHint: (names: string[]) =>
+      `Du hattest an ${names.length === 1 ? "einem Bogen" : `${names.length} Bögen`} selbst gebaut. Der Spielleiter gewinnt, dein Stand liegt als Kopie daneben: ${names.join(", ")}`,
+
+    // Fremde Bögen
+    otherSheets: "In der Gruppe",
+    readOnlyHint: (owner: string) => `Bogen von ${owner} — nur lesen. Änderungen macht nur ${owner} selbst.`,
+    unknownOwner: "einem Mitspieler",
+    sheetGone: "Dieser Bogen ist nicht mehr im Regal. Hol die Regale neu ab.",
+    prepared: "vorbereitet",
+    noRanks: "Keine Fertigkeitsränge eingetragen.",
+    openSheet: "Bogen ansehen",
+
+    // Spielleiter
+    editForeign: "Für den Spieler bearbeiten",
+    orderNote: "Ein Satz dazu (freiwillig)",
+    orderNotePlaceholder: "z.B. Stufe 8 und der Ring aus der Gruft",
+    orderQueued: (name: string) =>
+      `Änderung für ${name} vorgemerkt. Sie geht mit dem nächsten „Regal aktualisieren" raus und kommt bei ihm an, sobald seine App abholt.`,
+    pendingOrders: (count: number) =>
+      `${count} ${count === 1 ? "Änderung" : "Änderungen"} wartet auf das nächste Aktualisieren.`,
+    needToken:
+      "Zum Freigeben brauchst du einen eigenen GitHub-Zugang — denselben wie beim Geräte-Abgleich. Mitlesen geht ohne.",
+  },
+
   combat: {
     title: "Kampfoptionen",
     hint: "Gilt für diese Runde. Die Werte oben ändern sich mit.",
@@ -236,7 +337,9 @@ export const S = {
     combatExpertiseHint: (max: number) => `Vom Angriff auf die RK, höchstens ${max}.`,
     fightingDefensively: "Defensiv kämpfen (−4 / +2 RK)",
     totalDefense: "Totale Verteidigung (+4 RK, kein Angriff)",
-    dodgeTarget: "Dodge gilt gegen",
+    /** Der Schalter selbst — kurz, weil er neben den anderen Optionen steht. */
+    dodge: "Dodge (+1 RK gegen einen Gegner)",
+    dodgeTarget: "gegen wen? (freiwillig)",
     dodgePlaceholder: "z.B. Ogerhäuptling",
   },
 

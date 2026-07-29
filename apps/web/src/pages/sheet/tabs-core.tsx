@@ -249,7 +249,23 @@ export function CombatTab(props: TabProps) {
                     })
                   }
                 >
-                  <div className="truncate text-sm font-semibold">{attack.label}</div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="truncate text-sm font-semibold">{attack.label}</span>
+                    {/*
+                      Welche Waffe liegt WIRKLICH in der Hand? Angriffszeilen gibt
+                      es für alles, was man trägt (auch aus dem Rucksack — man
+                      zieht die Waffe eben). Der Platz entscheidet über den
+                      Schaden, also muss er hier stehen.
+                    */}
+                    {attack.slot !== undefined && attack.slot !== "none" && (
+                      <span className="shrink-0 rounded border border-amber-700/60 px-1 text-[10px] font-semibold text-amber-400">
+                        {S.sheet.equipMark[attack.slot]}
+                      </span>
+                    )}
+                    {attack.slot === "none" && (
+                      <span className="shrink-0 text-[10px] text-slate-500">{S.sheet.stowed}</span>
+                    )}
+                  </div>
                   <div className="text-xs text-slate-400">
                     {attack.bonuses.map(fmtMod).join(" / ")}
                     {attack.damageText !== "—" && (

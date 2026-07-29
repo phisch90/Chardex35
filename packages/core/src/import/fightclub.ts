@@ -8,6 +8,11 @@ import {
 } from "../schema/character.js";
 import { displayName, skillKey, type Entity } from "../schema/entities.js";
 import { allowedSlots, deriveSheet } from "../engine/index.js";
+import {
+  applyFullExtras,
+  isFullFightClubExport,
+  parseFullFightClubXml,
+} from "./fightclubFull.js";
 
 /**
  * Importer für Charakter-Exporte der App „Fight Club" (Lion's Den), 3.5-Edition:
@@ -60,6 +65,15 @@ export interface FightClubPc {
   /** Zeilen, die keiner Fertigkeit zuzuordnen waren — gehen nie stillschweigend verloren. */
   unparsedSkills: string[];
   actions: FightClubAction[];
+  /**
+   * Der ECHTE Platz am Körper, je Gegenstandsname — nur im vollständigen Export.
+   *
+   * Im Statblock-Export gibt es ihn nicht, deshalb rät der Importer dort: erste
+   * Waffe in die Hand, Rest in den Rucksack. Wo die Datei es weiß, hat Raten
+   * nichts zu suchen — dann steht die Rüstung als Rüstung da und der Schild in der
+   * Schildhand, so wie Philipp es in Fight Club eingestellt hat.
+   */
+  slotByName?: Record<string, EquipSlot> | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -688,17 +702,43 @@ export function mapFightClubPc(
     });
   }
 
-  // Waffen aus den Aktionszeilen ins Inventar (angelegt → Angriffszeilen).
+  /*
+    Waffen aus den Aktionszeilen ins Inventar.
+
+    Fight Clubs <action>-Zeilen sind ANGRIFFE, die der Charakter machen kann —
+    nicht das, was er gerade in der Hand hält. Wer sie alle als „angelegt"
+    übernimmt, bekommt genau das, was Philipp auf seinem Bogen gesehen hat:
+    Kurzschwert, Templer Schwert und Dolch alle mit der Marke 1H, dazu ein
+    Zweihänder — vier Waffen in zwei Händen, und vier Angriffszeilen.
+
+    Deshalb: die ERSTE Waffe in die Haupthand, alles Weitere in den Rucksack. Ein
+    Tap auf die Marke rückt eine Waffe in die Hand, wenn sie dort hingehört.
+  */
   const itemIndex = buildIndex(compendium, "item");
+  const stowedByCapacity: string[] = [];
+  let handTaken = false;
   const inventory: Character["inventory"] = pc.actions.map((action) => {
     const hit = matchName(itemIndex, action.name);
     const entity = hit && hit.rest === "" ? compendium.get(hit.id) : undefined;
+    const place = (item: Entity | undefined, label: string): EquipSlot => {
+      // Steht der Platz in der Datei, wird nicht geraten.
+      const known = pc.slotByName?.[label];
+      if (known !== undefined) return known;
+      if (handTaken) {
+        stowedByCapacity.push(label);
+        return "none";
+      }
+      const slot = importSlot(item);
+      // Nur Hände sind knapp; Ringe und Amulette („worn") stören einander nicht.
+      if (slot !== "worn") handTaken = true;
+      return slot;
+    };
     if (hit && hit.rest === "") {
       return {
         id: idFactory(),
         itemId: hit.id,
         qty: 1,
-        slot: importSlot(entity),
+        slot: place(entity, action.name),
         extraEffects: [],
       };
     }
@@ -706,8 +746,24 @@ export function mapFightClubPc(
     // Kampf-Reiter als Angriff auftauchen und nicht bloß als Notiz im Rucksack.
     const weapon = buildHomebrewWeapon(action, `homebrew:item:${slugifyName(action.name)}`);
     entities.push(weapon);
-    return { id: idFactory(), itemId: weapon.id, qty: 1, slot: importSlot(weapon), extraEffects: [] };
+    return {
+      id: idFactory(),
+      itemId: weapon.id,
+      qty: 1,
+      slot: place(weapon, action.name),
+      extraEffects: [],
+    };
   });
+  if (stowedByCapacity.length > 0) {
+    issues.push({
+      severity: "info",
+      code: "weapons-stowed",
+      message:
+        `Im Rucksack statt in der Hand: ${stowedByCapacity.join(", ")}. ` +
+        `Fight Club listet alle möglichen Angriffe; zwei Hände hat der Charakter trotzdem nur. ` +
+        `Ein Tap auf die Marke links nimmt eine Waffe in die Hand.`,
+    });
+  }
   /*
     Talent-Auswahlen auf Gegenstände verweisen — erst jetzt, weil die
     Homebrew-Waffen aus den Aktionszeilen dazugehören. Ohne diesen Verweis
@@ -978,6 +1034,25 @@ export function importFightClubXml(
   compendium: Map<string, Entity>,
   options: { idFactory: () => string; houseRules?: HouseRules },
 ): { results: ImportResultPc[]; issues: ImportIssue[] } {
+  /*
+    Fight Club exportiert auf ZWEI Wege, und beide sehen von außen gleich aus
+    („eine XML-Datei aus Fight Club"). Der Unterschied ist trotzdem der ganze
+    Charakter: der Statblock liefert fertige Zahlen ohne Ausrüstung, der
+    vollständige Export den ganzen Bogen mit Rüstung, Geld, Zählern und Notizen.
+
+    Ohne diese Weiche lief der vollständige Export durch den Statblock-Leser und
+    ergab einen fast leeren Charakter — nur der Name kam an, weil `<name>` in
+    beiden Formaten so heißt. Ein Import, der stillschweigend fast nichts
+    übernimmt, ist schlimmer als einer, der sich weigert.
+  */
+  if (isFullFightClubExport(xml)) {
+    const { pcs, issues } = parseFullFightClubXml(xml);
+    const results = pcs.map((pc) =>
+      applyFullExtras(mapFightClubPc(pc, compendium, options), pc, compendium, options.idFactory),
+    );
+    return { results, issues };
+  }
+
   const { pcs, issues } = parseFightClubXml(xml);
   const results = pcs.map((pc) => mapFightClubPc(pc, compendium, options));
   return { results, issues };

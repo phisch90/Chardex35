@@ -134,9 +134,22 @@ export function deriveSheetValues(
     slot: EquipSlot;
   }[] = [];
   for (const { instance, entity } of resolved.items) {
-    if (!isEquipped(instance) || !entity) continue;
+    if (!entity) continue;
     const label = instance.customName ?? displayName(entity);
-    if (entity.data.armor) equippedArmor.push({ entity, instanceId: instance.id, label });
+    // Rüstung und Schild zählen nur ANGELEGT — sonst wäre die RK eine Lüge.
+    if (entity.data.armor && isEquipped(instance)) {
+      equippedArmor.push({ entity, instanceId: instance.id, label });
+    }
+    /*
+      Waffen dagegen bekommen IMMER eine Angriffszeile, auch aus dem Rucksack: es
+      ist eine Waffe, mit der man angreifen kann — man zieht sie eben. Fight Club
+      listet ebenso alle Angriffe.
+
+      Das war der Grund für einen zweiten Fehler: als der Import nur noch die
+      erste Waffe in die Hand legte (vorher lagen vier Waffen in zwei Händen),
+      verschwanden die Angriffszeilen der übrigen drei. Beides falsch — die Zeile
+      hängt am Besitz, der PLATZ nur am Schaden.
+    */
     if (entity.data.weapon) {
       equippedWeapons.push({ entity, instanceId: instance.id, label, slot: instance.slot });
     }
@@ -280,7 +293,19 @@ export function deriveSheetValues(
       condition: undefined,
     });
   }
-  for (const effect of buckets.get("ac") ?? []) acContributions.push(toContribution(effect));
+  /*
+    Dodge kommt aus den Kampfoptionen (siehe combat.ac), nicht aus dem Talent —
+    darum fliegt der Kompendium-Effekt des Talents hier heraus.
+
+    Sonst stünden ZWEI Zeilen „Talent: Dodge +1" in der Aufschlüsselung: eine
+    durchgestrichene vom Talent (Bedingung „gegen einen gewählten Gegner") und
+    eine gezählte vom Schalter. Für eine Regel gibt es einen Besitzer, und das ist
+    der Schalter — er weiß, ob Dodge in dieser Runde gilt, das Talent weiß es nie.
+  */
+  for (const effect of buckets.get("ac") ?? []) {
+    if (effect.key.startsWith("srd:feat:dodge")) continue;
+    acContributions.push(toContribution(effect));
+  }
   // stackContributions kopiert die Beiträge — der GE-Beitrag wird über seinen
   // Index wiedergefunden (Reihenfolge bleibt erhalten).
   const dexIndex = acContributions.indexOf(dexContribution);
@@ -502,6 +527,7 @@ export function deriveSheetValues(
       damageBonus,
       critical: weaponData ? `${weaponData.critRange}/${weaponData.critMult}` : "—",
       notes,
+      ...(weapon?.slot === undefined ? {} : { slot: weapon.slot }),
     };
   };
 

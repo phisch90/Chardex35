@@ -148,20 +148,39 @@ export function applyCombatOptions(
     ac.push(dodge("Defensiv kämpfen", 2));
   }
 
-  // Dodge gilt gegen EINEN Gegner — deshalb mit Bedingung, damit die
-  // Aufschlüsselung es zeigt, ohne es blind mitzurechnen.
-  if (options.dodgeTarget.trim() !== "") {
-    if (context.hasDodge) {
-      ac.push({
-        source: "Talent: Dodge",
-        bonusType: "dodge",
-        value: 1,
-        applied: true,
-        condition: `nur gegen ${options.dodgeTarget.trim()}`,
-      });
-    } else {
-      warnings.push("Ein Dodge-Ziel ist eingetragen, aber der Charakter hat das Talent Dodge nicht.");
-    }
+  /*
+    Dodge: +1 Ausweichen gegen EINEN Gegner, den man zu Beginn seiner Aktion
+    bestimmt.
+
+    Der Schalter ist die Bedingung, nicht das Textfeld. Vorher musste man einen
+    Namen eintippen, damit der Bonus überhaupt entstand — und im Kampf tippt
+    niemand. Wer den Gegner benennen will, kann; nötig ist es nicht.
+
+    Der Bonus zählt jetzt in den TOTAL (kein `condition`). Das ist die
+    Entscheidung, die dahinter steckt: wer den Schalter umlegt, sagt damit „gegen
+    diesen Gegner", und dann soll die RK oben auch danach aussehen. Gegen wen es
+    gilt, steht daneben — mit Namen, wenn einer eingetragen ist.
+  */
+  if (context.hasDodge) {
+    /*
+      Die Zeile steht IMMER da, wenn das Talent vorhanden ist — ausgeschaltet
+      durchgestrichen. Sie ist damit der einzige Ort, an dem Dodge auftaucht: der
+      Kompendium-Effekt des Talents wird in derive.ts verworfen, weil sonst zwei
+      gleich beschriftete Zeilen in der Aufschlüsselung stünden.
+
+      Ganz zu verschwinden wäre falsch. Wer die RK aufklappt und Dodge nicht
+      findet, sucht den Fehler in seinem Charakter statt am Schalter.
+    */
+    const gegner = options.dodgeTarget.trim();
+    ac.push({
+      source: gegner === "" ? "Talent: Dodge" : `Talent: Dodge (${gegner})`,
+      bonusType: "dodge",
+      value: 1,
+      applied: options.dodgeActive,
+      condition: options.dodgeActive ? undefined : "Schalter im Kampf-Reiter ist aus",
+    });
+  } else if (options.dodgeActive) {
+    warnings.push("Dodge ist eingeschaltet, aber der Charakter hat das Talent Dodge nicht.");
   }
 
   const meleeDamage: CombatOptionOutcome["meleeDamage"] = (weapon) => {

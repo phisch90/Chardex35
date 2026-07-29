@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import type { Character, DerivedSheet, StatValue } from "@codex35/core";
-import { applyHpChange, displayName } from "@codex35/core";
+import { applyHpChange, displayName, readOrderMarker } from "@codex35/core";
 import { S } from "../../strings.js";
 import { CharacterRepo } from "../../db/repo.js";
 import { useAppSettings, useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
@@ -9,6 +9,8 @@ import { useDiceStore } from "../../lib/diceStore.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
 import { Chip, GhostButton, fmtMod } from "../../ui/bits.js";
+import { SwipeTabs } from "../../ui/SwipeTabs.js";
+import { OrderBanner } from "../../group/OrderBanner.js";
 import { ShareCharacterButton } from "../../ui/ShareCharacter.js";
 import { CharacterActionsSheet } from "../../ui/CharacterActions.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
@@ -48,13 +50,36 @@ const TAB_ICONS: Record<TabKey, string> = {
   notes: "📝",
 };
 
+/**
+ * Welcher Reiter war zuletzt offen?
+ *
+ * Der Anlass ist derselbe wie beim Zurück-Knopf: aus dem Zauber-Reiter einen
+ * Spruch antippen, lesen, zurück — und der Bogen fing wieder bei den Werten an.
+ * Der Weg zurück ist erst dann wirklich zurück, wenn man da landet, wo man war.
+ *
+ * Je Charakter, weil man mit zwei Bögen unterschiedliche Dinge tut, und in der
+ * Sitzung statt dauerhaft: nach dem Öffnen der App will man den Charakter sehen,
+ * nicht die Notizen von vorgestern.
+ */
+const TAB_MEMORY = "codex35.sheet.tab.";
+
+function rememberedTab(charId: string): TabKey {
+  try {
+    const stored = sessionStorage.getItem(TAB_MEMORY + charId);
+    if (stored !== null && stored in S.sheet.tabs) return stored as TabKey;
+  } catch {
+    // Privater Modus kann sessionStorage sperren — dann eben ohne Gedächtnis.
+  }
+  return "stats";
+}
+
 export function CharacterSheetPage() {
   const { charId } = useParams({ strict: false }) as { charId: string };
   const navigate = useNavigate();
   const character = useCharacter(charId);
   const sheet = useSheet(character);
   const compendium = useCompendium();
-  const [tab, setTab] = useState<TabKey>("stats");
+  const [tab, setTab] = useState<TabKey>(() => rememberedTab(charId));
   const [editMode, setEditMode] = useState(false);
   const [hpPadOpen, setHpPadOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -89,8 +114,33 @@ export function CharacterSheetPage() {
 
   const tabProps: TabProps = { character, sheet, editMode, save, openBreakdown };
   const hpRatio = sheet.hp.max > 0 ? sheet.hp.current / sheet.hp.max : 0;
+  const orderMarker = readOrderMarker(character);
   const hasSpells = sheet.spellcasting.length > 0;
   const tabs = (Object.keys(S.sheet.tabs) as TabKey[]).filter((t) => t !== "spells" || hasSpells);
+  /*
+    Der gemerkte Reiter kann es nicht mehr geben — „Zauber" bleibt gespeichert,
+    auch wenn der Charakter inzwischen keine Zauber hat (oder der Bogen noch lädt).
+    Ohne diese Prüfung stünde die Seite leer da: kein Reiter passt, also rendert
+    keiner.
+  */
+  const active: TabKey = tabs.includes(tab) ? tab : "stats";
+
+  const goTab = (key: TabKey) => {
+    setTab(key);
+    try {
+      sessionStorage.setItem(TAB_MEMORY + character.id, key);
+    } catch {
+      // siehe rememberedTab
+    }
+    // Oben anfangen. Vom Ende der Ausrüstungsliste in den Kampf-Reiter zu
+    // wischen und dort unterhalb des Inhalts zu landen, sah nach einer leeren
+    // Seite aus.
+    document.querySelector("main")?.scrollTo({ top: 0 });
+  };
+
+  const at = tabs.indexOf(active);
+  const before = tabs[at - 1];
+  const after = tabs[at + 1];
 
   // Gelöscht wird nur über das Aktions-Sheet: Gefahrenzone aufklappen,
   // Löschen wählen, Namen abtippen. Ein einzelner Fehlgriff darf keinen Bogen
@@ -100,6 +150,13 @@ export function CharacterSheetPage() {
   return (
     // Extra Platz unten, damit die mobile Reiter-Leiste nichts überdeckt.
     <div className="space-y-3 pb-14 md:pb-0">
+      {/*
+        Eine Arbeitskopie für einen fremden Bogen muss sich genauso verraten wie
+        ein Entwurf — sonst trägt man eine Stufe ein und hält es für den eigenen
+        Charakter. Derselbe Platz, dieselbe Form, andere Farbe.
+      */}
+      {orderMarker !== undefined && <OrderBanner character={character} marker={orderMarker} />}
+
       {/* Ein Entwurf muss sich sofort verraten, sonst baut man am Probelauf
           und hält ihn für den echten Bogen. */}
       {character.draftOf !== undefined && (
@@ -219,7 +276,7 @@ export function CharacterSheetPage() {
       {/* Auf Desktop bleiben die Reiter oben; mobil sitzen sie unten am Daumen. */}
       <div className="hidden flex-wrap gap-1 md:flex">
         {tabs.map((key) => (
-          <Chip key={key} active={tab === key} onClick={() => setTab(key)}>
+          <Chip key={key} active={active === key} onClick={() => goTab(key)}>
             {S.sheet.tabs[key]}
           </Chip>
         ))}
@@ -244,13 +301,18 @@ export function CharacterSheetPage() {
         </Chip>
       </div>
 
-      {tab === "stats" && <StatsTab {...tabProps} />}
-      {tab === "combat" && <CombatTab {...tabProps} />}
-      {tab === "skills" && <SkillsTab {...tabProps} />}
-      {tab === "spells" && hasSpells && <SpellsTab {...tabProps} />}
-      {tab === "inventory" && <InventoryTab {...tabProps} />}
-      {tab === "feats" && <FeatsTab {...tabProps} />}
-      {tab === "notes" && <NotesTab {...tabProps} />}
+      <SwipeTabs
+        onPrev={before === undefined ? undefined : () => goTab(before)}
+        onNext={after === undefined ? undefined : () => goTab(after)}
+      >
+        {active === "stats" && <StatsTab {...tabProps} />}
+        {active === "combat" && <CombatTab {...tabProps} />}
+        {active === "skills" && <SkillsTab {...tabProps} />}
+        {active === "spells" && hasSpells && <SpellsTab {...tabProps} />}
+        {active === "inventory" && <InventoryTab {...tabProps} />}
+        {active === "feats" && <FeatsTab {...tabProps} />}
+        {active === "notes" && <NotesTab {...tabProps} />}
+      </SwipeTabs>
 
       {/*
         Mobile Reiter-Leiste: direkt über der Hauptnavigation, in Daumenreichweite.
@@ -260,14 +322,14 @@ export function CharacterSheetPage() {
         {tabs.map((key) => (
           <button
             key={key}
-            onClick={() => setTab(key)}
+            onClick={() => goTab(key)}
             className={`flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[9px] font-medium leading-none ${
-              tab === key ? "text-amber-400" : "text-slate-400"
+              active === key ? "text-amber-400" : "text-slate-400"
             }`}
           >
             <span className="text-base leading-none">{TAB_ICONS[key]}</span>
             {S.sheet.tabsShort[key]}
-            {tab === key && <span className="mt-0.5 h-0.5 w-6 rounded-full bg-amber-400" />}
+            {active === key && <span className="mt-0.5 h-0.5 w-6 rounded-full bg-amber-400" />}
           </button>
         ))}
       </nav>

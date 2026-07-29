@@ -75,6 +75,38 @@ export interface EquipCandidate {
   slot: EquipSlot;
 }
 
+/**
+ * Ein Tap auf die Marke — aber mit Rücksicht auf die andere Hand.
+ *
+ * `nextSlot` allein läuft stur die Liste durch, und die beginnt bei der
+ * Haupthand. Wer neben dem Kurzschwert einen Dolch antippt, wirft damit erst das
+ * Kurzschwert aus der Hand und landet erst beim zweiten Tap in der Schildhand —
+ * am Ende hält die Figur nur den Dolch. Genau das ist beim Prüfen passiert, und
+ * genau das wollte Philipp nicht („erste und zweite Hand equippen, zum Beispiel
+ * Kurzschwert und Dolch").
+ *
+ * Deshalb: erst den nächsten Platz nehmen, der FREI ist. Ist keiner frei, dann
+ * eben verdrängen — dann ist es eine bewusste Entscheidung und kein Nebeneffekt.
+ */
+export function cycleEquipSlot(
+  entity: ItemEntity | undefined | null,
+  items: EquipCandidate[],
+  id: string,
+): EquipSlot {
+  const current = items.find((item) => item.id === id)?.slot ?? "none";
+  const cycle: EquipSlot[] = ["none", ...allowedSlots(entity)];
+  const start = cycle.indexOf(current);
+  if (start === -1) return "none"; // Altbestand („worn" an einer Rüstung): einmal ablegen
+
+  for (let step = 1; step <= cycle.length; step++) {
+    const candidate = cycle[(start + step) % cycle.length]!;
+    if (candidate === "none") return candidate;
+    if (conflictingEquipIds(items, id, candidate).length === 0) return candidate;
+  }
+  // Alles belegt: den nächsten Platz nehmen und verdrängen.
+  return cycle[(start + 1) % cycle.length]!;
+}
+
 /** Wie viele Hände belegt dieser Platz? */
 function handsUsed(slot: EquipSlot): number {
   if (slot === "mainHand" || slot === "offHand") return 1;

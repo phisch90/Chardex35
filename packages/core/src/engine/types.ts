@@ -1,3 +1,4 @@
+import type { EquipSlot } from "../schema/character.js";
 import type { Ability, BonusType, Size } from "../schema/common.js";
 
 /** Ein Beitrag zu einem Wert — bleibt IMMER erhalten (Breakdown-UI). */
@@ -42,6 +43,17 @@ export interface AttackLine {
   damageBonus: StatValue;
   critical: string;
   notes: string[];
+  /**
+   * Wo die Waffe steckt — und ob überhaupt eine gemeint ist (`undefined` bei den
+   * beiden Sammelzeilen Nahkampf/Fernkampf).
+   *
+   * Eine Angriffszeile hängt NICHT daran, ob die Waffe in der Hand liegt: auch
+   * eine Waffe im Rucksack ist eine, mit der man angreifen kann — man zieht sie
+   * eben. Fight Club listet ebenfalls alle Angriffe. Der Platz entscheidet über
+   * den SCHADEN (beidhändig: STR ×1,5 und Power Attack doppelt) und wird am Bogen
+   * angezeigt, damit man sieht, was gerade wirklich in der Hand ist.
+   */
+  slot?: EquipSlot;
 }
 
 export interface SkillLine {
