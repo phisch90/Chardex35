@@ -293,7 +293,19 @@ export function deriveSheetValues(
       condition: undefined,
     });
   }
-  for (const effect of buckets.get("ac") ?? []) acContributions.push(toContribution(effect));
+  /*
+    Dodge kommt aus den Kampfoptionen (siehe combat.ac), nicht aus dem Talent —
+    darum fliegt der Kompendium-Effekt des Talents hier heraus.
+
+    Sonst stünden ZWEI Zeilen „Talent: Dodge +1" in der Aufschlüsselung: eine
+    durchgestrichene vom Talent (Bedingung „gegen einen gewählten Gegner") und
+    eine gezählte vom Schalter. Für eine Regel gibt es einen Besitzer, und das ist
+    der Schalter — er weiß, ob Dodge in dieser Runde gilt, das Talent weiß es nie.
+  */
+  for (const effect of buckets.get("ac") ?? []) {
+    if (effect.key.startsWith("srd:feat:dodge")) continue;
+    acContributions.push(toContribution(effect));
+  }
   // stackContributions kopiert die Beiträge — der GE-Beitrag wird über seinen
   // Index wiedergefunden (Reihenfolge bleibt erhalten).
   const dexIndex = acContributions.indexOf(dexContribution);

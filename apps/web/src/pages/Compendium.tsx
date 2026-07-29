@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   classCategory,
   displayName,
@@ -12,6 +12,7 @@ import {
 } from "@codex35/core";
 import { S } from "../strings.js";
 import { useAllEntities, useCompendium } from "../lib/hooks.js";
+import { BackButton } from "../ui/BackButton.js";
 import { Card, Chip, SearchInput, fmtMod } from "../ui/bits.js";
 
 const BROWSABLE: EntityKind[] = ["class", "race", "feat", "spell", "item", "skill", "condition"];
@@ -189,15 +190,40 @@ function shortInfo(entity: Entity): string {
 }
 
 export function EntityDetailPage() {
-  const { entityId } = useParams({ strict: false }) as { entityId: string };
+  const { entityId, kind } = useParams({ strict: false }) as { entityId: string; kind?: string };
+  const navigate = useNavigate();
   const compendium = useCompendium();
   const entity = compendium?.get(entityId);
 
-  if (!compendium) return <p className="text-slate-400">{S.misc.loading}</p>;
-  if (!entity) return <p className="text-slate-400">{S.compendium.empty}</p>;
+  /*
+    Ohne Verlauf zurück ins Kompendium — und zwar in die Art, aus der dieser
+    Eintrag stammt. Die Art steht im Pfad, nicht am Eintrag: wer eine Klasse
+    öffnet, will zur Klassenliste, nicht auf die Startseite des Kompendiums.
+  */
+  const list = () =>
+    void navigate({
+      to: "/kompendium/$kind",
+      params: { kind: (BROWSABLE as string[]).includes(kind ?? "") ? kind! : "class" },
+    });
+
+  if (!compendium)
+    return (
+      <div className="space-y-3">
+        <BackButton fallback={list} />
+        <p className="text-slate-400">{S.misc.loading}</p>
+      </div>
+    );
+  if (!entity)
+    return (
+      <div className="space-y-3">
+        <BackButton fallback={list} />
+        <p className="text-slate-400">{S.compendium.empty}</p>
+      </div>
+    );
 
   return (
     <div className="space-y-3">
+      <BackButton fallback={list} />
       <div>
         <h1 className="text-xl font-bold">{displayName(entity)}</h1>
         <p className="text-sm text-slate-400">

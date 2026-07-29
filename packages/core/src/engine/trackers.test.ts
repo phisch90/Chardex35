@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { characterSchema, houseRulesSchema } from "../schema/character.js";
 import { entitySchema, resolveCompendium, type ClassLevelRow } from "../schema/entities.js";
 import { deriveSheet } from "./index.js";
-import { suggestTrackers } from "./trackers.js";
+import { effectiveTrackerMax, suggestTrackers, trackerMaxNote } from "./trackers.js";
 
 /**
  * Die Formeln hier sind der Grund für diese Tests: sie stehen im Regelwerk, nicht
@@ -307,5 +307,48 @@ describe("suggestTrackers", () => {
   it("Schlüssel sind eindeutig — sonst wird derselbe Zähler zweimal angeboten", () => {
     const keys = suggestTrackers(sheetFor("srd:class:paladin", 20)).map((s) => s.key);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+/**
+ * Philipps Fehler, wörtlich: „Extra turning wird nicht mit einberechnet bei der
+ * Anzahl der turnings. Wieso? Hatten wir doch schon besprochen."
+ *
+ * Besprochen war es, und die Engine rechnete auch richtig — der ZÄHLER am Charakter
+ * trug aber eine Momentaufnahme seiner Obergrenze vom Anlegen. Genau die Sorte
+ * Fehler, die dieses Projekt schon mehrfach hatte: ein abgeleiteter Wert wurde
+ * gespeichert.
+ */
+describe("Obergrenze eines Zählers folgt dem Vorschlag", () => {
+  // CHA 14 → +2, also 3 + 2 = 5 Versuche; Extra Turning legt 4 dazu → 9.
+  const klerikerMitExtraTurning = () =>
+    sheetFor("srd:class:cleric", 1, 14, { feats: ["srd:feat:extra-turning"] });
+
+  it("nimmt die vier zusätzlichen Versuche mit", () => {
+    const sheet = klerikerMitExtraTurning();
+    // 3 + CHA (+2) = 5, dazu 4 aus Extra Turning = 9.
+    const zähler = { suggestedFrom: "turn-undead", max: 5, maxManual: false };
+    expect(effectiveTrackerMax(zähler, sheet)).toBe(9);
+  });
+
+  it("überschreibt eine ALTE Momentaufnahme, statt sie zu glauben", () => {
+    // Genau Philipps Zustand: der Zähler wurde vor dem Talent angelegt.
+    const sheet = klerikerMitExtraTurning();
+    const alt = { suggestedFrom: "turn-undead", max: 5, maxManual: false };
+    expect(effectiveTrackerMax(alt, sheet)).toBe(9);
+    expect(trackerMaxNote(alt, sheet)).toContain("aus Talenten");
+  });
+
+  it("lässt einen selbst gesetzten Wert in Ruhe", () => {
+    const sheet = klerikerMitExtraTurning();
+    const eigen = { suggestedFrom: "turn-undead", max: 12, maxManual: true };
+    expect(effectiveTrackerMax(eigen, sheet)).toBe(12);
+    expect(trackerMaxNote(eigen, sheet)).toBeUndefined();
+  });
+
+  it("fasst selbst gebaute Zähler nicht an", () => {
+    const sheet = klerikerMitExtraTurning();
+    expect(effectiveTrackerMax({ max: 3, maxManual: false }, sheet)).toBe(3);
+    expect(effectiveTrackerMax({ maxManual: false }, sheet)).toBeUndefined();
   });
 });

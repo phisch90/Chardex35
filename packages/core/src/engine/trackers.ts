@@ -47,6 +47,38 @@ function abilityMod(sheet: DerivedSheet, ability: Ability): number {
 
 const signed = (value: number): string => `${value >= 0 ? "+" : ""}${value}`;
 
+/**
+ * Die WIRKLICHE Obergrenze eines Zählers.
+ *
+ * Ein Zähler aus einem Vorschlag folgt dem Vorschlag — sonst ist sein `max` eine
+ * Momentaufnahme vom Anlegen und veraltet beim nächsten Stufenaufstieg oder beim
+ * nächsten Talent. Genau daran ist Extra Turning gescheitert: die vier
+ * zusätzlichen Versuche standen korrekt in `sheet.extraUses`, aber der Zähler
+ * „Untote vertreiben" behielt seinen alten Wert, und der Vorschlag wurde nicht
+ * mehr angeboten, weil es den Zähler ja schon gab.
+ *
+ * Ein selbst gesetzter Wert (`maxManual`) gewinnt immer — wer die Grenze anfasst,
+ * meint es so.
+ */
+export function effectiveTrackerMax(
+  tracker: { max?: number | undefined; suggestedFrom?: string | undefined; maxManual?: boolean },
+  sheet: DerivedSheet,
+): number | undefined {
+  if (tracker.maxManual === true) return tracker.max;
+  if (tracker.suggestedFrom === undefined) return tracker.max;
+  const live = suggestTrackers(sheet).find((s) => s.key === tracker.suggestedFrom);
+  return live?.max ?? tracker.max;
+}
+
+/** Woher die Zahl kommt — für die Zeile unter dem Zähler. */
+export function trackerMaxNote(
+  tracker: { suggestedFrom?: string | undefined; maxManual?: boolean },
+  sheet: DerivedSheet,
+): string | undefined {
+  if (tracker.maxManual === true || tracker.suggestedFrom === undefined) return undefined;
+  return suggestTrackers(sheet).find((s) => s.key === tracker.suggestedFrom)?.note;
+}
+
 export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
   const out: TrackerSuggestion[] = [];
   const cha = abilityMod(sheet, "cha");

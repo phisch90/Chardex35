@@ -253,7 +253,16 @@ export const characterSchema = z.object({
       fightingDefensively: z.boolean().default(false),
       /** +4 RK, kein Angriff in dieser Runde. */
       totalDefense: z.boolean().default(false),
-      /** Gegen wen der Dodge-Bonus gilt (Freitext, leer = aus). */
+      /**
+       * Dodge AN/AUS — ein Schalter, kein Textfeld.
+       *
+       * Vorher hing der Bonus daran, ob ein Gegnername eingetippt war. Das ist
+       * die falsche Bedingung: der +1 gilt gegen genau einen Gegner, den man am
+       * Tisch ansagt — den Namen aufzuschreiben ist optional, das Ansagen nicht.
+       * Und ein Bonus, den man nur durch Tippen bekommt, wird im Kampf vergessen.
+       */
+      dodgeActive: z.boolean().default(false),
+      /** Gegen wen — reiner Merkzettel. Ob Dodge gilt, sagt `dodgeActive`. */
       dodgeTarget: z.string().default(""),
     })
     .default({
@@ -261,6 +270,7 @@ export const characterSchema = z.object({
       combatExpertise: 0,
       fightingDefensively: false,
       totalDefense: false,
+      dodgeActive: false,
       dodgeTarget: "",
     }),
 
@@ -300,6 +310,21 @@ export const characterSchema = z.object({
          * denselben Vorschlag nicht zweimal anzubieten — auch nach Umbenennen.
          */
         suggestedFrom: z.string().optional(),
+        /**
+         * Hat die Obergrenze jemand VON HAND gesetzt?
+         *
+         * Ohne diese Unterscheidung war `max` eine Momentaufnahme vom Anlegen —
+         * und damit falsch, sobald sich etwas ändert. Genau daran ist Extra
+         * Turning gescheitert: die Engine rechnet die vier zusätzlichen Versuche
+         * korrekt dazu, aber der Zähler „Untote vertreiben" behielt den Wert, den
+         * er beim Anlegen hatte, und der Vorschlag wurde nicht mehr angeboten,
+         * weil es den Zähler ja schon gab.
+         *
+         * Jetzt gilt: ein Zähler aus einem Vorschlag folgt dem Vorschlag. Erst
+         * wenn man die Grenze selbst anfasst, gewinnt der eigene Wert — und dann
+         * steht das auch so in den Daten, statt nur im Kopf.
+         */
+        maxManual: z.boolean().default(false),
       }),
     )
     .default([]),

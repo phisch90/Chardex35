@@ -127,6 +127,16 @@ export const S = {
     noArmorHint:
       `Keine Rüstung angelegt. Der Fight-Club-Export enthält keine Ausrüstung — deine Rüstung und dein Schild sind deshalb nie mitgekommen. Trag sie unten unter „Hinzufügen“ ein; danach rechnet die App die RK selbst und der Ausgleichs-Modifikator kann weg.`,
     equipHint: "Auf die Marke tippen wechselt den Platz.",
+    hands: "Rüstung und Hände",
+    /** Die drei Plätze, um die man sich im Kampf kümmert — als Frage, nicht als Zustand. */
+    handsRows: { armor: "Rüstung", mainHand: "Haupthand", offHand: "Schildhand" } as Record<
+      string,
+      string
+    >,
+    handsFree: "— frei —",
+    handsTwoHanded: (name: string) => `${name} (beidhändig)`,
+    handsHint:
+      "Eine beidhändig geführte Waffe belegt beide Hände. Am Gegenstand selbst wechselt ein Tap auf die Marke den Platz.",
     skillFilter: { all: "Alle", trained: "Trainiert", class: "Klasse" } as Record<string, string>,
     subtype: "Teilgebiet",
     addSubtype: "Teilgebiet anlegen",
@@ -240,7 +250,9 @@ export const S = {
     combatExpertiseHint: (max: number) => `Vom Angriff auf die RK, höchstens ${max}.`,
     fightingDefensively: "Defensiv kämpfen (−4 / +2 RK)",
     totalDefense: "Totale Verteidigung (+4 RK, kein Angriff)",
-    dodgeTarget: "Dodge gilt gegen",
+    /** Der Schalter selbst — kurz, weil er neben den anderen Optionen steht. */
+    dodge: "Dodge (+1 RK gegen einen Gegner)",
+    dodgeTarget: "gegen wen? (freiwillig)",
     dodgePlaceholder: "z.B. Ogerhäuptling",
   },
 

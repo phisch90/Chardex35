@@ -7,6 +7,7 @@ const options = (patch: Partial<CombatOptions> = {}): CombatOptions => ({
   combatExpertise: 0,
   fightingDefensively: false,
   totalDefense: false,
+  dodgeActive: false,
   dodgeTarget: "",
   ...patch,
 });
@@ -19,7 +20,15 @@ const context = (patch: Partial<CombatOptionContext> = {}): CombatOptionContext 
   ...patch,
 });
 
-const sum = (list: { value: number }[]) => list.reduce((a, c) => a + c.value, 0);
+/**
+ * Was am Ende auf dem Bogen landet — also nur ANGEWENDETE Beiträge.
+ *
+ * Der Unterschied ist seit dem Dodge-Schalter kein Detail mehr: die Dodge-Zeile
+ * steht immer in der Liste, ausgeschaltet aber durchgestrichen. Wer hier alle
+ * Werte addiert, prüft die Anzeige und nicht die Rechnung.
+ */
+const sum = (list: { value: number; applied: boolean }[]) =>
+  list.filter((c) => c.applied).reduce((a, c) => a + c.value, 0);
 
 describe("Power Attack", () => {
   it(`nimmt vom NAHKAMPF-Angriff und gibt auf den Schaden`, () => {
@@ -151,21 +160,50 @@ describe("Defensiv kämpfen und totale Verteidigung", () => {
 });
 
 describe("Dodge", () => {
-  it(`hängt am Ziel und bleibt situativ — deshalb mit Bedingung`, () => {
-    const out = applyCombatOptions(options({ dodgeTarget: "Ogerhäuptling" }), context());
+  it(`ist ein SCHALTER und zählt in den Total`, () => {
+    /*
+      Vorher hing der Bonus daran, ob ein Gegnername eingetippt war — und er trug
+      eine `condition`, zählte also nicht mit. Am Tisch tippt im Kampf niemand
+      einen Namen, und ein Bonus, der nur durchgestrichen dasteht, hilft nicht.
+    */
+    const out = applyCombatOptions(options({ dodgeActive: true }), context());
     expect(out.ac).toHaveLength(1);
-    expect(out.ac[0]?.condition).toContain("Ogerhäuptling");
+    expect(out.ac[0]?.value).toBe(1);
     expect(out.ac[0]?.bonusType).toBe("dodge");
+    expect(out.ac[0]?.applied).toBe(true);
+    expect(out.ac[0]?.condition).toBeUndefined();
+  });
+
+  it(`nimmt den Gegnernamen mit, wenn einer da ist — nötig ist er nicht`, () => {
+    const mitName = applyCombatOptions(
+      options({ dodgeActive: true, dodgeTarget: "Ogerhäuptling" }),
+      context(),
+    );
+    expect(mitName.ac[0]?.source).toContain("Ogerhäuptling");
+    const ohneName = applyCombatOptions(options({ dodgeActive: true }), context());
+    expect(ohneName.ac[0]?.source).toBe("Talent: Dodge");
   });
 
   it(`ohne Talent nur eine Meldung, kein Bonus`, () => {
-    const out = applyCombatOptions(options({ dodgeTarget: "Ork" }), context({ hasDodge: false }));
+    const out = applyCombatOptions(options({ dodgeActive: true }), context({ hasDodge: false }));
     expect(out.ac).toEqual([]);
     expect(out.warnings.join(" ")).toContain("Talent Dodge nicht");
   });
 
-  it(`leeres Ziel heißt aus`, () => {
-    expect(applyCombatOptions(options({ dodgeTarget: "   " }), context()).ac).toEqual([]);
+  it(`ein Name allein schaltet NICHTS ein`, () => {
+    const out = applyCombatOptions(options({ dodgeTarget: "Ork" }), context());
+    expect(sum(out.ac)).toBe(0);
+  });
+
+  it(`steht auch ausgeschaltet in der Liste — durchgestrichen, nicht verschwunden`, () => {
+    /*
+      Wer die RK aufklappt und Dodge gar nicht findet, sucht den Fehler im
+      Charakter statt am Schalter. Die Zeile nennt deshalb den Grund.
+    */
+    const out = applyCombatOptions(options(), context());
+    expect(out.ac).toHaveLength(1);
+    expect(out.ac[0]?.applied).toBe(false);
+    expect(out.ac[0]?.condition).toContain("Schalter");
   });
 });
 
@@ -188,7 +226,9 @@ describe("Zusammenspiel", () => {
   });
 
   it(`nichts eingestellt heißt: kein einziger Beitrag und keine Meldung`, () => {
-    const out = applyCombatOptions(options(), context());
+    // Ohne Dodge-Talent ist die Liste wirklich leer — mit Talent steht dort die
+    // ausgeschaltete Zeile, siehe den Dodge-Block.
+    const out = applyCombatOptions(options(), context({ hasDodge: false }));
     expect(out.attack).toEqual([]);
     expect(out.meleeAttack).toEqual([]);
     expect(out.ac).toEqual([]);

@@ -21,6 +21,7 @@ import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import { EquipMark } from "../../ui/EquipMark.js";
+import { HandsCard } from "./Hands.js";
 import { itemLabel, itemSummary } from "../../ui/itemSummary.js";
 import type { TabProps } from "./index.js";
 
@@ -107,6 +108,7 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           <div className="truncate">{name}</div>
           <div className="text-xs text-slate-500">
             {[
+              row.qty > 1 ? `×${row.qty}` : "",
               wirkung,
               !ignoreEncumbrance && weight ? `${weight * row.qty} lb` : "",
               row.extraEffects.length > 0 ? "verzaubert" : "",
@@ -115,27 +117,38 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               .join(" · ")}
           </div>
         </div>
-        <GhostButton
-          onClick={() =>
-            save((c) => {
-              const item = c.inventory.find((r) => r.id === row.id);
-              if (item) item.qty = Math.max(1, item.qty - 1);
-            })
-          }
-        >
-          −
-        </GhostButton>
-        <span className="w-6 text-center font-mono">{row.qty}</span>
-        <GhostButton
-          onClick={() =>
-            save((c) => {
-              const item = c.inventory.find((r) => r.id === row.id);
-              if (item) item.qty += 1;
-            })
-          }
-        >
-          +
-        </GhostButton>
+        {/*
+          Die Menge stand hier als −/+ neben jeder Zeile und nahm den Platz von
+          etwas Wichtigerem ein. Philipp: „dass man mehr als ein Kurzschwert dabei
+          hat, ist nicht so relevant, das muss nicht so prominent da." Also: die
+          Zahl steht als „×3" beim Gewicht, und geändert wird sie im
+          Bearbeiten-Modus.
+        */}
+        {editMode && (
+          <>
+            <GhostButton
+              onClick={() =>
+                save((c) => {
+                  const item = c.inventory.find((r) => r.id === row.id);
+                  if (item) item.qty = Math.max(1, item.qty - 1);
+                })
+              }
+            >
+              −
+            </GhostButton>
+            <span className="w-6 text-center font-mono">{row.qty}</span>
+            <GhostButton
+              onClick={() =>
+                save((c) => {
+                  const item = c.inventory.find((r) => r.id === row.id);
+                  if (item) item.qty += 1;
+                })
+              }
+            >
+              +
+            </GhostButton>
+          </>
+        )}
         {editMode && (
           <ConfirmDeleteButton
             label={name}
@@ -190,6 +203,9 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           ))}
         </div>
       </Card>
+
+      {/* Wählen, was in welcher Hand liegt — statt sich durch Marken zu tippen. */}
+      <HandsCard character={character} save={save} entities={entities ?? []} />
 
       <Card>
         <SectionTitle>
