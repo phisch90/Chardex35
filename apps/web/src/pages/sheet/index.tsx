@@ -11,6 +11,7 @@ import { HpPad } from "../../ui/HpPad.js";
 import { Chip, GhostButton, fmtMod } from "../../ui/bits.js";
 import { SwipeTabs } from "../../ui/SwipeTabs.js";
 import { OrderBanner } from "../../group/OrderBanner.js";
+import { IdentityCard } from "./Identity.js";
 import { ShareCharacterButton } from "../../ui/ShareCharacter.js";
 import { CharacterActionsSheet } from "../../ui/CharacterActions.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
@@ -191,6 +192,9 @@ export function CharacterSheetPage() {
               {sheet.classLevels.map((c) => `${c.className} ${c.level}`).join(" / ")} ·{" "}
               {S.sheet.level} {sheet.totalLevel}
               {sheet.ecl !== sheet.totalLevel && ` (ECL ${sheet.ecl})`}
+              {character.playerName !== undefined && character.playerName !== "" && (
+                <span className="text-slate-400"> · {character.playerName}</span>
+              )}
             </p>
           </div>
         </div>
@@ -207,6 +211,12 @@ export function CharacterSheetPage() {
                 {S.sheet.level} {sheet.totalLevel}
                 {sheet.ecl !== sheet.totalLevel && ` (ECL ${sheet.ecl})`}
               </p>
+              {/* Wer die Figur spielt, stand bisher nirgends am Bogen — nur im
+                  Erstellungs-Assistenten. In der Gruppe ist das die Angabe, an der
+                  man einen fremden Bogen zuordnet. */}
+              {character.playerName !== undefined && character.playerName !== "" && (
+                <p className="truncate text-xs text-slate-500">{character.playerName}</p>
+              )}
             </>
           )}
           {sheet.xp.nextLevelAt !== null && character.xp >= sheet.xp.nextLevelAt && (
@@ -300,6 +310,11 @@ export function CharacterSheetPage() {
           ✎ {editMode ? S.actions.done : S.actions.edit}
         </Chip>
       </div>
+
+      {/* Umbenennen gehört an den Anfang: was man ändern will, sieht man dabei —
+          und mit Porträt liegt der Name im Bild, wo ein Eingabefeld nichts zu
+          suchen hat. */}
+      {editMode && <IdentityCard character={character} save={save} />}
 
       <SwipeTabs
         onPrev={before === undefined ? undefined : () => goTab(before)}

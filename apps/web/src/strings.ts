@@ -162,7 +162,11 @@ export const S = {
     /** Der Punkt an einer Attributs-Kachel und was er bedeutet. */
     abilityDotHint: "• = da kommt etwas dazu (Volk, Talent, Gegenstand) — antippen zeigt, was.",
     abilityHasBonus: "Grundwert plus alles, was darauf wirkt.",
-    editModeOn: "Bearbeiten: Ränge, Talente, Ausrüstung, Zähler",
+    editModeOn: "Bearbeiten: Name, Ränge, Talente, Ausrüstung, Zähler",
+    identity: "Name und Spieler:in",
+    characterName: "Name des Charakters",
+    playerPlaceholder: "wer spielt ihn?",
+    nameEmptyHint: "Ohne Namen geht es nicht — beim Verlassen kommt der alte zurück.",
   },
 
   actions: {
