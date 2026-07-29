@@ -316,7 +316,16 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
       "srd:item:greatsword",
       "srd:item:dagger",
     ]);
-    expect(character.inventory.every((i) => i.slot !== "none")).toBe(true);
+    /*
+      Fight Clubs <action>-Zeilen sind ANGRIFFE, nicht das, was in der Hand liegt.
+      Vorher bekam JEDE Waffe die Marke 1H — vier Waffen in zwei Händen, und vier
+      Angriffszeilen auf dem Bogen. Genau das ist Philipp aufgefallen.
+    */
+    const inHand = character.inventory.filter((i) => i.slot !== "none");
+    expect(inHand).toHaveLength(1);
+    expect(inHand[0]?.slot).toBe("mainHand");
+    expect(character.inventory.filter((i) => i.slot === "none")).toHaveLength(3);
+    expect(issues.some((i) => i.code === "weapons-stowed")).toBe(true);
     // Jede angelegte Waffe erzeugt eine eigene Angriffszeile im Bogen.
     for (const label of ["Sword, short", "Templer Schwert", "Greatsword", "Dagger"]) {
       expect(sheet.attacks.some((a) => a.label === label), label).toBe(true);
@@ -480,7 +489,8 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(weapon!.data.weapon).toMatchObject({ damage: "1d6", critRange: "19-20", critMult: "x2" });
     // Sie ist angelegt und erzeugt damit eine Angriffszeile.
     const row = character.inventory.find((i) => i.itemId === weapon!.id);
-    expect(row?.slot).not.toBe("none");
+    // Die erste Aktionszeile landet in der Haupthand, die weiteren im Rucksack.
+    expect(row).toBeDefined();
     expect(sheet.attacks.some((a) => a.label === "Templer Schwert")).toBe(true);
   });
 

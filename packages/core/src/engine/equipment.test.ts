@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   allowedSlots,
   conflictingEquipIds,
+  cycleEquipSlot,
   isNaturalOrUnarmed,
   itemKind,
   nextSlot,
@@ -145,5 +146,60 @@ describe("conflictingEquipIds", () => {
   it(`verlangt nichts, wenn nichts im Weg ist`, () => {
     expect(conflictingEquipIds([armor("platte", "none")], "platte", "armor")).toEqual([]);
     expect(conflictingEquipIds([], "gibtsnicht", "mainHand")).toEqual([]);
+  });
+});
+
+describe("cycleEquipSlot", () => {
+  const sword = weapon("one");
+  const dagger = weapon("light");
+
+  it(`nimmt die FREIE Hand, statt die andere Waffe zu verdrängen`, () => {
+    /*
+      Der Fehler, der im Bogen zu sehen war: der erste Tap auf den Dolch nahm die
+      Haupthand und warf das Kurzschwert heraus; erst der zweite Tap landete in
+      der Schildhand — am Ende hielt die Figur nur den Dolch.
+    */
+    const items: EquipCandidate[] = [
+      { id: "kurzschwert", slot: "mainHand" },
+      { id: "dolch", slot: "none" },
+    ];
+    expect(cycleEquipSlot(dagger, items, "dolch")).toBe("offHand");
+  });
+
+  it(`geht der Reihe nach, wenn nichts im Weg ist`, () => {
+    const items: EquipCandidate[] = [{ id: "s", slot: "none" }];
+    expect(cycleEquipSlot(sword, items, "s")).toBe("mainHand");
+    expect(cycleEquipSlot(sword, [{ id: "s", slot: "mainHand" }], "s")).toBe("offHand");
+  });
+
+  it(`legt weg, statt der anderen Hand die Waffe zu nehmen`, () => {
+    /*
+      Beide Hände voll (Schwert + Dolch). Ein Tap auf das Schwert könnte auf
+      „beidhändig" gehen — dafür müsste aber der Dolch weg, und das wäre wieder ein
+      Nebeneffekt, den niemand angetippt hat. Also: weglegen.
+
+      Zweihändig führen setzt eine freie Hand voraus. Das ist keine Einschränkung
+      der App, sondern der Körper: erst den Dolch ab, dann das Schwert in beide
+      Hände.
+    */
+    const items: EquipCandidate[] = [
+      { id: "s", slot: "mainHand" },
+      { id: "d", slot: "offHand" },
+    ];
+    expect(cycleEquipSlot(sword, items, "s")).toBe("none");
+  });
+
+  it(`erreicht beidhändig, sobald die andere Hand frei ist`, () => {
+    const allein: EquipCandidate[] = [{ id: "s", slot: "offHand" }];
+    expect(cycleEquipSlot(sword, allein, "s")).toBe("bothHands");
+  });
+
+  it(`legt am Ende des Rings wieder ab`, () => {
+    expect(cycleEquipSlot(sword, [{ id: "s", slot: "bothHands" }], "s")).toBe("none");
+  });
+
+  it(`räumt einen Altbestands-Platz auf`, () => {
+    const plate = item({ armor: { kind: "heavy", acBonus: 8, maxDex: 1, acp: 6, asf: 0 } });
+    expect(cycleEquipSlot(plate, [{ id: "p", slot: "worn" }], "p")).toBe("none");
   });
 });

@@ -5,10 +5,10 @@ import {
   characterSchema,
   classCategory,
   conflictingEquipIds,
+  cycleEquipSlot,
   deriveSheet,
   displayName,
   maxRanks,
-  nextSlot,
   skillPointCost,
   type Ability,
   type Character,
@@ -523,9 +523,10 @@ function GearStep(props: { draft: Draft; setDraft: (d: Draft) => void; entities:
                   <EquipMark
                     slot={row.slot}
                     onClick={() => {
-                      const target = nextSlot(
+                      const target = cycleEquipSlot(
                         entity?.kind === "item" ? entity : undefined,
-                        row.slot,
+                        draft.inventory.map((r) => ({ id: r.id, slot: r.slot })),
+                        row.id,
                       );
                       const verdrängt =
                         target === "none"

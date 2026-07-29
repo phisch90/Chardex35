@@ -688,17 +688,40 @@ export function mapFightClubPc(
     });
   }
 
-  // Waffen aus den Aktionszeilen ins Inventar (angelegt → Angriffszeilen).
+  /*
+    Waffen aus den Aktionszeilen ins Inventar.
+
+    Fight Clubs <action>-Zeilen sind ANGRIFFE, die der Charakter machen kann —
+    nicht das, was er gerade in der Hand hält. Wer sie alle als „angelegt"
+    übernimmt, bekommt genau das, was Philipp auf seinem Bogen gesehen hat:
+    Kurzschwert, Templer Schwert und Dolch alle mit der Marke 1H, dazu ein
+    Zweihänder — vier Waffen in zwei Händen, und vier Angriffszeilen.
+
+    Deshalb: die ERSTE Waffe in die Haupthand, alles Weitere in den Rucksack. Ein
+    Tap auf die Marke rückt eine Waffe in die Hand, wenn sie dort hingehört.
+  */
   const itemIndex = buildIndex(compendium, "item");
+  const stowedByCapacity: string[] = [];
+  let handTaken = false;
   const inventory: Character["inventory"] = pc.actions.map((action) => {
     const hit = matchName(itemIndex, action.name);
     const entity = hit && hit.rest === "" ? compendium.get(hit.id) : undefined;
+    const place = (item: Entity | undefined, label: string): EquipSlot => {
+      if (handTaken) {
+        stowedByCapacity.push(label);
+        return "none";
+      }
+      const slot = importSlot(item);
+      // Nur Hände sind knapp; Ringe und Amulette („worn") stören einander nicht.
+      if (slot !== "worn") handTaken = true;
+      return slot;
+    };
     if (hit && hit.rest === "") {
       return {
         id: idFactory(),
         itemId: hit.id,
         qty: 1,
-        slot: importSlot(entity),
+        slot: place(entity, action.name),
         extraEffects: [],
       };
     }
@@ -706,8 +729,24 @@ export function mapFightClubPc(
     // Kampf-Reiter als Angriff auftauchen und nicht bloß als Notiz im Rucksack.
     const weapon = buildHomebrewWeapon(action, `homebrew:item:${slugifyName(action.name)}`);
     entities.push(weapon);
-    return { id: idFactory(), itemId: weapon.id, qty: 1, slot: importSlot(weapon), extraEffects: [] };
+    return {
+      id: idFactory(),
+      itemId: weapon.id,
+      qty: 1,
+      slot: place(weapon, action.name),
+      extraEffects: [],
+    };
   });
+  if (stowedByCapacity.length > 0) {
+    issues.push({
+      severity: "info",
+      code: "weapons-stowed",
+      message:
+        `Im Rucksack statt in der Hand: ${stowedByCapacity.join(", ")}. ` +
+        `Fight Club listet alle möglichen Angriffe; zwei Hände hat der Charakter trotzdem nur. ` +
+        `Ein Tap auf die Marke links nimmt eine Waffe in die Hand.`,
+    });
+  }
   /*
     Talent-Auswahlen auf Gegenstände verweisen — erst jetzt, weil die
     Homebrew-Waffen aus den Aktionszeilen dazugehören. Ohne diesen Verweis

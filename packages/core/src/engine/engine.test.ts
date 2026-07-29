@@ -466,6 +466,52 @@ describe("deriveSheet — RK, Rüstung, MaxGE", () => {
  * jedes Buch-Talent mechanisch stumm — oder landet als „Manuell: …" im
  * Notizen-Reiter, ohne Bezug zum Talent.
  */
+/**
+ * Zwei Waffen gleichzeitig — Philipps ausdrücklicher Wunsch: „erste und zweite
+ * Hand equippen, zum Beispiel Kurzschwert und Dolch".
+ */
+describe("deriveSheet — Hand und Schildhand", () => {
+  const zweiWaffen = (slots: [string, string]) =>
+    fighterDwarf4({
+      inventory: [
+        { id: "w1", itemId: "test:item:longsword", slot: slots[0] },
+        { id: "w2", itemId: "test:item:dagger", slot: slots[1] },
+      ],
+    });
+
+  it("führt Haupthand und Schildhand gleichzeitig", () => {
+    const sheet = deriveSheet(zweiWaffen(["mainHand", "offHand"]), COMPENDIUM, HOUSE);
+    const lines = sheet.attacks.filter((a) => a.slot !== undefined && a.slot !== "none");
+    expect(lines.map((a) => a.slot).sort()).toEqual(["mainHand", "offHand"]);
+  });
+
+  it("gibt auch einer Waffe im Rucksack eine Angriffszeile", () => {
+    /*
+      Sonst verschwindet die halbe Angriffsliste, sobald der Import nicht mehr
+      alles in die Hand legt. Eine getragene Waffe ist eine Waffe — man zieht sie.
+    */
+    const sheet = deriveSheet(zweiWaffen(["mainHand", "none"]), COMPENDIUM, HOUSE);
+    const dolch = sheet.attacks.find((a) => a.label === "Dagger");
+    expect(dolch, "Dolch-Zeile fehlt").toBeDefined();
+    expect(dolch!.slot).toBe("none");
+    expect(dolch!.damageText).not.toBe("—");
+  });
+
+  it("Rüstung zählt dagegen NUR angelegt", () => {
+    const ohne = deriveSheet(
+      fighterDwarf4({ inventory: [{ id: "a1", itemId: "test:item:chain-shirt", slot: "none" }] }),
+      COMPENDIUM,
+      HOUSE,
+    );
+    const mit = deriveSheet(
+      fighterDwarf4({ inventory: [{ id: "a1", itemId: "test:item:chain-shirt", slot: "armor" }] }),
+      COMPENDIUM,
+      HOUSE,
+    );
+    expect(mit.ac.total.total).toBeGreaterThan(ohne.ac.total.total);
+  });
+});
+
 describe("deriveSheet — eigene Modifikatoren am Talent", () => {
   it("rechnet einen selbst eingetragenen Bonus mit", () => {
     const c = fighterDwarf4({

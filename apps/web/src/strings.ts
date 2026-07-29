@@ -122,6 +122,10 @@ export const S = {
       worn: "getragen",
     } as Record<string, string>,
     equipLegend: "A Rüstung · 1H Haupthand · OH Schildhand · 2H beidhändig · E getragen",
+    money: "Geld",
+    /** Wenn ein RK-Ausgleich aus dem Import da ist, aber keine Rüstung angelegt. */
+    noArmorHint:
+      `Keine Rüstung angelegt. Der Fight-Club-Export enthält keine Ausrüstung — deine Rüstung und dein Schild sind deshalb nie mitgekommen. Trag sie unten unter „Hinzufügen“ ein; danach rechnet die App die RK selbst und der Ausgleichs-Modifikator kann weg.`,
     equipHint: "Auf die Marke tippen wechselt den Platz.",
     skillFilter: { all: "Alle", trained: "Trainiert", class: "Klasse" } as Record<string, string>,
     subtype: "Teilgebiet",
