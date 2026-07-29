@@ -8,7 +8,12 @@ import {
   type ItemEntity,
   type SkillEntity,
 } from "../schema/entities.js";
-import { applyCombatOptions } from "./combatOptions.js";
+import {
+  applyCombatOptions,
+  type Hand,
+  type TwoWeaponSetup,
+  type WieldContext,
+} from "./combatOptions.js";
 import { isNaturalOrUnarmed } from "./equipment.js";
 import type { ActiveEffect, ResolvedCharacter, TimelineResult } from "./internal.js";
 import {
@@ -155,6 +160,34 @@ export function deriveSheetValues(
     }
   }
 
+  /*
+    Was liegt in welcher Hand? Einmal ausgewertet, zweimal gebraucht: für den
+    Angriffsmalus (combatOptions.ts) und für die Zahl der Angriffe der zweiten
+    Hand.
+
+    GENAU der Slot zählt, nicht `isEquipped`. Zwei Fallen, die beide schon einmal
+    Zahlen verschoben haben: `worn` ist der Altbestand aus der Zeit vor den
+    Slot-Marken und keine Hand, und `none` ist der Rucksack — Philipps
+    importierter Bogen trägt eine Waffe in der Hand und drei im Rucksack. Und
+    Fernkampfwaffen dürfen es nicht auslösen: eine Armbrust ist in der Haupthand
+    erlaubt, ein Zweiwaffenkampf mit ihr nicht.
+
+    Ein Zweihänder sperrt: wer beide Hände an einer Waffe hat, hat keine zweite
+    frei. Über die Oberfläche ist das nicht erreichbar, über Import und Abgleich
+    schon.
+  */
+  const meleeInHand = (slot: EquipSlot) =>
+    equippedWeapons.find(
+      (w) => w.slot === slot && w.entity.data.weapon?.handedness !== "ranged",
+    );
+  const offHandWeapon = meleeInHand("offHand");
+  const twoWeaponSetup: TwoWeaponSetup | null =
+    meleeInHand("mainHand") !== undefined &&
+    offHandWeapon !== undefined &&
+    !equippedWeapons.some((w) => w.slot === "bothHands")
+      ? { offHandIsLight: offHandWeapon.entity.data.weapon?.handedness === "light" }
+      : null;
+
   /**
    * Talent-Effekte, die nur für die gewählte Waffe gelten („Weapon Focus
    * (Kurzschwert)" → +1 nur mit dem Kurzschwert). Der Verweis `choiceRef` ist
@@ -250,11 +283,27 @@ export function deriveSheetValues(
     Führung) stehen gesammelt in combatOptions.ts.
   */
   const featIdSet = new Set(resolved.feats.map((f) => f.featId));
+  /*
+    Die drei Zweiwaffen-Talente über ihre Kennung, wie die drei Nachbarn darüber.
+
+    Die Alternative wäre eine Marke in den Packdaten gewesen (so läuft es bei
+    Weapon Finesse). Dagegen sprechen zwei Dinge: die Mechanik dieser Talente
+    steht hier in combatOptions.ts und nicht in einem Effekt — genau wie bei Power
+    Attack und Dodge —, und eine Marke bräuchte einen Neubau der Packs samt
+    erhöhter Kompendiums-Nummer. Vergisst man die, sind alle Tests grün und auf
+    dem Handy fehlt die Marke: dann rechnet ein Charakter MIT Talent weiter mit
+    −6/−10. Der Preis der Kennungen ist, dass ein eigenes Talent aus seinen
+    Büchern nicht mitzählt — das trifft die drei Nachbarn genauso.
+  */
   const combat = applyCombatOptions(character.combatOptions, {
     bab: timeline.bab,
     hasPowerAttack: featIdSet.has("srd:feat:power-attack"),
     hasCombatExpertise: featIdSet.has("srd:feat:combat-expertise"),
     hasDodge: featIdSet.has("srd:feat:dodge"),
+    twoWeapon: twoWeaponSetup,
+    hasTwoWeaponFighting: featIdSet.has("srd:feat:two-weapon-fighting"),
+    hasImprovedTwoWeaponFighting: featIdSet.has("srd:feat:improved-two-weapon-fighting"),
+    hasGreaterTwoWeaponFighting: featIdSet.has("srd:feat:greater-two-weapon-fighting"),
   });
   for (const message of combat.warnings) {
     issues.push({ severity: "warning", code: "combat-option", message });
@@ -443,6 +492,26 @@ export function deriveSheetValues(
     const wieldedInTwoHands = weapon?.slot === "bothHands" || weaponData?.handedness === "two";
     const isLight = weaponData?.handedness === "light";
     const useDex = mode === "ranged" || (weaponFinesse && isLight);
+    /*
+      Ein Objekt für die Führung dieser Waffe, drei Regeln dahinter: der
+      Schadensbonus von Power Attack, der Zweiwaffen-Malus auf den Angriff und der
+      halbe Stärkeschaden der zweiten Hand. Eine Wahrheit über die Hand, nicht
+      drei nebeneinander.
+    */
+    const hand: Hand =
+      weapon?.slot === "mainHand"
+        ? "main"
+        : weapon?.slot === "offHand"
+          ? "off"
+          : weapon?.slot === "bothHands"
+            ? "both"
+            : "none";
+    const wield: WieldContext = {
+      handedness: weaponData?.handedness ?? "one",
+      hand,
+      wieldedInTwoHands,
+      naturalOrUnarmed: isNaturalOrUnarmed(weapon?.entity),
+    };
     const abilityLabel = useDex ? "DEX-Modifikator" : "STR-Modifikator";
     const abilityValue = useDex ? dexMod : mod("str");
 
@@ -461,6 +530,9 @@ export function deriveSheetValues(
       ...base,
       ...combat.attack,
       ...(mode === "melee" ? combat.meleeAttack : []),
+      // Der Zweiwaffen-Malus ist für Haupthand und zweite Hand VERSCHIEDEN hoch
+      // — deshalb hier je Waffe und nicht über die globalen Listen darüber.
+      ...combat.weaponAttack(wield),
     ];
     for (const path of paths) {
       for (const effect of buckets.get(path) ?? []) contributions.push(toContribution(effect));
@@ -473,7 +545,20 @@ export function deriveSheetValues(
       contributions.push(...chosenItemContributions(weapon, "attack.self"));
     }
     const attack = stackContributions(contributions);
-    const bonuses = iterativeAttacks(timeline.bab).map((b) => b + (attack.total - timeline.bab));
+    /*
+      Wie viele Angriffe diese Zeile hergibt.
+
+      Normalfall: die absteigende Reihe aus dem Grundangriffsbonus (+6 → +6/+1).
+      Die ZWEITE HAND folgt dieser Reihe aber nicht — sie bekommt genau die
+      Angriffe, die die Zweiwaffen-Talente gewähren: einen, mit Improved zwei,
+      mit Greater drei. Vorher zeigte der Bogen ihr die volle Reihe und damit bei
+      GAB +6 einen Angriff zu viel.
+    */
+    const offHandSteps = hand === "off" ? combat.offHandSteps : [];
+    const bonuses =
+      offHandSteps.length > 0
+        ? offHandSteps.map((step) => attack.total + step)
+        : iterativeAttacks(timeline.bab).map((b) => b + (attack.total - timeline.bab));
 
     // Schaden.
     let damageText = "—";
@@ -491,14 +576,26 @@ export function deriveSheetValues(
           condition: undefined,
         });
       }
-      damageContributions.push(
-        ...combat.meleeDamage({
-          handedness: weaponData.handedness,
-          wieldedInTwoHands,
-          naturalOrUnarmed: isNaturalOrUnarmed(weapon?.entity),
-        }),
-      );
+      damageContributions.push(...combat.meleeDamage(wield));
       if (mode === "ranged") notes.push("Kein ST-Bonus auf Fernkampfschaden (außer Wurfwaffen/Kompositbögen).");
+      if (offHandSteps.length > 0) {
+        notes.push(
+          offHandSteps.length === 1
+            ? "Zweite Hand: ein zusätzlicher Angriff bei voller Attacke."
+            : `Zweite Hand: ${offHandSteps.length} Angriffe bei voller Attacke (aus deinen Zweiwaffen-Talenten).`,
+        );
+      }
+      /*
+        Der Malus gilt nur, WEIL man mit beiden Waffen angreift. Ein einzelner
+        Angriff mit der Haupthand hat ihn nicht — und der Erklärsatz zur
+        Angriffsfolge behauptet genau das Gegenteil („ein einzelner Angriff nutzt
+        immer +5"). Die Zahl, die am Tisch fällt, hängt daran; also steht es dran.
+      */
+      if (combat.weaponAttack(wield).length > 0) {
+        notes.push(
+          "Diese Zahl gilt für die volle Attacke mit beiden Waffen. Ein einzelner Angriff nur mit dieser Waffe hat den Malus nicht.",
+        );
+      }
       const damagePaths: StatPath[] =
         mode === "melee" ? ["damage.melee", "damage.all"] : ["damage.ranged", "damage.all"];
       for (const path of damagePaths) {
@@ -516,6 +613,15 @@ export function deriveSheetValues(
     if (weaponData) {
       const bonus = damageBonus.total;
       damageText = bonus === 0 ? weaponData.damage : `${weaponData.damage}${bonus > 0 ? "+" : ""}${bonus}`;
+    }
+    /*
+      Die Sammelzeile bekommt KEINEN Malus (sie gehört zu keiner Waffenkombination
+      — genau der Fehler, der bei Power Attack schon einmal den Langbogen
+      mitgerissen hat), aber einen Satz dazu. Ohne ihn steht am Tisch oben +8 und
+      beim Kurzschwert +5, und die Antwort ist nirgends zu sehen.
+    */
+    if (weapon === null && mode === "melee" && twoWeaponSetup !== null && character.combatOptions.twoWeaponFighting) {
+      notes.push("Zweiwaffenkampf ist an — die Mali stehen an den Waffenzeilen, nicht hier.");
     }
 
     return {
@@ -783,6 +889,7 @@ export function deriveSheetValues(
     extraUses,
     spellcasting,
     encumbrance,
+    twoWeaponPossible: twoWeaponSetup !== null,
     xp: {
       current: character.xp,
       nextLevelAt: totalLevel >= 20 ? null : xpForLevel(totalLevel + 1),

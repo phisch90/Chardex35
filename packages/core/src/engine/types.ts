@@ -185,6 +185,16 @@ export interface DerivedSheet {
   extraUses: Record<string, number>;
   spellcasting: SpellcastingBlock[];
   encumbrance: EncumbranceBlock;
+  /**
+   * Liegt in JEDER Hand eine Nahkampfwaffe? Nur dann ist der
+   * Zweiwaffenkampf-Schalter im Kampf-Reiter sinnvoll.
+   *
+   * Eine Folge, nie gespeichert — und sie gehört in die Engine und nicht in die
+   * Oberfläche: dort müsste die Regel („Fernkampf zählt nicht, ein Zweihänder
+   * sperrt, `worn` ist keine Hand") nachgebaut werden, und `AttackLine` trägt
+   * keine Handhabung, mit der man das erraten könnte.
+   */
+  twoWeaponPossible: boolean;
   xp: { current: number; nextLevelAt: number | null };
   features: FeatureLine[];
   issues: DerivedIssue[];
