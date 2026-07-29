@@ -345,6 +345,9 @@ export const S = {
     dodge: "Dodge (+1 RK gegen einen Gegner)",
     dodgeTarget: "gegen wen? (freiwillig)",
     dodgePlaceholder: "z.B. Ogerhäuptling",
+    twoWeapon: "Mit beiden Waffen angreifen",
+    twoWeaponHint:
+      "Malus auf beide Hände — wie hoch, hängt daran, ob die Waffe in der zweiten Hand leicht ist und ob du das Talent hast. Steht an den Waffenzeilen.",
   },
 
   compendium: {

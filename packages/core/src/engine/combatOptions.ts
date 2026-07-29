@@ -23,6 +23,42 @@ export interface CombatOptionContext {
   hasPowerAttack: boolean;
   hasCombatExpertise: boolean;
   hasDodge: boolean;
+  /**
+   * `null` = in dieser Runde wird nicht mit zwei Waffen gekämpft — entweder weil
+   * der Schalter aus ist oder weil gar nicht in jeder Hand eine Nahkampfwaffe
+   * liegt. Was in den Händen liegt, weiß nur derive.ts; die Regel steht hier.
+   */
+  twoWeapon: TwoWeaponSetup | null;
+  hasTwoWeaponFighting: boolean;
+  hasImprovedTwoWeaponFighting: boolean;
+  hasGreaterTwoWeaponFighting: boolean;
+}
+
+/**
+ * Welche Hand — für den Zweiwaffen-Malus, der für beide Hände UNTERSCHIEDLICH
+ * hoch ist.
+ *
+ * `none` deckt drei Fälle ab, die alle keinen Malus bekommen: die zwei
+ * Sammelzeilen („Nahkampf", „Fernkampf", die zu keiner Waffe gehören), der
+ * Rucksack, und der Altbestand `worn` aus der Zeit vor den Slot-Marken.
+ */
+export type Hand = "main" | "off" | "both" | "none";
+
+/**
+ * Was in dieser Runde in den Händen liegt. TATSACHEN, keine Regel — die Höhe der
+ * Mali rechnet applyCombatOptions daraus aus.
+ */
+export interface TwoWeaponSetup {
+  /**
+   * Ist die Waffe in der ZWEITEN Hand leicht?
+   *
+   * Nur sie entscheidet, wörtlich im SRD am Talent Two-Weapon Fighting: „If your
+   * off-hand weapon is light the penalties are reduced by 2 each." Über die Waffe
+   * in der Haupthand sagt die Regel nichts — und beide Mali sinken, auch der der
+   * Haupthand. Wer hier die Haupthand prüft, baut einen Fehler, der bei zwei
+   * leichten Waffen unsichtbar bleibt.
+   */
+  offHandIsLight: boolean;
 }
 
 /** Kampfgeschick ist laut SRD auf 5 begrenzt, zusätzlich zum GAB. */
@@ -51,6 +87,13 @@ export interface WieldContext {
   naturalOrUnarmed?: boolean;
   /** Wird sie in dieser Runde mit beiden Händen geführt? */
   wieldedInTwoHands?: boolean;
+  /**
+   * In welcher Hand sie steckt. VERPFLICHTEND, obwohl ein Standardwert bequemer
+   * wäre: eine vergessene Angabe würde den Zweiwaffen-Malus lautlos abschalten,
+   * und lautlos ist in diesem Projekt die teuerste Eigenschaft. So meldet sich
+   * der Typprüfer.
+   */
+  hand: Hand;
 }
 
 export interface CombatOptionOutcome {
@@ -72,6 +115,28 @@ export interface CombatOptionOutcome {
   meleeAttack: Contribution[];
   /** Auf den Nahkampfschaden. Zweihändige Führung verdoppelt Power Attack. */
   meleeDamage: (weapon: WieldContext) => Contribution[];
+  /**
+   * Der Zweiwaffen-Malus — auf den Angriffswurf GENAU DIESER Waffe.
+   *
+   * Warum eine Funktion und nicht eine Liste wie `attack`/`meleeAttack`: dieser
+   * Malus ist für Haupthand und zweite Hand verschieden hoch (−4 gegen −8), und
+   * eine Liste kann das nicht ausdrücken. Ihn in `meleeAttack` zu legen wäre der
+   * bequeme Weg und genau der schon einmal behobene Power-Attack-Fehler: dann
+   * fiele auch die Sammelzeile „Nahkampf" mit, obwohl dort gar keine
+   * Waffenkombination gemeint ist.
+   */
+  weaponAttack: (weapon: WieldContext) => Contribution[];
+  /**
+   * Die Angriffe der ZWEITEN Hand als Abzüge vom eigenen Angriffswert:
+   * `[]` = keiner (es wird nicht mit zwei Waffen gekämpft), `[0]` = einer,
+   * `[0, -5]` mit Improved, `[0, -5, -10]` mit Greater.
+   *
+   * Die zweite Hand bekommt NICHT die absteigende Reihe aus dem
+   * Grundangriffsbonus. Genau das tat der Bogen vorher: bei GAB +6 zeigte er der
+   * zweiten Hand zwei Angriffe — zufällig das, was ein Charakter MIT Improved
+   * Two-Weapon Fighting bekäme, und für alle anderen einer zu viel.
+   */
+  offHandSteps: number[];
   /** Auf die RK — immer Ausweichen-Boni, die sich also summieren. */
   ac: Contribution[];
   /** Hinweise für den Bogen (Übertretung der Obergrenzen, kein Angriff …). */
@@ -183,6 +248,65 @@ export function applyCombatOptions(
     warnings.push("Dodge ist eingeschaltet, aber der Charakter hat das Talent Dodge nicht.");
   }
 
+  /*
+    Zweiwaffenkampf.
+
+    Der Schalter allein reicht nicht — es muss auch in jeder Hand eine
+    Nahkampfwaffe liegen. Beides zusammen ergibt `twoWeapon`; ist der Schalter an
+    und die Hände sind leer, wird gemeldet statt gerechnet. Ein Malus ohne Grund
+    ist schlimmer als kein Malus: er wandert unbemerkt in die Zahl, die Philipp am
+    Tisch dem Spielleiter sagt.
+
+    Die vier Zeilen der SRD-Tabelle als EINE Formel, weil es zwei getrennte
+    Ermäßigungen sind, die sich addieren:
+
+      Grundlage                              −6 / −10
+      Waffe in der zweiten Hand ist leicht   je +2   („reduced by 2 each")
+      Talent Two-Weapon Fighting             +2 / +6 („lessens by 2 / by 6")
+
+    → −6/−10 · −4/−8 · −4/−4 · −2/−2
+  */
+  const twoWeapon = options.twoWeaponFighting ? context.twoWeapon : null;
+  if (options.twoWeaponFighting && context.twoWeapon === null) {
+    warnings.push(
+      "Zweiwaffenkampf ist eingeschaltet, aber es liegt nicht in jeder Hand eine Nahkampfwaffe — es gilt kein Malus.",
+    );
+  }
+  const offHandLight = twoWeapon?.offHandIsLight === true;
+  const twfFeat = context.hasTwoWeaponFighting;
+  const primaryPenalty = twoWeapon === null ? 0 : -6 + (offHandLight ? 2 : 0) + (twfFeat ? 2 : 0);
+  const offHandPenalty = twoWeapon === null ? 0 : -10 + (offHandLight ? 2 : 0) + (twfFeat ? 6 : 0);
+
+  const weaponAttack: CombatOptionOutcome["weaponAttack"] = (weapon) => {
+    // Fernkampf kennt keinen Zweiwaffenkampf. Doppelt geprüft (auch schon beim
+    // Aufbau der Hände), weil genau dieser Fehlertyp hier schon einmal live war:
+    // eine Armbrust in der Haupthand darf keinen Nahkampf-Malus abbekommen.
+    if (twoWeapon === null || weapon.handedness === "ranged") return [];
+    const zusatz = offHandLight ? ", leichte Waffe in der zweiten Hand" : "";
+    if (weapon.hand === "main") return [mod(`Zweiwaffenkampf (Haupthand${zusatz})`, primaryPenalty)];
+    if (weapon.hand === "off") return [mod(`Zweiwaffenkampf (zweite Hand${zusatz})`, offHandPenalty)];
+    return [];
+  };
+
+  /*
+    Wie viele Angriffe die zweite Hand hergibt. Die Talente stapeln aufeinander:
+    ohne Talent einer, Two-Weapon Fighting gibt KEINEN weiteren (es senkt nur die
+    Mali — steht wörtlich am Talent), Improved einen zweiten bei −5, Greater einen
+    dritten bei −10.
+
+    Ob die −5 „zusätzlich zum Zweiwaffen-Malus" oder „als absteigende Reihe"
+    gemeint ist, lässt die Quelle offen — rechnerisch macht es keinen
+    Unterschied: (GAB−5)+Mali ist dasselbe wie GAB+Mali−5.
+  */
+  const offHandSteps =
+    twoWeapon === null
+      ? []
+      : context.hasGreaterTwoWeaponFighting
+        ? [0, -5, -10]
+        : context.hasImprovedTwoWeaponFighting
+          ? [0, -5]
+          : [0];
+
   const meleeDamage: CombatOptionOutcome["meleeDamage"] = (weapon) => {
     if (powerAttack === 0 || weapon.handedness === "ranged") return [];
     /*
@@ -217,7 +341,7 @@ export function applyCombatOptions(
     ];
   };
 
-  return { attack, meleeAttack, meleeDamage, ac, warnings };
+  return { attack, meleeAttack, meleeDamage, weaponAttack, offHandSteps, ac, warnings };
 }
 
 /** Gilt in dieser Runde überhaupt ein Angriff? */

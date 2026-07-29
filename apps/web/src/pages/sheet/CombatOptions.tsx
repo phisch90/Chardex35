@@ -25,7 +25,8 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
     options.combatExpertise > 0 ||
     options.fightingDefensively ||
     options.totalDefense ||
-    options.dodgeActive;
+    options.dodgeActive ||
+    options.twoWeaponFighting;
 
   return (
     <Card className={anyActive ? "border-amber-700/70" : ""}>
@@ -41,6 +42,7 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
                 totalDefense: false,
                 dodgeActive: false,
                 dodgeTarget: "",
+                twoWeaponFighting: false,
               })
             }
           >
@@ -86,6 +88,30 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
             {S.combat.totalDefense}
           </Chip>
         </div>
+
+        {/*
+          Zweiwaffenkampf. Der Schalter erscheint, sobald in jeder Hand eine
+          Nahkampfwaffe liegt — ob das der Fall ist, entscheidet die Engine
+          (`twoWeaponPossible`) und nicht diese Datei: die Regel dahinter kennt
+          drei Ausnahmen (Fernkampf zählt nicht, ein Zweihänder sperrt, der
+          Rucksack ist keine Hand), und die hier nachzubauen wäre eine zweite
+          Wahrheit.
+
+          Steht er trotzdem an, obwohl die Hände nicht passen, bleibt die Zeile
+          sichtbar — sonst könnte man einen angeschalteten Malus nicht mehr
+          ausschalten. Die Engine warnt dazu.
+        */}
+        {(sheet.twoWeaponPossible || options.twoWeaponFighting) && (
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Chip
+              active={options.twoWeaponFighting}
+              onClick={() => set({ twoWeaponFighting: !options.twoWeaponFighting })}
+            >
+              {S.combat.twoWeapon}
+            </Chip>
+            <span className="text-[11px] text-slate-500">{S.combat.twoWeaponHint}</span>
+          </div>
+        )}
 
         {/*
           Dodge als SCHALTER, und zwar in derselben Reihe wie die anderen

@@ -219,6 +219,19 @@ export function GroupSheetPage() {
                     .filter((part) => part !== "" && part !== "—")
                     .join(" · ")}
                 </div>
+                {/*
+                  Die Hinweise gehören hierher, nicht nur in den eigenen Bogen.
+                  Sie tragen die BEGRÜNDUNG der Zahl — „Zweiwaffenkampf: ein
+                  zusätzlicher Angriff", „kein STR-Bonus im Fernkampf". Ohne sie
+                  stand am Tisch beim Mitspieler „+5 / +0" ohne jeden Hinweis,
+                  warum, und eine unbegründete Zahl ist schlimmer als eine
+                  falsche: man kann ihr nicht widersprechen.
+                */}
+                {attack.notes.map((note) => (
+                  <div key={note} className="text-[11px] leading-snug text-slate-500">
+                    {note}
+                  </div>
+                ))}
               </li>
             ))}
           </ul>

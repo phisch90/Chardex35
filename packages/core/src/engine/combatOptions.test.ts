@@ -9,6 +9,7 @@ const options = (patch: Partial<CombatOptions> = {}): CombatOptions => ({
   totalDefense: false,
   dodgeActive: false,
   dodgeTarget: "",
+  twoWeaponFighting: false,
   ...patch,
 });
 
@@ -17,6 +18,10 @@ const context = (patch: Partial<CombatOptionContext> = {}): CombatOptionContext 
   hasPowerAttack: true,
   hasCombatExpertise: true,
   hasDodge: true,
+  twoWeapon: null,
+  hasTwoWeaponFighting: false,
+  hasImprovedTwoWeaponFighting: false,
+  hasGreaterTwoWeaponFighting: false,
   ...patch,
 });
 
@@ -34,7 +39,7 @@ describe("Power Attack", () => {
   it(`nimmt vom NAHKAMPF-Angriff und gibt auf den Schaden`, () => {
     const out = applyCombatOptions(options({ powerAttack: 4 }), context());
     expect(sum(out.meleeAttack)).toBe(-4);
-    expect(sum(out.meleeDamage({ handedness: "one" }))).toBe(4);
+    expect(sum(out.meleeDamage({ handedness: "one", hand: "main" }))).toBe(4);
   });
 
   it(`lässt Fernkampfangriffe in Ruhe — das ist der Fehler, der auf dem Bogen stand`, () => {
@@ -49,13 +54,13 @@ describe("Power Attack", () => {
 
   it(`zählt zweihändig DOPPELT — das ist der Grund, warum man es nicht im Kopf rechnet`, () => {
     const out = applyCombatOptions(options({ powerAttack: 5 }), context());
-    expect(sum(out.meleeDamage({ handedness: "two" }))).toBe(10);
-    expect(out.meleeDamage({ handedness: "two" })[0]?.source).toContain("×2");
+    expect(sum(out.meleeDamage({ handedness: "two", hand: "main" }))).toBe(10);
+    expect(out.meleeDamage({ handedness: "two", hand: "main" })[0]?.source).toContain("×2");
   });
 
   it(`gibt mit einer LEICHTEN Waffe keinen Schaden, der Angriffsmalus bleibt aber`, () => {
     const out = applyCombatOptions(options({ powerAttack: 3 }), context());
-    expect(sum(out.meleeDamage({ handedness: "light" }))).toBe(0);
+    expect(sum(out.meleeDamage({ handedness: "light", hand: "main" }))).toBe(0);
     expect(sum(out.meleeAttack)).toBe(-3);
   });
 
@@ -63,20 +68,20 @@ describe("Power Attack", () => {
     // „except with unarmed strikes or natural weapon attacks" — sonst kassiert
     // ein waffenloser Mönch den Malus und bekommt nichts dafür.
     const out = applyCombatOptions(options({ powerAttack: 3 }), context());
-    expect(sum(out.meleeDamage({ handedness: "light", naturalOrUnarmed: true }))).toBe(3);
+    expect(sum(out.meleeDamage({ handedness: "light", naturalOrUnarmed: true, hand: "main" }))).toBe(3);
   });
 
   it(`zählt eine EINHÄNDIGE Waffe doppelt, wenn sie beidhändig geführt wird`, () => {
     // Langschwert in beiden Händen: der häufigste Fall am Tisch, und vorher gab
     // es dafür +4 statt +8.
     const out = applyCombatOptions(options({ powerAttack: 4 }), context());
-    expect(sum(out.meleeDamage({ handedness: "one", wieldedInTwoHands: true }))).toBe(8);
-    expect(sum(out.meleeDamage({ handedness: "one" }))).toBe(4);
+    expect(sum(out.meleeDamage({ handedness: "one", wieldedInTwoHands: true, hand: "main" }))).toBe(8);
+    expect(sum(out.meleeDamage({ handedness: "one", hand: "main" }))).toBe(4);
   });
 
   it(`wirkt nicht auf Fernkampfschaden`, () => {
     const out = applyCombatOptions(options({ powerAttack: 3 }), context());
-    expect(out.meleeDamage({ handedness: "ranged" })).toEqual([]);
+    expect(out.meleeDamage({ handedness: "ranged", hand: "main" })).toEqual([]);
   });
 
   it(`meldet eine Höhe über dem GAB, wendet sie aber an (der DM hat Recht)`, () => {
@@ -89,7 +94,7 @@ describe("Power Attack", () => {
     const out = applyCombatOptions(options({ powerAttack: 4 }), context({ hasPowerAttack: false }));
     expect(out.attack).toEqual([]);
     expect(out.meleeAttack).toEqual([]);
-    expect(sum(out.meleeDamage({ handedness: "one" }))).toBe(0);
+    expect(sum(out.meleeDamage({ handedness: "one", hand: "main" }))).toBe(0);
     expect(out.warnings.join(" ")).toContain("hat das Talent nicht");
   });
 });
@@ -215,7 +220,7 @@ describe("Zusammenspiel", () => {
     );
     expect(sum(out.meleeAttack)).toBe(-4);
     expect(sum(out.ac)).toBe(2);
-    expect(sum(out.meleeDamage({ handedness: "one" }))).toBe(2);
+    expect(sum(out.meleeDamage({ handedness: "one", hand: "main" }))).toBe(2);
     expect(out.attack).toEqual([]);
   });
 

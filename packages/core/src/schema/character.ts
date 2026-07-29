@@ -279,6 +279,20 @@ export const characterSchema = z.object({
       dodgeActive: z.boolean().default(false),
       /** Gegen wen — reiner Merkzettel. Ob Dodge gilt, sagt `dodgeActive`. */
       dodgeTarget: z.string().default(""),
+      /**
+       * „Ich greife diese Runde mit BEIDEN Waffen an."
+       *
+       * Eine Eingabe und keine Folge, obwohl es verlockend ist, sie aus den
+       * Händen abzuleiten: man kann Kurzschwert und Dolch in den Händen halten
+       * und trotzdem nur einmal mit dem Kurzschwert zuschlagen — dann gilt kein
+       * Malus. Was die Hände tragen, gehört zum AUFBAU; ob man beide benutzt, ist
+       * eine Entscheidung dieser Runde, wie defensiv kämpfen und der
+       * Dodge-Schalter.
+       *
+       * Die HÖHE der Mali steht bewusst nicht hier: die ist eine Folge daraus, ob
+       * die Waffe in der zweiten Hand leicht ist und ob das Talent vorhanden ist.
+       */
+      twoWeaponFighting: z.boolean().default(false),
     })
     .default({
       powerAttack: 0,
@@ -287,6 +301,7 @@ export const characterSchema = z.object({
       totalDefense: false,
       dodgeActive: false,
       dodgeTarget: "",
+      twoWeaponFighting: false,
     }),
 
   /** DER Notausgang — Provenienz „manuell". Macht Homebrew ab Tag 1 spielbar. */

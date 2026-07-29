@@ -86,12 +86,27 @@ nicht zwischenspeichern.
   Domänenplatz je Zaubergrad ab 1, die Domänenzauber in der Auswahl, und der Import
   liest seine Notiz „Domains".
 
+- **Zweiwaffen-Mali: gelten an seinem Tisch.** Wörtlich: „der zwei waffen angriff
+  malus gilt bei uns." Gebaut als Schalter in den Kampfoptionen, die Höhe als
+  Folge aus (Zweitwaffe leicht?) × (Talent?) — −6/−10 · −4/−8 · −4/−4 · −2/−2.
+  Sein Wort deckt den ANGRIFF; der halbe Stärkeschaden der zweiten Hand ist eine
+  eigene Frage und noch offen.
+- **Iterative Angriffe ab GAB +6:** er klärt mit seinem DM, ob sein Tisch die
+  volle Attacke spielt. Fight Club zeigt sie ihm seit zwei Jahren als „+9/+4",
+  ohne ein Wort dazu. Bis zur Antwort NICHT anfassen — das würde jeden Bogen
+  ändern.
+
 ## Noch offen
 
-- **Zweiwaffen-Mali (−6/−10):** verschiebt Zahlen bestehender Charaktere — braucht
-  sein Wort (siehe „Zwei Ausnahmen" oben).
+- **Halber Stärkeschaden in der zweiten Hand** (Dolch 1d4+1 statt 1d4+2) und die
+  Rundung bei negativem Stärkemodifikator im ×1,5-Pfad — beides verschiebt Zahlen,
+  beides braucht sein Wort.
 - **Wurfwaffen** (Schleuder, Wurfspeer, Dart, Shuriken, Bolas) bekommen keinen
   Stärkeschaden — braucht eine Marke „Wurfwaffe" an den Waffendaten.
+- **Ausrüstung:** blättern statt suchen (die Auswahl zeigt erst ab zwei Buchstaben
+  und dann 20 Treffer — deshalb findet er die 12 Rüstungen nicht), Werte erklären
+  (Rüstungsmalus, arkane Patzerchance betrifft seinen Kleriker nicht) und eigene
+  Gegenstände mit rechnenden Effekten.
 - **Behälter** (Inventar/Geldbeutel, Münzgewicht) und Umsortieren per Ziehen.
 
 Details: `PRUEFBERICHT.md`.
