@@ -201,6 +201,21 @@ export const characterSchema = z.object({
     })
     .default({ pp: 0, gp: 0, sp: 0, cp: 0 }),
 
+  /**
+   * Gewählte Domänen — die Kennung der Domänen-Zauberliste, je Klasse.
+   *
+   * AUFBAU, nicht Spielzustand: eine Domäne wählt man einmal auf Stufe 1 und
+   * behält sie ein Charakterleben lang. Deshalb steht sie NICHT in `spellState`
+   * neben „vorbereitet" und „verbraucht" — sonst gehörte sie beim Gruppen-Regal
+   * dem Spieler, und der Spielleiter könnte sie nicht setzen.
+   *
+   * Je Klasse und nicht global, weil ein Kleriker/Magier zwei Zauberblöcke hat
+   * und die Domänen zum Kleriker gehören.
+   */
+  domains: z
+    .array(z.object({ classId: z.string(), spellListId: z.string() }))
+    .default([]),
+
   /** Je Klassen-ID. */
   spellState: z
     .record(

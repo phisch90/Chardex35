@@ -144,6 +144,26 @@ export const classDataSchema = z.object({
        * ihre gesamte Klassenliste.
        */
       spellbook: z.boolean().default(false),
+      /**
+       * Domänen — beim Kleriker zwei, sonst gar keine.
+       *
+       * Ein MERKMAL DER KLASSE, keine Zahl in jeder Zeile der Stufentabelle.
+       * Der Domänenplatz gilt auf jedem Zaubergrad ab 1, immer genau einer; als
+       * „+1" in 20 Tabellenzeilen geschrieben stünde dieselbe Aussage
+       * zwanzigmal da und wäre zwanzigmal einzeln falsch zu machen. Die
+       * Stufentabelle im SRD schreibt „3+1" aus demselben Grund nur als
+       * Fußnote.
+       *
+       * `pick` = wie viele Domänen gewählt werden, `bonusSlot` = ob je Grad ein
+       * Platz dazukommt. Beides getrennt, weil es Klassen gibt, die Domänen
+       * bekommen, ohne dafür einen Platz zu erhalten.
+       */
+      domains: z
+        .object({
+          pick: z.number().int().default(2),
+          bonusSlot: z.boolean().default(true),
+        })
+        .optional(),
     })
     .optional(),
   /** Freitext: Waffen-/Rüstungsvertrautheit. */

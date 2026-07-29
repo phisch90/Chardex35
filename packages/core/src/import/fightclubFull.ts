@@ -466,6 +466,44 @@ export function applyFullExtras(
     character.noteSections.push({ id: idFactory(), title, body: note.text });
   }
 
+  // --- Domänen ---------------------------------------------------------------
+  /*
+    Fight Club kennt für Domänen kein Feld — sie stehen in einer NOTIZ:
+    `<note><title>Domains</title><text>Heal / War</text></note>`. In seinem Bogen
+    ist das die einzige Spur, und als reiner Notiztext hätten sie weder Zauber
+    noch den Domänenplatz ausgelöst.
+
+    Die Notiz bleibt trotzdem stehen. Sie ist sein Text, und sie kann mehr
+    enthalten als die zwei Namen; still umzuschreiben, was er selbst geschrieben
+    hat, ist keine Aufgabe eines Importeurs.
+  */
+  const domainNote = full.notes.find((note) => /^domains?$/i.test(note.title.trim()));
+  if (domainNote !== undefined) {
+    const classId = character.levels
+      .map((level) => level.classId)
+      .find((id) => domainPick(compendium.get(id)) > 0);
+    if (classId !== undefined) {
+      const read = readDomainNote(buildDomainIndex(compendium), domainNote.text);
+      for (const listId of read.ids) {
+        if (character.domains.some((d) => d.classId === classId && d.spellListId === listId)) continue;
+        character.domains.push({ classId, spellListId: listId });
+      }
+      if (read.names.length > 0) {
+        issues.push({
+          severity: "info",
+          code: "fc-full-domains",
+          message: `Domänen aus deiner Notiz übernommen: ${read.names.join(", ")}. Damit hast du deren Zauber zur Auswahl und je Zaubergrad einen Platz mehr.`,
+        });
+      } else if (read.unmatched.length > 0) {
+        issues.push({
+          severity: "info",
+          code: "fc-full-domains-unmatched",
+          message: `In deiner Notiz „Domains" habe ich keine Domäne erkannt (gelesen: ${read.unmatched.join(", ")}). Wähl sie im Zauber-Reiter von Hand — geraten hätte ich sonst die falsche Zauberliste.`,
+        });
+      }
+    }
+  }
+
   // --- Vorbereitete Zauber ---------------------------------------------------
   const casterClassId = character.levels
     .map((level) => level.classId)
@@ -576,6 +614,96 @@ function buildSpellIndex(compendium: Map<string, Entity>): Map<string, string> {
 
 function hasSpellcasting(entity: Entity | undefined): boolean {
   return entity?.kind === "class" && entity.data.spellcasting !== undefined;
+}
+
+function domainPick(entity: Entity | undefined): number {
+  if (entity?.kind !== "class") return 0;
+  return entity.data.spellcasting?.domains?.pick ?? 0;
+}
+
+/**
+ * Die Domänen aus einem handgeschriebenen Notizfeld lesen.
+ *
+ * ZEILENWEISE, und eine Zeile zählt nur, wenn sie AUSSCHLIESSLICH aus
+ * Domänennamen besteht. Der Grund steht in seiner echten Notiz:
+ *
+ *     Heal / war
+ *     1 — Cure light wounds / magic weapon
+ *     2 — Cure moderate wounds / spiritual weapon
+ *
+ * Die erste Zeile sind die Domänen, die anderen sind seine Merkliste der
+ * Domänenzauber je Grad. Ein Leser, der die ganze Notiz in einen Topf wirft,
+ * meldet vier erfundene Domänen — genau das tat die erste Fassung, und in der
+ * App standen vier Hinweiszeilen Unsinn.
+ *
+ * Nur eine Zeile pro Domäne ist ebenso erlaubt („Fire\nWater"): beide Zeilen
+ * bestehen dann komplett aus Namen.
+ */
+function readDomainNote(
+  index: Map<string, string>,
+  text: string,
+): { ids: string[]; names: string[]; unmatched: string[] } {
+  const ids: string[] = [];
+  const names: string[] = [];
+  let firstLine: string[] = [];
+  for (const line of text.split("\n")) {
+    const parts = line
+      .split(/[/,;&]| und /i)
+      .map((part) => part.trim())
+      .filter((part) => part !== "");
+    if (parts.length === 0) continue;
+    if (firstLine.length === 0) firstLine = parts;
+    const hits = parts.map((part) => lookupDomain(index, part));
+    if (hits.some((hit) => hit === undefined)) continue;
+    parts.forEach((part, i) => {
+      const id = hits[i]!;
+      if (ids.includes(id)) return;
+      ids.push(id);
+      names.push(part);
+    });
+  }
+  /*
+    Ungelesenes wird nur gemeldet, wenn GAR NICHTS erkannt wurde. Steht die
+    Domäne drin, ist der Rest der Notiz sein Text und niemandes Sache — ihn als
+    „unbekannte Domäne" zu melden macht aus einer Hilfe eine Belästigung.
+  */
+  return { ids, names, unmatched: ids.length === 0 ? firstLine : [] };
+}
+
+/**
+ * Domänen-Zauberlisten nach Namen, OHNE das Wort „Domain".
+ *
+ * Die Packs nennen sie „War Domain", er schreibt „War" — und „Heal" für die
+ * Domäne, die „Healing" heißt. Deshalb ein Namensregister mit anschließendem
+ * Anfangsvergleich, kein Gleichheitstest.
+ */
+function buildDomainIndex(compendium: Map<string, Entity>): Map<string, string> {
+  const index = new Map<string, string>();
+  for (const [id, entity] of compendium) {
+    if (entity.kind !== "spelllist" || entity.deletedAt !== undefined) continue;
+    if (id !== entity.id) continue;
+    if (!entity.tags.includes("domain")) continue;
+    const key = normalizeName(entity.name.replace(/\s+domain$/i, ""));
+    if (!index.has(key)) index.set(key, entity.id);
+  }
+  return index;
+}
+
+/**
+ * Einen geschriebenen Domänennamen einer Liste zuordnen.
+ *
+ * Genauer Treffer zuerst, dann ein Anfang, der NUR EINE Domäne trifft. „Ma"
+ * passt auf Madness und Magic — dann wird nichts gewählt und der Name
+ * gemeldet. Eine geratene Domäne wären neun falsche Zauber, und die fallen
+ * niemandem auf, bis sie am Spieltisch gebraucht werden.
+ */
+function lookupDomain(index: Map<string, string>, name: string): string | undefined {
+  const key = normalizeName(name.replace(/\s+domain$/i, ""));
+  if (key === "") return undefined;
+  const exact = index.get(key);
+  if (exact !== undefined) return exact;
+  const starts = [...index.entries()].filter(([listName]) => listName.startsWith(key));
+  return starts.length === 1 ? starts[0]![1] : undefined;
 }
 
 /**

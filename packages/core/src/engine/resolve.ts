@@ -70,6 +70,12 @@ export function resolve(
     entity: get(conditionId, "condition", "Zustand"),
   }));
 
+  const domains = character.domains.map((entry) => ({
+    classId: entry.classId,
+    spellListId: entry.spellListId,
+    entity: get(entry.spellListId, "spelllist", "Domäne"),
+  }));
+
   // Ein Override-Entity liegt unter eigener UND Ziel-ID in der Map. Gelistet
   // wird nur der kanonische Eintrag (bei Overrides: unter der Ziel-ID).
   const skills: { id: string; entity: Extract<Entity, { kind: "skill" }> }[] = [];
@@ -81,5 +87,16 @@ export function resolve(
   }
   skills.sort((a, b) => a.entity.name.localeCompare(b.entity.name));
 
-  return { character, race, classes, classLevelCounts, feats, items, conditions, skills, issues };
+  return {
+    character,
+    race,
+    classes,
+    classLevelCounts,
+    feats,
+    items,
+    conditions,
+    domains,
+    skills,
+    issues,
+  };
 }

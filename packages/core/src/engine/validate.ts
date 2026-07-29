@@ -138,6 +138,25 @@ export function validate(
 
   // Mehr vorbereitete Zauber als Slots (je Grad).
   for (const block of sheet.spellcasting) {
+    /*
+      Domänen gewählt? Ohne sie fehlen dem Kleriker zwei Dinge gleichzeitig: die
+      Zauber der Domänenliste (Power Word Kill steht auf keiner Klerikerliste)
+      und die zugehörige Granted Power. Der Domänenplatz selbst ist trotzdem da —
+      er hängt an der KLASSE, nicht an der Wahl, und ihn erst nach der Wahl zu
+      gewähren hieße, dass ein halb ausgefüllter Bogen falsch rechnet.
+    */
+    if (block.domainPick > 0 && block.domains.length !== block.domainPick) {
+      issues.push({
+        severity: "warning",
+        code: block.domains.length < block.domainPick ? "domains-missing" : "domains-too-many",
+        message:
+          block.domains.length < block.domainPick
+            ? `${block.className}: ${block.domains.length} von ${block.domainPick} Domänen gewählt. Im Zauber-Reiter nachtragen — sonst fehlen dir die Domänenzauber.`
+            : `${block.className}: ${block.domains.length} Domänen gewählt, die Klasse hat ${block.domainPick}.`,
+        ref: block.classId,
+      });
+    }
+
     const prepared = character.spellState[block.classId]?.prepared ?? [];
     const countByLevel = new Map<number, number>();
     for (const p of prepared) {

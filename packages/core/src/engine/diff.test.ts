@@ -89,11 +89,15 @@ describe.skipIf(!packsAvailable)("diffSheets", () => {
     // Kämpfer-Stufe 4 gibt ein Bonustalent, Kleriker nicht.
     expect(find(groups, "Punkte", "Talent-Slots")?.delta).toBe(-1);
     // … und der Kleriker bringt Grad-2-Zauber.
+    //
+    // Ab Grad 1 ist der Domänenplatz mitgezählt: die Tabelle sagt für Kleriker 3
+    // „4/2/1", der Bogen zeigt 4/3/2. Grad 0 bleibt bei 4 — Kantrips bekommen
+    // keinen Domänenplatz.
     const slots = groups
       .find((g) => g.title === "Zauber")
       ?.entries.find((e) => e.label.endsWith("Slots"));
-    expect(slots?.before).toBe("4/2/1/—/—/—/—/—/—/—");
-    expect(slots?.after).toBe("5/3/2/—/—/—/—/—/—/—");
+    expect(slots?.before).toBe("4/3/2/—/—/—/—/—/—/—");
+    expect(slots?.after).toBe("5/4/3/—/—/—/—/—/—/—");
   });
 
   it(`macht neue Trefferpunkte und Rettungswürfe sichtbar`, () => {

@@ -81,8 +81,24 @@ export interface SlotInfo {
   /** null = „—" (Grad nicht verfügbar); 0 = nur Bonus-Slots. */
   base: number | null;
   bonus: number;
+  /**
+   * Domänenplatz dieses Grads: 1 beim Kleriker ab Grad 1, sonst 0.
+   *
+   * Steckt in `total` mit drin — der Platz ist ein Platz, und die Zählung
+   * „wie viele Zauber Grad 1 kann ich heute wirken" darf nicht zwei Zahlen
+   * brauchen. Getrennt ausgewiesen wird er, damit der Bogen ihn auch als
+   * solchen zeigen kann; er darf nur einen Domänenzauber tragen.
+   */
+  domain: number;
   total: number | null;
   used: number;
+}
+
+/** Eine gewählte Domäne, für die Anzeige aufgelöst. */
+export interface DomainLine {
+  spellListId: string;
+  /** „War Domain" bzw. die Kennung, falls das Kompendium sie nicht kennt. */
+  name: string;
 }
 
 export interface SpellcastingBlock {
@@ -99,6 +115,10 @@ export interface SpellcastingBlock {
   spellListId: string;
   /** Klasse führt ein Zauberbuch (Magier, Assassine) und ist darauf begrenzt. */
   usesSpellbook: boolean;
+  /** Wie viele Domänen die Klasse wählt. 0 = keine (alle außer Kleriker). */
+  domainPick: number;
+  /** Die gewählten Domänen dieser Klasse — leer, solange nichts gewählt ist. */
+  domains: DomainLine[];
 }
 
 export interface EncumbranceBlock {

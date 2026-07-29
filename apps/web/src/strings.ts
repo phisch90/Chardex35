@@ -473,6 +473,16 @@ export const S = {
     unprepare: "Vorbereitung lösen",
     unlearn: "Vergessen",
     removeFromSpellbook: "Aus dem Zauberbuch nehmen",
+    domains: "Domänen",
+    domainSlot: "Domänenplatz",
+    /** Die Marke am Zauber, der nur über die Domäne dazukommt. */
+    fromDomain: "Domäne",
+    pickDomain: "Domäne wählen…",
+    domainsMissing: (have: number, want: number) =>
+      `${have} von ${want} gewählt — im Bearbeiten-Modus nachtragen.`,
+    domainsHint:
+      "Jede Domäne bringt ihre neun Zauber mit und je Zaubergrad einen zusätzlichen Platz. Der Platz gehört einem Domänenzauber.",
+    domainRemove: "Domäne entfernen",
   },
 
   import: {

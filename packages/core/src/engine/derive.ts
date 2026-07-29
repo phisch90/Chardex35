@@ -691,13 +691,26 @@ export function deriveSheetValues(
     const dcBase = 10 + abilityMod + stackPaths(buckets, ["dc.spells"]).total;
 
     const usedSlots = character.spellState[classId]?.usedSlots ?? [];
+    /*
+      Der Domänenplatz — der Grund, warum in seinem Bogen bei Grad 1 „3" stand,
+      wo Fight Club „4" zeigt.
+
+      Er gilt ab Grad 1 (Grad 0 nie, das sind Kantrips) und nur, wo es überhaupt
+      Plätze gibt: `base === null` heißt „diesen Grad kann die Klasse noch
+      nicht", und ein Domänenplatz auf einem Grad ohne Plätze wäre ein Zauber aus
+      dem Nichts. Genau denselben Vorbehalt hat schon der Bonus aus dem Attribut.
+    */
+    const domainSlot = casting.domains?.bonusSlot === true ? 1 : 0;
     const slots: SlotInfo[] = row.spellsPerDay.map((base, level) => {
-      const bonus = base === null || level === 0 || !casting.bonusSlots ? 0 : bonusSpells(abilityMod, level);
+      const usable = base !== null && level > 0;
+      const bonus = !usable || !casting.bonusSlots ? 0 : bonusSpells(abilityMod, level);
+      const domain = usable ? domainSlot : 0;
       return {
         level,
         base,
         bonus,
-        total: base === null ? null : base + bonus,
+        domain,
+        total: base === null ? null : base + bonus + domain,
         used: usedSlots[level] ?? 0,
       };
     });
@@ -714,6 +727,13 @@ export function deriveSheetValues(
       spellsKnown: row.spellsKnown,
       spellListId: casting.spellListId,
       usesSpellbook: casting.spellbook,
+      domainPick: casting.domains?.pick ?? 0,
+      domains: resolved.domains
+        .filter((entry) => entry.classId === classId)
+        .map((entry) => ({
+          spellListId: entry.spellListId,
+          name: entry.entity?.name ?? entry.spellListId,
+        })),
     });
   }
 
