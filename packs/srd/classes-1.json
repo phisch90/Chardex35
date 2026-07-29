@@ -3202,6 +3202,10 @@
         "ability": "wis",
         "armorFailure": false,
         "bonusSlots": true,
+        "domains": {
+          "bonusSlot": true,
+          "pick": 2
+        },
         "model": "prepared",
         "spellListId": "srd:spelllist:cleric",
         "spellbook": false

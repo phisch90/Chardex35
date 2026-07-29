@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   displayName,
-  spellsForList,
+  domainSpellLists,
+  spellsForCaster,
   type Character,
   type SpellEntity,
   type SpellcastingBlock,
@@ -35,14 +36,29 @@ function spellSubline(spell: SpellEntity | null): string {
   return spell.data.components ? `${parts} (${spell.data.components})` : parts;
 }
 
-function CasterBlock({ block, character, save }: TabProps & { block: SpellcastingBlock }) {
+function CasterBlock({
+  block,
+  character,
+  editMode,
+  save,
+}: TabProps & { block: SpellcastingBlock }) {
   const compendium = useCompendium();
   const [query, setQuery] = useState("");
   const [addLevel, setAddLevel] = useState<number | null>(null);
 
+  /*
+    `block` als Ganzes ist die richtige Abhängigkeit: der abgeleitete Bogen hängt
+    am Charakter (useSheet merkt sich ihn), nicht am Tippen im Suchfeld. Die 236
+    Klerikerzauber plus Domänenzauber werden also einmal je Bogenstand sortiert
+    und nicht bei jedem Tastendruck.
+  */
   const entries = useMemo(
-    () => (compendium ? spellsForList(compendium, block.spellListId) : []),
-    [compendium, block.spellListId],
+    () => (compendium ? spellsForCaster(compendium, block) : []),
+    [compendium, block],
+  );
+  const allDomains = useMemo(
+    () => (compendium && block.domainPick > 0 ? domainSpellLists(compendium) : []),
+    [compendium, block.domainPick],
   );
   const state = character.spellState[block.classId] ?? emptySpellState();
   const knownSet = new Set(state.known);
@@ -58,6 +74,26 @@ function CasterBlock({ block, character, save }: TabProps & { block: Spellcastin
       // Direkte Index-Zuweisung kann Sparse-Löcher erzeugen — normalisieren,
       // damit Export (JSON) und Zod-Import sauber bleiben.
       s.usedSlots = Array.from(s.usedSlots, (v) => v ?? 0);
+    });
+
+  /**
+   * Domänen sind AUFBAU, nicht Spielzustand — sie liegen deshalb neben
+   * `spellState` am Charakter und werden hier direkt geschrieben.
+   *
+   * Doppelte werden abgewiesen: zwei Mal War brächte zwei Mal dieselben neun
+   * Zauber und einen Platz, den es nicht gibt.
+   */
+  const addDomain = (spellListId: string) =>
+    save((c) => {
+      if (c.domains.some((d) => d.classId === block.classId && d.spellListId === spellListId)) return;
+      c.domains.push({ classId: block.classId, spellListId });
+    });
+
+  const removeDomain = (spellListId: string) =>
+    save((c) => {
+      c.domains = c.domains.filter(
+        (d) => !(d.classId === block.classId && d.spellListId === spellListId),
+      );
     });
 
   const slotFor = (level: number) => block.slots.find((s) => s.level === level);
@@ -149,6 +185,64 @@ function CasterBlock({ block, character, save }: TabProps & { block: Spellcastin
         </GhostButton>
       </div>
 
+      {/*
+        Domänen. Sie stehen ÜBER der Suche und über den Graden, weil sie
+        entscheiden, was in den Graden überhaupt zur Auswahl steht — und weil ein
+        Kleriker ohne gewählte Domänen zwei Plätze hat, die er nicht füllen kann.
+      */}
+      {block.domainPick > 0 && (
+        <div className="mt-2 rounded-xl border border-slate-700 bg-slate-900/60 px-2.5 py-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-semibold text-slate-300">{S.spells.domains}</span>
+            {block.domains.map((domain) => (
+              <span
+                key={domain.spellListId}
+                className="flex items-center gap-1 rounded-lg bg-violet-950/60 px-2 py-0.5 text-[11px] text-violet-200"
+              >
+                <Link
+                  to="/kompendium/$kind/$entityId"
+                  params={{ kind: "spelllist", entityId: domain.spellListId }}
+                  className="hover:text-violet-100"
+                >
+                  {domain.name}
+                </Link>
+                {editMode && (
+                  <button
+                    onClick={() => removeDomain(domain.spellListId)}
+                    title={S.spells.domainRemove}
+                    className="text-violet-400 hover:text-rose-300"
+                  >
+                    ✕
+                  </button>
+                )}
+              </span>
+            ))}
+            {block.domains.length < block.domainPick && (
+              <span className="text-[11px] text-amber-400">
+                {S.spells.domainsMissing(block.domains.length, block.domainPick)}
+              </span>
+            )}
+          </div>
+          {editMode && (
+            <select
+              value=""
+              onChange={(e) => {
+                if (e.target.value !== "") addDomain(e.target.value);
+              }}
+              className="mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
+            >
+              <option value="">{S.spells.pickDomain}</option>
+              {allDomains.map((domain) => (
+                <option key={domain.id} value={domain.id}>
+                  {domain.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <p className="mt-1 text-[10px] leading-snug text-slate-500">{S.spells.domainsHint}</p>
+        </div>
+      )}
+
       <div className="mt-2">
         <SearchInput value={query} onChange={setQuery} placeholder={S.actions.search} />
       </div>
@@ -167,7 +261,23 @@ function CasterBlock({ block, character, save }: TabProps & { block: Spellcastin
                 {S.spells.level} {level}
               </span>
               <span className="flex-1 truncate font-mono text-[11px] text-slate-400">
-                {Array.from({ length: total }, (_, i) => (i < used ? "●" : "○")).join(" ")}
+                {/*
+                  Der Domänenplatz ist der LETZTE Punkt der Reihe und trägt eine
+                  eigene Form. Verbraucht wird von links, also füllt er sich
+                  zuletzt — was der Wahrheit entspricht: die App weiß nicht,
+                  welcher der gewirkten Zauber der Domänenzauber war, und sie soll
+                  nicht so tun als ob.
+                */}
+                {Array.from({ length: total }, (_, i) => {
+                  const isDomain = i >= total - slot.domain;
+                  const symbol = isDomain ? (i < used ? "◆" : "◇") : i < used ? "●" : "○";
+                  return (
+                    <span key={i} className={isDomain ? "text-violet-300" : undefined}>
+                      {symbol}
+                      {i < total - 1 ? " " : ""}
+                    </span>
+                  );
+                })}
                 {slot.bonus > 0 && <span className="ml-1 text-emerald-500">(+{slot.bonus})</span>}
               </span>
               <span className="shrink-0 text-[11px] text-slate-400">
@@ -230,6 +340,16 @@ function CasterBlock({ block, character, save }: TabProps & { block: Spellcastin
                           {count > 1 && <span className="text-slate-400"> ×{count}</span>}
                         </div>
                         <div className="truncate text-[11px] text-slate-500">
+                          {/*
+                            Woher der Zauber kommt, muss dranstehen: Power Word
+                            Kill steht auf keiner Klerikerliste und wäre ohne die
+                            Marke ein Zauber, den man sich nicht erklären kann.
+                          */}
+                          {entry.domain !== undefined && (
+                            <span className="mr-1 rounded bg-violet-950/60 px-1 text-violet-300">
+                              {entry.domain}
+                            </span>
+                          )}
                           {spellSubline(entry.spell)}
                         </div>
                       </Link>
@@ -379,6 +499,13 @@ function CasterBlock({ block, character, save }: TabProps & { block: Spellcastin
             <span className="text-emerald-400">(+n)</span> hinter der Slot-Zahl — Bonus-Slots aus{" "}
             {S.abilities[block.ability]}
           </li>
+          {block.domainPick > 0 && (
+            <li>
+              <span className="text-violet-300">◆</span> / <span className="text-violet-300">◇</span>{" "}
+              im Grad-Kopf — der {S.spells.domainSlot} dieses Grads. Er gehört einem Zauber aus deinen
+              Domänen; verbraucht wird von links, er füllt sich also zuletzt.
+            </li>
+          )}
         </ul>
       </details>
     </Card>

@@ -16,12 +16,21 @@ const SPELLCASTING: Record<
     armorFailure: boolean;
     /** Nur der Magier führt unter den PHB-Castern ein Zauberbuch. */
     spellbook: boolean;
+    /**
+     * Wie viele Domänen die Klasse wählt. Nur der Kleriker; der Druide hat im
+     * SRD keine. Der Domänenplatz je Zaubergrad hängt daran.
+     *
+     * Steht in der SQL-Ablage nirgends als Spalte — die Stufentabelle schreibt
+     * „3+1" und die Fußnote erklärt es in Prosa. Deshalb hier von Hand, wie
+     * schon Zauberbuch und Rüstungsstörung.
+     */
+    domains?: number;
   }
 > = {
   wizard: { model: "prepared", ability: "int", list: "sorcerer-wizard", armorFailure: true, spellbook: true },
   sorcerer: { model: "spontaneous", ability: "cha", list: "sorcerer-wizard", armorFailure: true, spellbook: false },
   bard: { model: "spontaneous", ability: "cha", list: "bard", armorFailure: true, spellbook: false },
-  cleric: { model: "prepared", ability: "wis", list: "cleric", armorFailure: false, spellbook: false },
+  cleric: { model: "prepared", ability: "wis", list: "cleric", armorFailure: false, spellbook: false, domains: 2 },
   druid: { model: "prepared", ability: "wis", list: "druid", armorFailure: false, spellbook: false },
   paladin: { model: "prepared", ability: "wis", list: "paladin", armorFailure: false, spellbook: false },
   ranger: { model: "prepared", ability: "wis", list: "ranger", armorFailure: false, spellbook: false },
@@ -222,6 +231,9 @@ export function convertClasses(ctx: ConvertContext): ClassEntity[] {
                 bonusSlots: true,
                 armorFailure: caster.armorFailure,
                 spellbook: caster.spellbook,
+                ...(caster.domains === undefined
+                  ? {}
+                  : { domains: { pick: caster.domains, bonusSlot: true } }),
               },
             }
           : {}),

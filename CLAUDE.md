@@ -60,23 +60,38 @@ Sitzung, nicht per `curl`.
 
 ## Die Fehlerfamilie dieses Projekts
 
-**Ein abgeleiteter Wert, der gespeichert wurde.** Bisher vier Fälle: rohe statt
+**Ein abgeleiteter Wert, der gespeichert wurde.** Bisher fünf Fälle: rohe statt
 geparster Datenbankzeilen · fehlende Schema-Standardwerte, weil Parser Literale
 bauten · `equipped` statt `slot` · das eingefrorene Maximum eines Zählers, weshalb
-Extra Turning nie ankam. Bei jedem neuen Feld die Frage stellen: ist das eine
+Extra Turning nie ankam · der Abzweigpunkt des Abgleichs, der für Bögen weiterzählte,
+die nie hochgeladen wurden. Bei jedem neuen Feld die Frage stellen: ist das eine
 Eingabe oder eine Folge?
+
+Beim Domänenplatz war die Antwort: die WAHL der Domäne ist eine Eingabe (steht am
+Charakter), der PLATZ je Zaubergrad ist eine Folge (steht als Merkmal an der Klasse
+und wird gerechnet) — und in welchem der Plätze ein vorbereiteter Zauber sitzt,
+gehört gar niemandem: das rechnet die Anzeige aus, gespeichert wird es nicht.
 
 Zweite Falle, aus dem Prüfbericht: **ein Feld, das seinen Wert in eine eigene Kopie
 zieht und nur beim Verlassen speichert.** Dabei geht Tippen verloren. Durchschreiben,
 nicht zwischenspeichern.
 
-## Offene Entscheidungen (Stand: Prüfbericht)
+## Beantwortete Entscheidungen (nicht neu fragen)
 
-- **Arbeitet er wirklich auf iPhone UND iPad?** Davon hängt ab, wie dringend der
-  Abgleich-Fehler ist (Konflikt wird nur bei genau gleicher `rev` erkannt, sonst
-  geht Arbeit still verloren).
-- **Turn Undead: 8 oder 7?** Sein Zähler sagt 8, seine eigene Notiz sagt 3+CHA+4 = 7.
-- **Domänen** (Heal/War) stehen bei ihm nur in einer Notiz — zusammen mit dem
-  fehlenden Domänenplatz zu bauen.
+- **Geräte:** iPhone UND iPad, beide. Deshalb war der Abgleich-Fehler dringend — er
+  ist behoben (Abzweigpunkt je Regal, siehe `sync/merge.ts`).
+- **Turn Undead: 7.** Seine Notiz hat recht (3 + CHA + 4 vom Talent), die 8 in Fight
+  Club war ein alter Stand. Der Zähler rechnet, er speichert nicht.
+- **Domänen: fehlten wirklich.** Gebaut: Heal/War als Wahl am Charakter, ein
+  Domänenplatz je Zaubergrad ab 1, die Domänenzauber in der Auswahl, und der Import
+  liest seine Notiz „Domains".
 
-Details zu allem Offenen: `PRUEFBERICHT.md`.
+## Noch offen
+
+- **Zweiwaffen-Mali (−6/−10):** verschiebt Zahlen bestehender Charaktere — braucht
+  sein Wort (siehe „Zwei Ausnahmen" oben).
+- **Wurfwaffen** (Schleuder, Wurfspeer, Dart, Shuriken, Bolas) bekommen keinen
+  Stärkeschaden — braucht eine Marke „Wurfwaffe" an den Waffendaten.
+- **Behälter** (Inventar/Geldbeutel, Münzgewicht) und Umsortieren per Ziehen.
+
+Details: `PRUEFBERICHT.md`.

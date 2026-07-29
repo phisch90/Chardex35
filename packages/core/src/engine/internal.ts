@@ -8,6 +8,7 @@ import type {
   ItemEntity,
   RaceEntity,
   SkillEntity,
+  SpellListEntity,
 } from "../schema/entities.js";
 import type { DerivedIssue } from "./types.js";
 
@@ -28,6 +29,8 @@ export interface ResolvedCharacter {
   }[];
   items: { instance: Character["inventory"][number]; entity: ItemEntity | null }[];
   conditions: { conditionId: string; entity: ConditionEntity | null }[];
+  /** Gewählte Domänen samt aufgelöster Zauberliste (für Name und Zauber). */
+  domains: { classId: string; spellListId: string; entity: SpellListEntity | null }[];
   /**
    * Alle Fertigkeiten des Kompendiums (SRD + Homebrew, ohne Tombstones).
    * `id` ist die kanonische ID (bei Overrides die Ziel-ID) — unter dieser

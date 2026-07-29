@@ -1,5 +1,31 @@
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { entitySchema, resolveCompendium, type Entity } from "../schema/entities.js";
+import { deriveSheet } from "../engine/index.js";
+import { importFightClubXml } from "./fightclub.js";
 import { derivedTrackerKey, isFullFightClubExport, parseFullFightClubXml } from "./fightclubFull.js";
+
+const packsDir = join(dirname(fileURLToPath(import.meta.url)), "../../../../packs/srd");
+const manifestPath = join(packsDir, "manifest.json");
+const packsAvailable = existsSync(manifestPath);
+
+function loadPackEntities(): Entity[] {
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { files: string[] };
+  const entities: Entity[] = [];
+  for (const file of manifest.files) {
+    if (!file.endsWith(".json") || file === "manifest.json") continue;
+    for (const item of JSON.parse(readFileSync(join(packsDir, file), "utf8")) as unknown[]) {
+      entities.push(entitySchema.parse(item));
+    }
+  }
+  return entities;
+}
+
+function loadFullCompendium(): Map<string, Entity> {
+  return resolveCompendium(loadPackEntities());
+}
 
 /**
  * Erfundene Datei im echten Format.
@@ -240,5 +266,118 @@ describe("Zähler: was folgt, folgt", () => {
   it(`verwechselt nichts, was nur ähnlich anfängt`, () => {
     expect(derivedTrackerKey("Ragebringer Aufladungen")).toBeUndefined();
     expect(derivedTrackerKey("")).toBeUndefined();
+  });
+});
+
+/**
+ * Domänen — der Weg von der Notiz in echte Daten.
+ *
+ * Fight Club hat für Domänen kein Feld; in seinem Bogen stehen sie als
+ * `<note><title>Domains</title><text>Heal / War</text></note>`. Als Notiztext
+ * angekommen wären sie ein Text und nichts weiter: keine neun Zauber, kein Platz
+ * je Grad. Gegen die ECHTEN Packs geprüft, weil an ihnen die 36 Domänenlisten und
+ * die Marke hängen, über die zugeordnet wird.
+ */
+describe.skipIf(!packsAvailable)("Domänen aus der Notiz", () => {
+  const compendium = packsAvailable ? loadFullCompendium() : new Map<string, Entity>();
+  let n = 0;
+  const result = packsAvailable
+    ? importFightClubXml(XML, compendium, { idFactory: () => `dom-${++n}` }).results[0]!
+    : undefined;
+
+  it(`ordnet „Heal / War" den richtigen zwei Zauberlisten zu`, () => {
+    // „Heal" ist die Domäne, die im SRD „Healing" heißt — Anfangsvergleich, kein
+    // Gleichheitstest. Und sie hängen am KLERIKER, nicht am Fighter.
+    expect(result?.character.domains).toEqual([
+      { classId: "srd:class:cleric", spellListId: "srd:spelllist:domain-healing" },
+      { classId: "srd:class:cleric", spellListId: "srd:spelllist:domain-war" },
+    ]);
+  });
+
+  it(`sagt, dass es sie übernommen hat`, () => {
+    const issue = result?.issues.find((i) => i.code === "fc-full-domains");
+    expect(issue?.message).toContain("Heal");
+    expect(issue?.message).toContain("War");
+  });
+
+  it(`lässt seine Notiz stehen`, () => {
+    // Sein Text, seine Sache. Der Import liest ihn, er schreibt ihn nicht um.
+    expect(result?.character.noteSections.map((s) => s.title)).toContain("Domains");
+  });
+
+  it(`bringt den Domänenplatz auf den Bogen`, () => {
+    const withImported = resolveCompendium([...loadPackEntities(), ...(result?.entities ?? [])]);
+    const sheet = deriveSheet(result!.character, withImported);
+    const block = sheet.spellcasting.find((b) => b.classId === "srd:class:cleric")!;
+    // Kleriker 4, WIS 11: Tabelle 5/3/2, auf dem Bogen 5/4/3.
+    expect(block.slots.slice(0, 3).map((s) => s.total)).toEqual([5, 4, 3]);
+    expect(block.domains.map((d) => d.name)).toEqual(["Healing Domain", "War Domain"]);
+    // Und damit kein Gemecker mehr über fehlende Domänen.
+    expect(sheet.issues.filter((i) => i.code.startsWith("domains-"))).toEqual([]);
+  });
+
+  it(`überliest seine Merkliste der Domänenzauber, statt vier Domänen zu erfinden`, () => {
+    /*
+      Seine echte Notiz ist DREI Zeilen lang:
+
+          Heal / war
+          1 — Cure light wounds / magic weapon
+          2 — Cure moderate wounds / spiritual weapon
+
+      Die erste Fassage warf alles in einen Topf und meldete in der App vier
+      erfundene Domänen. Eine Zeile zählt nur, wenn sie ausschließlich aus
+      Domänennamen besteht.
+    */
+    const xml = XML.replace(
+      "<text>Heal / War</text>",
+      "<text>Heal / war\n1 — Cure light wounds / magic weapon \n2 — Cure moderate wounds / spiritual weapon </text>",
+    );
+    let m = 0;
+    const other = importFightClubXml(xml, compendium, { idFactory: () => `x-${++m}` }).results[0]!;
+    expect(other.character.domains).toEqual([
+      { classId: "srd:class:cleric", spellListId: "srd:spelllist:domain-healing" },
+      { classId: "srd:class:cleric", spellListId: "srd:spelllist:domain-war" },
+    ]);
+    // Und KEIN Hinweis über die zwei Zeilen, die er für sich geschrieben hat.
+    expect(other.issues.find((i) => i.code === "fc-full-domains-unmatched")).toBeUndefined();
+  });
+
+  it(`nimmt auch eine Domäne pro Zeile`, () => {
+    const xml = XML.replace("<text>Heal / War</text>", "<text>Sun\nTravel</text>");
+    let m = 0;
+    const other = importFightClubXml(xml, compendium, { idFactory: () => `w-${++m}` }).results[0]!;
+    expect(other.character.domains.map((d) => d.spellListId)).toEqual([
+      "srd:spelllist:domain-sun",
+      "srd:spelllist:domain-travel",
+    ]);
+  });
+
+  it(`meldet, wenn es GAR NICHTS erkannt hat`, () => {
+    const xml = XML.replace("<text>Heal / War</text>", "<text>Zwielicht und Feuerwerk</text>");
+    let m = 0;
+    const other = importFightClubXml(xml, compendium, { idFactory: () => `v-${++m}` }).results[0]!;
+    expect(other.character.domains).toEqual([]);
+    const issue = other.issues.find((i) => i.code === "fc-full-domains-unmatched");
+    expect(issue?.message).toContain("Zwielicht");
+    expect(issue?.message).toContain("Feuerwerk");
+  });
+
+  it(`raten bei mehrdeutigem Anfang: lieber nichts`, () => {
+    // „Ma" passt auf Madness UND Magic. Neun falsche Zauber merkt man erst am
+    // Spieltisch.
+    const xml = XML.replace("<text>Heal / War</text>", "<text>Ma</text>");
+    let m = 0;
+    const other = importFightClubXml(xml, compendium, { idFactory: () => `y-${++m}` }).results[0]!;
+    expect(other.character.domains).toEqual([]);
+    expect(other.issues.find((i) => i.code === "fc-full-domains-unmatched")).toBeDefined();
+  });
+
+  it(`ein Charakter ohne Domänenklasse bekommt keine Domänen angehängt`, () => {
+    // Notiz da, Klasse nicht — dann bleibt es eine Notiz.
+    const xml = XML.replace(/<class><id>2<\/id>[\s\S]*?<\/class>/, "");
+    let m = 0;
+    const other = importFightClubXml(xml, compendium, { idFactory: () => `z-${++m}` }).results[0]!;
+    expect(other.character.domains).toEqual([]);
+    expect(other.character.noteSections.map((s) => s.title)).toContain("Domains");
   });
 });
