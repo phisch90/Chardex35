@@ -15,6 +15,15 @@ import { BottomSheet, GhostButton } from "./bits.js";
  * sonst einen Bogen, den zwei Jahre Spielzeit gefüllt haben — und über den
  * Geräte-Abgleich wäre er auf dem iPad gleich mit weg.
  */
+/**
+ * Der Bestätigungscode fürs Löschen.
+ *
+ * Eine Stelle, weil er im Hinweis, im Platzhalter, in der Vorlese-Beschriftung UND
+ * im Vergleich vorkommt. Vier Kopien laufen irgendwann auseinander, und dann steht
+ * im Text eine Zahl, die der Knopf nicht annimmt.
+ */
+const DELETE_CODE = "1337";
+
 export function CharacterActionsSheet(props: {
   character: Character;
   open: boolean;
@@ -72,7 +81,18 @@ export function CharacterActionsSheet(props: {
     props.onDeleted?.();
   };
 
-  const nameMatches = typed.trim().toLowerCase() === character.name.trim().toLowerCase();
+  /*
+    Bestätigt wird mit einem festen Code, nicht mit dem Namen — Philipps
+    Entscheidung: „Das Name abtippen zum löschen finde ich übertrieben."
+
+    Was dabei verloren geht, ist nicht der Schutz vor dem Löschen an sich (die
+    Gefahrenzone und der zweite Schritt bleiben), sondern der Schutz davor, den
+    FALSCHEN Bogen zu löschen: einen Namen kann man nur abtippen, wenn man ihn
+    gelesen hat, „1337" tippt man beim dritten Mal blind. Deshalb steht der Name
+    jetzt groß und rot über der Abfrage — gesehen werden muss er weiterhin, nur
+    nicht mehr getippt.
+  */
+  const codeMatches = typed.trim() === DELETE_CODE;
 
   return (
     <BottomSheet open={props.open} onClose={close} title={character.name}>
@@ -129,21 +149,30 @@ export function CharacterActionsSheet(props: {
                 </>
               ) : (
                 <>
-                  <p className="text-xs text-slate-300">
-                    Tippe <strong>{character.name}</strong> ab, um das Löschen zu bestätigen.
+                  {/* Der Name so groß, dass man ihn nicht übersehen kann: er ist
+                      die einzige Stelle, an der noch auffällt, wenn man im falschen
+                      Bogen steht. */}
+                  <p className="text-sm text-slate-300">
+                    Wirklich <strong className="text-red-300">{character.name}</strong> löschen?
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Tippe <strong>{DELETE_CODE}</strong> zum Bestätigen.
                   </p>
                   <input
                     value={typed}
                     onChange={(e) => setTyped(e.target.value)}
                     autoComplete="off"
                     spellCheck={false}
-                    placeholder={character.name}
+                    /* Ziffernblock direkt auf dem Handy — der Code ist eine Zahl. */
+                    inputMode="numeric"
+                    placeholder={DELETE_CODE}
+                    aria-label={`${DELETE_CODE} tippen, um ${character.name} zu löschen`}
                     className="w-full rounded-lg border border-red-800 bg-slate-950 px-3 py-2 text-sm"
                   />
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => void doDelete()}
-                      disabled={!nameMatches}
+                      disabled={!codeMatches}
                       className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white enabled:hover:bg-red-600 disabled:opacity-40"
                     >
                       Endgültig löschen
