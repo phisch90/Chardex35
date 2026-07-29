@@ -398,3 +398,250 @@ describe("redundantConflictCopies", () => {
     expect(redundantConflictCopies([original, dead])).toHaveLength(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Der gemeinsame Abzweigpunkt: „beide haben gearbeitet" erkennen
+// ---------------------------------------------------------------------------
+
+/**
+ * Der schlimmste Fehler, den der Prüfbericht gefunden hat, und er war als Absicht
+ * dokumentiert: ein Konflikt wurde nur bei GENAU gleicher rev erkannt. Zwei Geräte,
+ * die beide gearbeitet haben, haben aber fast nie dieselbe Zahl.
+ *
+ * Philipp arbeitet auf iPhone UND iPad („1, beide") — das ist genau die Lage, für
+ * die die Konfliktkopien gebaut wurden, und sie fiel durchs Raster.
+ */
+describe("mergeDocSets mit gemeinsamem Abzweigpunkt", () => {
+  interface Doc extends SyncDoc {
+    name: string;
+    damage: number;
+    feats: string[];
+  }
+  const doc = (patch: Partial<Doc> = {}): Doc => ({
+    id: "hike",
+    rev: 7,
+    updatedAt: "2026-07-29T20:00:00.000Z",
+    name: "Hike",
+    damage: 0,
+    feats: [],
+    ...patch,
+  });
+
+  it(`erkennt den nachgestellten Datenverlust: 13 Schaden vs. Cleave`, () => {
+    /*
+      Beide bei rev 7 einig. iPhone trägt 13 Schaden ein (rev 8), das iPad ohne Netz
+      Cleave (rev 9). Vorher: das iPad gewann, der Schaden war weg, keine Kopie,
+      keine Warnung, im Bericht stand „1 geholt".
+    */
+    const iphone = doc({ rev: 8, updatedAt: "2026-07-29T20:30:00.000Z", damage: 13 });
+    const ipad = doc({ rev: 9, updatedAt: "2026-07-29T21:00:00.000Z", feats: ["Cleave"] });
+    const base = new Map([["hike", 7]]);
+
+    const out = mergeDocSets([iphone], [ipad], base);
+
+    expect(out.conflicts).toHaveLength(1);
+    // Der neuere Stand gewinnt …
+    expect(out.merged[0]?.feats).toEqual(["Cleave"]);
+    // … und der Schaden vom iPhone ist gerettet, nicht weg.
+    expect(out.conflicts[0]?.loser.damage).toBe(13);
+    expect(out.conflicts[0]?.loserSide).toBe("local");
+  });
+
+  it(`rettet auch den NEUEREN Stand, wenn er die kleinere rev hat`, () => {
+    // iPhone rev 10 um 20:30 gegen iPad rev 9 um 21:00 — vorher gewann das iPhone
+    // wegen der höheren Zahl, und das Talent von vor einer halben Stunde fehlte.
+    const iphone = doc({ rev: 10, updatedAt: "2026-07-29T20:30:00.000Z", damage: 13 });
+    const ipad = doc({ rev: 9, updatedAt: "2026-07-29T21:00:00.000Z", feats: ["Cleave"] });
+    const out = mergeDocSets([iphone], [ipad], new Map([["hike", 7]]));
+
+    expect(out.conflicts).toHaveLength(1);
+    expect(out.merged[0]?.feats).toEqual(["Cleave"]);
+    expect(out.merged[0]?.rev).toBe(11);
+  });
+
+  it(`macht KEINEN Konflikt, wenn nur eine Seite gearbeitet hat`, () => {
+    // Der Normalfall: iPad hat nur gelesen. Eine Kopie wäre hier reiner Lärm.
+    const iphone = doc({ rev: 9, damage: 13 });
+    const ipad = doc({ rev: 7 });
+    const out = mergeDocSets([iphone], [ipad], new Map([["hike", 7]]));
+
+    expect(out.conflicts).toEqual([]);
+    expect(out.merged[0]?.damage).toBe(13);
+    expect(out.toRemote).toHaveLength(1);
+    expect(out.toLocal).toEqual([]);
+  });
+
+  it(`macht KEINEN Konflikt, wenn nur die Gegenseite gearbeitet hat`, () => {
+    const out = mergeDocSets([doc({ rev: 7 })], [doc({ rev: 9, damage: 13 })], new Map([["hike", 7]]));
+    expect(out.conflicts).toEqual([]);
+    expect(out.toLocal).toHaveLength(1);
+    expect(out.toRemote).toEqual([]);
+  });
+
+  it(`bleibt beim alten Verhalten, solange der Abzweigpunkt fehlt`, () => {
+    /*
+      Erster Abgleich nach dem Update: der Punkt ist für kein Dokument bekannt. Ohne
+      diese Rückfallregel gäbe es beim ersten Lauf für JEDES abweichende Dokument
+      eine Kopie — eine Lawine als Begrüßung.
+    */
+    const iphone = doc({ rev: 8, damage: 13 });
+    const ipad = doc({ rev: 9, feats: ["Cleave"] });
+    expect(mergeDocSets([iphone], [ipad]).conflicts).toEqual([]);
+    expect(mergeDocSets([iphone], [ipad], new Map()).conflicts).toEqual([]);
+  });
+
+  it(`erkennt es weiterhin bei gleicher rev, auch ohne Abzweigpunkt`, () => {
+    const out = mergeDocSets([doc({ damage: 13 })], [doc({ feats: ["Cleave"] })]);
+    expect(out.conflicts).toHaveLength(1);
+  });
+
+  it(`schweigt, wenn beide über den Punkt hinaus sind, der INHALT aber gleich ist`, () => {
+    // Dasselbe zweimal getippt ist kein Konflikt — nur Buchhaltung.
+    const out = mergeDocSets(
+      [doc({ rev: 8, damage: 13 })],
+      [doc({ rev: 9, damage: 13 })],
+      new Map([["hike", 7]]),
+    );
+    expect(out.conflicts).toEqual([]);
+    expect(out.merged[0]?.rev).toBe(9);
+  });
+
+  it(`gibt den neuen gemeinsamen Stand zum Mitschreiben heraus`, () => {
+    const out = mergeDocSets(
+      [doc({ id: "a", rev: 8, damage: 13 }), doc({ id: "nur-hier", rev: 3 })],
+      [doc({ id: "a", rev: 9, feats: ["Cleave"] }), doc({ id: "nur-dort", rev: 5 })],
+      new Map([["a", 7]]),
+    );
+    // Für jedes Dokument im Ergebnis steht drin, worauf man sich geeinigt hat.
+    expect(out.nextBase.get("a")).toBe(out.merged.find((d) => d.id === "a")?.rev);
+    expect(out.nextBase.get("nur-hier")).toBe(3);
+    expect(out.nextBase.get("nur-dort")).toBe(5);
+    expect(out.nextBase.size).toBe(3);
+  });
+
+  it(`rettet den bearbeiteten Stand, wenn woanders gelöscht wurde`, () => {
+    /*
+      Auf dem iPad gelöscht, auf dem iPhone gleichzeitig 13 Schaden eingetragen.
+
+      Die Löschung gewinnt (sie ist neuer), aber der bearbeitete Stand liegt danach
+      als Kopie daneben. Das ist Absicht und keine Wiederauferstehung: die Löschung
+      war eine Entscheidung, die Bearbeitung war auch eine, und der Abgleich
+      verspricht, keine Arbeit wegzuwerfen. Wer die Kopie nicht will, löscht sie —
+      dann ist es wieder eine Entscheidung und kein Verlust.
+
+      (Ich hatte hier zuerst „keine Kopie" erwartet. Die Bremse gegen
+      Wiederauferstehung greift, wenn der VERLIERER eine Löschung ist — hier ist er
+      der Inhalt.)
+    */
+    const gelöscht = doc({
+      rev: 9,
+      deletedAt: "2026-07-29T21:00:00.000Z",
+      updatedAt: "2026-07-29T21:00:00.000Z",
+    });
+    const bearbeitet = doc({ rev: 8, damage: 13, updatedAt: "2026-07-29T20:30:00.000Z" });
+    const out = mergeDocSets([bearbeitet], [gelöscht], new Map([["hike", 7]]));
+
+    expect(out.conflicts).toHaveLength(1);
+    expect(out.merged[0]?.deletedAt).toBeDefined();
+    const kopien = conflictCopiesNeeded(out.conflicts, out.merged);
+    expect(kopien).toHaveLength(1);
+    expect(kopien[0]?.loser.damage).toBe(13);
+  });
+
+  it(`macht aus einer Löschung KEINE Kopie, wenn sie verliert`, () => {
+    // Andere Richtung: hier ist der Verlierer die Löschung. Eine „gerettete" Kopie
+    // davon wäre genau die Wiederauferstehung, die niemand will.
+    const gelöscht = doc({
+      rev: 8,
+      deletedAt: "2026-07-29T20:30:00.000Z",
+      updatedAt: "2026-07-29T20:30:00.000Z",
+    });
+    const bearbeitet = doc({ rev: 9, damage: 13, updatedAt: "2026-07-29T21:00:00.000Z" });
+    const out = mergeDocSets([gelöscht], [bearbeitet], new Map([["hike", 7]]));
+
+    expect(out.conflicts).toHaveLength(1);
+    expect(out.merged[0]?.deletedAt).toBeUndefined();
+    expect(conflictCopiesNeeded(out.conflicts, out.merged)).toEqual([]);
+  });
+});
+
+/**
+ * Was die adversarische Gegenprüfung an meiner ersten Fassung gefunden hat.
+ *
+ * Alle drei Punkte hier waren echte Löcher: die Regel stimmte, aber drumherum konnte
+ * der gemeinsame Stand höher stehen als das, was wirklich angekommen ist — und dann
+ * galt wieder „höhere Zahl gewinnt", still.
+ */
+describe("Nachbesserungen aus der Gegenprüfung", () => {
+  interface Doc extends SyncDoc {
+    name: string;
+    damage: number;
+  }
+  const doc = (patch: Partial<Doc> = {}): Doc => ({
+    id: "hike",
+    rev: 7,
+    updatedAt: "2026-07-29T20:00:00.000Z",
+    name: "Hike",
+    damage: 0,
+    ...patch,
+  });
+
+  it(`behandelt eine rev UNTER dem gemeinsamen Stand als Widerspruch`, () => {
+    /*
+      Zahlen wachsen — eine kleinere rev als der gemeinsame Stand kann es nicht geben.
+      In der Gruppe passierte es doch: die Arbeitskopie setzte sich auf rev 1 zurück.
+      Vorher hätte „die höhere gewinnt" den Unterschied nicht gesehen; jetzt ist es
+      ein Konflikt, und der Stand bleibt erhalten.
+    */
+    const zurückgesetzt = doc({ rev: 2, damage: 13 });
+    const gegenseite = doc({ rev: 6 });
+    const out = mergeDocSets([zurückgesetzt], [gegenseite], new Map([["hike", 6]]));
+
+    expect(out.conflicts).toHaveLength(1);
+    expect(conflictCopiesNeeded(out.conflicts, out.merged)).toHaveLength(1);
+  });
+
+  it(`überlebt eine Klammer im Gerätenamen`, () => {
+    /*
+      „iPad (alt)" ergab ein Anhängsel, das das Erkennungs-Muster nicht mehr traf:
+      die Anhängsel stapelten sich, und die Aufräum-Karte in der Liste erschien nie.
+    */
+    const name = conflictCopyName("Hike", "iPad (alt)", "2026-07-29");
+    expect(name).toBe("Hike (Konflikt iPad alt, 2026-07-29)");
+    // Entscheidend: als Kopie wiedererkennbar, also abschneidbar.
+    expect(stripConflictSuffix(name)).toBe("Hike");
+    // Und eine Kopie der Kopie stapelt nicht.
+    expect(stripConflictSuffix(conflictCopyName(name, "iPhone", "2026-07-30"))).toBe("Hike");
+  });
+
+  it(`hält den Punkt zurück, wo nichts angekommen ist`, () => {
+    /*
+      Nachgestellt, was in sync.ts schiefging: ein Bogen über der Größengrenze fällt
+      stumm aus dem Schreib-Auftrag. Sein Punkt darf NICHT weiterwandern, sonst gilt
+      beim nächsten Lauf wieder „höhere Zahl gewinnt".
+
+      Hier wird die Regel dahinter geprüft: nextBase kommt aus dem Ergebnis, und der
+      Aufrufer muss die nicht angekommenen daraus entfernen. Was passiert, wenn er es
+      NICHT tut, steht in der zweiten Hälfte — genau der Verlust.
+    */
+    const lokal = doc({ rev: 8, damage: 13 });
+    const fern = doc({ rev: 7 });
+    const erster = mergeDocSets([lokal], [fern], new Map([["hike", 7]]));
+    expect(erster.nextBase.get("hike")).toBe(8);
+
+    /*
+      Wenn 8 gespeichert wird, ohne dass es ankam: die Gegenseite schreibt später auf
+      9 (mit neuerem Zeitstempel, sie gewinnt also) …
+    */
+    const fernNeu = doc({ rev: 9, updatedAt: "2026-07-29T21:00:00.000Z", name: "Hike vom iPad" });
+    const falsch = mergeDocSets([lokal], [fernNeu], new Map([["hike", 8]]));
+    expect(falsch.conflicts).toEqual([]); // … und die 13 Schaden sind still weg.
+    expect(falsch.merged[0]?.damage).toBe(0);
+
+    // Bleibt der alte Punkt (7) stehen, wird es erkannt und der Stand gerettet.
+    const richtig = mergeDocSets([lokal], [fernNeu], new Map([["hike", 7]]));
+    expect(richtig.conflicts).toHaveLength(1);
+    expect(richtig.conflicts[0]?.loser.damage).toBe(13);
+    expect(richtig.conflicts[0]?.loserSide).toBe("local");
+  });
+});

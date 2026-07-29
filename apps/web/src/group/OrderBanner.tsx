@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { orderFromWorkCopy, type Character, type OrderMarker } from "@codex35/core";
 import { S } from "../strings.js";
-import { db } from "../db/db.js";
+import { CharacterRepo } from "../db/repo.js";
 import { GhostButton, PrimaryButton } from "../ui/bits.js";
 import { mutateGroupSettings } from "./groupStore.js";
 import { useGroupSettings } from "./useGroup.js";
@@ -54,7 +54,14 @@ export function OrderBanner({
         order,
       ];
     });
-    await db.characters.delete(character.id);
+    /*
+      Mit Löschvermerk, nicht hart weg. Das war die einzige Stelle im Projekt, die
+      eine Zeile wirklich entfernt hat — und ohne Vermerk liegt sie noch in der
+      Ablage und kommt beim nächsten Geräte-Abgleich als „nur dort vorhanden"
+      zurück. Eine Arbeitskopie, die von den Toten wiederkehrt, ist genau die
+      Sorte Rätsel, die niemand lösen will.
+    */
+    await CharacterRepo.remove(character);
     setSent(S.group.orderQueued(owner));
     await navigate({
       to: "/gruppe/$gistId/$charId",

@@ -45,7 +45,23 @@ export function workCopyId(gistId: string, characterId: string): string {
 
 export function makeWorkCopy(
   foreign: Character,
-  context: { gistId: string; owner: string; now: string },
+  context: {
+    gistId: string;
+    owner: string;
+    now: string;
+    /**
+     * Die rev einer schon vorhandenen Arbeitskopie unter derselben Kennung.
+     *
+     * MUSS mitgegeben werden, wo es eine gibt. Eine Gegenprüfung hat gefunden,
+     * warum: die Kopie trug fest `rev: 1`, und ein zweites „für den Spieler
+     * bearbeiten" schrieb damit unter derselben Kennung eine KLEINERE Zahl. Der
+     * Geräte-Abgleich liest eine rev unter dem gemeinsamen Stand als „hier ist
+     * nichts passiert" — die alte Fassung von der Gegenseite hätte still gewonnen.
+     *
+     * Eine Zahl, die zurückspringt, ist für jeden Abgleich Gift, egal welcher.
+     */
+    previousRev?: number | undefined;
+  },
 ): Character {
   const marker: OrderMarker = {
     gistId: context.gistId,
@@ -57,7 +73,7 @@ export function makeWorkCopy(
   return characterSchema.parse({
     ...foreign,
     id: workCopyId(context.gistId, foreign.id),
-    rev: 1,
+    rev: (context.previousRev ?? 0) + 1,
     updatedAt: context.now,
     // Kein Entwurf: ein Entwurf gehört zu einem eigenen Bogen und wird verglichen.
     // Das hier gehört jemand anderem.
