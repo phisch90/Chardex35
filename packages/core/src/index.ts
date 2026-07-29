@@ -11,3 +11,7 @@ export * from "./import/prerequisites.js";
 export * from "./sync/merge.js";
 export * from "./sync/backupStatus.js";
 export * from "./sync/refs.js";
+export * from "./group/shelf.js";
+export * from "./group/orders.js";
+export * from "./group/build.js";
+export * from "./group/envelope.js";
