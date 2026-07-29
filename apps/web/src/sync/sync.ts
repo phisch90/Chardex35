@@ -208,19 +208,46 @@ async function runOnce(cfg: SyncSettings): Promise<SyncReport> {
     (uuid bzw. „homebrew:…"), und zwei Karten wären zwei Stellen, an denen dasselbe
     schiefgehen kann.
   */
-  const base = await SyncBaseRepo.get();
+  const base = await SyncBaseRepo.get(cfg.gistId);
   const chars = mergeDocSets(localChars, remoteChars, base);
   const entities = mergeDocSets(localEntities, remoteEntities, base);
 
   const now = new Date();
   // Zweite Sicherung gegen dieselbe Klasse von Fehler: eine Kopie entsteht nur,
   // wenn ihr Inhalt nicht sowieso schon im Bestand liegt (siehe core).
-  const charCopies = conflictCopiesNeeded(chars.conflicts, chars.merged).map((c) =>
-    copyCharacter(c, cfg, now),
-  );
-  const entityCopies = conflictCopiesNeeded(entities.conflicts, entities.merged).map((c) =>
-    copyEntity(c, cfg, now),
-  );
+  /*
+    Eine einzelne kaputte Zeile darf nicht den GANZEN Abgleich anhalten.
+
+    Gefunden von einer Gegenprüfung, und der Weg dahin ist erschreckend kurz:
+    `CharacterRepo.mutate` schreibt ohne Schemaprüfung, ein „3.5" im EP-Feld genügt.
+    Beim Bauen der Konfliktkopie läuft genau diese Zeile durchs Schema, wirft — und
+    zwar VOR jedem Schreiben. Ergebnis: der Abgleich ging gar nicht mehr, für alle
+    Bögen, wegen eines Tippfehlers in einem.
+
+    Jetzt fliegt der eine Bogen aus dem Lauf und wird gemeldet, der Rest läuft.
+  */
+  const safeCopy = <T extends { name: string }>(
+    conflict: SyncConflict<T>,
+    build: () => T,
+  ): T | undefined => {
+    try {
+      return build();
+    } catch (error) {
+      skipped.push(
+        `${conflict.loser.name} (Konfliktkopie nicht möglich: ${
+          error instanceof Error ? error.message.slice(0, 120) : String(error)
+        })`,
+      );
+      return undefined;
+    }
+  };
+
+  const charCopies = conflictCopiesNeeded(chars.conflicts, chars.merged)
+    .map((c) => safeCopy(c, () => copyCharacter(c, cfg, now)))
+    .filter((c): c is Character => c !== undefined);
+  const entityCopies = conflictCopiesNeeded(entities.conflicts, entities.merged)
+    .map((c) => safeCopy(c, () => copyEntity(c, cfg, now)))
+    .filter((c): c is Entity => c !== undefined);
   const conflicts = [...charCopies, ...entityCopies].map((doc) => doc.name);
 
   // 1. Lokal schreiben. Konfliktkopien gehören auf BEIDE Seiten, damit sie
@@ -237,11 +264,35 @@ async function runOnce(cfg: SyncSettings): Promise<SyncReport> {
   // 2. Hochschreiben.
   const tooBig: string[] = [];
   const patch: Record<string, string | null> = {};
+  /**
+   * Dokumente, die zur Gegenseite SOLLTEN, aber nicht hingekommen sind. Für sie
+   * bleibt der alte Abzweigpunkt stehen — sonst gilt beim nächsten Lauf wieder
+   * „höhere Zahl gewinnt", still.
+   */
+  const notPushed = new Set<string>();
+
+  /*
+    Eine Ferndatei, die wir nicht lesen konnten, ist NICHT „dort nicht vorhanden".
+    Sie fehlt nur in unserem Vergleich — und dann hielte der Vergleich unseren
+    eigenen, womöglich älteren Stand für den einzigen und schriebe ihn darüber.
+    Was wir nicht lesen konnten, fassen wir auch nicht an.
+  */
+  const unreadable = new Set([...skipped, ...snapshot.truncated]);
+  const blocked = (prefix: string, id: string) => unreadable.has(syncFileName(prefix, id));
+
   for (const doc of [...chars.toRemote, ...charCopies]) {
-    addToPatch(patch, tooBig, CHAR_PREFIX, doc.id, doc.name, doc);
+    if (blocked(CHAR_PREFIX, doc.id)) {
+      notPushed.add(doc.id);
+      continue;
+    }
+    if (!addToPatch(patch, tooBig, CHAR_PREFIX, doc.id, doc.name, doc)) notPushed.add(doc.id);
   }
   for (const doc of [...entities.toRemote, ...entityCopies]) {
-    addToPatch(patch, tooBig, HOMEBREW_PREFIX, doc.id, doc.name, doc);
+    if (blocked(HOMEBREW_PREFIX, doc.id)) {
+      notPushed.add(doc.id);
+      continue;
+    }
+    if (!addToPatch(patch, tooBig, HOMEBREW_PREFIX, doc.id, doc.name, doc)) notPushed.add(doc.id);
   }
 
   const pushed = Object.keys(patch).length;
@@ -276,9 +327,27 @@ async function runOnce(cfg: SyncSettings): Promise<SyncReport> {
     ist ihr Stand gemeinsam. Ohne sie fielen sie beim nächsten Lauf als „nur hier"
     auf.
   */
-  const nextBase = new Map([...chars.nextBase, ...entities.nextBase]);
-  for (const doc of [...charCopies, ...entityCopies]) nextBase.set(doc.id, doc.rev);
-  await SyncBaseRepo.set(nextBase);
+  /*
+    MISCHEN, nicht ersetzen — und nur für Dokumente, die wirklich angekommen sind.
+
+    Beides hat die Gegenprüfung gefunden, und beide Fehler waren meine:
+
+     - Ersetzen hätte Dokumente vergessen, die in diesem Lauf gar nicht vorkamen.
+     - Und ein Bogen, der über der Größengrenze der Ablage liegt (ein großes Porträt
+       reicht), fällt stumm aus dem Auftrag. Sein Punkt wäre trotzdem
+       weitergewandert, und beim nächsten Lauf hätte die Gegenseite ihn still
+       überschrieben. Der behobene Datenverlust wäre genau für die Bögen zurück, die
+       am schwersten durchgehen — der fünfte Fall der Fehlerfamilie, diesmal von mir.
+  */
+  const nextBase = new Map(base);
+  for (const [id, rev] of [...chars.nextBase, ...entities.nextBase]) {
+    if (notPushed.has(id)) continue;
+    nextBase.set(id, rev);
+  }
+  for (const doc of [...charCopies, ...entityCopies]) {
+    if (!notPushed.has(doc.id)) nextBase.set(doc.id, doc.rev);
+  }
+  await SyncBaseRepo.set(cfg.gistId, nextBase);
 
   return {
     at: new Date().toISOString(),
@@ -290,6 +359,14 @@ async function runOnce(cfg: SyncSettings): Promise<SyncReport> {
   };
 }
 
+/**
+ * Legt ein Dokument in den Schreib-Auftrag — oder meldet, dass es nicht ging.
+ *
+ * Der Rückgabewert ist wichtiger, als er aussieht: wer hier nicht hineinkommt, ist
+ * in der Ablage NICHT angekommen, und dann darf der gemeinsame Abzweigpunkt für
+ * dieses Dokument nicht weiterwandern. Genau das hat eine Gegenprüfung gefunden —
+ * ohne diese Rückmeldung war der behobene Datenverlust für zu große Bögen wieder da.
+ */
 function addToPatch(
   patch: Record<string, string | null>,
   tooBig: string[],
@@ -297,13 +374,14 @@ function addToPatch(
   id: string,
   name: string,
   doc: unknown,
-): void {
+): boolean {
   const json = canonicalJson(doc);
   if (new TextEncoder().encode(json).length > MAX_DOC_BYTES) {
     tooBig.push(name);
-    return;
+    return false;
   }
   patch[syncFileName(prefix, id)] = json;
+  return true;
 }
 
 /**

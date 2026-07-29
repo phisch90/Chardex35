@@ -564,3 +564,84 @@ describe("mergeDocSets mit gemeinsamem Abzweigpunkt", () => {
     expect(conflictCopiesNeeded(out.conflicts, out.merged)).toEqual([]);
   });
 });
+
+/**
+ * Was die adversarische Gegenprüfung an meiner ersten Fassung gefunden hat.
+ *
+ * Alle drei Punkte hier waren echte Löcher: die Regel stimmte, aber drumherum konnte
+ * der gemeinsame Stand höher stehen als das, was wirklich angekommen ist — und dann
+ * galt wieder „höhere Zahl gewinnt", still.
+ */
+describe("Nachbesserungen aus der Gegenprüfung", () => {
+  interface Doc extends SyncDoc {
+    name: string;
+    damage: number;
+  }
+  const doc = (patch: Partial<Doc> = {}): Doc => ({
+    id: "hike",
+    rev: 7,
+    updatedAt: "2026-07-29T20:00:00.000Z",
+    name: "Hike",
+    damage: 0,
+    ...patch,
+  });
+
+  it(`behandelt eine rev UNTER dem gemeinsamen Stand als Widerspruch`, () => {
+    /*
+      Zahlen wachsen — eine kleinere rev als der gemeinsame Stand kann es nicht geben.
+      In der Gruppe passierte es doch: die Arbeitskopie setzte sich auf rev 1 zurück.
+      Vorher hätte „die höhere gewinnt" den Unterschied nicht gesehen; jetzt ist es
+      ein Konflikt, und der Stand bleibt erhalten.
+    */
+    const zurückgesetzt = doc({ rev: 2, damage: 13 });
+    const gegenseite = doc({ rev: 6 });
+    const out = mergeDocSets([zurückgesetzt], [gegenseite], new Map([["hike", 6]]));
+
+    expect(out.conflicts).toHaveLength(1);
+    expect(conflictCopiesNeeded(out.conflicts, out.merged)).toHaveLength(1);
+  });
+
+  it(`überlebt eine Klammer im Gerätenamen`, () => {
+    /*
+      „iPad (alt)" ergab ein Anhängsel, das das Erkennungs-Muster nicht mehr traf:
+      die Anhängsel stapelten sich, und die Aufräum-Karte in der Liste erschien nie.
+    */
+    const name = conflictCopyName("Hike", "iPad (alt)", "2026-07-29");
+    expect(name).toBe("Hike (Konflikt iPad alt, 2026-07-29)");
+    // Entscheidend: als Kopie wiedererkennbar, also abschneidbar.
+    expect(stripConflictSuffix(name)).toBe("Hike");
+    // Und eine Kopie der Kopie stapelt nicht.
+    expect(stripConflictSuffix(conflictCopyName(name, "iPhone", "2026-07-30"))).toBe("Hike");
+  });
+
+  it(`hält den Punkt zurück, wo nichts angekommen ist`, () => {
+    /*
+      Nachgestellt, was in sync.ts schiefging: ein Bogen über der Größengrenze fällt
+      stumm aus dem Schreib-Auftrag. Sein Punkt darf NICHT weiterwandern, sonst gilt
+      beim nächsten Lauf wieder „höhere Zahl gewinnt".
+
+      Hier wird die Regel dahinter geprüft: nextBase kommt aus dem Ergebnis, und der
+      Aufrufer muss die nicht angekommenen daraus entfernen. Was passiert, wenn er es
+      NICHT tut, steht in der zweiten Hälfte — genau der Verlust.
+    */
+    const lokal = doc({ rev: 8, damage: 13 });
+    const fern = doc({ rev: 7 });
+    const erster = mergeDocSets([lokal], [fern], new Map([["hike", 7]]));
+    expect(erster.nextBase.get("hike")).toBe(8);
+
+    /*
+      Wenn 8 gespeichert wird, ohne dass es ankam: die Gegenseite schreibt später auf
+      9 (mit neuerem Zeitstempel, sie gewinnt also) …
+    */
+    const fernNeu = doc({ rev: 9, updatedAt: "2026-07-29T21:00:00.000Z", name: "Hike vom iPad" });
+    const falsch = mergeDocSets([lokal], [fernNeu], new Map([["hike", 8]]));
+    expect(falsch.conflicts).toEqual([]); // … und die 13 Schaden sind still weg.
+    expect(falsch.merged[0]?.damage).toBe(0);
+
+    // Bleibt der alte Punkt (7) stehen, wird es erkannt und der Stand gerettet.
+    const richtig = mergeDocSets([lokal], [fernNeu], new Map([["hike", 7]]));
+    expect(richtig.conflicts).toHaveLength(1);
+    expect(richtig.conflicts[0]?.loser.damage).toBe(13);
+    expect(richtig.conflicts[0]?.loserSide).toBe("local");
+  });
+});

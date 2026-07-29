@@ -69,10 +69,16 @@ export const SyncSettingsRepo = {
   /** Verbindung lösen: Token weg, Charaktere bleiben. */
   async disconnect(): Promise<void> {
     await SyncSettingsRepo.set({ ...DEFAULT_SYNC_SETTINGS });
-    // Der Abzweigpunkt gehört zu DIESER Verbindung. Bleibt er stehen und man
-    // verbindet sich mit einer anderen Ablage, hielte die Erkennung fremde
-    // Dokumente für schon abgeglichen.
-    await SyncBaseRepo.clear();
+    /*
+      Der Abzweigpunkt bleibt STEHEN. Er trägt die Kennung seiner Ablage: verbindet
+      man sich wieder mit derselben (der übliche Fall — ein abgelaufenes Token
+      ersetzen geht nur über Trennen), gilt er weiter. Bei einer anderen Ablage zählt
+      er von allein nicht.
+
+      Ihn hier zu löschen war ein Fehler: danach glich die App ohne Punkt ab, also
+      wieder mit „höhere Zahl gewinnt", und ein neues Token kostete stillschweigend
+      Arbeit.
+    */
   },
 };
 
@@ -114,12 +120,31 @@ export function guessDeviceName(userAgent: string): string {
  */
 export const SYNC_BASE_KEY = "syncBase";
 
+/**
+ * Gespeichert wird MIT der Kennung der Ablage, zu der der Punkt gehört.
+ *
+ * Der Grund kommt aus einer Gegenprüfung: der Punkt wurde beim Trennen der
+ * Verbindung gelöscht, und Trennen ist der einzige Weg, ein abgelaufenes Token zu
+ * ersetzen. Danach glich die App gegen dieselbe Ablage ab — ohne Punkt für ALLES,
+ * also wieder mit „höhere Zahl gewinnt". Genau der Fehler, den das hier behebt, und
+ * ausgelöst durch etwas so Harmloses wie ein neues Token.
+ *
+ * Mit der Kennung daran gilt: gleiche Ablage → der Punkt gilt weiter. Andere Ablage
+ * → er zählt nicht, denn dort bedeutet er nichts.
+ */
+interface StoredBase {
+  gistId: string;
+  entries: Record<string, number>;
+}
+
 export const SyncBaseRepo = {
-  async get(): Promise<Map<string, number>> {
+  /** Leer, wenn der Punkt zu einer ANDEREN Ablage gehört. */
+  async get(gistId: string): Promise<Map<string, number>> {
     const row = await db.settings.get(SYNC_BASE_KEY);
     const out = new Map<string, number>();
-    if (typeof row?.value !== "object" || row.value === null) return out;
-    for (const [id, rev] of Object.entries(row.value as Record<string, unknown>)) {
+    const value = row?.value as Partial<StoredBase> | undefined;
+    if (value === undefined || value.gistId !== gistId) return out;
+    for (const [id, rev] of Object.entries(value.entries ?? {})) {
       if (typeof rev === "number" && Number.isFinite(rev)) out.set(id, rev);
     }
     return out;
@@ -132,11 +157,11 @@ export const SyncBaseRepo = {
    * gewesen — und der nächste Lauf hielte eine echte Divergenz für einseitige
    * Arbeit. Dann wäre der Fehler zurück, den das hier behebt.
    */
-  async set(base: Map<string, number>): Promise<void> {
-    await db.settings.put({ key: SYNC_BASE_KEY, value: Object.fromEntries(base) });
+  async set(gistId: string, base: Map<string, number>): Promise<void> {
+    const value: StoredBase = { gistId, entries: Object.fromEntries(base) };
+    await db.settings.put({ key: SYNC_BASE_KEY, value });
   },
 
-  /** Beim Trennen der Verbindung mit weg — sonst gilt ein fremder Punkt weiter. */
   async clear(): Promise<void> {
     await db.settings.delete(SYNC_BASE_KEY);
   },

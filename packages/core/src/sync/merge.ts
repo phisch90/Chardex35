@@ -79,7 +79,14 @@ export function stripConflictSuffix(name: string): string {
  * Liste nicht mehr zu lesen.
  */
 export function conflictCopyName(name: string, from: string, day: string): string {
-  return `${stripConflictSuffix(name)} (Konflikt ${from}, ${day})`;
+  /*
+    Klammern aus dem Gerätenamen entfernen. „iPad (alt)" ergab
+    „… (Konflikt iPad (alt), 2026-07-29)", und das Anhängsel-Muster oben endet an der
+    ERSTEN schließenden Klammer — damit war die Kopie nicht mehr als Kopie erkennbar:
+    die Anhängsel stapelten sich, und die Aufräum-Karte in der Liste erschien nie.
+  */
+  const plain = (text: string) => text.replace(/[()]/g, "").trim();
+  return `${stripConflictSuffix(name)} (Konflikt ${plain(from)}, ${plain(day)})`;
 }
 
 /**
@@ -271,7 +278,18 @@ export function mergeDocSets<T extends SyncDoc>(
       die Erkennung ab dem zweiten Abgleich vollständig.
     */
     const common = base?.get(id);
-    const diverged = common !== undefined && l.rev > common && r.rev > common;
+    /*
+      Divergenz: beide über dem gemeinsamen Stand.
+
+      Und ein Sicherheitsnetz dazu: eine rev UNTER dem gemeinsamen Stand kann es
+      eigentlich nicht geben — Zahlen wachsen. Wenn es doch passiert, hat irgendwo
+      etwas eine Zahl zurückgesetzt (eine Gegenprüfung hat genau so einen Fall in der
+      Gruppe gefunden), und dann ist „die höhere gewinnt" blind für den Unterschied.
+      Lieber eine Kopie zu viel als ein stiller Verlust.
+    */
+    const rolledBack = common !== undefined && (l.rev < common || r.rev < common);
+    const diverged =
+      common !== undefined && ((l.rev > common && r.rev > common) || rolledBack);
 
     if (!diverged) {
       if (l.rev > r.rev) {

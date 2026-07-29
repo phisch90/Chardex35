@@ -5,6 +5,7 @@ import {
   deriveSheet,
   displayName,
   makeWorkCopy,
+  workCopyId,
   resolveCompendium,
   type Character,
   type DerivedSheet,
@@ -64,10 +65,18 @@ export function GroupSheetPage() {
    */
   const editForPlayer = async () => {
     if (!found) return;
+    /*
+      Die rev einer schon vorhandenen Kopie fortschreiben, nicht bei 1 anfangen.
+      Sonst springt die Zahl unter derselben Kennung zurück, und der
+      Geräte-Abgleich hält das für „hier ist nichts passiert" — die alte Fassung
+      vom anderen Gerät gewinnt still.
+    */
+    const existing = await db.characters.get(workCopyId(gistId, found.character.id));
     const copy = makeWorkCopy(found.character, {
       gistId,
       owner: found.shelf.owner,
       now: new Date().toISOString(),
+      previousRev: existing?.rev,
     });
     await db.characters.put(copy);
     await navigate({ to: "/charaktere/$charId", params: { charId: copy.id } });
