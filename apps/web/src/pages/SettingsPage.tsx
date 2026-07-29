@@ -10,6 +10,7 @@ import { useAppSettings, useHouseRules } from "../lib/hooks.js";
 import { buildExport, downloadExport, importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton, PrimaryButton, SectionTitle } from "../ui/bits.js";
 import { SyncCard } from "./SyncCard.js";
+import { GroupCard } from "../group/GroupCard.js";
 import { VersionBadge } from "../ui/VersionBadge.js";
 import { SYNC_SETTINGS_KEY, isSyncConfigured, parseSyncSettings } from "../sync/syncSettings.js";
 
@@ -125,6 +126,10 @@ export function SettingsPage() {
       </Card>
 
       <SyncCard />
+
+      {/* Die Gruppe steht direkt hinter dem Geräte-Abgleich: beide benutzen
+          denselben GitHub-Zugang, und wer das eine einrichtet, denkt ans andere. */}
+      <GroupCard />
 
       <Card>
         <SectionTitle>{S.settings.exportTitle}</SectionTitle>

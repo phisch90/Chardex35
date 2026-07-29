@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   displayName,
+  readOrderMarker,
   redundantConflictCopies,
   stripConflictSuffix,
   type Character,
@@ -13,18 +14,29 @@ import { importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton } from "../ui/bits.js";
 import { VersionBadge } from "../ui/VersionBadge.js";
 import { CharacterActionsSheet, DiscardDraftButton } from "../ui/CharacterActions.js";
+import { useCachedShelves } from "../group/useGroup.js";
 
 export function CharacterListPage() {
   const characters = useCharacters();
 
   // Entwürfe stehen unten in ihrem eigenen Abschnitt — die Liste soll nach
   // den echten Figuren aussehen, nicht nach einer Werkbank.
-  const { real, drafts } = useMemo(() => {
+  const { real, drafts, workCopies } = useMemo(() => {
     const all = characters ?? [];
     const byId = new Map(all.map((c) => [c.id, c]));
+    /*
+      Arbeitskopien fremder Bögen stehen NICHT zwischen den eigenen Figuren. Sie
+      liegen in derselben Tabelle (nur so lassen sie sich mit dem gewohnten Bogen
+      bearbeiten und wandern über den Geräte-Abgleich aufs iPad), aber in der Liste
+      wären sie an dieser Stelle eine Falle: man tippt seinen Charakter an und
+      landet im fremden.
+    */
+    const isWorkCopy = (c: Character) => readOrderMarker(c) !== undefined;
+    const own = all.filter((c) => !isWorkCopy(c));
     return {
-      real: all.filter((c) => c.draftOf === undefined || !byId.has(c.draftOf)),
-      drafts: all.filter((c) => c.draftOf !== undefined && byId.has(c.draftOf)),
+      real: own.filter((c) => c.draftOf === undefined || !byId.has(c.draftOf)),
+      drafts: own.filter((c) => c.draftOf !== undefined && byId.has(c.draftOf)),
+      workCopies: all.filter(isWorkCopy),
     };
   }, [characters]);
 
@@ -70,6 +82,90 @@ export function CharacterListPage() {
           ))}
         </div>
       )}
+
+      {workCopies.length > 0 && (
+        <div className="pt-2">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-violet-300/80">
+            {S.group.editForeign} ({workCopies.length})
+          </h2>
+          <ul className="divide-y divide-slate-800 rounded-xl border border-violet-900/60 bg-violet-950/20">
+            {workCopies.map((copy) => {
+              const marker = readOrderMarker(copy)!;
+              return (
+                <li key={copy.id}>
+                  <Link
+                    to="/charaktere/$charId"
+                    params={{ charId: copy.id }}
+                    className="flex items-baseline justify-between gap-2 px-3 py-2.5 hover:bg-violet-900/20"
+                  >
+                    <span className="min-w-0 truncate text-sm font-medium">{copy.name}</span>
+                    <span className="shrink-0 text-xs text-violet-300/80">
+                      {marker.owner === "" ? S.group.unknownOwner : marker.owner}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {/* Die Bögen der anderen — unten, hinter den eigenen und den Entwürfen.
+          Man öffnet diese Liste, um SEINEN Charakter zu spielen; die der anderen
+          schaut man nachschlagend an. */}
+      <GroupSection />
+    </div>
+  );
+}
+
+/**
+ * Was in der Gruppe liegt.
+ *
+ * Zeigt nur, was schon abgeholt ist — es wird hier NICHT nachgeladen. Am
+ * Spieltisch ist das Netz das Erste, was fehlt, und eine Liste, die beim Öffnen
+ * hängt, ist schlimmer als eine, die von gestern ist. Abgeholt wird in den
+ * Einstellungen auf Knopfdruck.
+ */
+function GroupSection() {
+  const shelves = useCachedShelves();
+  const withCharacters = (shelves ?? []).filter((entry) => entry.shelf.characters.length > 0);
+  if (withCharacters.length === 0) return null;
+
+  return (
+    <div className="pt-2">
+      <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+        {S.group.otherSheets}
+      </h2>
+      {withCharacters.map((entry) => (
+        <div key={entry.gistId} className="mb-2">
+          <div className="mb-1 flex items-baseline gap-1.5 text-xs text-slate-500">
+            <span className="font-medium text-slate-400">
+              {entry.shelf.owner === "" ? S.group.unknownOwner : entry.shelf.owner}
+            </span>
+            {entry.shelf.gamemaster && (
+              <span className="rounded bg-violet-900/60 px-1.5 py-0.5 text-[10px] text-violet-300">
+                SL
+              </span>
+            )}
+          </div>
+          <ul className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-900/50">
+            {entry.shelf.characters.map((character) => (
+              <li key={character.id}>
+                <Link
+                  to="/gruppe/$gistId/$charId"
+                  params={{ gistId: entry.gistId, charId: character.id }}
+                  className="flex items-baseline justify-between gap-2 px-3 py-2.5 hover:bg-slate-800/60"
+                >
+                  <span className="min-w-0 truncate text-sm font-medium">{character.name}</span>
+                  <span className="shrink-0 text-xs text-slate-500">
+                    {S.sheet.level} {character.levels.length}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }

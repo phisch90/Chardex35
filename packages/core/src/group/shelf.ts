@@ -133,6 +133,15 @@ export const groupSettingsSchema = z.object({
   /** Welche meiner Bögen im Regal liegen. */
   sharedCharacterIds: z.array(z.string()).default([]),
   subscriptions: z.array(shelfSubscriptionSchema).default([]),
+  /**
+   * Aufträge, die ich als Spielleiter ausgestellt habe und die beim nächsten
+   * Veröffentlichen mit ins Regal wandern.
+   *
+   * Sie stehen hier und nicht am Charakter: es sind Nachrichten an jemand anderen,
+   * keine Eigenschaft einer Figur. Am Charakter würden sie zudem über den
+   * Geräte-Abgleich mitreisen und auf dem iPad als Änderung erscheinen.
+   */
+  outgoingOrders: z.array(shelfOrderSchema).default([]),
 });
 export type GroupSettings = z.infer<typeof groupSettingsSchema>;
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import type { Character, DerivedSheet, StatValue } from "@codex35/core";
-import { applyHpChange, displayName } from "@codex35/core";
+import { applyHpChange, displayName, readOrderMarker } from "@codex35/core";
 import { S } from "../../strings.js";
 import { CharacterRepo } from "../../db/repo.js";
 import { useAppSettings, useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
@@ -10,6 +10,7 @@ import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
 import { Chip, GhostButton, fmtMod } from "../../ui/bits.js";
 import { SwipeTabs } from "../../ui/SwipeTabs.js";
+import { OrderBanner } from "../../group/OrderBanner.js";
 import { ShareCharacterButton } from "../../ui/ShareCharacter.js";
 import { CharacterActionsSheet } from "../../ui/CharacterActions.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
@@ -113,6 +114,7 @@ export function CharacterSheetPage() {
 
   const tabProps: TabProps = { character, sheet, editMode, save, openBreakdown };
   const hpRatio = sheet.hp.max > 0 ? sheet.hp.current / sheet.hp.max : 0;
+  const orderMarker = readOrderMarker(character);
   const hasSpells = sheet.spellcasting.length > 0;
   const tabs = (Object.keys(S.sheet.tabs) as TabKey[]).filter((t) => t !== "spells" || hasSpells);
   /*
@@ -148,6 +150,13 @@ export function CharacterSheetPage() {
   return (
     // Extra Platz unten, damit die mobile Reiter-Leiste nichts überdeckt.
     <div className="space-y-3 pb-14 md:pb-0">
+      {/*
+        Eine Arbeitskopie für einen fremden Bogen muss sich genauso verraten wie
+        ein Entwurf — sonst trägt man eine Stufe ein und hält es für den eigenen
+        Charakter. Derselbe Platz, dieselbe Form, andere Farbe.
+      */}
+      {orderMarker !== undefined && <OrderBanner character={character} marker={orderMarker} />}
+
       {/* Ein Entwurf muss sich sofort verraten, sonst baut man am Probelauf
           und hält ihn für den echten Bogen. */}
       {character.draftOf !== undefined && (
