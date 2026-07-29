@@ -17,10 +17,17 @@ import type { TabProps } from "./index.js";
  */
 export function IdentityCard({ character, save }: Pick<TabProps, "character" | "save">) {
   /*
-    Der Name darf NICHT leer gespeichert werden, und das ist kein Schönheitsgrund:
-    beim Löschen muss man den Namen abtippen, um zu bestätigen. Ein leerer Name
-    macht aus dieser Bremse einen leeren Vergleich — dann löscht ein Fehlgriff den
-    Bogen ohne Rückfrage.
+    Der Name darf NICHT leer gespeichert werden.
+
+    (Die frühere Begründung war das Löschen: dort musste man den Namen abtippen, und
+     ein leerer Name hätte aus der Bremse einen leeren Vergleich gemacht. Seit
+     bestätigt wird, indem man einen Code tippt, gilt dieser Grund nicht mehr — die
+     Regel bleibt aber richtig.)
+
+    Ein Bogen ohne Namen ist an jeder Stelle ein Problem, an der er GENANNT wird:
+    eine leere Zeile in der Charakterliste, ein leerer Eintrag im Regal der Gruppe,
+    eine Export-Datei ohne Namen, ein Auftrag „für wen?". Nichts davon fällt auf,
+    wenn es passiert, und alles davon nervt später.
 
     Also: geschrieben wird bei jedem Tastendruck (kein zweiter Wahrheitsstand, an dem
     Tippen verloren geht), aber ein leeres Feld bleibt ÖRTLICH leer und wird beim
