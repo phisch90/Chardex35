@@ -69,6 +69,10 @@ export const SyncSettingsRepo = {
   /** Verbindung lösen: Token weg, Charaktere bleiben. */
   async disconnect(): Promise<void> {
     await SyncSettingsRepo.set({ ...DEFAULT_SYNC_SETTINGS });
+    // Der Abzweigpunkt gehört zu DIESER Verbindung. Bleibt er stehen und man
+    // verbindet sich mit einer anderen Ablage, hielte die Erkennung fremde
+    // Dokumente für schon abgeglichen.
+    await SyncBaseRepo.clear();
   },
 };
 
@@ -90,3 +94,50 @@ export function guessDeviceName(userAgent: string): string {
   }
   return "Gerät";
 }
+
+// ---------------------------------------------------------------------------
+// Der gemeinsame Abzweigpunkt je Dokument
+// ---------------------------------------------------------------------------
+
+/**
+ * Was DIESES Gerät beim letzten erfolgreichen Abgleich gesehen hat: Dokument-ID →
+ * `rev`.
+ *
+ * Liegt bei den Einstellungen und NICHT am Dokument. Am Dokument würde die Angabe
+ * über den Abgleich mitreisen, und auf dem anderen Gerät bedeutet sie etwas anderes
+ * — es wäre wieder ein abgeleiteter Wert, der gespeichert wurde, die Fehlerfamilie
+ * dieses Projekts.
+ *
+ * Ohne diese Angabe lässt sich „beide haben gearbeitet" grundsätzlich nicht von
+ * „nur einer hat gearbeitet" unterscheiden: eine einzelne `rev` sagt, wie oft
+ * gespeichert wurde, nicht wovon aus.
+ */
+export const SYNC_BASE_KEY = "syncBase";
+
+export const SyncBaseRepo = {
+  async get(): Promise<Map<string, number>> {
+    const row = await db.settings.get(SYNC_BASE_KEY);
+    const out = new Map<string, number>();
+    if (typeof row?.value !== "object" || row.value === null) return out;
+    for (const [id, rev] of Object.entries(row.value as Record<string, unknown>)) {
+      if (typeof rev === "number" && Number.isFinite(rev)) out.set(id, rev);
+    }
+    return out;
+  },
+
+  /**
+   * Wird NUR nach einem vollständig durchgelaufenen Abgleich geschrieben.
+   *
+   * Zu früh gespeichert würde ein abgebrochener Lauf behaupten, man sei sich einig
+   * gewesen — und der nächste Lauf hielte eine echte Divergenz für einseitige
+   * Arbeit. Dann wäre der Fehler zurück, den das hier behebt.
+   */
+  async set(base: Map<string, number>): Promise<void> {
+    await db.settings.put({ key: SYNC_BASE_KEY, value: Object.fromEntries(base) });
+  },
+
+  /** Beim Trennen der Verbindung mit weg — sonst gilt ein fremder Punkt weiter. */
+  async clear(): Promise<void> {
+    await db.settings.delete(SYNC_BASE_KEY);
+  },
+};

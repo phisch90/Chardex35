@@ -35,8 +35,16 @@ export interface MergeOutcome<T> {
   toLocal: T[];
   /** Muss zur Gegenseite (wir waren neuer). */
   toRemote: T[];
-  /** Gleiche rev, verschiedener Inhalt — hier wäre sonst etwas verloren. */
+  /** Beide Seiten sind über den gemeinsamen Stand hinaus — hier wäre etwas verloren. */
   conflicts: SyncConflict<T>[];
+  /**
+   * Der gemeinsame Stand NACH diesem Abgleich, zum Mitschreiben.
+   *
+   * Muss erst gespeichert werden, wenn der Abgleich wirklich durch ist. Zu früh
+   * gespeichert würde ein abgebrochener Lauf behaupten, man sei sich einig gewesen —
+   * und der nächste Lauf hielte eine echte Divergenz für einseitige Arbeit.
+   */
+  nextBase: Map<string, number>;
 }
 
 /** Inhaltsvergleich ohne die Sync-Buchhaltung: rev und updatedAt zählen nicht. */
@@ -167,10 +175,39 @@ export function redundantConflictCopies<T extends SyncDoc & { name: string }>(do
   return out;
 }
 
-export function mergeDocSets<T extends SyncDoc>(local: T[], remote: T[]): MergeOutcome<T> {
+/**
+ * Was dieses GERÄT beim letzten erfolgreichen Abgleich gesehen hat: Dokument-ID →
+ * `rev`. Der gemeinsame Abzweigpunkt.
+ *
+ * Ohne diese Angabe lässt sich „beide haben gearbeitet" grundsätzlich nicht von
+ * „nur einer hat gearbeitet" unterscheiden. Eine einzelne Zahl sagt, WIE OFT
+ * gespeichert wurde, nicht WOVON aus — und genau daran ist die alte Erkennung
+ * gescheitert (siehe unten).
+ *
+ * Die Angabe gehört dem Gerät, nicht dem Dokument: sie darf nicht mitreisen, denn
+ * auf dem anderen Gerät bedeutet sie etwas anderes.
+ */
+export type SyncBase = ReadonlyMap<string, number>;
+
+export function mergeDocSets<T extends SyncDoc>(
+  local: T[],
+  remote: T[],
+  /**
+   * Der letzte gemeinsame Stand je Dokument. Fehlt er (oder fehlt ein Eintrag),
+   * gilt das alte Verhalten „höhere rev gewinnt" — siehe die Begründung unten bei
+   * `diverged`.
+   */
+  base?: SyncBase,
+): MergeOutcome<T> {
   const localById = new Map(local.map((d) => [d.id, d]));
   const remoteById = new Map(remote.map((d) => [d.id, d]));
-  const out: MergeOutcome<T> = { merged: [], toLocal: [], toRemote: [], conflicts: [] };
+  const out: MergeOutcome<T> = {
+    merged: [],
+    toLocal: [],
+    toRemote: [],
+    conflicts: [],
+    nextBase: new Map(),
+  };
 
   // Sortierte Vereinigung: gleiche Eingaben → gleiche Ausgabe, egal in welcher
   // Reihenfolge die Datenbank ihre Zeilen liefert.
@@ -203,15 +240,50 @@ export function mergeDocSets<T extends SyncDoc>(local: T[], remote: T[]): MergeO
       continue;
     }
 
-    if (l.rev > r.rev) {
-      out.merged.push(l);
-      out.toRemote.push(l);
-      continue;
-    }
-    if (r.rev > l.rev) {
-      out.merged.push(r);
-      out.toLocal.push(r);
-      continue;
+    /*
+      HIER saß der schlimmste Fehler dieses Projekts, und er war jahrelang als
+      Absicht dokumentiert.
+
+      Vorher galt: ungleiche rev → die höhere gewinnt, fertig. Ein Konflikt wurde
+      NUR bei genau gleicher rev erkannt. Zwei Geräte, die beide gearbeitet haben,
+      haben aber fast nie dieselbe Zahl — Gleichstand ist der Ausnahmefall. Der
+      Normalfall lief damit still ins Verlieren:
+
+        beide bei rev 7 einig
+        iPhone: 13 Schaden eingetragen        → 8
+        iPad (ohne Netz): Cleave + Notiz      → 9
+        Abgleich: das iPad gewinnt, der Schaden ist weg, keine Kopie, keine
+        Warnung, im Bericht steht „1 geholt".
+
+      Nachgestellt und bestätigt. Es traf auch den NEUEREN Stand: iPhone rev 10 um
+      20:30 gegen iPad rev 9 um 21:00 — das iPhone gewinnt, das Talent von vor einer
+      halben Stunde fehlt.
+
+      Richtig ist: ein Konflikt liegt vor, wenn BEIDE Seiten über den letzten
+      gemeinsamen Stand hinausgelaufen sind — egal wie weit. Der Gewinner wird dann
+      nach Zeitstempel bestimmt und der Verlierer als Kopie gerettet.
+
+      Ist der gemeinsame Stand unbekannt (erster Abgleich dieses Dokuments auf
+      diesem Gerät, oder der erste Abgleich nach dieser Änderung), bleibt es beim
+      alten Verhalten. Das ist bewusst: sonst gäbe es beim ersten Lauf nach dem
+      Update für jedes abweichende Dokument eine Kopie — eine Lawine als
+      Begrüßung. Der Abzweigpunkt wird bei diesem Lauf mitgeschrieben, also greift
+      die Erkennung ab dem zweiten Abgleich vollständig.
+    */
+    const common = base?.get(id);
+    const diverged = common !== undefined && l.rev > common && r.rev > common;
+
+    if (!diverged) {
+      if (l.rev > r.rev) {
+        out.merged.push(l);
+        out.toRemote.push(l);
+        continue;
+      }
+      if (r.rev > l.rev) {
+        out.merged.push(r);
+        out.toLocal.push(r);
+        continue;
+      }
     }
 
     // Beide Seiten haben denselben Stand unterschiedlich weitergeschrieben.
@@ -228,6 +300,14 @@ export function mergeDocSets<T extends SyncDoc>(local: T[], remote: T[]): MergeO
     out.toRemote.push(winner);
     out.conflicts.push({ id, winner, loser, loserSide: winnerIsLocal ? "remote" : "local" });
   }
+
+  /*
+    Der neue gemeinsame Stand ist das Ergebnis: nach diesem Abgleich haben beide
+    Seiten für jedes Dokument genau das, was in `merged` steht. Aus dem Ergebnis
+    abgeleitet und nicht an jeder Verzweigung von Hand gesetzt — sonst fehlt der
+    Eintrag genau in dem Zweig, den man beim Ändern übersieht.
+  */
+  for (const doc of out.merged) out.nextBase.set(doc.id, doc.rev);
 
   return out;
 }

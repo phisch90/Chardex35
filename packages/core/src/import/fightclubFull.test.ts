@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isFullFightClubExport, parseFullFightClubXml } from "./fightclubFull.js";
+import { derivedTrackerKey, isFullFightClubExport, parseFullFightClubXml } from "./fightclubFull.js";
 
 /**
  * Erfundene Datei im echten Format.
@@ -211,5 +211,34 @@ describe("Zähler, Notizen, vorbereitete Zauber", () => {
   it(`nimmt NUR vorbereitete Zauber, nicht die ganze Klassenliste`, () => {
     // In echten Dateien stehen 300+ Zauber; vorbereitet sind vier.
     expect(pc.full.prepared).toEqual([{ name: "Bless", level: 1, count: 2 }]);
+  });
+});
+
+describe("Zähler: was folgt, folgt", () => {
+  it(`hängt Untote vertreiben an den Vorschlag statt an die Zahl aus dem Export`, () => {
+    /*
+      Philipps Bogen stand auf 8, seine eigene Notiz nennt die Formel 3 + CHA + 4,
+      und gefragt hat er geantwortet: 7. Die 8 war ein alter Stand, der in Fight Club
+      hängen geblieben ist — genau die Sorte eingefrorener Wert, die bei den Zählern
+      gerade abgeschafft wurde. Also folgt der Zähler der Regel.
+    */
+    expect(derivedTrackerKey("Turn Undead (1d6+2)")).toBe("turn-undead");
+    expect(derivedTrackerKey("Rebuke Undead")).toBe("turn-undead");
+    expect(derivedTrackerKey("Smite Evil 2/day")).toBe("smite-evil");
+    expect(derivedTrackerKey("Wild Shape")).toBe("wild-shape");
+  });
+
+  it(`lässt Hausregel-Zähler in Ruhe`, () => {
+    // „Action Points" und „Restore Spell Points" gibt es im SRD nicht. Für die kennen
+    // wir keine Formel, und eine erfundene wäre schlimmer als seine Zahl.
+    expect(derivedTrackerKey("Action Points")).toBeUndefined();
+    expect(derivedTrackerKey("Restore Spell Points")).toBeUndefined();
+    expect(derivedTrackerKey("Spellcast DC")).toBeUndefined();
+    expect(derivedTrackerKey("Level 0 Spell")).toBeUndefined();
+  });
+
+  it(`verwechselt nichts, was nur ähnlich anfängt`, () => {
+    expect(derivedTrackerKey("Ragebringer Aufladungen")).toBeUndefined();
+    expect(derivedTrackerKey("")).toBeUndefined();
   });
 });

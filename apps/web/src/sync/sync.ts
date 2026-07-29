@@ -30,7 +30,7 @@ import {
   syncFileName,
   writeSyncGist,
 } from "./gist.js";
-import { SyncSettingsRepo, isSyncConfigured, type SyncSettings } from "./syncSettings.js";
+import { SyncBaseRepo, SyncSettingsRepo, isSyncConfigured, type SyncSettings } from "./syncSettings.js";
 
 export interface SyncReport {
   at: string;
@@ -199,8 +199,18 @@ async function runOnce(cfg: SyncSettings): Promise<SyncReport> {
     hydrateEntityRow,
   );
 
-  const chars = mergeDocSets(localChars, remoteChars);
-  const entities = mergeDocSets(localEntities, remoteEntities);
+  /*
+    Der gemeinsame Abzweigpunkt. Ohne ihn erkennt der Vergleich nur den Gleichstand
+    als Konflikt — und zwei Geräte, die beide gearbeitet haben, haben fast nie
+    dieselbe rev. Genau daran ging Arbeit still verloren (siehe merge.ts).
+
+    Charaktere und Homebrew teilen EINE Ablage: die IDs sind eindeutig
+    (uuid bzw. „homebrew:…"), und zwei Karten wären zwei Stellen, an denen dasselbe
+    schiefgehen kann.
+  */
+  const base = await SyncBaseRepo.get();
+  const chars = mergeDocSets(localChars, remoteChars, base);
+  const entities = mergeDocSets(localEntities, remoteEntities, base);
 
   const now = new Date();
   // Zweite Sicherung gegen dieselbe Klasse von Fehler: eine Kopie entsteht nur,
@@ -253,6 +263,22 @@ async function runOnce(cfg: SyncSettings): Promise<SyncReport> {
 
     await writeSyncGist(cfg.token, cfg.gistId, patch);
   }
+
+  /*
+    Erst JETZT den Abzweigpunkt mitschreiben — nach dem Schreiben, nicht vorher.
+
+    Bricht es davor ab (kein Netz, Wächter schlägt an, Ablage zu groß), bleibt der
+    alte Punkt stehen und der nächste Lauf sieht die Divergenz noch. Früher
+    gespeichert würde ein abgebrochener Lauf behaupten, man sei sich einig gewesen,
+    und die Erkennung wäre beim nächsten Mal blind — der behobene Fehler wäre zurück.
+
+    Die Konfliktkopien gehören mit hinein: sie liegen danach auf beiden Seiten, also
+    ist ihr Stand gemeinsam. Ohne sie fielen sie beim nächsten Lauf als „nur hier"
+    auf.
+  */
+  const nextBase = new Map([...chars.nextBase, ...entities.nextBase]);
+  for (const doc of [...charCopies, ...entityCopies]) nextBase.set(doc.id, doc.rev);
+  await SyncBaseRepo.set(nextBase);
 
   return {
     at: new Date().toISOString(),

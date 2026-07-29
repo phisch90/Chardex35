@@ -75,6 +75,52 @@ const FC_MODIFIER: Record<string, { target: string; label: string }> = {
   "20": { target: "init", label: "Initiative" },
 };
 
+/**
+ * Fight-Club-Zähler, die bei uns aus der Klasse FOLGEN — und deshalb der Regel
+ * folgen sollen statt der Zahl aus dem Export.
+ *
+ * Der Anlass ist Philipps eigener Bogen: dort stand „Turn Undead (1d6+2)" auf 8,
+ * während seine eigene Notiz die Formel nennt (3 + CHA + 4 vom Talent) und damit
+ * bei CHA 10 auf 7 kommt. Gefragt, welche Zahl gilt, hat er geantwortet: **7**.
+ * Die 8 war ein alter Stand, der in Fight Club hängen geblieben ist — genau die
+ * Sorte eingefrorener Wert, die wir bei den Zählern gerade abgeschafft haben.
+ *
+ * Alles, was hier NICHT steht, kommt als „von Hand gesetzt" an und bleibt
+ * unangetastet: „Action Points" und „Restore Spell Points" gibt es im SRD nicht,
+ * für die kennen wir keine Formel, und eine erfundene wäre schlimmer als seine Zahl.
+ *
+ * Der Vergleich läuft über den Anfang des Namens, weil Fight Club Zusätze anhängt
+ * („Turn Undead (1d6+2)").
+ */
+const DERIVED_TRACKERS: { prefix: string; key: string }[] = [
+  { prefix: "turn undead", key: "turn-undead" },
+  { prefix: "rebuke undead", key: "turn-undead" },
+  { prefix: "smite evil", key: "smite-evil" },
+  { prefix: "bardic music", key: "bardic-music" },
+  { prefix: "rage", key: "rage" },
+  { prefix: "wild shape", key: "wild-shape" },
+  { prefix: "stunning fist", key: "stunning-fist" },
+];
+
+/**
+ * Gehört dieser Zähler zu einem Vorschlag, den die App selbst rechnet?
+ *
+ * Dann wird er daran gehängt (`suggestedFrom`) und folgt der Regel — auch beim
+ * nächsten Stufenaufstieg und beim nächsten Talent.
+ */
+export function derivedTrackerKey(label: string): string | undefined {
+  const clean = label.toLowerCase().replace(/[^a-z ]+/g, " ").replace(/\s+/g, " ").trim();
+  /*
+    An der WORTGRENZE vergleichen, nicht am nackten Anfang. Ein Test hat den Fehlgriff
+    sofort gefangen: „Ragebringer Aufladungen" fing mit „rage" an und wäre als
+    Barbaren-Raserei gelesen worden — samt einer Grenze, die die App aus der
+    Barbarenstufe rechnet, die es gar nicht gibt.
+  */
+  return DERIVED_TRACKERS.find(
+    (entry) => clean === entry.prefix || clean.startsWith(`${entry.prefix} `),
+  )?.key;
+}
+
 /** Namen, unter denen Fight Club Münzen als Gegenstand führt. */
 const COIN_NAMES: Record<string, "pp" | "gp" | "sp" | "cp"> = {
   "platinum pieces": "pp",
@@ -377,6 +423,31 @@ export function applyFullExtras(
   */
   for (const tracker of full.trackers) {
     if (character.trackers.some((existing) => existing.name === tracker.label)) continue;
+    const derived = derivedTrackerKey(tracker.label);
+    if (derived !== undefined) {
+      /*
+        Diesen Zähler rechnet die App selbst. Er hängt am Vorschlag und folgt damit
+        der Regel — die Zahl aus dem Export wird BEWUSST nicht als Grenze
+        übernommen. Der aktuelle Stand kommt mit: wie viele Einsätze heute noch übrig
+        sind, weiß nur der Export.
+      */
+      character.trackers.push({
+        id: idFactory(),
+        name: tracker.label,
+        kind: "counter",
+        value: tracker.value,
+        maxManual: false,
+        suggestedFrom: derived,
+      });
+      if (tracker.max > 0) {
+        issues.push({
+          severity: "info",
+          code: "fc-full-tracker-derived",
+          message: `„${tracker.label}" stand in Fight Club auf ${tracker.max} — die App rechnet die Grenze jetzt selbst aus Klasse, Attribut und Talenten und hält sie damit beim nächsten Aufstieg von allein aktuell. Stimmt die Zahl bei dir nicht, kannst du sie im Bogen von Hand überschreiben.`,
+        });
+      }
+      continue;
+    }
     character.trackers.push({
       id: idFactory(),
       name: tracker.label,
