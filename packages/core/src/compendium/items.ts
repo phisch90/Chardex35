@@ -86,6 +86,18 @@ export function itemGroupOf(entity: ItemEntity): ItemGroup {
     case "magic":
       return "magicGear";
     default:
+      /*
+        Rückfall auf die DATEN. `category` ist das Finde-Feld und hat den
+        Standardwert „other" — ein Gegenstand, der aus einem älteren Stand oder
+        aus einem fremden Weg kommt und ihn nie gesetzt bekam, läge damit in der
+        Restgruppe, obwohl er einwandfrei rechnet: eine eigene Waffe mit
+        Schadenswürfel wäre nicht bei den Waffen zu finden.
+
+        Die Engine entscheidet an genau diesen beiden Feldern (equipment.ts:
+        `itemKind`), und dieselbe Reihenfolge gilt hier: `armor` vor `weapon`.
+      */
+      if (entity.data.armor !== undefined) return "armor";
+      if (entity.data.weapon !== undefined) return "weapon";
       return "other";
   }
 }

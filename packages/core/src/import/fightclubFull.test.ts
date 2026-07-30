@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { entitySchema, resolveCompendium, type Entity } from "../schema/entities.js";
 import { deriveSheet } from "../engine/index.js";
+import { itemGroupOf } from "../compendium/items.js";
 import { importFightClubXml } from "./fightclub.js";
 import { derivedTrackerKey, isFullFightClubExport, parseFullFightClubXml } from "./fightclubFull.js";
 
@@ -379,5 +380,113 @@ describe.skipIf(!packsAvailable)("Domänen aus der Notiz", () => {
     const other = importFightClubXml(xml, compendium, { idFactory: () => `z-${++m}` }).results[0]!;
     expect(other.character.domains).toEqual([]);
     expect(other.character.noteSections.map((s) => s.title)).toContain("Domains");
+  });
+});
+
+describe.skipIf(!packsAvailable)("Eigenbau-Einträge aus dem Export", () => {
+  /*
+    Kennzeichnungs-Tests. Bis hierher prüfte kein Test die ENTITY, die der Import
+    baut — nur die geparste Zwischenform. Genau deshalb konnte der Bau still
+    unvollständig sein: die Waffe entstand als Objektliteral mit allen
+    Schema-Standardwerten von Hand, und als `weapon.strDamage` neu dazukam, fehlte
+    es dort, ohne dass der Compiler etwas sagte.
+
+    Die Namen sind hier ABSICHTLICH erfunden. „Leather Armor" und „Shield, Heavy
+    Wooden" findet der Import im SRD und nimmt den echten Eintrag — dann wird gar
+    nichts gebaut. Eigenbau entsteht nur bei einem Namen, den es nicht gibt, und
+    genau der ist Philipps Fall („Templer Schwert", „Iron Concecration").
+  */
+  const compendium = packsAvailable ? loadFullCompendium() : new Map<string, Entity>();
+  const XML_OWN = XML.replace(
+    "<item><name>Leather Armor</name><slot>5</slot><type>0</type><armorClass>2</armorClass><damage>1d4</damage></item>",
+    "<item><name>Templer Lederpanzer</name><slot>5</slot><type>0</type><armorClass>3</armorClass>" +
+      "<weight>15.0</weight><cost>100 gp</cost><text>Eigenbau des Ordens.</text></item>",
+  ).replace(
+    "<item><name>Shield, Heavy Wooden</name><slot>4</slot><type>3</type><armorClass>2</armorClass><damage>1d4</damage></item>",
+    "<item><name>Templer Buckler</name><slot>4</slot><type>3</type><armorClass>2</armorClass></item>",
+  );
+  let n = 0;
+  const result = packsAvailable
+    ? importFightClubXml(XML_OWN, compendium, { idFactory: () => `hb-${++n}` }).results[0]!
+    : undefined;
+
+  const own = (name: string) => {
+    const entity = result!.entities.find((e) => e.kind === "item" && e.name === name);
+    if (entity === undefined || entity.kind !== "item") {
+      throw new Error(
+        `fehlt: ${name} — gebaut wurden: ${result!.entities.map((e) => e.name).join(", ")}`,
+      );
+    }
+    return entity;
+  };
+
+  it(`Eine eigene Rüstung bekommt ihren RK-Bonus als echte Daten`, () => {
+    /*
+      Ohne diese Daten rechnete die RK nicht, und wir wären wieder beim
+      Ausgleichs-Modifikator, den er letzte Woche wegräumen musste.
+
+      `maxDex: null` und `acp: 0` sind GERATEN — der Export nennt sie nicht. Die
+      freundliche Annahme ist Absicht: eine erfundene Grenze würde stillschweigend
+      RK und Fertigkeiten senken. Nachtragen kann er sie jetzt im Editor.
+    */
+    expect(own("Templer Lederpanzer").data.armor).toEqual({
+      kind: "light",
+      acBonus: 3,
+      maxDex: null,
+      acp: 0,
+      asf: 0,
+    });
+    expect(own("Templer Lederpanzer").data.weightLb).toBe(15);
+    expect(own("Templer Lederpanzer").description).toBe("Eigenbau des Ordens.");
+  });
+
+  it(`Was in der Schildhand steckt, wird ein Schild — nicht eine Rüstung`, () => {
+    // Der Export verrät die Art nicht; Fight Club steckt Schilde in die
+    // Schildhand, und daran hängt der Platz.
+    expect(own("Templer Buckler").data.armor).toEqual({
+      kind: "shield",
+      acBonus: 2,
+      maxDex: null,
+      acp: 0,
+      asf: 0,
+    });
+  });
+
+  it(`Beide sind bei „Rüstung & Schilde" zu finden`, () => {
+    // Die Größe, die sich beim Umbau nicht bewegen durfte.
+    expect(itemGroupOf(own("Templer Lederpanzer"))).toBe("armor");
+    expect(itemGroupOf(own("Templer Buckler"))).toBe("armor");
+  });
+
+  it(`Beide zählen auf dem Bogen wirklich: RK 10 + 3 + 2 = 15`, () => {
+    // Die eigentliche Probe. Eine Rüstung, die nicht rechnet, ist eine Notiz.
+    const sheet = deriveSheet(result!.character, resolveCompendium([
+      ...loadPackEntities(),
+      ...result!.entities,
+    ]));
+    const from = (type: string) =>
+      sheet.ac.total.contributions
+        .filter((c) => c.applied && c.bonusType === type)
+        .reduce((sum, c) => sum + c.value, 0);
+    expect(from("armor")).toBe(3);
+    expect(from("shield")).toBe(2);
+  });
+
+  it(`Das Amulett behält seinen Text und bleibt ohne Wirkung`, () => {
+    const amulet = own("Amulett");
+    expect(amulet.data.category).toBe("gear");
+    expect(amulet.data.armor).toBeUndefined();
+    expect(amulet.data.weapon).toBeUndefined();
+  });
+
+  it(`Die Hülle kommt vollständig aus dem Schema`, () => {
+    for (const name of ["Templer Lederpanzer", "Templer Buckler", "Amulett"]) {
+      const entity = own(name);
+      expect(entity.source, name).toBe("homebrew");
+      expect(entity.schemaVersion, name).toBe(1);
+      expect(entity.rev, name).toBe(1);
+      expect(entity.effects, name).toEqual([]);
+      expect(entity.id.startsWith("homebrew:item:"), name).toBe(true);
+    }
   });
 });

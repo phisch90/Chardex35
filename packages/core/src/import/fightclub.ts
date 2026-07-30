@@ -7,6 +7,7 @@ import {
   type HouseRules,
 } from "../schema/character.js";
 import { displayName, skillKey, type Entity } from "../schema/entities.js";
+import { buildHomebrewItem } from "../compendium/homebrewItem.js";
 import { allowedSlots, deriveSheet } from "../engine/index.js";
 import {
   applyFullExtras,
@@ -459,34 +460,33 @@ function buildHomebrewWeapon(action: FightClubAction, id: string): Entity {
         : Number(low) < 20
           ? `${low}-20`
           : "20";
-  return {
+  /*
+    Über `buildHomebrewItem`, nicht als Objektliteral. Vorher stand hier eine
+    handgeschriebene Entity mit `schemaVersion`, `rev`, `updatedAt`, `tags`,
+    `critRange`, `critMult`, `category` und `handedness` von Hand — genau die
+    Bauform, die in CLAUDE.md als Fehlerfamilie steht. Als `weapon.strDamage`
+    ins Schema kam, hätte dieses Literal es still nicht mitbekommen.
+  */
+  return buildHomebrewItem({
     id,
-    kind: "item",
     name: action.name,
-    source: "homebrew",
-    schemaVersion: CURRENT_SCHEMA_VERSION,
-    rev: 1,
-    updatedAt: "",
+    kind: "weapon",
     tags: ["import", "waffe"],
     description:
       `Aus dem Fight-Club-Import („${action.name}"). Schaden und Kritischer Treffer stehen ` +
       "so im Export; als einhändige Kriegswaffe angenommen, weil der Export das nicht " +
       `verrät.${action.attack ? ` Angriffsbonus im Original: ${action.attack}.` : ""} ` +
       "Gewicht, Preis und Schadensart kannst du nachtragen.",
-    effects: [],
-    data: {
-      category: "weapon",
-      weapon: {
-        // Der Export nennt den Schaden inklusive Attributsbonus („1d6+2"); die
-        // App rechnet den selbst dazu, also bleibt hier nur der Würfel.
-        damage: /^\s*(\d+d\d+|\d+)/.exec(action.damage ?? "")?.[1] ?? "1d6",
-        critRange,
-        critMult: multMatch ? `x${multMatch[1]}` : "x2",
-        category: "martial",
-        handedness: "one",
-      },
+    weapon: {
+      // Der Export nennt den Schaden inklusive Attributsbonus („1d6+2"); die
+      // App rechnet den selbst dazu, also bleibt hier nur der Würfel.
+      damage: /^\s*(\d+d\d+|\d+)/.exec(action.damage ?? "")?.[1] ?? "1d6",
+      critRange,
+      critMult: multMatch ? `x${multMatch[1]}` : "x2",
+      category: "martial",
+      handedness: "one",
     },
-  };
+  });
 }
 
 /**

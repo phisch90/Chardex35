@@ -144,6 +144,122 @@ export function GhostButton(props: {
   );
 }
 
+/*
+  Die drei Formular-Bausteine.
+
+  Sie stehen hier, weil dieselbe Klassenkette bisher an sechs Stellen kopiert war
+  (Identity, CombatOptions, CharacterWizard, FeatModifiers, Hands, SpellsTab) und
+  der Gegenstands-Editor die siebte Kopie geworden wäre. Die 390-px-Regeln stecken
+  darin: Beschriftung ÜBER dem Feld statt daneben, sobald sie länger als fünf
+  Zeichen ist, und der Hinweissatz darunter statt in einem Tooltip — auf dem Handy
+  gibt es kein „darüberfahren".
+*/
+
+/** Beschriftung, Feld, Hinweis — untereinander. */
+export function Field(props: { label: string; hint?: string; children: ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-[11px] uppercase tracking-wide text-slate-400">{props.label}</span>
+      {props.children}
+      {props.hint !== undefined && (
+        <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">{props.hint}</span>
+      )}
+    </label>
+  );
+}
+
+/** Die gemeinsame Kette für Textfelder und Auswahlfelder. */
+export const inputClass =
+  "mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none";
+
+export function SelectField(props: {
+  label: string;
+  hint?: string;
+  value: string;
+  options: ReadonlyArray<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Field label={props.label} {...(props.hint === undefined ? {} : { hint: props.hint })}>
+      <select
+        value={props.value}
+        onChange={(e) => props.onChange(e.target.value)}
+        className={inputClass}
+      >
+        {props.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+}
+
+/**
+ * Zahl mit −/+ statt Tastatur.
+ *
+ * Wörtlich aus dem Kampf-Reiter übernommen, wo die Begründung steht: „am Tisch
+ * wird das mit einer Hand bedient, und eine Bildschirmtastatur für ‚4' ist ein
+ * Ärgernis." Bei der Obergrenze ist Schluss — ungebremst kam dort „Nahkampf −89,
+ * Schaden 2d6+204" heraus.
+ *
+ * `format` ist für Werte, die anders aussehen als sie gespeichert sind: der
+ * Fertigkeits-Malus steht als 0…12 im Regler und wird als „−6" angezeigt, weil im
+ * Buch ein Minuszeichen davor steht.
+ */
+export function NumberStepper(props: {
+  label: string;
+  hint?: string;
+  value: number;
+  min?: number;
+  max: number;
+  step?: number;
+  format?: (value: number) => string;
+  onChange: (value: number) => void;
+}) {
+  const min = props.min ?? 0;
+  const step = props.step ?? 1;
+  const shown = props.format ? props.format(props.value) : String(props.value);
+  return (
+    <div className="flex items-center gap-2">
+      <div className="min-w-0 flex-1">
+        <div className="text-sm">{props.label}</div>
+        {props.hint !== undefined && (
+          <div className="text-[11px] leading-snug text-slate-500">{props.hint}</div>
+        )}
+      </div>
+      {/*
+        Die Knöpfe bekommen einen Klartext-Namen. Ein „−" allein ist für die
+        Vorlesefunktion sinnlos („Knopf, Minus") — mit Beschriftung wird daraus
+        „RK-Bonus verringern". Nebenbei sind sie damit auch eindeutig ansprechbar,
+        wenn drei Regler untereinander stehen.
+      */}
+      <GhostButton
+        title={`${props.label} verringern`}
+        disabled={props.value <= min}
+        onClick={() => props.onChange(Math.max(min, props.value - step))}
+      >
+        −
+      </GhostButton>
+      <span
+        className={`w-9 text-center font-mono text-lg ${
+          props.value > min ? "text-amber-300" : "text-slate-500"
+        }`}
+      >
+        {shown}
+      </span>
+      <GhostButton
+        title={`${props.label} erhöhen`}
+        disabled={props.value >= props.max}
+        onClick={() => props.onChange(Math.min(props.max, props.value + step))}
+      >
+        +
+      </GhostButton>
+    </div>
+  );
+}
+
 export function Chip(props: { children: ReactNode; active?: boolean; onClick?: () => void }) {
   return (
     <button

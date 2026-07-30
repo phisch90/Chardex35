@@ -469,6 +469,116 @@ export const S = {
     /** Die Karte, die seine Frage „warum und worauf" für SEINEN Bogen beantwortet. */
     loadTitle: "Was deine Rüstung kostet",
     loadNothing: "Du trägst nichts, was dich behindert.",
+
+    /*
+      Der Editor für eigene Gegenstände. Sein Wunsch, wörtlich: „außerdem möchte
+      ich wie bei FC3 eigene erstellen können und dann diesen Gegenständen auch ggf
+      Effekte und Boni hinzufügen können. Die dann auch wirklich rechnen."
+
+      Jede Zahl bekommt einen Satz dazu, der sagt, WORAUF sie wirkt. Sein „Malus
+      −2 (hä?, warum und worauf?)" war die Frage, mit der diese ganze Runde anfing.
+    */
+    editor: {
+      addOwn: "+ Eigener Gegenstand",
+      titleNew: "Eigener Gegenstand",
+      titleEdit: "Gegenstand bearbeiten",
+      edit: "Werte bearbeiten",
+      kindLabel: "Art",
+      kinds: {
+        armor: "Rüstung",
+        shield: "Schild",
+        weapon: "Waffe",
+        gear: "Sonstiges",
+      } as Record<string, string>,
+      kindHints: {
+        armor:
+          "Zählt auf die RK, sobald du sie anlegst. Trag Bonus, DEX-Grenze und Abzug so ein, wie sie im Buch stehen.",
+        shield:
+          "Kommt in die Schildhand und zählt dort auf die RK. Bonus und Abzug wie im Buch.",
+        weapon:
+          "Bekommt eine eigene Angriffszeile im Kampf-Reiter — auch wenn sie im Rucksack liegt.",
+        gear: "Kein RK, kein Angriff. Boni trägst du danach an der Zeile im Gepäck ein — die rechnen mit.",
+      } as Record<string, string>,
+      nameLabel: "Name",
+      namePlaceholder: "z.B. Templer Schwert",
+      template: "Von einer Vorlage abschreiben",
+      templateHint:
+        "Nimmt alle Werte eines Regelwerks-Gegenstands als Ausgangspunkt. Du kannst sie danach ändern.",
+      templateChosen: (name: string) =>
+        `Vorlage: ${name} — Werte übernommen. Talente wie Weapon Focus wirken auch auf diesen Gegenstand, weil er als dieselbe Waffenart gilt.`,
+      templateClear: "Vorlage lösen",
+      armorKindLabel: "Rüstungsstärke",
+      armorKinds: {
+        light: "leicht",
+        medium: "mittel",
+        heavy: "schwer",
+      } as Record<string, string>,
+      armorKindHint:
+        "Mittel und schwer bremsen die Bewegung: 30 ft werden 20 ft, 20 ft werden 15 ft. Die App rechnet das.",
+      acBonusLabel: "RK-Bonus",
+      acBonusHint: "Was der Gegenstand auf die RK gibt. Vollplatte 8, Kettenhemd 4, schwerer Schild 2.",
+      maxDexUnlimited: "DEX unbegrenzt",
+      maxDexLabel: "DEX-Grenze",
+      maxDexHint:
+        "Höchstens so viel DEX-Bonus zählt noch auf die RK. Vollplatte 1, Kettenhemd 4. Schilde haben keine Grenze.",
+      acpLabel: "Abzug auf Fertigkeiten",
+      acpHint:
+        "Zieht von Balance, Climb, Escape Artist, Hide, Jump, Move Silently, Sleight of Hand, Swim und Tumble ab. Bei Swim doppelt. Vollplatte 6, Kettenhemd 2.",
+      asfLabel: "In Rüstung zaubern (%)",
+      asfHint:
+        "Nur für Bard, Sorcerer und Wizard. Die App rechnet es nicht gegen deine Zauber — sie zeigt es an, damit du am Tisch würfeln kannst.",
+      damageLabel: "Schaden",
+      damagePlaceholder: "1d8",
+      damageHint: "Nur der Würfel, ohne deinen Stärkebonus — den rechnet die App dazu.",
+      critRangeLabel: "Kritisch ab",
+      critRangeHint: `Steht im Buch nur „19", ist das 19-20.`,
+      critMultLabel: "Faktor",
+      handednessLabel: "Führung",
+      handedness: {
+        light: "leicht",
+        one: "einhändig",
+        two: "zweihändig",
+        ranged: "Fernkampf",
+      } as Record<string, string>,
+      handednessHint:
+        "Leicht heißt: Kampfgeschick zählt, und der Malus der zweiten Hand ist kleiner. Zweihändig gibt den anderthalbfachen Stärkeschaden.",
+      weaponCategoryLabel: "Vertrautheit",
+      weaponCategories: {
+        simple: "einfache Waffe",
+        martial: "Kriegswaffe",
+        exotic: "exotische Waffe",
+        natural: "natürliche Waffe",
+      } as Record<string, string>,
+      weaponCategoryHint:
+        `Wirkt heute nur bei „natürliche Waffe" — dann rechnet Power Attack anders. Fehlende Übung rechnet die App nicht.`,
+      rangeLabel: "Reichweite je Schritt (ft)",
+      rangeHint: "Kurzbogen 60, Wurfspeer 30, Dolch geworfen 10.",
+      strDamageLabel: "Stärkeschaden",
+      strDamageOptions: {
+        none: "gar nicht (Armbrust)",
+        penaltyOnly: "nur der Malus (Bogen)",
+        full: "ganz (Wurfwaffe, Schleuder)",
+      } as Record<string, string>,
+      strDamageHint:
+        "Steht so in den Waffentexten: Armbrüste bekommen nichts, Bögen nur einen Malus für niedrige Stärke, Wurfwaffen und die Schleuder den ganzen Modifikator.",
+      damageTypeLabel: "Schadensart",
+      damageTypePlaceholder: "piercing",
+      weightLabel: "Gewicht (lb)",
+      costLabel: "Preis (gp)",
+      descriptionLabel: "Beschreibung",
+      descriptionHint: "Was steht im Buch dazu? Nur für dich — die App rechnet daraus nichts.",
+      more: "Mehr Angaben",
+      previewTitle: "So steht es später in der Liste",
+      save: "Anlegen und ins Gepäck",
+      saveEdit: "Übernehmen",
+      cancel: "Abbrechen",
+      saveHint: "Landet im Gepäck. Ein Tap auf die Marke legt es an.",
+      usedBy: (count: number, names: string[]) =>
+        count <= 1
+          ? "Dieser Gegenstand liegt nur auf diesem Bogen."
+          : `Dieser Gegenstand liegt auf ${count} Bögen auf diesem Gerät (${names.join(", ")}). Deine Änderung gilt für alle.`,
+      failed: (message: string) => `Konnte nicht gespeichert werden: ${message}`,
+    },
   },
 
   compendium: {

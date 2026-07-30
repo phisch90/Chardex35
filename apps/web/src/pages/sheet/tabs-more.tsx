@@ -9,6 +9,7 @@ import {
   itemKind,
   type BonusType,
   type EquipSlot,
+  type ItemEntity,
   type ItemKind,
   type StatPath,
 } from "@codex35/core";
@@ -25,6 +26,8 @@ import { EquipMark } from "../../ui/EquipMark.js";
 import { HandsCard } from "./Hands.js";
 import { itemLabel, itemSummary } from "../../ui/itemSummary.js";
 import { ItemPicker } from "../../ui/ItemPicker.js";
+import { ItemEditor } from "../../ui/ItemEditor.js";
+import { CompendiumRepo } from "../../db/repo.js";
 import type { TabProps } from "./index.js";
 
 export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
@@ -38,6 +41,21 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
   // Löschen nur im Bearbeiten-Modus (Schalter im Kopf des Bogens) — ein
   // Fehlgriff im Kampf soll keine Ausrüstung kosten.
   const undo = useUndo();
+  /*
+    Der Editor für eigene Gegenstände. `null` = zu, `undefined`-Eintrag = neu
+    anlegen, eine Entity = die bearbeiten. `usedBy` wird beim Öffnen EINMAL
+    geholt, weil es nur ein Satz zur Einordnung ist und keine laufende Anzeige.
+  */
+  const [editor, setEditor] = useState<
+    { entity?: ItemEntity | undefined; usedBy?: { count: number; names: string[] } } | null
+  >(null);
+
+  const openEditorFor = (entity: ItemEntity) => {
+    setEditor({ entity });
+    void CompendiumRepo.countCharactersUsing(entity.id).then((usedBy) =>
+      setEditor((current) => (current?.entity?.id === entity.id ? { entity, usedBy } : current)),
+    );
+  };
   const q = query.trim().toLowerCase();
   const results =
     q.length >= 2
@@ -184,6 +202,17 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               +
             </GhostButton>
           </>
+        )}
+        {/*
+          Eigene Gegenstände lassen sich hier ändern — SRD-Einträge nicht. Der
+          Knopf steht nur an Zeilen, die auf einen selbst angelegten oder
+          importierten Gegenstand zeigen: ein Regelwerks-Eintrag ist für alle
+          Bögen gleich und wird nicht am eigenen Bogen umgeschrieben.
+        */}
+        {editMode && entity?.source === "homebrew" && (
+          <GhostButton title={S.items.editor.edit} onClick={() => openEditorFor(entity)}>
+            ✎
+          </GhostButton>
         )}
         {editMode && (
           <ConfirmDeleteButton
@@ -424,29 +453,51 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
             }
           />
         )}
-        <GhostButton
-          onClick={() => {
-            const name = prompt("Name des Gegenstands?");
-            if (!name) return;
-            const weight = ignoreEncumbrance
-              ? 0
-              : Number(prompt("Gewicht in lb?", "0") ?? 0) || 0;
-            save((c) =>
-              void c.inventory.push({
-                id: crypto.randomUUID(),
-                customName: name,
-                weightLbOverride: weight,
-                qty: 1,
-                slot: "none",
-                extraEffects: [],
-              }),
-            );
-          }}
-        >
-          + Freier Gegenstand
-        </GhostButton>
+        {/*
+          Hier stand „+ Freier Gegenstand": zwei Systemdialoge für Name und
+          Gewicht, und heraus kam eine Zeile ohne Wirkung. Eine eigene Rüstung war
+          damit nicht anzulegen (DEX-Grenze und Fertigkeits-Malus fehlten), eine
+          eigene Waffe bekam keine Angriffszeile — genau seine Lücke: „die dann
+          auch wirklich rechnen".
+
+          Jetzt entsteht ein echter Gegenstand mit echten Werten. Bestehende freie
+          Zeilen (nur `customName`) funktionieren weiter; sie werden nur nicht mehr
+          neu angeboten, damit es nicht zwei Wege für dieselbe Sache gibt.
+        */}
+        <GhostButton onClick={() => setEditor({})}>{S.items.editor.addOwn}</GhostButton>
       </Card>
 
+      {compendium !== undefined && (
+        <ItemEditor
+          open={editor !== null}
+          compendium={compendium}
+          existing={editor?.entity}
+          usedBy={editor?.usedBy}
+          onClose={() => setEditor(null)}
+          onSave={(entity) => {
+            /*
+              Anlegen legt den Gegenstand ins Regal UND ins Gepäck — sonst hätte er
+              etwas gebaut, das nirgends auftaucht. Ändern schreibt nur das Regal;
+              die Inventarzeile zeigt schon darauf, und `saveHomebrew` zählt die
+              rev hoch, damit der Abgleich die Änderung als neuer erkennt.
+            */
+            const isNew = editor?.entity === undefined;
+            void (isNew
+              ? CompendiumRepo.createHomebrew(entity).then(() =>
+                  save((c) =>
+                    void c.inventory.push({
+                      id: crypto.randomUUID(),
+                      itemId: entity.id,
+                      qty: 1,
+                      slot: "none",
+                      extraEffects: [],
+                    }),
+                  ),
+                )
+              : CompendiumRepo.saveHomebrew(entity));
+          }}
+        />
+      )}
     </div>
   );
 }
