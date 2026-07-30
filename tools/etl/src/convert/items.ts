@@ -22,6 +22,48 @@ const HANDEDNESS: Record<string, Handedness> = {
   "Unarmed Attacks": "light",
 };
 
+/**
+ * Wie der Stärkemodifikator auf den SCHADEN einer Fernkampfwaffe wirkt.
+ *
+ * Von Hand, weil die SQL-Ablage keine Spalte dafür hat — die Regel steht in der
+ * Prosa der Waffenbeschreibung. Beide Sätze stehen in unseren eigenen Packs:
+ *
+ *   Sling:   „Your Strength modifier applies to damage rolls when you use a
+ *            sling, just as it does for thrown weapons."
+ *   Longbow: „If you have a penalty for low Strength, apply it to damage rolls
+ *            when you use a longbow. If you have a bonus for high Strength, you
+ *            can apply it to damage rolls when you use a composite longbow …
+ *            but not a regular longbow."
+ *
+ * Was hier NICHT stehen muss: Wurfwaffen, die zugleich Nahkampfwaffen sind
+ * (Wurfaxt, leichter Hammer, Speer, Dreizack). Die sind `light`/`one`/`two` und
+ * bekommen ihren vollen Bonus über den Nahkampf-Pfad; nur der Reichweitenwert
+ * verrät, dass man sie auch werfen kann.
+ *
+ * Ohne Eintrag gilt `none` — das ist bei Armbrüsten und Munition richtig.
+ */
+const STR_DAMAGE: Record<string, "none" | "penaltyOnly" | "full"> = {
+  // Wurfwaffen: voller Bonus UND voller Malus.
+  bolas: "full",
+  dart: "full",
+  javelin: "full",
+  net: "full",
+  "shuriken-5": "full",
+  // Die Schleuder — laut ihrem eigenen Regeltext wie eine Wurfwaffe.
+  sling: "full",
+  // Bögen: der Malus zählt, der Bonus nicht.
+  longbow: "penaltyOnly",
+  shortbow: "penaltyOnly",
+  /*
+    Kompositbögen sind auf eine Stärke gebaut. Ihren Bonus voll zu geben ist die
+    freundliche Auslegung: die Regel verlangt, dass die Stärkewertung des Bogens
+    passt, und die steht in keinem Datenfeld. Warnen statt sperren — wer einen
+    Kompositbogen einträgt, hat sich einen gekauft, der zu ihm passt.
+  */
+  "longbow-composite": "full",
+  "shortbow-composite": "full",
+};
+
 const ARMOR_KIND: Record<string, ArmorKind> = {
   "Light armor": "light",
   "Medium armor": "medium",
@@ -120,6 +162,9 @@ export function convertItems(ctx: ConvertContext): ItemEntity[] {
         category: WEAPON_CATEGORY[category]!,
         handedness: HANDEDNESS[subcategory]!,
         ...(rangeIncrementFt !== undefined ? { rangeIncrementFt } : {}),
+        ...(HANDEDNESS[subcategory] === "ranged"
+          ? { strDamage: STR_DAMAGE[slugify(cleanCell(row.name) ?? "")] ?? "none" }
+          : {}),
       };
       push(base, slugify(subcategory), String(row.id));
       continue;
