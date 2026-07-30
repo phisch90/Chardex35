@@ -98,10 +98,20 @@ export function CharacterSheetPage() {
   if (character === null) return <p className="text-slate-400">Charakter nicht gefunden.</p>;
   if (!sheet) return <p className="text-slate-400">{S.misc.loading}</p>;
 
-  // Mutiert immer den frischen DB-Stand (nicht den Render-Stand) — schnelle
-  // Doppel-Taps gehen sonst verloren.
+  /*
+    Mutiert immer den frischen DB-Stand (nicht den Render-Stand) — schnelle
+    Doppel-Taps gehen sonst verloren.
+
+    Das `catch` ist nachgerüstet, und es hat einen Anlass: hier stand ein nacktes
+    `void`. Als der Domänen-Fehler zuschlug (die Mutation warf, die Transaktion
+    brach ab), verschluckte genau dieses `void` die Ursache — sichtbar blieb nur,
+    dass ein Tap nichts tat. Ein fehlgeschlagener Schreibvorgang muss wenigstens
+    irgendwo stehen.
+  */
   const save: TabProps["save"] = (mutate) => {
-    void CharacterRepo.mutate(character.id, mutate);
+    void CharacterRepo.mutate(character.id, mutate).catch((error: unknown) => {
+      console.error(`Speichern an ${character.name} fehlgeschlagen:`, error);
+    });
   };
 
   const openBreakdown: TabProps["openBreakdown"] = (title, value, opts) =>
@@ -399,6 +409,14 @@ export function CharacterSheetPage() {
 
       <CharacterActionsSheet
         character={character}
+        /*
+          Der abgeleitete Bogen wird hier hereingegeben und nicht im Blatt geholt:
+          dasselbe Blatt hängt auch an der Charakterliste, und dort würde es je
+          Zeile eine Kompendiums-Abfrage aufziehen. Nebenbei ist es die Weiche für
+          die Rast — ohne Bogen keine Rast, denn einen Bogen zu rasten, den man
+          nicht ansieht, will niemand.
+        */
+        sheet={sheet}
         open={actionsOpen}
         onClose={() => setActionsOpen(false)}
         onDeleted={afterDelete}

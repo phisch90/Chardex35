@@ -37,6 +37,7 @@ export * from "./diff.js";
 export * from "./spells.js";
 export * from "./tables.js";
 export * from "./trackers.js";
+export * from "./rest.js";
 export * from "./types.js";
 export { stackContributions, withoutContributions } from "./stack.js";
 export {
