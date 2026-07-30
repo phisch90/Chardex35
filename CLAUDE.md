@@ -103,6 +103,17 @@ nicht zwischenspeichern.
   Folge aus (Zweitwaffe leicht?) × (Talent?) — −6/−10 · −4/−8 · −4/−4 · −2/−2.
   Sein Wort deckt den ANGRIFF; der halbe Stärkeschaden der zweiten Hand ist eine
   eigene Frage und noch offen.
+- **Rast: zwei Zeilen im ⋯-Menü, TP bleiben unberührt.** Der Mond in jedem
+  Zauberblock ist weg — wörtlich: „Mond überall entfernen. Rasten soll irgendwo
+  anders zentral sein nicht ein Button den man versehentlich drückt ohne zu wissen
+  was passiert ist." Gebaut als „Rast (8 Stunden)" (Zauberplätze aller Klassen +
+  Tageszähler) und „Kurze Pause" (nur Tageszähler, „Ja, ohne Zauberplätze"), beide
+  mit Ansage der echten Zahlen vorher und Rücknahme danach. Gefragt und
+  entschieden: TP fasst die Rast NICHT an („weiter nichts anfassen"), temporäre TP
+  überdauern eine Nacht („bleiben stehen"). Die Regel-Funktion steht in
+  `core/engine/rest.ts`; `planRest` rechnet, `applyRest` führt genau diesen Plan
+  aus. Die kurze Pause ist eine Hausregel seines Tisches — im Regelwerk füllen sich
+  Fähigkeiten pro Tag erst nach acht Stunden.
 - **Iterative Angriffe ab GAB +6:** er klärt mit seinem DM, ob sein Tisch die
   volle Attacke spielt. Fight Club zeigt sie ihm seit zwei Jahren als „+9/+4",
   ohne ein Wort dazu. Bis zur Antwort NICHT anfassen — das würde jeden Bogen
@@ -121,12 +132,6 @@ nicht zwischenspeichern.
 - **Eigene Gegenstände LÖSCHEN** gibt es bewusst nicht: jeder Bogen, der einen
   gelöschten Typ noch trägt, verliert RK und Angriffszeile und zeigt eine
   Fehlermeldung. Das braucht sein Wort (Löschen ist eine der zwei Ausnahmen).
-- **Rast und TP:** die Rast steht jetzt zentral im ⋯-Menü (Zauberplätze aller
-  Klassen + Tageszähler, mit Ansage der Zahlen und Rücknahme). TP fasst sie
-  ABSICHTLICH nicht an: dass eine Nachtruhe 1 TP pro Stufe heilt, steht nirgends in
-  dieser App, und ob temporäre TP eine Nacht überdauern, ist eine Entscheidung für
-  seinen Tisch. Offen sind damit drei Fragen: heilt die Rast Schaden? fallen
-  temporäre TP weg? soll es eine zweite Zeile „Kurze Pause" geben?
 - **Eigene Zähler bei der Rast:** aufgefüllt wird nur, was aus einem Vorschlag der
   App entstand (`suggestedFrom`) — bei „Aktionspunkte" kennt die App die Regel
   nicht und sagt das. Damit Fight-Club-Zähler mitrasten, bräuchte der Zähler ein

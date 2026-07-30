@@ -590,6 +590,14 @@ export const S = {
   rest: {
     action: "Rast (8 Stunden)",
     hint: "Gibt die verbrauchten Zauberplätze zurück und füllt deine Tageszähler.",
+    /*
+      Die kurze Pause. Sein Wort: „Ja, ohne Zauberplätze." Im Regelwerk gibt es sie
+      so nicht — dort füllen sich Fähigkeiten pro Tag erst nach acht Stunden. Das
+      ist eine Hausregel seines Tisches, und die gewinnt.
+    */
+    shortAction: "Kurze Pause",
+    shortHint: "Füllt nur die Tageszähler. Die Zauberplätze bleiben verbraucht.",
+    slotsUntouched: "Zauberplätze bleiben, wie sie sind.",
     nothing: "Nichts aufzufüllen — alle Plätze sind frei und die Zähler voll.",
     confirmTitle: "Das ändert sich:",
     slotLine: (className: string, freed: number) =>
@@ -606,8 +614,7 @@ export const S = {
       1 TP pro Stufe pro Nachtruhe steht nirgends in dieser App, und ob temporäre
       TP eine Nacht überdauern, ist eine Entscheidung für seinen Tisch.
     */
-    hpNote:
-      "TP fasse ich nicht an. Wie viel eine Nachtruhe heilt, entscheidet dein Tisch — sag es mir, dann baue ich es ein.",
+    hpNote: "TP fasse ich nicht an — die trägst du im TP-Rechner nach.",
     confirm: "Rast machen",
     cancel: "Abbrechen",
     doneTitle: "Rast gemacht.",
