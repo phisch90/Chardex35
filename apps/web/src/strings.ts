@@ -126,6 +126,19 @@ export const S = {
     /** Wenn ein RK-Ausgleich aus dem Import da ist, aber keine Rüstung angelegt. */
     noArmorHint:
       `Keine Rüstung angelegt. Der Fight-Club-Export enthält keine Ausrüstung — deine Rüstung und dein Schild sind deshalb nie mitgekommen. Trag sie unten unter „Hinzufügen“ ein; danach rechnet die App die RK selbst und der Ausgleichs-Modifikator kann weg.`,
+    /*
+      Der Fall, den Philipp mit einem Bildschirmfoto gemeldet hat: RK 19 statt 16,
+      weil er Schild und Leder nachgetragen hatte und der Import-Ausgleich weiter
+      mitzählte. Der Text nennt die Zahlen und sagt, was verschwindet — eine
+      Warnung ohne Zahlen wäre hier wertlos.
+    */
+    acDoubleTitle: "Deine RK zählt gerade doppelt",
+    acDoubleHint: (suppressed: string[], total: number) =>
+      suppressed.length > 0
+        ? `Die App hat beim Import nicht gewusst, was du trägst, und die RK mit diesen Zeilen auf den Wert aus Fight Club gehoben. Jetzt ist die echte Ausrüstung eingetragen — und der Ausgleich ist als Rüstungsbonus so hoch, dass er ${suppressed.join(" und ")} verdrängt (darum steht das durchgestrichen). Deine RK steht auf ${total}. Nimm den Ausgleich weg, dann rechnet die App nur noch mit dem, was du wirklich trägst.`
+        : `Die App hat beim Import nicht gewusst, was du trägst, und die RK mit diesen Zeilen auf den Wert aus Fight Club gehoben. Jetzt ist die echte Ausrüstung eingetragen und beides zählt zusammen — deine RK steht auf ${total}. Nimm den Ausgleich weg, dann rechnet die App nur noch mit dem, was du wirklich trägst.`,
+    acDoubleRemove: "Ausgleich entfernen",
+    acDoubleUndo: "RK-Ausgleich",
     equipHint: "Auf die Marke tippen wechselt den Platz.",
     hands: "Rüstung und Hände",
     /** Die drei Plätze, um die man sich im Kampf kümmert — als Frage, nicht als Zustand. */
