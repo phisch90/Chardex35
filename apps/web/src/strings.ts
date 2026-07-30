@@ -350,6 +350,114 @@ export const S = {
       "Malus auf beide Hände — wie hoch, hängt daran, ob die Waffe in der zweiten Hand leicht ist und ob du das Talent hast. Steht an den Waffenzeilen.",
   },
 
+  /*
+    Ausrüstung: die Wege zu den Gegenständen, auf Deutsch — die NAMEN bleiben
+    englisch (SRD, so steht es in seinen Büchern und in Fight Club).
+
+    Der Anlass ist sein Satz: „wenn ich den englischen Begriff nicht genau kenne
+    finde ich nichts." Übersetzt wird deshalb genau das, wonach man SUCHT
+    (Gruppen, Arten, Synonyme), nicht das, was gefunden wird.
+  */
+  items: {
+    groups: {
+      weapon: "Waffen",
+      armor: "Rüstung & Schilde",
+      gear: "Ausrüstung & Werkzeug",
+      potion: "Tränke",
+      scroll: "Schriftrollen",
+      wands: "Zauberstäbe, Zepter & Stäbe",
+      ring: "Ringe",
+      wondrous: "Wundersame Gegenstände",
+      magicGear: "Magische Ausrüstung",
+      specialAbility: "Waffen- und Rüstungseigenschaften",
+      cursed: "Verfluchtes",
+      artifact: "Artefakte",
+      other: "Sonstiges",
+    } as Record<string, string>,
+    subgroups: {
+      light: "Leichte Rüstung",
+      medium: "Mittlere Rüstung",
+      heavy: "Schwere Rüstung",
+      shield: "Schilde",
+      simple: "Einfache Waffen",
+      martial: "Kriegswaffen",
+      exotic: "Exotische Waffen",
+      wand: "Zauberstäbe",
+      rod: "Zepter",
+      staff: "Stäbe",
+    } as Record<string, string>,
+    /** Deutsche Suchwörter → Gruppe. Damit findet „rüstung" die 18 Rüstungen. */
+    synonyms: {
+      rüstung: "armor",
+      ruestung: "armor",
+      armor: "armor",
+      panzer: "armor",
+      schild: "armor",
+      shield: "armor",
+      waffe: "weapon",
+      waffen: "weapon",
+      weapon: "weapon",
+      schwert: "weapon",
+      sword: "weapon",
+      bogen: "weapon",
+      axt: "weapon",
+      trank: "potion",
+      tränke: "potion",
+      traenke: "potion",
+      potion: "potion",
+      rolle: "scroll",
+      schriftrolle: "scroll",
+      scroll: "scroll",
+      stab: "wands",
+      zauberstab: "wands",
+      wand: "wands",
+      zepter: "wands",
+      rod: "wands",
+      ring: "ring",
+      ringe: "ring",
+      werkzeug: "gear",
+      ausrüstung: "gear",
+      ausruestung: "gear",
+      gear: "gear",
+      wundersam: "wondrous",
+      verflucht: "cursed",
+      artefakt: "artifact",
+    } as Record<string, string>,
+    epicToggle: (n: number) => `Epische Gegenstände zeigen (${n})`,
+    allGroups: "Alle Gruppen",
+    groupHit: (label: string, n: number) => `${label} — ${n} Einträge zum Blättern`,
+    moreInGroup: (n: number) => `… ${n} weitere in dieser Gruppe zeigen`,
+    scrollGrade: (grade: number, tradition: string) => `Grad ${grade}, ${tradition}`,
+    arcane: "arkan",
+    divine: "göttlich",
+    /** Die sechs Sammelrollen, die keinem einzelnen Zauber zuzuordnen sind. */
+    scrollUnmapped: "Rollen, deren Zauber ich nicht zuordnen kann",
+    scrollMine: "Was ich wirken kann",
+    /** Für die Werte-Karte: worauf wirkt was. */
+    acArmor: "Rüstungsbonus. Zählt, solange du die Rüstung anhast. Gegen Berührungsangriffe zählt er nicht mit.",
+    acShield: "Schildbonus. Zählt, solange du das Schild in der Schildhand hältst — im Rucksack zählt es nicht.",
+    maxDexNone: "Dieses Stück begrenzt deinen DEX-Bonus nicht.",
+    maxDexText: (max: number, dex: number) =>
+      dex > max
+        ? `Von deinem DEX-Bonus zählen höchstens +${max} auf die RK. Dein DEX-Bonus ist +${dex} — du verlierst damit ${dex - max} Punkte RK.`
+        : `Von deinem DEX-Bonus zählen höchstens +${max} auf die RK. Dein DEX-Bonus ist +${dex} — du verlierst nichts.`,
+    acpLabel: "Fertigkeiten",
+    acpText: (value: number) =>
+      `${Math.abs(value)} Abzug auf die neun Fertigkeiten, bei denen die Rüstung im Weg ist: Balance, Climb, Escape Artist, Hide, Jump, Move Silently, Sleight of Hand, Swim, Tumble. Bei Swim doppelt, also ${Math.abs(value) * 2}. Die App rechnet das schon mit — du siehst es im Fertigkeiten-Reiter an der Zeile stehen.`,
+    asfLabel: "In Rüstung zaubern",
+    asfNotYou: (classNames: string[]) =>
+      `Betrifft dich nicht. Die Zahl gilt nur für Klassen, deren Zauber in Rüstung misslingen können${
+        classNames.length > 0 ? ` (${classNames.join(", ")})` : " (Bard, Sorcerer, Wizard)"
+      } — deine nicht.`,
+    asfYou: (pct: number, classNames: string[]) =>
+      `Jeder Zauber deiner ${classNames.join("/")}-Stufen misslingt zu ${pct} %, solange du das trägst. Die App rechnet diese Zahl NICHT gegen deine Zauber — sie steht hier, damit du am Tisch würfeln kannst (W100, ${pct} oder weniger: der Zauber ist weg).`,
+    asfGeneric:
+      "Gilt für Bard, Sorcerer und Wizard: deren Zauber misslingen mit dieser Wahrscheinlichkeit, solange man das trägt. Göttliche Zauberer (Cleric, Druid, Paladin, Ranger) sind nicht betroffen.",
+    /** Die Karte, die seine Frage „warum und worauf" für SEINEN Bogen beantwortet. */
+    loadTitle: "Was deine Rüstung kostet",
+    loadNothing: "Du trägst nichts, was dich behindert.",
+  },
+
   compendium: {
     kinds: {
       race: "Völker",

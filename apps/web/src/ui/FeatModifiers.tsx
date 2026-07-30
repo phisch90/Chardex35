@@ -27,6 +27,14 @@ export function FeatModifiers(props: {
   skills: Entity[];
   editMode: boolean;
   onChange: (next: Effect[]) => void;
+  /**
+   * Wann der Effekt zählt. An einem TALENT ist „passive" richtig — ein Talent hat
+   * man immer. An einem GEGENSTAND ist es falsch und gefährlich: `passive` wirkt
+   * laut engine/effects.ts auch aus dem RUCKSACK. Ein Ring mit „RK +2", einmal so
+   * angelegt, verschiebt die RK dauerhaft, und in der Aufschlüsselung steht nur
+   * der Gegenstandsname — man sucht den Fehler überall, nur nicht dort.
+   */
+  activation?: Effect["activation"];
 }) {
   const [adding, setAdding] = useState(false);
   const skillName = (id: string) => props.skills.find((s) => s.id === id)?.name;
@@ -97,6 +105,7 @@ export function FeatModifiers(props: {
       {props.editMode && adding && (
         <AddModifier
           skills={props.skills}
+          {...(props.activation === undefined ? {} : { activation: props.activation })}
           onCancel={() => setAdding(false)}
           onAdd={(effect) => {
             props.onChange([...props.own, effect]);
@@ -118,6 +127,7 @@ function AddModifier(props: {
   skills: Entity[];
   onAdd: (effect: Effect) => void;
   onCancel: () => void;
+  activation?: Effect["activation"];
 }) {
   const [key, setKey] = useState(MODIFIER_TARGETS[0]!.key);
   const [skillId, setSkillId] = useState(props.skills[0]?.id ?? "");
@@ -131,7 +141,7 @@ function AddModifier(props: {
         target: `skill:${skillId}` as StatPath,
         bonusType: "untyped",
         value,
-        activation: "passive",
+        activation: props.activation ?? "passive",
         ...(condition.trim() === "" ? {} : { condition: condition.trim() }),
       };
     }
@@ -141,7 +151,7 @@ function AddModifier(props: {
       target: target.path,
       bonusType: target.bonusType,
       value,
-      activation: "passive",
+      activation: props.activation ?? "passive",
       ...(condition.trim() === "" ? {} : { condition: condition.trim() }),
     };
   };

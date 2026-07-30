@@ -44,6 +44,14 @@ export const MODIFIER_TARGETS: ModifierTarget[] = [
   { key: "damage.all", label: "Schaden (alle)", path: "damage.all", bonusType: "untyped", group: G.attack },
   { key: "damage.melee", label: "Schaden Nahkampf", path: "damage.melee", bonusType: "untyped", group: G.attack },
   { key: "damage.ranged", label: "Schaden Fernkampf", path: "damage.ranged", bonusType: "untyped", group: G.attack },
+  /*
+    Die zwei wichtigsten Einträge für einen GEGENSTAND — und die einzigen, die es
+    nur dort gibt. Ohne sie trägt man das „+1" eines Langschwerts als
+    „Angriff (alle)" ein, und dann wird JEDE Waffe des Charakters besser. Das
+    fällt nicht auf, weil die Zahl plausibel aussieht.
+  */
+  { key: "attack.self", label: "Nur dieser Gegenstand: Angriff", path: "attack.self", bonusType: "enhancement", group: G.attack },
+  { key: "damage.self", label: "Nur dieser Gegenstand: Schaden", path: "damage.self", bonusType: "enhancement", group: G.attack },
 
   // --- RK: die Bonusart steckt im Eintrag ----------------------------------
   { key: "ac.untyped", label: "RK (ohne Art)", path: "ac", bonusType: "untyped", group: G.ac },

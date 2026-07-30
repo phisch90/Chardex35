@@ -16,18 +16,24 @@ import { S } from "../../strings.js";
 import { toPortraitDataUrl } from "../../lib/image.js";
 import { FeatText } from "../../ui/FeatText.js";
 import { FeatModifiers } from "../../ui/FeatModifiers.js";
+import { describeModifier } from "../../ui/modifierTargets.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
 import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
-import { useAllEntities, useHouseRules } from "../../lib/hooks.js";
+import { useAllEntities, useCompendium, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import { EquipMark } from "../../ui/EquipMark.js";
 import { HandsCard } from "./Hands.js";
 import { itemLabel, itemSummary } from "../../ui/itemSummary.js";
+import { ItemPicker } from "../../ui/ItemPicker.js";
 import type { TabProps } from "./index.js";
 
 export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
   const entities = useAllEntities();
+  const compendium = useCompendium();
   const { ignoreEncumbrance } = useHouseRules();
+  // Für den Modifikator-Editor an den Zeilen: die Fertigkeiten zum Auswählen.
+  const skillEntities = (entities ?? []).filter((e) => e.kind === "skill" && !e.deletedAt);
+  const skillName = (id: string) => skillEntities.find((sk) => sk.id === id)?.name;
   const [query, setQuery] = useState("");
   // Löschen nur im Bearbeiten-Modus (Schalter im Kopf des Bogens) — ein
   // Fehlgriff im Kampf soll keine Ausrüstung kosten.
@@ -100,9 +106,11 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
     const weight = row.weightLbOverride ?? entity?.data.weightLb ?? 0;
     // Was das Stück bringt, gehört an das Stück — sonst muss man raten, warum
     // die RK sich beim Ablegen ändert. Jetzt auch bei Waffen (Schaden, Kritisch).
-    const wirkung = itemSummary(entity);
+    // Ohne Preis und Gewicht: die Zeile führt ihr eigenes Gewicht mal der Menge.
+    const wirkung = itemSummary(entity, { money: false });
     return (
-      <li key={row.id} className="flex items-center gap-2 py-1.5 text-sm">
+      <li key={row.id} className="py-1.5 text-sm">
+        <div className="flex items-center gap-2">
         <EquipMark slot={row.slot} onClick={() => cycleSlot(row.id)} />
         <div className="min-w-0 flex-1">
           <div className="truncate">{name}</div>
@@ -111,7 +119,6 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               row.qty > 1 ? `×${row.qty}` : "",
               wirkung,
               !ignoreEncumbrance && weight ? `${weight * row.qty} lb` : "",
-              row.extraEffects.length > 0 ? "verzaubert" : "",
             ]
               .filter((p) => p !== "")
               .join(" · ")}
@@ -167,6 +174,41 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               );
             }}
           />
+        )}
+        </div>
+        {/*
+          Eigene Boni AM GEGENSTAND — „die dann auch wirklich rechnen", wörtlich
+          sein Wunsch. Die Engine wendet `extraEffects` an Inventarzeilen schon
+          lange an (engine/effects.ts); es fehlte nur die Eingabe. Es ist derselbe
+          Editor wie an den Talenten, mit einem entscheidenden Unterschied:
+          `activation: "equipped"`. Mit dem Standardwert „passive" würde der Bonus
+          auch aus dem Rucksack wirken.
+
+          Gespeichert wird über `row.id`, nie über den Listenindex: diese Liste ist
+          gefiltert und zusätzlich nach Art gruppiert, der Index träfe die falsche
+          Zeile.
+        */}
+        {editMode && (
+          <FeatModifiers
+            entity={entity}
+            own={row.extraEffects}
+            skills={skillEntities}
+            editMode={editMode}
+            activation="equipped"
+            onChange={(next) =>
+              save((c) => {
+                const item = c.inventory.find((r) => r.id === row.id);
+                if (item) item.extraEffects = next;
+              })
+            }
+          />
+        )}
+        {!editMode && row.extraEffects.length > 0 && (
+          <div className="text-[11px] text-amber-300/80">
+            {row.extraEffects
+              .map((e) => `${describeModifier(e.target, e.bonusType, skillName)} ${fmtMod(Number(e.value) || 0)}`)
+              .join(" · ")}
+          </div>
         )}
       </li>
     );
@@ -272,30 +314,32 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
 
       <Card>
         <SectionTitle>{S.actions.add}</SectionTitle>
-        <SearchInput value={query} onChange={setQuery} placeholder={S.actions.search} />
-        <ul className="mt-1 divide-y divide-slate-800">
-          {results.map((item) => (
-            <li key={item.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
-              <span className="truncate">{displayName(item)}</span>
-              <GhostButton
-                onClick={() => {
-                  save((c) =>
-                    void c.inventory.push({
-                      id: crypto.randomUUID(),
-                      itemId: item.id,
-                      qty: 1,
-                      slot: "none",
-                      extraEffects: [],
-                    }),
-                  );
-                  setQuery("");
-                }}
-              >
-                {S.actions.add}
-              </GhostButton>
-            </li>
-          ))}
-        </ul>
+        {/*
+          Blättern statt raten. Vorher stand hier eine reine Suche: erst ab zwei
+          getippten Buchstaben, dann 20 unsortierte Treffer — und „armor" lieferte
+          darunter keine einzige Rüstung, weil die zwölf echten „Banded mail",
+          „Full plate" und „Chain shirt" heißen. Die Regeln dahinter (welche Gruppe,
+          welche Untergruppe, welcher Grad bei Schriftrollen) stehen in
+          `packages/core/src/compendium/items.ts`, nicht hier.
+        */}
+        {compendium === undefined ? (
+          <p className="text-sm text-slate-500">{S.misc.loading}</p>
+        ) : (
+          <ItemPicker
+            compendium={compendium}
+            onPick={(item) =>
+              save((c) =>
+                void c.inventory.push({
+                  id: crypto.randomUUID(),
+                  itemId: item.id,
+                  qty: 1,
+                  slot: "none",
+                  extraEffects: [],
+                }),
+              )
+            }
+          />
+        )}
         <GhostButton
           onClick={() => {
             const name = prompt("Name des Gegenstands?");

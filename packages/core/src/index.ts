@@ -17,3 +17,4 @@ export * from "./group/orders.js";
 export * from "./group/build.js";
 export * from "./group/envelope.js";
 export * from "./group/workcopy.js";
+export * from "./compendium/items.js";

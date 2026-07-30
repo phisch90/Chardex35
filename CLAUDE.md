@@ -103,10 +103,10 @@ nicht zwischenspeichern.
   beides braucht sein Wort.
 - **Wurfwaffen** (Schleuder, Wurfspeer, Dart, Shuriken, Bolas) bekommen keinen
   Stärkeschaden — braucht eine Marke „Wurfwaffe" an den Waffendaten.
-- **Ausrüstung:** blättern statt suchen (die Auswahl zeigt erst ab zwei Buchstaben
-  und dann 20 Treffer — deshalb findet er die 12 Rüstungen nicht), Werte erklären
-  (Rüstungsmalus, arkane Patzerchance betrifft seinen Kleriker nicht) und eigene
-  Gegenstände mit rechnenden Effekten.
+- **Ausrüstung — Rest:** eigene Gegenstände mit echten RÜSTUNGS- und WAFFENWERTEN
+  (heute geht nur eine freie Zeile mit Boni; für eine eigene Rüstung fehlen DEX-
+  Grenze und Fertigkeits-Malus), die Werte-Karte „Was deine Rüstung kostet", und
+  der Assistent benutzt noch die alte Suche.
 - **Behälter** (Inventar/Geldbeutel, Münzgewicht) und Umsortieren per Ziehen.
 
 Details: `PRUEFBERICHT.md`.

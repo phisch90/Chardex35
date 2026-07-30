@@ -8,7 +8,9 @@ import {
   nextSlot,
   type EquipCandidate,
 } from "./equipment.js";
-import type { ItemEntity } from "../schema/entities.js";
+import { entitySchema, resolveCompendium, type ItemEntity } from "../schema/entities.js";
+import { characterSchema } from "../schema/character.js";
+import { deriveSheet } from "./index.js";
 
 const item = (data: Partial<ItemEntity["data"]>, over: Partial<ItemEntity> = {}): ItemEntity =>
   ({
@@ -201,5 +203,128 @@ describe("cycleEquipSlot", () => {
   it(`räumt einen Altbestands-Platz auf`, () => {
     const plate = item({ armor: { kind: "heavy", acBonus: 8, maxDex: 1, acp: 6, asf: 0 } });
     expect(cycleEquipSlot(plate, [{ id: "p", slot: "worn" }], "p")).toBe("none");
+  });
+});
+
+/**
+ * Eigene Boni AN einem Gegenstand — die Lücke, die beim Umbau der Ausrüstung
+ * aufgefallen ist: `inventory[].extraEffects` wird von der Engine seit langem
+ * angewendet, war aber von keinem Test gedeckt. Und daran hängt eine Falle, die
+ * man nur EINMAL falsch baut, wenn ein Test sie festhält.
+ */
+describe("Eigene Modifikatoren an einer Inventarzeile", () => {
+  const COMPENDIUM = resolveCompendium([
+    entitySchema.parse({
+      id: "srd:race:human",
+      kind: "race",
+      name: "Human",
+      source: "srd",
+      data: { size: "medium", speedFt: 30 },
+    }),
+    entitySchema.parse({
+      id: "srd:class:fighter",
+      kind: "class",
+      name: "Fighter",
+      source: "srd",
+      data: {
+        hitDie: 10,
+        skillPointsPerLevel: 2,
+        classSkillIds: [],
+        levels: [{ bab: 1, fort: 2, ref: 0, will: 0, features: [] }],
+      },
+    }),
+    entitySchema.parse({
+      id: "homebrew:item:amulett",
+      kind: "item",
+      name: "Drachenamulett",
+      source: "homebrew",
+      data: { category: "wondrous" },
+    }),
+  ]);
+
+  const withAmulet = (slot: string, activation: string) =>
+    characterSchema.parse({
+      id: "extra-1",
+      name: "Prüfling",
+      raceId: "srd:race:human",
+      abilities: { base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 } },
+      levels: [{ classId: "srd:class:fighter", hpRoll: "avg" }],
+      inventory: [
+        {
+          id: "i1",
+          itemId: "homebrew:item:amulett",
+          slot,
+          extraEffects: [{ target: "ac", bonusType: "natural", value: 2, activation }],
+        },
+      ],
+    });
+
+  it("wirkt, wenn der Gegenstand angelegt ist — und steht mit seinem Namen da", () => {
+    const sheet = deriveSheet(withAmulet("worn", "equipped"), COMPENDIUM);
+    expect(sheet.ac.total.total).toBe(12);
+    expect(sheet.ac.total.contributions.map((c) => c.source)).toContain("Drachenamulett");
+  });
+
+  it("wirkt NICHT aus dem Rucksack", () => {
+    expect(deriveSheet(withAmulet("none", "equipped"), COMPENDIUM).ac.total.total).toBe(10);
+  });
+
+  it(`mit „passive" wirkt er auch aus dem Rucksack — deshalb schreibt die Oberfläche „equipped"`, () => {
+    /*
+      Die Falle, absichtlich festgeschrieben. Der Modifikator-Editor kommt von den
+      TALENTEN, und dort ist „passive" richtig: ein Talent hat man immer. An einem
+      Gegenstand ist es falsch — ein Ring mit „RK +2", einmal so angelegt,
+      verschiebt die RK dauerhaft, und in der Aufschlüsselung steht nur der
+      Gegenstandsname. Man sucht den Fehler überall, nur nicht dort.
+    */
+    expect(deriveSheet(withAmulet("none", "passive"), COMPENDIUM).ac.total.total).toBe(12);
+  });
+
+  it(`Ein „nur diese Waffe"-Bonus bleibt bei seiner Waffe`, () => {
+    const compendium = resolveCompendium([
+      ...[...COMPENDIUM.values()],
+      entitySchema.parse({
+        id: "homebrew:item:schwert",
+        kind: "item",
+        name: "Schwert aus der Gruft",
+        source: "homebrew",
+        data: { category: "weapon", weapon: { damage: "1d8", critRange: "20", critMult: "x2", handedness: "one" } },
+      }),
+      entitySchema.parse({
+        id: "homebrew:item:knüppel",
+        kind: "item",
+        name: "Knüppel",
+        source: "homebrew",
+        data: { category: "weapon", weapon: { damage: "1d6", critRange: "20", critMult: "x2", handedness: "one" } },
+      }),
+    ]);
+    const character = characterSchema.parse({
+      id: "extra-2",
+      name: "Prüfling",
+      raceId: "srd:race:human",
+      abilities: { base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 } },
+      levels: [{ classId: "srd:class:fighter", hpRoll: "avg" }],
+      inventory: [
+        {
+          id: "w1",
+          itemId: "homebrew:item:schwert",
+          slot: "mainHand",
+          extraEffects: [
+            { target: "attack.self", bonusType: "enhancement", value: 1, activation: "equipped" },
+            { target: "damage.self", bonusType: "enhancement", value: 1, activation: "equipped" },
+          ],
+        },
+        { id: "w2", itemId: "homebrew:item:knüppel", slot: "none", extraEffects: [] },
+      ],
+    });
+    const sheet = deriveSheet(character, compendium);
+    const byLabel = new Map(sheet.attacks.map((a) => [a.label, a]));
+    // Grundangriffsbonus 1, STR 10 (+0): das Schwert +2, der Knüppel +1.
+    expect(byLabel.get("Schwert aus der Gruft")?.bonuses).toEqual([2]);
+    expect(byLabel.get("Schwert aus der Gruft")?.damageText).toBe("1d8+1");
+    expect(byLabel.get("Knüppel")?.bonuses).toEqual([1]);
+    expect(byLabel.get("Knüppel")?.damageText).toBe("1d6");
+    // Und die Sammelzeile bleibt unberührt — sonst wäre jede Waffe besser.
+    expect(byLabel.get("Nahkampf")?.bonuses).toEqual([1]);
   });
 });
