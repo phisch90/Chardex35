@@ -219,6 +219,55 @@ describe.skipIf(!packsAvailable)("Rast", () => {
     }).toEqual(before);
   });
 
+  it("Die kurze Pause lässt die Zauberplätze in Ruhe — sein Wort", () => {
+    /*
+      Wörtlich gefragt und beantwortet: „Ja, ohne Zauberplätze." Im Regelwerk gibt
+      es die kurze Pause so nicht — dort füllen sich Fähigkeiten pro Tag erst nach
+      acht Stunden. Hausregel seines Tisches, und die gewinnt.
+    */
+    const c = cleric({
+      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 2] } },
+      trackers: [
+        {
+          id: "t1",
+          name: "Untote vertreiben",
+          kind: "counter",
+          value: 1,
+          suggestedFrom: "turn-undead",
+          maxManual: false,
+        },
+      ],
+    });
+    const plan = planRest(c, deriveSheet(c, compendium), "short");
+    expect(plan.scope).toBe("short");
+    expect(plan.slots).toEqual([]);
+    expect(plan.trackers).toEqual([{ id: "t1", name: "Untote vertreiben", from: 1, to: 4 }]);
+
+    applyRest(c, plan);
+    // Die Plätze bleiben verbraucht — und weil `applyRest` nur ausführt, was im
+    // Plan steht, KANN sie sie nicht anfassen.
+    expect(c.spellState["srd:class:cleric"]?.usedSlots).toEqual([0, 2]);
+    expect(c.trackers[0]?.value).toBe(4);
+  });
+
+  it("Eine kurze Pause ohne Zähler hat nichts zu tun, auch bei verbrauchten Plätzen", () => {
+    // Wichtig für die Oberfläche: sonst bietet sie eine Pause an, die nichts tut.
+    const c = cleric({
+      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 3] } },
+    });
+    const plan = planRest(c, deriveSheet(c, compendium), "short");
+    expect(plan.nothingToDo).toBe(true);
+    // Die Nachtruhe am selben Bogen hätte sehr wohl etwas zu tun.
+    expect(planRest(c, deriveSheet(c, compendium), "full").nothingToDo).toBe(false);
+  });
+
+  it("Ohne Angabe ist es die Nachtruhe", () => {
+    const c = cleric({
+      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [1] } },
+    });
+    expect(planRest(c, deriveSheet(c, compendium)).scope).toBe("full");
+  });
+
   it("Zurücknehmen stellt genau den Stand von vorher wieder her", () => {
     const c = cleric({
       spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 2, 1] } },

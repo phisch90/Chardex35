@@ -8,6 +8,7 @@ import {
   type Character,
   type DerivedSheet,
   type RestPlan,
+  type RestScope,
   type RestUndo,
 } from "@codex35/core";
 import { S } from "../strings.js";
@@ -130,6 +131,14 @@ export function CharacterActionsSheet(props: {
     gerechneter. Sonst könnte zwischen Lesen und Tippen etwas dazwischenkommen
     (ein Abgleich vom iPad), und dann passiert etwas anderes als angesagt.
   */
+  const askRest = (scope: RestScope) => {
+    const plan = planRest(character, props.sheet!, scope);
+    // Nichts aufzufüllen: dann sagt sie das, statt eine Rückfrage zu stellen,
+    // deren Antwort nichts ändert.
+    if (plan.nothingToDo) setNote(S.rest.nothing);
+    else setRestPlan(plan);
+  };
+
   const doRest = async (plan: RestPlan) => {
     let undo: RestUndo | null = null;
     await CharacterRepo.mutate(character.id, (c) => {
@@ -165,18 +174,29 @@ export function CharacterActionsSheet(props: {
           sind es nicht.
         */}
         {props.sheet !== undefined && restDone === null && restPlan === null && (
-          <ActionRow
-            icon="😴"
-            label={S.rest.action}
-            hint={S.rest.hint}
-            onClick={() => {
-              const plan = planRest(character, props.sheet!);
-              // Nichts aufzufüllen: dann sagt sie das, statt eine Rückfrage zu
-              // stellen, deren Antwort nichts ändert.
-              if (plan.nothingToDo) setNote(S.rest.nothing);
-              else setRestPlan(plan);
-            }}
-          />
+          <>
+            <ActionRow
+              icon="😴"
+              label={S.rest.action}
+              hint={S.rest.hint}
+              onClick={() => askRest("full")}
+            />
+            {/*
+              Die kurze Pause. Sein Wort: „Ja, ohne Zauberplätze." Im Regelwerk gibt
+              es sie so nicht — dort füllen sich Fähigkeiten pro Tag erst nach acht
+              Stunden. Hausregel seines Tisches, und die gewinnt.
+
+              Dieselbe Rückfrage, derselbe Ablauf: nur der Umfang unterscheidet
+              sich, und das steht im Plan. Zwei getrennte Abläufe wären zwei
+              Stellen, die auseinanderlaufen können.
+            */}
+            <ActionRow
+              icon="☕"
+              label={S.rest.shortAction}
+              hint={S.rest.shortHint}
+              onClick={() => askRest("short")}
+            />
+          </>
         )}
         {restPlan !== null && <RestConfirm plan={restPlan} onCancel={() => setRestPlan(null)} onConfirm={() => void doRest(restPlan)} />}
         {restDone !== null && (
@@ -328,8 +348,17 @@ function RestLines(props: { plan: RestPlan }) {
 function RestConfirm(props: { plan: RestPlan; onCancel: () => void; onConfirm: () => void }) {
   return (
     <div className="rounded-lg border border-amber-800/60 bg-amber-950/20 p-3">
-      <p className="text-sm font-medium text-amber-200">{S.rest.confirmTitle}</p>
+      <p className="text-sm font-medium text-amber-200">
+        {props.plan.scope === "short" ? `${S.rest.shortAction} — ${S.rest.confirmTitle}` : S.rest.confirmTitle}
+      </p>
       <RestLines plan={props.plan} />
+      {/*
+        Bei der kurzen Pause muss dastehen, was NICHT passiert. Sonst tippt er sie
+        an, die Plätze sind noch verbraucht, und das sieht wie ein Fehler aus.
+      */}
+      {props.plan.scope === "short" && (
+        <p className="mt-1 text-[11px] leading-snug text-slate-400">{S.rest.slotsUntouched}</p>
+      )}
       {/* Die zwei offenen Regelfragen benennen, statt sie zu erfinden. */}
       <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{S.rest.hpNote}</p>
       <div className="mt-2 flex items-center gap-2">

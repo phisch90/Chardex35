@@ -33,11 +33,12 @@ import { effectiveTrackerMax } from "./trackers.js";
  * Domänen, Stufen, Ausrüstung), ist tabu — sonst legt der nächste Auftrag eine
  * Rettungskopie an, nur weil jemand geschlafen hat.
  *
- * **Was sie BEWUSST nicht tut: TP heilen.** Die 3.5-Regel „1 TP pro Stufe pro
- * Nachtruhe" steht nirgends in diesem Programm, und nichttödlicher wie temporärer
- * Schaden sind eigene Regelfragen (False Life überdauert ab Stufe 9 eine ganze
- * Nacht). Das sind Entscheidungen für seinen Tisch, keine Programmier-
- * entscheidungen — die App erfindet sie nicht.
+ * **Was sie nicht tut: TP heilen.** Gefragt und beantwortet — er will, dass die
+ * Rast TP gar nicht anfasst („weiter nichts anfassen"), und temporäre TP sollen
+ * eine Nacht überdauern („bleiben stehen"). Das deckt sich mit dem, was das
+ * Programm rechnen kann: die 3.5-Regel „1 TP pro Stufe pro Nachtruhe" steht hier
+ * nirgends, und False Life überdauert ab Stufe 9 ohnehin eine ganze Nacht. TP
+ * trägt er im TP-Rechner nach; ein Test hält fest, dass die Rast sie nicht anrührt.
  */
 
 export interface RestSlotLine {
@@ -63,7 +64,21 @@ export interface RestSkippedLine {
   reason: "eigene Mechanik" | "keine Grenze" | "schon voll";
 }
 
+/**
+ * Wie lang geruht wird.
+ *
+ * `full` ist die Nachtruhe: Zauberplätze und Tageszähler. `short` ist die kurze
+ * Pause und lässt die Zauberplätze ausdrücklich in Ruhe — Philipps Wort dazu:
+ * „Ja, ohne Zauberplätze."
+ *
+ * Im Regelwerk gibt es die kurze Pause so nicht; dort füllen sich Fähigkeiten pro
+ * Tag erst nach acht Stunden. Das ist eine Hausregel seines Tisches, und die
+ * gewinnt — der DM hat Recht, nicht die App.
+ */
+export type RestScope = "full" | "short";
+
 export interface RestPlan {
+  scope: RestScope;
   slots: RestSlotLine[];
   trackers: RestTrackerLine[];
   skipped: RestSkippedLine[];
@@ -77,12 +92,20 @@ export interface RestPlan {
  * Rein: sie liest, sie schreibt nichts. Damit ist sie testbar, und die Ansage in
  * der Oberfläche ist dieselbe Rechnung wie die Ausführung.
  */
-export function planRest(character: Character, sheet: DerivedSheet): RestPlan {
+export function planRest(
+  character: Character,
+  sheet: DerivedSheet,
+  scope: RestScope = "full",
+): RestPlan {
   const slots: RestSlotLine[] = [];
-  for (const block of sheet.spellcasting) {
-    const used = character.spellState[block.classId]?.usedSlots ?? [];
-    const freed = used.reduce((sum, value) => sum + (value ?? 0), 0);
-    if (freed > 0) slots.push({ classId: block.classId, className: block.className, freed });
+  // Bei der kurzen Pause bleibt diese Liste leer — und weil `applyRest` nur
+  // ausführt, was im Plan steht, kann sie die Plätze gar nicht anfassen.
+  if (scope === "full") {
+    for (const block of sheet.spellcasting) {
+      const used = character.spellState[block.classId]?.usedSlots ?? [];
+      const freed = used.reduce((sum, value) => sum + (value ?? 0), 0);
+      if (freed > 0) slots.push({ classId: block.classId, className: block.className, freed });
+    }
   }
 
   const trackers: RestTrackerLine[] = [];
@@ -126,6 +149,7 @@ export function planRest(character: Character, sheet: DerivedSheet): RestPlan {
   }
 
   return {
+    scope,
     slots,
     trackers,
     skipped,
