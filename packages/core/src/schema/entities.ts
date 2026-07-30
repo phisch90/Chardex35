@@ -288,6 +288,27 @@ export const weaponDataSchema = z.object({
   handedness: z.enum(["light", "one", "two", "ranged"]).default("one"),
   rangeIncrementFt: z.number().int().optional(),
   reachFt: z.number().int().optional(),
+  /**
+   * Wie der Stärkemodifikator auf den SCHADEN wirkt. Nur bei Fernkampfwaffen
+   * gesetzt — im Nahkampf gilt immer der ganze Bonus (bei zweihändiger Führung
+   * das Anderthalbfache).
+   *
+   * Drei Fälle, alle drei wörtlich in den SRD-Texten unserer eigenen Packs:
+   *
+   *  - `full` — Wurfwaffen und die SCHLEUDER. Bei `srd:item:sling` steht es
+   *    ausdrücklich: „Your Strength modifier applies to damage rolls when you use
+   *    a sling, just as it does for thrown weapons."
+   *  - `penaltyOnly` — Bögen. Bei `srd:item:longbow`: „If you have a penalty for
+   *    low Strength, apply it to damage rolls when you use a longbow. If you have
+   *    a bonus for high Strength, you can apply it … but not a regular longbow."
+   *    Ein MALUS zählt also, ein Bonus nicht.
+   *  - `none` — Armbrüste. Die Sehne spannt das Gerät, nicht der Arm.
+   *
+   * Ohne Angabe: Fernkampf `none`, Nahkampf voller Bonus. Das war vorher die
+   * einzige Regel — und damit machte ein Wurfspeer bei STR 18 denselben Schaden
+   * wie bei STR 8.
+   */
+  strDamage: z.enum(["none", "penaltyOnly", "full"]).optional(),
 });
 
 export const armorDataSchema = z.object({

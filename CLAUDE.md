@@ -101,8 +101,6 @@ nicht zwischenspeichern.
 - **Halber Stärkeschaden in der zweiten Hand** (Dolch 1d4+1 statt 1d4+2) und die
   Rundung bei negativem Stärkemodifikator im ×1,5-Pfad — beides verschiebt Zahlen,
   beides braucht sein Wort.
-- **Wurfwaffen** (Schleuder, Wurfspeer, Dart, Shuriken, Bolas) bekommen keinen
-  Stärkeschaden — braucht eine Marke „Wurfwaffe" an den Waffendaten.
 - **Ausrüstung — Rest:** eigene Gegenstände mit echten RÜSTUNGS- und WAFFENWERTEN
   (heute geht nur eine freie Zeile mit Boni; für eine eigene Rüstung fehlen DEX-
   Grenze und Fertigkeits-Malus), die Werte-Karte „Was deine Rüstung kostet", und

@@ -1668,7 +1668,8 @@
         "critMult": "x2",
         "critRange": "20",
         "damage": "—",
-        "handedness": "ranged"
+        "handedness": "ranged",
+        "strDamage": "none"
       },
       "weightLb": 3
     },
@@ -3280,7 +3281,8 @@
         "damage": "1d4",
         "damageType": "bludgeoning",
         "handedness": "ranged",
-        "rangeIncrementFt": 10
+        "rangeIncrementFt": 10,
+        "strDamage": "full"
       },
       "weightLb": 2
     },
@@ -3307,7 +3309,8 @@
         "critMult": "x2",
         "critRange": "20",
         "damage": "—",
-        "handedness": "ranged"
+        "handedness": "ranged",
+        "strDamage": "none"
       },
       "weightLb": 1
     },
@@ -3334,7 +3337,8 @@
         "critMult": "x2",
         "critRange": "20",
         "damage": "—",
-        "handedness": "ranged"
+        "handedness": "ranged",
+        "strDamage": "none"
       }
     },
     "description": "A crossbow bolt used as a melee weapon is treated as a light improvised weapon (-4 penalty on attack rolls) and deals damage as a dagger of its size (crit x2). Bolts come in a wooden case that holds 10 bolts (or 5, for a repeating crossbow). A bolt that hits its target is destroyed; one that misses has a 50% chance of being destroyed or lost.",
@@ -3360,7 +3364,8 @@
         "critMult": "x2",
         "critRange": "20",
         "damage": "—",
-        "handedness": "ranged"
+        "handedness": "ranged",
+        "strDamage": "none"
       },
       "weightLb": 1
     },
@@ -4446,7 +4451,8 @@
         "critMult": "x2",
         "critRange": "20",
         "damage": "—",
-        "handedness": "ranged"
+        "handedness": "ranged",
+        "strDamage": "none"
       },
       "weightLb": 5
     },
@@ -7264,7 +7270,8 @@
         "damage": "1d4",
         "damageType": "piercing",
         "handedness": "ranged",
-        "rangeIncrementFt": 30
+        "rangeIncrementFt": 30,
+        "strDamage": "none"
       },
       "weightLb": 2
     },
@@ -7293,7 +7300,8 @@
         "damage": "1d10",
         "damageType": "piercing",
         "handedness": "ranged",
-        "rangeIncrementFt": 120
+        "rangeIncrementFt": 120,
+        "strDamage": "none"
       },
       "weightLb": 8
     },
@@ -7322,7 +7330,8 @@
         "damage": "1d8",
         "damageType": "piercing",
         "handedness": "ranged",
-        "rangeIncrementFt": 80
+        "rangeIncrementFt": 80,
+        "strDamage": "none"
       },
       "weightLb": 4
     },
@@ -7351,7 +7360,8 @@
         "damage": "1d10",
         "damageType": "piercing",
         "handedness": "ranged",
-        "rangeIncrementFt": 120
+        "rangeIncrementFt": 120,
+        "strDamage": "none"
       },
       "weightLb": 12
     },
@@ -7379,7 +7389,8 @@
         "damage": "1d8",
         "damageType": "piercing",
         "handedness": "ranged",
-        "rangeIncrementFt": 80
+        "rangeIncrementFt": 80,
+        "strDamage": "none"
       },
       "weightLb": 6
     },
@@ -8309,7 +8320,8 @@
         "damage": "1d4",
         "damageType": "piercing",
         "handedness": "ranged",
-        "rangeIncrementFt": 20
+        "rangeIncrementFt": 20,
+        "strDamage": "full"
       },
       "weightLb": 0.5
     },

@@ -1956,7 +1956,8 @@
         "damage": "1d6",
         "damageType": "piercing",
         "handedness": "ranged",
-        "rangeIncrementFt": 60
+        "rangeIncrementFt": 60,
+        "strDamage": "penaltyOnly"
       },
       "weightLb": 2
     },
@@ -1985,7 +1986,8 @@
         "damage": "1d6",
         "damageType": "piercing",
         "handedness": "ranged",
-        "rangeIncrementFt": 70
+        "rangeIncrementFt": 70,
+        "strDamage": "full"
       },
       "weightLb": 2
     },
@@ -2120,7 +2122,8 @@
         "damage": "1d2",
         "damageType": "piercing",
         "handedness": "ranged",
-        "rangeIncrementFt": 10
+        "rangeIncrementFt": 10,
+        "strDamage": "full"
       },
       "weightLb": 0.5
     },
@@ -2653,7 +2656,8 @@
         "damage": "1d4",
         "damageType": "bludgeoning",
         "handedness": "ranged",
-        "rangeIncrementFt": 50
+        "rangeIncrementFt": 50,
+        "strDamage": "full"
       },
       "weightLb": 0
     },

@@ -565,8 +565,34 @@ export function deriveSheetValues(
     const damageContributions: Contribution[] = [];
     const notes: string[] = [];
     if (weaponData) {
-      const strFactor = mode === "ranged" ? 0 : wieldedInTwoHands ? 1.5 : 1;
-      const strDamage = Math.floor(mod("str") * strFactor);
+      /*
+        Stärkeschaden. Vorher stand hier ein Satz: „Fernkampf null, sonst voll",
+        und damit machte ein Wurfspeer bei STR 18 denselben Schaden wie bei STR 8.
+        Der Bogen schrieb sogar dazu „außer Wurfwaffen/Kompositbögen" — er kannte
+        die Ausnahme also und wandte sie nicht an.
+
+        Jetzt entscheidet die WAFFE (`weapon.strDamage`, aus den Packs):
+
+          full         Wurfwaffen und die Schleuder — Bonus und Malus
+          penaltyOnly  Bögen — nur der Malus, kein Bonus
+          none         Armbrüste
+
+        Ohne Angabe: Fernkampf `none`, Nahkampf voll (zweihändig ×1,5).
+      */
+      const strMod = mod("str");
+      const ranged = mode === "ranged";
+      const rule = weaponData.strDamage ?? (ranged ? "none" : "full");
+      const strFactor =
+        rule === "none"
+          ? 0
+          : rule === "penaltyOnly"
+            ? strMod < 0
+              ? 1
+              : 0
+            : ranged || !wieldedInTwoHands
+              ? 1
+              : 1.5;
+      const strDamage = Math.floor(strMod * strFactor);
       if (strFactor > 0 && strDamage !== 0) {
         damageContributions.push({
           source: strFactor === 1.5 ? "STR-Modifikator (×1,5 zweihändig)" : "STR-Modifikator",
@@ -577,7 +603,15 @@ export function deriveSheetValues(
         });
       }
       damageContributions.push(...combat.meleeDamage(wield));
-      if (mode === "ranged") notes.push("Kein ST-Bonus auf Fernkampfschaden (außer Wurfwaffen/Kompositbögen).");
+      if (ranged) {
+        notes.push(
+          rule === "full"
+            ? "Wurfwaffe: der STR-Modifikator zählt auf den Schaden."
+            : rule === "penaltyOnly"
+              ? "Bogen: ein STR-MALUS zählt auf den Schaden, ein Bonus nicht (nur beim Kompositbogen)."
+              : "Kein STR-Modifikator auf den Schaden.",
+        );
+      }
       if (offHandSteps.length > 0) {
         notes.push(
           offHandSteps.length === 1
