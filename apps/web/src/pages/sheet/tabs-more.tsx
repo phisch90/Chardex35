@@ -65,9 +65,38 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
    * Genau daran hat Philipp gemerkt, dass etwas fehlt — die App hat dazu bisher
    * geschwiegen.
    */
+  /**
+   * Der Ausgleich, den der Fight-Club-Import auf die RK setzt, weil im Export
+   * keine Ausrüstung steht. Er ist eine KRÜCKE, und Krücken müssen weg, sobald
+   * das Echte da ist.
+   */
+  const acCompensation = character.miscModifiers.filter(
+    (m) => m.target === "ac" && /Fight-Club/i.test(m.note ?? ""),
+  );
   const missingArmor =
-    character.miscModifiers.some((m) => m.target === "ac" && /Fight-Club/i.test(m.note ?? "")) &&
-    !character.inventory.some((row) => row.slot === "armor");
+    acCompensation.length > 0 && !character.inventory.some((row) => row.slot === "armor");
+
+  /**
+   * Jetzt zählt beides: die echte Rüstung UND der Ausgleich.
+   *
+   * Der Fall, den Philipp gemeldet hat — sein Bogen stand auf RK 19 statt 16,
+   * weil er Schild und Leder nachgetragen hatte und der Import-Ausgleich weiter
+   * mitzählte. Schlimmer noch: der Ausgleich ist als RÜSTUNGS-Bonus eingetragen
+   * und war höher als das Leder, hat es also verdrängt — in der Aufschlüsselung
+   * stand „Leather" durchgestrichen, und das versteht niemand von allein.
+   *
+   * Die App kann das nicht selbst entscheiden (vielleicht steckt im Ausgleich
+   * noch ein Ring, der wirklich fehlt), also fragt sie — mit den Zahlen daneben.
+   */
+  const doubleCountedAc =
+    acCompensation.length > 0 &&
+    character.inventory.some(
+      (row) => row.slot !== "none" && entityOf(row)?.data.armor !== undefined,
+    );
+  /** Was der Ausgleich gerade verdrängt — genau die durchgestrichenen Zeilen. */
+  const suppressedByCompensation = sheet.ac.total.contributions.filter(
+    (c) => !c.applied && (c.bonusType === "armor" || c.bonusType === "shield"),
+  );
 
   /**
    * Ein Tap auf die Marke rückt einen Platz weiter: nicht angelegt → erster
@@ -271,6 +300,61 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           <p className="mt-1 rounded-lg border border-amber-800/60 bg-amber-950/30 p-2 text-xs text-amber-300">
             {S.sheet.noArmorHint}
           </p>
+        )}
+        {/*
+          Der Gegenfall, und der wichtigere: die Rüstung IST jetzt da, und der
+          Ausgleich zählt weiter mit. Das ist keine Warnung, die man wegklicken
+          kann — es ist eine falsche Zahl auf dem Bogen, und sie muss mit einem
+          Tap wegzubekommen sein.
+        */}
+        {doubleCountedAc && (
+          <div className="mt-1 rounded-lg border border-rose-800/60 bg-rose-950/30 p-2 text-xs text-rose-200">
+            <p className="font-semibold">{S.sheet.acDoubleTitle}</p>
+            <ul className="mt-1 space-y-0.5 font-mono text-[11px]">
+              {acCompensation.map((m) => (
+                <li key={m.id}>
+                  {fmtMod(m.value)} — {m.note}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1 leading-snug">
+              {S.sheet.acDoubleHint(
+                suppressedByCompensation.map((c) => c.source),
+                sheet.ac.total.total,
+              )}
+            </p>
+            <div className="mt-1.5">
+              <GhostButton
+                danger
+                onClick={() => {
+                  const removed = character.miscModifiers.filter((m) =>
+                    acCompensation.some((c) => c.id === m.id),
+                  );
+                  save(
+                    (c) =>
+                      void (c.miscModifiers = c.miscModifiers.filter(
+                        (m) => !removed.some((r) => r.id === m.id),
+                      )),
+                  );
+                  /*
+                    Rücknahme angeboten, statt vorher zu fragen. Löschen ist hier
+                    das Richtige und die Zahlen stehen daneben — aber es sind seine
+                    Daten, und ein Fehlgriff darf nicht bedeuten, dass er den
+                    Importwert nachrechnen muss.
+                  */
+                  undo.offer(S.sheet.acDoubleUndo, () =>
+                    save((c) => {
+                      for (const m of removed) {
+                        if (!c.miscModifiers.some((x) => x.id === m.id)) c.miscModifiers.push(m);
+                      }
+                    }),
+                  );
+                }}
+              >
+                {S.sheet.acDoubleRemove}
+              </GhostButton>
+            </div>
+          </div>
         )}
         {equipped.length === 0 && <p className="py-2 text-sm text-slate-500">Nichts angelegt.</p>}
         {(["armor", "shield", "weapon", "other"] as const).map((slot) => {
