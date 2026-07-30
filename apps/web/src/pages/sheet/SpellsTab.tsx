@@ -180,9 +180,18 @@ function CasterBlock({
             {S.spells.level} · {S.abilities[block.ability]} {fmtMod(block.abilityMod)}
           </p>
         </div>
-        <GhostButton onClick={() => mutate((s) => void (s.usedSlots = []))} title={S.spells.rest}>
-          🌙
-        </GhostButton>
+        {/*
+          Hier saß der Mond: ein Tap, und alle verbrauchten Plätze DIESER Klasse
+          waren wieder da. Philipps Einwand, wörtlich: „Mond überall entfernen.
+          Rasten soll irgendwo anders zentral sein nicht ein Button den man
+          versehentlich drückt ohne zu wissen was passiert ist."
+
+          Er hatte in beidem recht. Der Knopf saß oben rechts in der Karte, dort wo
+          sonst das Aktionsmenü sitzt, und ein Fehlgriff kostete den ganzen
+          Zaubertag. Und als Rast war er ohnehin falsch: ein Kleriker/Magier hatte
+          zwei davon, jeder füllte nur seinen eigenen Block. Die Rast steht jetzt
+          EINMAL im ⋯-Menü, nennt vorher die Zahlen und lässt sich zurücknehmen.
+        */}
       </div>
 
       {/*
@@ -292,7 +301,7 @@ function CasterBlock({
                     s.usedSlots[level] = Math.max(0, (s.usedSlots[level] ?? 0) - 1);
                   })
                 }
-                title={S.spells.rest}
+                title={S.spells.giveBackSlot}
               >
                 −
               </GhostButton>
@@ -469,11 +478,18 @@ function CasterBlock({
         </p>
       )}
       {isPrepared && <p className="mt-3 text-[10px] text-slate-500">{S.spells.preparedHint}</p>}
+      {/*
+        Wo die Rast jetzt steckt. Der Mond war leicht zu finden, weil er im Weg
+        stand — genau sein Vorwurf. Ein Satz an der Stelle, an der man ihn sucht
+        (unten am Zauberblock, nicht als Knopf), löst beides.
+      */}
+      <p className="mt-1 text-[10px] leading-snug text-slate-500">{S.spells.restElsewhere}</p>
 
       {/*
         Legende. Nur noch für die Zeichen, die wirklich Zeichen bleiben: die
-        Slot-Punkte im Grad-Kopf und die Rast. Vorbereiten und Wirken stehen
-        jetzt als Wort am Zauber — dafür braucht es keine Erklärung mehr.
+        Slot-Punkte im Grad-Kopf. Vorbereiten und Wirken stehen jetzt als Wort am
+        Zauber, und die Rast ist ins ⋯-Menü gewandert — dafür braucht es hier
+        keine Erklärung mehr.
       */}
       <details className="mt-3 border-t border-slate-800 pt-2">
         <summary className="cursor-pointer text-xs text-slate-400">Zeichen-Legende</summary>
@@ -485,10 +501,6 @@ function CasterBlock({
           <li>
             <span className="text-slate-300">＋</span> / <span className="text-slate-300">−</span> im
             Grad-Kopf — Slot von Hand verbrauchen bzw. zurückgeben
-          </li>
-          <li>
-            <span className="text-slate-300">🌙</span> — Rast: setzt alle verbrauchten Slots dieser
-            Klasse zurück
           </li>
           {usesSpellbook && (
             <li>

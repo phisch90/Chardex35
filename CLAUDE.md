@@ -67,6 +67,18 @@ Extra Turning nie ankam · der Abzweigpunkt des Abgleichs, der für Bögen weite
 die nie hochgeladen wurden. Bei jedem neuen Feld die Frage stellen: ist das eine
 Eingabe oder eine Folge?
 
+**Fall 1 ist wiedergekommen, und zwar im SCHREIBweg.** `CharacterRepo.mutate` holte
+die rohe Zeile aus der Datenbank und mutierte sie. Sein Kleriker war gespeichert,
+bevor es Domänen gab — dort war `domains` nicht `[]`, sondern gar nicht da. Die
+Anzeige las den geparsten Stand und zeigte brav „0 von 2 gewählt", aber
+`c.domains.some(...)` warf, die Transaktion brach ab, und ein nacktes `void`
+verschluckte es. Seine Beschreibung war genau richtig: „lassen sich quasi auflisten
+aber nicht auswählen." Behoben durch `hydrateCharacterRow` IM Schreibweg (nicht am
+einzelnen Feld — jedes Feld mit Standardwert war dieselbe Falle) plus ein `catch`,
+das einen fehlgeschlagenen Schreibvorgang wenigstens protokolliert. Lehre: ein
+gespeicherter Datensatz ist nie auf dem Stand des Schemas, und ein `void` ohne
+`catch` macht jeden Fehler dahinter unsichtbar.
+
 Beim Domänenplatz war die Antwort: die WAHL der Domäne ist eine Eingabe (steht am
 Charakter), der PLATZ je Zaubergrad ist eine Folge (steht als Merkmal an der Klasse
 und wird gerechnet) — und in welchem der Plätze ein vorbereiteter Zauber sitzt,
@@ -109,6 +121,19 @@ nicht zwischenspeichern.
 - **Eigene Gegenstände LÖSCHEN** gibt es bewusst nicht: jeder Bogen, der einen
   gelöschten Typ noch trägt, verliert RK und Angriffszeile und zeigt eine
   Fehlermeldung. Das braucht sein Wort (Löschen ist eine der zwei Ausnahmen).
+- **Rast und TP:** die Rast steht jetzt zentral im ⋯-Menü (Zauberplätze aller
+  Klassen + Tageszähler, mit Ansage der Zahlen und Rücknahme). TP fasst sie
+  ABSICHTLICH nicht an: dass eine Nachtruhe 1 TP pro Stufe heilt, steht nirgends in
+  dieser App, und ob temporäre TP eine Nacht überdauern, ist eine Entscheidung für
+  seinen Tisch. Offen sind damit drei Fragen: heilt die Rast Schaden? fallen
+  temporäre TP weg? soll es eine zweite Zeile „Kurze Pause" geben?
+- **Eigene Zähler bei der Rast:** aufgefüllt wird nur, was aus einem Vorschlag der
+  App entstand (`suggestedFrom`) — bei „Aktionspunkte" kennt die App die Regel
+  nicht und sagt das. Damit Fight-Club-Zähler mitrasten, bräuchte der Zähler ein
+  echtes Feld „füllt sich bei der Rast" (der Import liest es schon als `perDay` und
+  wirft es weg).
+- **Ein fehlgeschlagenes Speichern sieht er nicht.** Es steht jetzt in der Konsole,
+  aber auf dem Handy schaut da niemand hinein. Eine sichtbare Meldung fehlt.
 - **Behälter** (Inventar/Geldbeutel, Münzgewicht) und Umsortieren per Ziehen.
 
 Details: `PRUEFBERICHT.md`.

@@ -581,6 +581,40 @@ export const S = {
     },
   },
 
+  /*
+    Die Rast. Sein Auftrag, wörtlich: „Rasten soll irgendwo anders zentral sein
+    nicht ein Button den man versehentlich drückt ohne zu wissen was passiert
+    ist." Deshalb nennt jeder Text hier ZAHLEN — „füllt alles auf" wäre genau die
+    Ansage, die er bemängelt hat.
+  */
+  rest: {
+    action: "Rast (8 Stunden)",
+    hint: "Gibt die verbrauchten Zauberplätze zurück und füllt deine Tageszähler.",
+    nothing: "Nichts aufzufüllen — alle Plätze sind frei und die Zähler voll.",
+    confirmTitle: "Das ändert sich:",
+    slotLine: (className: string, freed: number) =>
+      `${className}: ${freed} ${freed === 1 ? "verbrauchter Platz wird" : "verbrauchte Plätze werden"} frei`,
+    trackerLine: (name: string, from: number, to: number) => `${name}: ${from} → ${to}`,
+    skippedTitle: "Bleibt in Ruhe:",
+    skippedReasons: {
+      "eigene Mechanik": "die Regel dazu kenne ich nicht",
+      "keine Grenze": "keine Obergrenze eingetragen",
+      "schon voll": "schon voll",
+    } as Record<string, string>,
+    /*
+      Der Satz, der die zwei offenen Regelfragen benennt statt sie zu erfinden:
+      1 TP pro Stufe pro Nachtruhe steht nirgends in dieser App, und ob temporäre
+      TP eine Nacht überdauern, ist eine Entscheidung für seinen Tisch.
+    */
+    hpNote:
+      "TP fasse ich nicht an. Wie viel eine Nachtruhe heilt, entscheidet dein Tisch — sag es mir, dann baue ich es ein.",
+    confirm: "Rast machen",
+    cancel: "Abbrechen",
+    doneTitle: "Rast gemacht.",
+    undo: "Zurücknehmen",
+    undone: "Zurückgenommen.",
+  },
+
   compendium: {
     kinds: {
       race: "Völker",
@@ -687,7 +721,14 @@ export const S = {
     prepare: "Vorbereiten",
     learn: "Lernen",
     cast: "Wirken",
-    rest: "Rast (Slots zurücksetzen)",
+    /*
+      Der „−"-Knopf im Grad-Kopf trug bis hierher `rest` und behauptete damit eine
+      Rast, obwohl er genau EINEN Platz zurückgibt. Der Mond ist weg, die Rast
+      steht zentral im ⋯-Menü — der Knopf braucht seinen eigenen Satz.
+    */
+    giveBackSlot: "Einen Slot zurückgeben",
+    restElsewhere:
+      "Rast: oben im ⋯-Menü. Sie füllt die Plätze aller Zauberklassen und deine Tageszähler auf einmal auf und sagt vorher, was sich ändert.",
     browse: "Zauberliste durchsuchen",
     onlySpellbook: "nur Zauberbuch",
     level: "Grad",

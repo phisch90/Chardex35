@@ -110,12 +110,34 @@ export const CharacterRepo = {
    * Mutation gegen den FRISCHEN DB-Stand in einer Transaktion — verhindert
    * Lost Updates bei schnellen Doppel-Taps (HP −1/−1, Slot-Pips), die sonst
    * beide denselben veralteten Render-Stand klonen würden.
+   *
+   * `hydrateCharacterRow` steht hier aus einem Grund, der einen echten Fehler
+   * gekostet hat: Dexie gibt die ROHE gespeicherte Zeile zurück, getypt als
+   * `Character` — und der Typ lügt. In der Datenbank steht die Zeile so, wie eine
+   * frühere App-Version sie geschrieben hat. Ein Feld, das erst später ins Schema
+   * kam, ist dort nicht `[]`, sondern gar nicht da; sein Standardwert entsteht
+   * ausschließlich beim Parsen.
+   *
+   * Was daraus wurde: Philipps Kleriker war gespeichert, bevor es Domänen gab.
+   * Die Anzeige las den geparsten Stand und zeigte brav „0 von 2 gewählt", aber
+   * `c.domains.some(...)` traf hier auf `undefined`, warf, riss die Transaktion
+   * mit und wurde von `void` verschluckt. Seine Beschreibung war genau richtig:
+   * „lassen sich quasi auflisten aber nicht auswählen."
+   *
+   * Das ist Fall 1 der Fehlerfamilie dieses Projekts, wörtlich „rohe statt
+   * geparster Datenbankzeilen" — und die Reparatur muss HIER stehen, nicht an den
+   * einzelnen Feldern: `domains` war nur das erste, das auffiel. Jedes Feld mit
+   * einem Standardwert im Schema (Geld, Zustände, Kampfoptionen, Zauberzustand,
+   * Zähler …) ist über diesen Weg dieselbe Falle.
    */
   async mutate(id: string, fn: (c: Character) => void): Promise<void> {
     await db.transaction("rw", db.characters, async () => {
       const current = await db.characters.get(id);
       if (!current || current.deletedAt) return;
-      const copy = structuredClone(current);
+      // Geklont wird trotzdem: bei einem echten Datenfehler gibt
+      // `hydrateCharacterRow` die Rohdaten zurück, und die dürfen nicht die
+      // Zeile in der Datenbank sein, die wir gerade mutieren.
+      const copy = hydrateCharacterRow(structuredClone(current));
       fn(copy);
       copy.rev = current.rev + 1;
       copy.updatedAt = now();
@@ -254,8 +276,13 @@ export const CompendiumRepo = {
   async countCharactersUsing(itemId: string): Promise<{ count: number; names: string[] }> {
     const names: string[] = [];
     for (const raw of await db.characters.toArray()) {
-      if (raw.deletedAt !== undefined) continue;
-      if (raw.inventory.some((row) => row.itemId === itemId)) names.push(raw.name);
+      // Auch hier die rohe Zeile erst auf den Schema-Stand bringen. `inventory`
+      // gibt es seit v1, es wäre also heute harmlos — aber es ist dasselbe
+      // Muster, das eben den Domänen-Fehler verursacht hat, und ein „heute
+      // harmlos" veraltet mit dem nächsten Feld.
+      const character = hydrateCharacterRow(raw);
+      if (character.deletedAt !== undefined) continue;
+      if (character.inventory.some((row) => row.itemId === itemId)) names.push(character.name);
     }
     return { count: names.length, names };
   },

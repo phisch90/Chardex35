@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import type { Character } from "@codex35/core";
+import {
+  applyRest,
+  planRest,
+  snapshotForRest,
+  undoRest,
+  type Character,
+  type DerivedSheet,
+  type RestPlan,
+  type RestUndo,
+} from "@codex35/core";
+import { S } from "../strings.js";
 import { CharacterRepo } from "../db/repo.js";
 import { buildCharacterExport, shareOrDownload } from "../lib/transfer.js";
 import { useAllEntities, useHouseRules } from "../lib/hooks.js";
@@ -30,6 +40,17 @@ export function CharacterActionsSheet(props: {
   onClose: () => void;
   /** Wird nach dem Löschen gerufen (z.B. um von der Bogenseite wegzugehen). */
   onDeleted?: () => void;
+  /**
+   * Der abgeleitete Bogen — nur vom Bogen selbst hereingegeben, nicht aus der
+   * Charakterliste.
+   *
+   * Zwei Gründe. Erstens rechnet die Rast mit lebenden Zahlen (die wirkliche
+   * Grenze eines Zählers steht nicht am Zähler), und die stehen nur hier. Zweitens
+   * soll man keinen Bogen rasten können, den man gar nicht ansieht — in der Liste
+   * fehlt der Bogen, also fehlt die Rast. Und geholt wird er NICHT hier drin: die
+   * Liste würde ihn dann je Zeile aufziehen.
+   */
+  sheet?: DerivedSheet | undefined;
 }) {
   const navigate = useNavigate();
   const entities = useAllEntities();
@@ -38,11 +59,21 @@ export function CharacterActionsSheet(props: {
   const [deleteArmed, setDeleteArmed] = useState(false);
   const [typed, setTyped] = useState("");
   const [note, setNote] = useState<string | null>(null);
+  /*
+    Die Rast hat drei Zustände, und das ist der ganze Punkt: „zu" → „gefragt, mit
+    Zahlen" → „gemacht, mit Rücknahme". Der Mond hatte nur einen.
+  */
+  const [restPlan, setRestPlan] = useState<RestPlan | null>(null);
+  const [restUndo, setRestUndo] = useState<RestUndo | null>(null);
+  const [restDone, setRestDone] = useState<RestPlan | null>(null);
 
   const character = props.character;
   const isDraft = character.draftOf !== undefined;
 
   const close = () => {
+    setRestPlan(null);
+    setRestDone(null);
+    setRestUndo(null);
     // Beim Schließen alles wieder zusammenklappen: der nächste Aufruf soll
     // nicht mit aufgeklappter Gefahrenzone beginnen.
     setDangerOpen(false);
@@ -94,9 +125,69 @@ export function CharacterActionsSheet(props: {
   */
   const codeMatches = typed.trim() === DELETE_CODE;
 
+  /*
+    Ausgeführt wird GENAU der Plan, der in der Rückfrage stand — nicht ein neu
+    gerechneter. Sonst könnte zwischen Lesen und Tippen etwas dazwischenkommen
+    (ein Abgleich vom iPad), und dann passiert etwas anderes als angesagt.
+  */
+  const doRest = async (plan: RestPlan) => {
+    let undo: RestUndo | null = null;
+    await CharacterRepo.mutate(character.id, (c) => {
+      undo = snapshotForRest(c, plan);
+      applyRest(c, plan);
+    });
+    setRestUndo(undo);
+    setRestDone(plan);
+    setRestPlan(null);
+    setNote(null);
+  };
+
+  const undoTheRest = async () => {
+    const undo = restUndo;
+    if (undo === null) return;
+    await CharacterRepo.mutate(character.id, (c) => void undoRest(c, undo));
+    setRestDone(null);
+    setRestUndo(null);
+    setNote(S.rest.undone);
+  };
+
   return (
     <BottomSheet open={props.open} onClose={close} title={character.name}>
       <div className="space-y-2">
+        {/*
+          Die Rast. Sein Auftrag, wörtlich: „Rasten soll irgendwo anders zentral
+          sein nicht ein Button den man versehentlich drueckt ohne zu wissen was
+          passiert ist."
+
+          Also: an EINER Stelle, für alle Zauberklassen und Zähler zusammen, mit
+          den echten Zahlen VORHER und einer Rücknahme danach. Sie steht oben, weil
+          sie der häufigste Handgriff in diesem Blatt ist — Kopieren und Teilen
+          sind es nicht.
+        */}
+        {props.sheet !== undefined && restDone === null && restPlan === null && (
+          <ActionRow
+            icon="😴"
+            label={S.rest.action}
+            hint={S.rest.hint}
+            onClick={() => {
+              const plan = planRest(character, props.sheet!);
+              // Nichts aufzufüllen: dann sagt sie das, statt eine Rückfrage zu
+              // stellen, deren Antwort nichts ändert.
+              if (plan.nothingToDo) setNote(S.rest.nothing);
+              else setRestPlan(plan);
+            }}
+          />
+        )}
+        {restPlan !== null && <RestConfirm plan={restPlan} onCancel={() => setRestPlan(null)} onConfirm={() => void doRest(restPlan)} />}
+        {restDone !== null && (
+          <div className="rounded-lg border border-emerald-800/60 bg-emerald-950/30 p-3">
+            <p className="text-sm font-medium text-emerald-200">{S.rest.doneTitle}</p>
+            <RestLines plan={restDone} />
+            <div className="mt-2">
+              <GhostButton onClick={() => void undoTheRest()}>{S.rest.undo}</GhostButton>
+            </div>
+          </div>
+        )}
         {!isDraft && (
           <ActionRow
             icon="🧪"
@@ -193,6 +284,59 @@ export function CharacterActionsSheet(props: {
         </div>
       </div>
     </BottomSheet>
+  );
+}
+
+/**
+ * Was die Rast ändern wird — mit Zahlen, nicht mit „füllt alles auf".
+ *
+ * Das ist der ganze Unterschied zum Mond: er tat es einfach. Hier steht vorher
+ * da, welche Klasse wie viele Plätze zurückbekommt und welcher Zähler von wo nach
+ * wo geht. Und was in Ruhe bleibt, steht auch da — ein Zähler, der stillschweigend
+ * nicht mitrastet, ist schlimmer als einer, der es begründet.
+ */
+function RestLines(props: { plan: RestPlan }) {
+  const { plan } = props;
+  return (
+    <>
+      <ul className="mt-1 space-y-0.5 text-xs leading-snug text-slate-300">
+        {plan.slots.map((line) => (
+          <li key={line.classId}>{S.rest.slotLine(line.className, line.freed)}</li>
+        ))}
+        {plan.trackers.map((line) => (
+          <li key={line.id}>{S.rest.trackerLine(line.name, line.from, line.to)}</li>
+        ))}
+      </ul>
+      {plan.skipped.length > 0 && (
+        <>
+          <p className="mt-1.5 text-[11px] uppercase tracking-wide text-slate-500">
+            {S.rest.skippedTitle}
+          </p>
+          <ul className="space-y-0.5 text-[11px] leading-snug text-slate-500">
+            {plan.skipped.map((line) => (
+              <li key={line.name}>
+                {line.name} — {S.rest.skippedReasons[line.reason] ?? line.reason}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </>
+  );
+}
+
+function RestConfirm(props: { plan: RestPlan; onCancel: () => void; onConfirm: () => void }) {
+  return (
+    <div className="rounded-lg border border-amber-800/60 bg-amber-950/20 p-3">
+      <p className="text-sm font-medium text-amber-200">{S.rest.confirmTitle}</p>
+      <RestLines plan={props.plan} />
+      {/* Die zwei offenen Regelfragen benennen, statt sie zu erfinden. */}
+      <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{S.rest.hpNote}</p>
+      <div className="mt-2 flex items-center gap-2">
+        <GhostButton onClick={props.onConfirm}>{S.rest.confirm}</GhostButton>
+        <GhostButton onClick={props.onCancel}>{S.rest.cancel}</GhostButton>
+      </div>
+    </div>
   );
 }
 
