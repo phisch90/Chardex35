@@ -216,11 +216,48 @@ export const CompendiumRepo = {
     return next;
   },
 
+  /**
+   * Einen SELBST angelegten Eintrag anlegen — und vorher nachsehen.
+   *
+   * Der Unterschied zu `insertHomebrew` ist das Nachsehen. Dort schreibt ein
+   * blindes `put` über eine bestehende Kennung, und weil der Import seine
+   * Kennungen aus dem NAMEN baut, überschrieb ein zweiter Import mit einem
+   * gleichnamigen Gegenstand rückwirkend die Werte des ersten Charakters. Der
+   * Editor kann sich das nicht erlauben: er zieht eine Zufallskennung, und wenn
+   * die belegt ist, ist etwas grundlegend falsch — dann wird nichts geschrieben.
+   */
+  async createHomebrew(entity: Entity): Promise<Entity> {
+    if (entity.source !== "homebrew") throw new Error(`Eigene Einträge tragen die Quelle „homebrew".`);
+    if ((await db.entities.get(entity.id)) !== undefined) {
+      throw new Error(`Die Kennung ${entity.id} ist schon belegt.`);
+    }
+    const next = { ...entity, updatedAt: now() };
+    await db.entities.put(next);
+    return next;
+  },
+
   async saveHomebrew(entity: Entity): Promise<Entity> {
     if (entity.source !== "homebrew") throw new Error("SRD-Einträge sind unveränderlich — nutze Überschreiben.");
     const next = { ...entity, rev: entity.rev + 1, updatedAt: now() };
     await db.entities.put(next);
     return next;
+  },
+
+  /**
+   * Wie viele Bögen auf diesem Gerät tragen diesen Gegenstand?
+   *
+   * Für den Satz im Editor: eine Änderung am TYP gilt für jedes Exemplar auf
+   * jedem Bogen. „Kurzschwert 1d6 → 1d8" verschiebt den Schaden überall, und das
+   * muss dastehen, bevor er speichert. Die Zahl kann zu klein sein — fremde Bögen
+   * liegen nicht auf diesem Gerät —, deshalb sagt der Text „auf diesem Gerät".
+   */
+  async countCharactersUsing(itemId: string): Promise<{ count: number; names: string[] }> {
+    const names: string[] = [];
+    for (const raw of await db.characters.toArray()) {
+      if (raw.deletedAt !== undefined) continue;
+      if (raw.inventory.some((row) => row.itemId === itemId)) names.push(raw.name);
+    }
+    return { count: names.length, names };
   },
 
   async remove(entity: Entity): Promise<void> {

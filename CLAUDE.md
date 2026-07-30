@@ -101,10 +101,14 @@ nicht zwischenspeichern.
 - **Halber Stärkeschaden in der zweiten Hand** (Dolch 1d4+1 statt 1d4+2) und die
   Rundung bei negativem Stärkemodifikator im ×1,5-Pfad — beides verschiebt Zahlen,
   beides braucht sein Wort.
-- **Ausrüstung — Rest:** eigene Gegenstände mit echten RÜSTUNGS- und WAFFENWERTEN
-  (heute geht nur eine freie Zeile mit Boni; für eine eigene Rüstung fehlen DEX-
-  Grenze und Fertigkeits-Malus), die Werte-Karte „Was deine Rüstung kostet", und
-  der Assistent benutzt noch die alte Suche.
+- **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" fehlt noch.
+  Eigene Gegenstände mit echten Rüstungs- und Waffenwerten sind gebaut (Editor im
+  Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in
+  `core/compendium/homebrewItem.ts`), und der Assistent benutzt jetzt denselben
+  Blätterer wie der Bogen.
+- **Eigene Gegenstände LÖSCHEN** gibt es bewusst nicht: jeder Bogen, der einen
+  gelöschten Typ noch trägt, verliert RK und Angriffszeile und zeigt eine
+  Fehlermeldung. Das braucht sein Wort (Löschen ist eine der zwei Ausnahmen).
 - **Behälter** (Inventar/Geldbeutel, Münzgewicht) und Umsortieren per Ziehen.
 
 Details: `PRUEFBERICHT.md`.

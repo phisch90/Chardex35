@@ -9,6 +9,7 @@ import {
   deriveSheet,
   displayName,
   maxRanks,
+  resolveCompendium,
   skillPointCost,
   type Ability,
   type Character,
@@ -22,6 +23,7 @@ import { useAllEntities, useCompendium, useHouseRules } from "../lib/hooks.js";
 import { Card, Chip, GhostButton, PrimaryButton, SearchInput, fmtMod } from "../ui/bits.js";
 import { EquipMark } from "../ui/EquipMark.js";
 import { itemSummary } from "../ui/itemSummary.js";
+import { ItemPicker } from "../ui/ItemPicker.js";
 import { FeatText } from "../ui/FeatText.js";
 import { ClassInfo, RaceInfo, classDetailLine, raceDetailLine } from "../ui/RaceClassInfo.js";
 
@@ -492,15 +494,25 @@ function FeatStep(props: {
   );
 }
 
+/**
+ * Ausrüstung im Assistenten.
+ *
+ * Hier stand die ALTE Suche: `filter(name.includes(query)).slice(0, 40)`. Die ist
+ * an genau dem gescheitert, was Philipp gemeldet hat — „armor" liefert darunter
+ * keine einzige Rüstung, weil die zwölf echten „Banded mail", „Full plate" und
+ * „Chain shirt" heißen. Der Blätterer aus dem Bogen kann das (Gruppen mit Anzahl,
+ * Untergruppen, deutsche Suchwörter) und wird hier einfach mitbenutzt, damit es
+ * nicht zwei Wege gibt, einen Gegenstand in ein Inventar zu bekommen.
+ *
+ * OHNE `startGroup`: erst wollte ich bei „Ausrüstung & Werkzeug" aufschlagen,
+ * weil man bei der Erschaffung Seil und Fackeln kauft. Im gebauten Bogen war das
+ * falsch — man steckt dann IN der Gruppe, und „Rüstung & Schilde" ist gar nicht zu
+ * sehen. Genau das war seine Beschwerde. Also dieselbe Ansicht wie im Bogen: alle
+ * zwölf Gruppen mit Anzahl, ein Tap in jede.
+ */
 function GearStep(props: { draft: Draft; setDraft: (d: Draft) => void; entities: Entity[] }) {
   const { draft, setDraft } = props;
-  const [query, setQuery] = useState("");
-  const q = query.trim().toLowerCase();
-  const items = props.entities
-    .filter((e) => e.kind === "item" && !e.deletedAt)
-    .filter((e) => !q || e.name.toLowerCase().includes(q))
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .slice(0, 40);
+  const compendium = useMemo(() => resolveCompendium(props.entities), [props.entities]);
 
   return (
     <Card className="space-y-2">
@@ -562,40 +574,18 @@ function GearStep(props: { draft: Draft; setDraft: (d: Draft) => void; entities:
           })}
         </ul>
       )}
-      <SearchInput value={query} onChange={setQuery} placeholder={S.actions.search} />
-      <ul className="divide-y divide-slate-800">
-        {items.map((item) => (
-          <li key={item.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
-            <div className="min-w-0">
-              <div className="truncate">{displayName(item)}</div>
-              {item.kind === "item" && (
-                <div className="text-xs text-slate-500">
-                  {[
-                    itemSummary(item),
-                    item.data.costGp !== undefined ? `${item.data.costGp} gp` : null,
-                    item.data.weightLb ? `${item.data.weightLb} lb` : null,
-                  ]
-                    .filter((part) => part !== null && part !== "")
-                    .join(" · ")}
-                </div>
-              )}
-            </div>
-            <GhostButton
-              onClick={() =>
-                setDraft({
-                  ...draft,
-                  inventory: [
-                    ...draft.inventory,
-                    { id: crypto.randomUUID(), itemId: item.id, qty: 1, slot: "none" },
-                  ],
-                })
-              }
-            >
-              {S.actions.add}
-            </GhostButton>
-          </li>
-        ))}
-      </ul>
+      <ItemPicker
+        compendium={compendium}
+        onPick={(item) =>
+          setDraft({
+            ...draft,
+            inventory: [
+              ...draft.inventory,
+              { id: crypto.randomUUID(), itemId: item.id, qty: 1, slot: "none" },
+            ],
+          })
+        }
+      />
     </Card>
   );
 }

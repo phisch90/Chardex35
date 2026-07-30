@@ -1,6 +1,7 @@
 import { ABILITIES, type Ability } from "../schema/common.js";
 import { characterSchema, type Character } from "../schema/character.js";
-import { entitySchema, type Entity } from "../schema/entities.js";
+import type { Entity } from "../schema/entities.js";
+import { buildHomebrewItem } from "../compendium/homebrewItem.js";
 import type { FightClubAction, FightClubPc, ImportIssue, ImportResultPc } from "./fightclub.js";
 
 /**
@@ -714,6 +715,16 @@ function lookupDomain(index: Map<string, string>, name: string): string | undefi
  * Rüstung, entscheidet der Platz: Fight Club steckt den Schild in die Schildhand.
  */
 function buildFullItem(item: FullItem, id: string): Entity {
+  /*
+    Was hier GERATEN wird, und warum es so bleibt: der Export nennt nur den
+    RK-Wert. Ob leichte, mittlere oder schwere Rüstung, wie hoch die DEX-Grenze
+    ist und welcher Fertigkeits-Malus gilt, steht nicht darin. Geraten wird
+    deshalb die freundlichste Annahme — leicht, keine DEX-Grenze, kein Malus —,
+    denn eine erfundene Grenze würde stillschweigend Fertigkeiten und RK senken.
+
+    Nachtragen kann er das jetzt selbst: der Eigenbau-Editor im Ausrüstungs-
+    Reiter zeigt genau diese Felder an einem importierten Stück.
+  */
   const armor =
     item.armorClass === undefined
       ? undefined
@@ -724,18 +735,14 @@ function buildFullItem(item: FullItem, id: string): Entity {
           acp: 0,
           asf: 0,
         };
-  return entitySchema.parse({
+  return buildHomebrewItem({
     id,
-    kind: "item",
     name: item.name,
-    source: "homebrew",
-    description: item.text,
-    data: {
-      category: armor !== undefined ? "armor" : "gear",
-      ...(item.weightLb === undefined ? {} : { weightLb: item.weightLb }),
-      ...(item.costGp === undefined ? {} : { costGp: item.costGp }),
-      ...(armor === undefined ? {} : { armor }),
-    },
+    kind: armor === undefined ? "gear" : armor.kind === "shield" ? "shield" : "armor",
+    ...(item.text === undefined ? {} : { description: item.text }),
+    ...(item.weightLb === undefined ? {} : { weightLb: item.weightLb }),
+    ...(item.costGp === undefined ? {} : { costGp: item.costGp }),
+    ...(armor === undefined ? {} : { armor }),
   });
 }
 

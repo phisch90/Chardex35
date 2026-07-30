@@ -172,4 +172,51 @@ describe.skipIf(!packsAvailable)("Gegenstände gruppieren", () => {
       expect(names, key).toEqual([...names].sort((a, b) => a.localeCompare(b)));
     }
   });
+
+  describe("Rückfall auf die Daten, wenn die Kategorie fehlt", () => {
+    /*
+      `category` ist das FINDE-Feld und hat den Standardwert „other". Ein
+      Gegenstand aus einem älteren Stand, der ihn nie gesetzt bekam, läge damit in
+      der Restgruppe, obwohl er einwandfrei rechnet — eine eigene Waffe mit
+      Schadenswürfel wäre nicht bei den Waffen zu finden. Die Engine entscheidet an
+      `data.armor` bzw. `data.weapon`, also tut es diese Einteilung auch.
+    */
+    const make = (data: unknown): ItemEntity =>
+      entitySchema.parse({
+        id: "homebrew:item:x",
+        kind: "item",
+        name: "X",
+        source: "homebrew",
+        data,
+      }) as ItemEntity;
+
+    it("Eine Waffe ohne Kategorie liegt trotzdem bei den Waffen", () => {
+      expect(itemGroupOf(make({ weapon: { damage: "1d8" } }))).toBe("weapon");
+    });
+
+    it(`Eine Rüstung ohne Kategorie liegt bei „Rüstung & Schilde"`, () => {
+      expect(itemGroupOf(make({ armor: { kind: "heavy", acBonus: 8 } }))).toBe("armor");
+      expect(itemGroupOf(make({ armor: { kind: "shield", acBonus: 2 } }))).toBe("armor");
+    });
+
+    it(`Was wirklich nichts ist, bleibt „Sonstiges"`, () => {
+      expect(itemGroupOf(make({}))).toBe("other");
+    });
+
+    it("Kein SRD-Gegenstand wechselt dadurch die Gruppe", () => {
+      /*
+        Der Wächter: der Rückfall darf nur greifen, wo die Kategorie fehlt. Bei
+        den echten Packs kommt „other" nie zusammen mit Waffen- oder
+        Rüstungsdaten vor — sonst hätte sich gerade eine Gruppe verschoben, und
+        das bewegt die Zeilen unter seinen Fingern.
+      */
+      const affected = [...compendium.values()].filter(
+        (e) =>
+          e.kind === "item" &&
+          e.data.category === "other" &&
+          (e.data.weapon !== undefined || e.data.armor !== undefined),
+      );
+      expect(affected.map((e) => e.name)).toEqual([]);
+    });
+  });
 });

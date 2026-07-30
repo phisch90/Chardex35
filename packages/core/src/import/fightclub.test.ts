@@ -485,8 +485,27 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(weapon!.name).toBe("Templer Schwert");
     expect(weapon!.source).toBe("homebrew");
     if (weapon!.kind !== "item") throw new Error("kein Gegenstand");
-    // Schaden ohne den Attributsbonus aus dem Export; „19/x2" heißt 19–20.
-    expect(weapon!.data.weapon).toMatchObject({ damage: "1d6", critRange: "19-20", critMult: "x2" });
+    /*
+      Schaden ohne den Attributsbonus aus dem Export; „19/x2" heißt 19–20.
+
+      Vollständig geprüft, nicht nur die drei Felder: das ist der Wächter dafür,
+      dass der Umbau auf `buildHomebrewItem` nichts verschoben hat. Vorher stand
+      hier ein Objektliteral, in dem jeder Schema-Standardwert von Hand
+      wiederholt war — genau die Bauform, bei der ein neues Schemafeld still
+      fehlt.
+    */
+    expect(weapon!.data.weapon).toEqual({
+      damage: "1d6",
+      critRange: "19-20",
+      critMult: "x2",
+      category: "martial",
+      handedness: "one",
+    });
+    expect(weapon!.data.category).toBe("weapon");
+    expect(weapon!.tags).toEqual(["import", "waffe"]);
+    expect(weapon!.schemaVersion).toBe(1);
+    expect(weapon!.rev).toBe(1);
+    expect(weapon!.effects).toEqual([]);
     // Sie ist angelegt und erzeugt damit eine Angriffszeile.
     const row = character.inventory.find((i) => i.itemId === weapon!.id);
     // Die erste Aktionszeile landet in der Haupthand, die weiteren im Rucksack.

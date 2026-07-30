@@ -1,6 +1,6 @@
 import { COMBAT_EXPERTISE_MAX } from "@codex35/core";
 import { S } from "../../strings.js";
-import { Card, Chip, GhostButton, SectionTitle } from "../../ui/bits.js";
+import { Card, Chip, GhostButton, NumberStepper, SectionTitle } from "../../ui/bits.js";
 import type { TabProps } from "./index.js";
 
 /**
@@ -54,7 +54,7 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
 
       <div className="space-y-2">
         {has("srd:feat:power-attack") && (
-          <Stepper
+          <NumberStepper
             label={S.combat.powerAttack}
             hint={S.combat.powerAttackHint(sheet.bab)}
             value={options.powerAttack}
@@ -63,7 +63,7 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
           />
         )}
         {has("srd:feat:combat-expertise") && (
-          <Stepper
+          <NumberStepper
             label={S.combat.combatExpertise}
             hint={S.combat.combatExpertiseHint(Math.min(COMBAT_EXPERTISE_MAX, sheet.bab))}
             value={options.combatExpertise}
@@ -142,50 +142,5 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
         )}
       </div>
     </Card>
-  );
-}
-
-/**
- * Zahl mit −/+ statt Tastatur: am Tisch wird das mit einer Hand bedient, und
- * eine Bildschirmtastatur für „4" ist ein Ärgernis. Die Obergrenze steht daneben,
- * gesperrt wird nicht — wer sie überschreiten will, bekommt eine Warnung am
- * Bogen (die Regel dazu steht in der Engine).
- */
-function Stepper(props: {
-  label: string;
-  hint: string;
-  value: number;
-  max: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="min-w-0 flex-1">
-        <div className="text-sm">{props.label}</div>
-        <div className="text-[11px] text-slate-500">{props.hint}</div>
-      </div>
-      <GhostButton disabled={props.value <= 0} onClick={() => props.onChange(props.value - 1)}>
-        −
-      </GhostButton>
-      <span
-        className={`w-8 text-center font-mono text-lg ${
-          props.value > 0 ? "text-amber-300" : "text-slate-500"
-        }`}
-      >
-        {props.value}
-      </span>
-      {/*
-        Bei der Obergrenze ist Schluss. Die Engine wendet einen höheren Wert
-        weiterhin an und warnt (Importe und ältere Stände können ihn mitbringen) —
-        aber ANBIETEN darf die Oberfläche ihn nicht. Ungebremst kam man hier auf
-        „Nahkampf −89, Schaden 2d6+204".
-      */}
-      <GhostButton
-        disabled={props.value >= props.max}
-        onClick={() => props.onChange(props.value + 1)}
-      >
-        +
-      </GhostButton>
-    </div>
   );
 }
