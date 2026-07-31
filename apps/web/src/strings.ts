@@ -205,12 +205,28 @@ export const S = {
 
   wizard: {
     title: "Neuer Charakter",
-    steps: ["Volk", "Attribute", "Klasse", "Fertigkeiten", "Talente", "Ausrüstung", "Fertig"],
+    /*
+      Klasse VOR den Attributen — seine Entscheidung, wörtlich: „Vielleicht hätte ich
+      auch gerne zuerst Klasse, also Volk, Klasse und dann die Attribute, weil dann
+      kann man ein bisschen schauen, wenn man würfelt, dass man die Attribute der
+      Rasse und Klasse anpasst."
+
+      Die Reihenfolge hier ist die Wahrheit: `STEP` in `CharacterWizard.tsx` benennt
+      dieselben Positionen, damit im Code keine nackten Zahlen stehen.
+    */
+    steps: ["Volk", "Klasse", "Attribute", "Fertigkeiten", "Talente", "Ausrüstung", "Fertig"],
     name: "Name",
     playerName: "Spieler:in",
     hpRoll: "TP-Wurf",
     pointsLeft: "Punkte übrig",
     slotsLeft: "Slots übrig",
+    /** Steht in der haftenden Leiste, wenn kein Talent-Slot mehr frei ist. */
+    noSlotsLeft: "Keine Talent-Slots mehr frei",
+    /** Zu viel gewählt — der DM hat Recht, aber es soll dastehen. */
+    tooMany: (over: number) => `${over} zu viel gewählt`,
+    /** Warum ein Reiter noch nicht angetippt werden kann. */
+    needRaceAndClass: "Erst Volk und Klasse wählen",
+    summary: "Der Bogen, wie er wird",
     standardArray: "Standardreihe (15/14/13/12/10/8)",
     rollAll: "🎲 Alle würfeln (4W6, niedrigster fällt)",
     /** NPC-Klassen sind kein Spielerfutter — aber erreichbar, für Gefolge und NSCs. */
@@ -367,10 +383,21 @@ export const S = {
     /** Mehrfach wählbare Talente (Toughness) dürfen wieder vorkommen. */
     againOk: "mehrfach möglich",
     requires: "Braucht",
-    /** Voraussetzung, die die App nicht prüfen kann — steht dran, sperrt nicht. */
-    unverifiable: "kann ich nicht prüfen",
+    /*
+      Voraussetzung, die die App nicht prüfen kann.
+
+      Vorher stand an der Zeile nur „? kann ich nicht prüfen", und er hat zu Recht
+      gefragt: „Dann versteh ich noch nicht ganz, was Du mit Fragezeichen kann ich
+      nicht prüfen als Tag meinst." Das Fragezeichen ohne Bezug sagt nichts — jetzt
+      steht die Voraussetzung SELBST in der Marke, mit dem Grund davor.
+    */
+    unverifiable: "ungeprüft",
+    /** Die Marke an der Zeile: der Voraussetzungstext, als ungeprüft gekennzeichnet. */
+    unverifiableMark: (text: string) => `ungeprüft: ${text}`,
     unverifiableHint:
-      "Das steht in den Daten nur als Satz, nicht als Zahl. Ich zeige es, sperre aber nicht — du weißt, ob es passt.",
+      "Diese Voraussetzung steht im Regelwerk als Satz und nicht als Zahl — ich kann sie nicht nachrechnen und sperre deshalb nicht. Du weißt, ob sie passt.",
+    /** Nur zeigen, was gewählt werden kann — sein Wunsch beim Blättern. */
+    onlyEligible: "nur wählbare",
     noSheetYet: "Voraussetzungen kann ich erst prüfen, wenn Volk und Klasse stehen.",
     /** Die Rückfrage beim Notausgang. */
     overrideAsk: (missing: string[]) =>
