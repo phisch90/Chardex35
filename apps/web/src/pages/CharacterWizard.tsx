@@ -3,6 +3,8 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   ABILITIES,
   ABILITY_BASE_SOURCE,
+  abilityAdviceFor,
+  adviceFor,
   characterSchema,
   classCategory,
   conflictingEquipIds,
@@ -14,6 +16,7 @@ import {
   skillPointCost,
   type Ability,
   type AbilityBlock,
+  type Advice,
   type Character,
   type DerivedSheet,
   type Entity,
@@ -28,6 +31,8 @@ import { EquipMark } from "../ui/EquipMark.js";
 import { itemSummary } from "../ui/itemSummary.js";
 import { ItemPicker } from "../ui/ItemPicker.js";
 import { FeatPicker } from "../ui/FeatPicker.js";
+import { AdviceCard } from "../ui/AdviceCard.js";
+import { SkillAdviceLine, SkillMark, suggestionWhy } from "../ui/SkillAdvice.js";
 import { CampaignPicker, type CampaignValue } from "../ui/CampaignPicker.js";
 import { DraftSummary } from "../ui/DraftSummary.js";
 import { FeatText } from "../ui/FeatText.js";
@@ -202,6 +207,16 @@ export function CharacterWizardPage() {
     .map((e) => displayName(e))
     .join(" ");
 
+  /*
+    Die Empfehlung ist eine FOLGE aus Volk und Klasse — gerechnet, nie gespeichert.
+
+    KEIN `useMemo`: hier unten steht der Aufruf hinter dem frühen `return` für das noch
+    ladende Kompendium, und ein Hook hinter einer Bedingung wirft, sobald die Bedingung
+    umschlägt. Die Rechnung ist ein Kartenzugriff und eine Schleife über sechs Attribute —
+    dafür braucht es kein Memo.
+  */
+  const advice = adviceFor(chosenClass, chosenRace);
+
   const stepBudget = budget();
 
   /*
@@ -302,6 +317,14 @@ export function CharacterWizardPage() {
         />
       )}
 
+      {/*
+        Die Empfehlung steht ÜBER den Feldern, nicht darunter: sie soll gelesen werden,
+        bevor getippt wird. Ohne Klasse gibt es keine — dann fehlt die Karte einfach.
+      */}
+      {step === STEP.abilities && advice !== undefined && (
+        <AdviceCard advice={advice} who={who} />
+      )}
+
       {step === STEP.abilities && (
         <Card>
           <div className="mb-3 flex flex-wrap gap-2">
@@ -340,27 +363,45 @@ export function CharacterWizardPage() {
             </Chip>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {ABILITIES.map((ability) => (
-              <label key={ability} className="flex flex-col gap-1">
-                <span className="text-xs uppercase text-slate-400">
-                  {S.abilityNames[ability]} ({S.abilities[ability]})
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={draft.base[ability]}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      base: { ...draft.base, [ability]: e.target.valueAsNumber || 10 },
-                    })
-                  }
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-lg font-semibold"
-                />
-                {sheet && <AbilityResult block={sheet.abilities[ability]} />}
-              </label>
-            ))}
+            {ABILITIES.map((ability) => {
+              const hint = advice === undefined ? undefined : abilityAdviceFor(advice, ability);
+              return (
+                <label key={ability} className="flex flex-col gap-1">
+                  <span className="flex flex-wrap items-baseline gap-x-1.5 text-xs uppercase text-slate-400">
+                    {S.abilityNames[ability]} ({S.abilities[ability]})
+                    {/*
+                      Die Marke am Feld. Sie steht nur an Attributen, die laut Empfehlung
+                      zählen — an alle sechs geschrieben wäre sie keine Auskunft mehr.
+                    */}
+                    {hint !== undefined && (
+                      <span className="normal-case text-amber-300">
+                        ★ {S.advice.matters}
+                        {hint.min !== undefined && `, ${S.advice.fromValue(hint.min)}`}
+                      </span>
+                    )}
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={draft.base[ability]}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        base: { ...draft.base, [ability]: e.target.valueAsNumber || 10 },
+                      })
+                    }
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-lg font-semibold"
+                  />
+                  {sheet && (
+                    <AbilityResult
+                      block={sheet.abilities[ability]}
+                      {...(hint?.min !== undefined ? { min: hint.min } : {})}
+                    />
+                  )}
+                </label>
+              );
+            })}
           </div>
           <p className="mt-2 text-xs text-slate-500">
             Würfelt wie gewohnt am Tisch und tragt die Werte ein — Volks-Modifikatoren rechnet die
@@ -388,6 +429,8 @@ export function CharacterWizardPage() {
         <SkillStep
           draft={draft}
           setDraft={setDraft}
+          advice={advice}
+          klass={chosenClass}
           lines={sheet?.skills}
           sheetPoints={sheet?.skillPoints}
           compendium={compendium}
@@ -495,10 +538,16 @@ export function CharacterWizardPage() {
  * sobald er mitwirkt. Eine zweite „Volks-Modifikator"-Rechnung wäre der abgeleitete Wert,
  * der gespeichert wurde — die Fehlerfamilie dieses Projekts, nur im Anzeigecode.
  */
-function AbilityResult({ block }: { block: AbilityBlock }) {
+function AbilityResult({ block, min }: { block: AbilityBlock; min?: number }) {
   const sources = block.score.contributions.filter(
     (c) => c.source !== ABILITY_BASE_SOURCE && c.value !== 0,
   );
+  /*
+    Verglichen wird der ENDWERT, nicht die getippte Zahl. Bei seinem Halb-Ork ist das der
+    Unterschied zwischen 13 und 15 — ein Hinweis „unter 14" neben einer 15 wäre schlicht
+    falsch. Gesperrt wird nichts: warnen statt sperren.
+  */
+  const below = min !== undefined && block.score.total < min;
   return (
     <span className="text-xs text-slate-400">
       {S.wizard.abilityResult(block.score.total, fmtMod(block.mod))}
@@ -509,6 +558,7 @@ function AbilityResult({ block }: { block: AbilityBlock }) {
             .join(" · ")}
         </span>
       )}
+      {below && <span className="ml-1.5 text-amber-400">⚠ {S.advice.below(min)}</span>}
     </span>
   );
 }
@@ -578,6 +628,9 @@ function PickList(props: {
 function SkillStep(props: {
   draft: Draft;
   setDraft: (d: Draft) => void;
+  /** Was die Klasse ausmacht — dieselbe Auskunft wie im Stufenaufstieg. */
+  advice: Advice | undefined;
+  klass: Entity | undefined;
   lines: SkillLine[] | undefined;
   sheetPoints: { available: number; spent: number } | undefined;
   compendium: Map<string, Entity>;
@@ -611,6 +664,7 @@ function SkillStep(props: {
       <div className={`mb-2 text-sm font-semibold ${left < 0 ? "text-red-400" : "text-emerald-400"}`}>
         {S.wizard.pointsLeft}: {left}
       </div>
+      <SkillAdviceLine advice={props.advice} klass={props.klass} compendium={props.compendium} />
       <ul className="divide-y divide-slate-800">
         {props.lines.map((skill) => {
           const isClass = skill.isClassSkill;
@@ -625,6 +679,7 @@ function SkillStep(props: {
               <span className={isClass ? "" : "text-slate-400"}>
                 {skill.name}
                 {isClass && <span className="ml-1 text-[11px] text-amber-400">✧</span>}
+                <SkillMark why={suggestionWhy(props.advice, skill)} />
                 {!isSubtypeAnchor && (
                   <span className="ml-1 text-xs text-slate-500">
                     {S.sheet.maxRanks} {max}

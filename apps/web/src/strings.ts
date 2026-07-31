@@ -238,6 +238,24 @@ export const S = {
     showNpcClasses: "auch NPC-Klassen",
   },
 
+  /**
+   * Empfehlungen im Assistenten und beim Stufenaufstieg. Sie EMPFEHLEN — der Satz
+   * `disclaimer` steht mit Absicht dabei: an seinem Tisch entscheidet der DM, nicht die App.
+   */
+  advice: {
+    abilityTitle: (who: string) => `Für ${who} zählt`,
+    fromValue: (min: number) => `ab ${min}`,
+    /** Marke am Eingabefeld eines wichtigen Attributs. */
+    matters: "wichtig",
+    /** Am Feld, wenn der ENDWERT unter dem empfohlenen Mindestwert liegt. */
+    below: (min: number) => `unter ${min}`,
+    disclaimer: "Nur ein Vorschlag — spielbar ist jede Verteilung.",
+    skillTitle: (klass: string) => `Empfohlen für ${klass}`,
+    /** Marke an einer empfohlenen Fertigkeitszeile. */
+    suggested: "empfohlen",
+    subtypeHint: (subtype: string) => `am besten ${subtype}`,
+  },
+
   settings: {
     tagline: "D&D 3.5 mit Homebrew — alles auf deinem Gerät",
     features: "Funktionen",
