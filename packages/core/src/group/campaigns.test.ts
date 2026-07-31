@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { characterSchema, type Character } from "../schema/character.js";
 import { buildFingerprint } from "./orders.js";
-import { campaignsOf, charactersToRecolor, colorOfCampaign } from "./campaigns.js";
+import {
+  campaignsOf,
+  charactersToRecolor,
+  colorOfCampaign,
+  groupByCampaign,
+} from "./campaigns.js";
 
 /**
  * Kampagnen.
@@ -65,6 +70,49 @@ describe("Kampagnen fallen aus den Bögen — nicht aus einer zweiten Liste", ()
 
   it("Ohne Farbangabe ist die Kampagne unauffällig", () => {
     expect(campaignsOf([hero("A", { name: "Nachtwind" })])[0]?.color).toBe("slate");
+  });
+});
+
+describe("Die Startseite in Abschnitte teilen", () => {
+  it("Kampagnen nach Namen, die Bögen ohne Kampagne zuletzt", () => {
+    /*
+      Der Rest steht unten und nicht zwischen den Kampagnen: „ohne Kampagne" ist
+      keine Kampagne, die zufällig mit O anfängt.
+    */
+    const groups = groupByCampaign([
+      hero("Alrik", { name: "Sturmtal", color: "sky" }),
+      hero("Einzelgänger"),
+      hero("Hike", { name: "Nachtwind", color: "emerald" }),
+      hero("Torben", { name: "Nachtwind", color: "emerald" }),
+    ]);
+    expect(groups.map((g) => g.campaign?.name)).toEqual(["Nachtwind", "Sturmtal", undefined]);
+    expect(groups.map((g) => g.characters.map((c) => c.name))).toEqual([
+      ["Hike", "Torben"],
+      ["Alrik"],
+      ["Einzelgänger"],
+    ]);
+  });
+
+  it("Ohne Bögen ohne Kampagne gibt es auch keinen Rest-Abschnitt", () => {
+    // Sonst stünde unter der letzten Kampagne eine leere Überschrift.
+    const groups = groupByCampaign([hero("Hike", { name: "Nachtwind", color: "emerald" })]);
+    expect(groups).toHaveLength(1);
+  });
+
+  it("Jeder Bogen kommt in genau einem Abschnitt vor", () => {
+    /*
+      Die Zahl der Abschnitte geht in die Kartengröße ein und die Zahl der Bögen
+      auch — zählt hier einer doppelt oder fällt einer heraus, rutscht die unterste
+      Karte unter die Leiste.
+    */
+    const all = [
+      hero("A", { name: "Nachtwind", color: "emerald" }),
+      hero("B", { name: "   " }),
+      hero("C"),
+      hero("D", { name: "nachtwind", color: "rose" }),
+    ];
+    const flat = groupByCampaign(all).flatMap((g) => g.characters.map((c) => c.name));
+    expect(flat.sort()).toEqual(["A", "B", "C", "D"]);
   });
 });
 

@@ -1,9 +1,27 @@
 import type { ReactNode } from "react";
 
-export function Card(props: { children: ReactNode; className?: string }) {
+/**
+ * Die Karte — Rahmen, Fläche, Polster.
+ *
+ * `tone` und `padding` sind ERSATZ, nicht Ergänzung, und das ist der Grund, warum
+ * sie überhaupt existieren: eine Klasse, die über `className` hinten angehängt wird,
+ * gewinnt NICHT automatisch. Tailwind entscheidet bei gleicher Spezifität nach der
+ * Reihenfolge im Stylesheet, und dort steht `slate` hinter allen Buntfarben. Ein
+ * `bg-emerald-950/40` im `className` blieb deshalb wirkungslos — die Kampagnenfarbe
+ * war unsichtbar, obwohl die Klasse am Element stand. Dasselbe für `p-2` gegen das
+ * eingebaute `p-3`. Wer die Farbe oder das Polster ändern will, ERSETZT es hier.
+ */
+export function Card(props: {
+  children: ReactNode;
+  className?: string;
+  /** Rahmen und Fläche, statt des grauen Standards. */
+  tone?: string | undefined;
+  /** Polster, statt `p-3`. */
+  padding?: string | undefined;
+}) {
   return (
     <div
-      className={`rounded-xl border border-slate-700/60 bg-slate-900/70 p-3 shadow-sm ${props.className ?? ""}`}
+      className={`rounded-xl border shadow-sm ${props.tone ?? "border-slate-700/60 bg-slate-900/70"} ${props.padding ?? "p-3"} ${props.className ?? ""}`}
     >
       {props.children}
     </div>

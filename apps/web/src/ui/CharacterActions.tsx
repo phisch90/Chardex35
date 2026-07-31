@@ -16,6 +16,8 @@ import { CharacterRepo } from "../db/repo.js";
 import { buildCharacterExport, shareOrDownload } from "../lib/transfer.js";
 import { useAllEntities, useHouseRules } from "../lib/hooks.js";
 import { BottomSheet, GhostButton } from "./bits.js";
+import { CampaignPicker } from "./CampaignPicker.js";
+import { campaignLook } from "./campaignColors.js";
 
 /**
  * Alles, was man mit einem Charakter TUN kann, an einer Stelle — und das
@@ -67,6 +69,7 @@ export function CharacterActionsSheet(props: {
   const [restPlan, setRestPlan] = useState<RestPlan | null>(null);
   const [restUndo, setRestUndo] = useState<RestUndo | null>(null);
   const [restDone, setRestDone] = useState<RestPlan | null>(null);
+  const [campaignOpen, setCampaignOpen] = useState(false);
 
   const character = props.character;
   const isDraft = character.draftOf !== undefined;
@@ -79,6 +82,7 @@ export function CharacterActionsSheet(props: {
     // nicht mit aufgeklappter Gefahrenzone beginnen.
     setDangerOpen(false);
     setDeleteArmed(false);
+    setCampaignOpen(false);
     setTyped("");
     setNote(null);
     props.onClose();
@@ -208,6 +212,51 @@ export function CharacterActionsSheet(props: {
             </div>
           </div>
         )}
+        {/*
+          Die Kampagne. Von der Startseite aus ist das die erste Zeile im Blatt (die
+          Rast erscheint dort nicht, weil der abgeleitete Bogen fehlt) — und genau so
+          wollte er es: Karte antippen, ⋯, Kampagne eintragen, ohne den Bogen zu
+          öffnen. Aufklappen statt einer eigenen Seite, damit die Farbreihe im selben
+          Blick liegt wie die Karte, die sie färbt.
+        */}
+        {campaignOpen ? (
+          <div className="rounded-lg border border-slate-700 p-3">
+            <CampaignPicker
+              value={character.campaign}
+              ownId={character.id}
+              onChange={(next) => {
+                void CharacterRepo.mutate(character.id, (c) => {
+                  if (next === undefined) delete c.campaign;
+                  else c.campaign = next;
+                }).catch((error: unknown) => {
+                  console.error(`Kampagne an ${character.name} fehlgeschlagen:`, error);
+                });
+              }}
+            />
+            <div className="mt-2">
+              <GhostButton onClick={() => setCampaignOpen(false)}>{S.actions.done}</GhostButton>
+            </div>
+          </div>
+        ) : (
+          <ActionRow
+            icon={
+              character.campaign === undefined
+                ? "🏷️"
+                : /* Der Punkt in der Farbe der Kampagne: er sieht schon in der Zeile,
+                     was eingetragen ist, ohne sie aufzuklappen. */
+                  undefined
+            }
+            dot={
+              character.campaign === undefined
+                ? undefined
+                : campaignLook(character.campaign.color).dot
+            }
+            label={S.campaign.label}
+            hint={character.campaign?.name ?? S.campaign.none}
+            onClick={() => setCampaignOpen(true)}
+          />
+        )}
+
         {!isDraft && (
           <ActionRow
             icon="🧪"
@@ -370,7 +419,13 @@ function RestConfirm(props: { plan: RestPlan; onCancel: () => void; onConfirm: (
 }
 
 function ActionRow(props: {
-  icon: string;
+  icon?: string | undefined;
+  /**
+   * Ein farbiger Punkt anstelle des Symbols — für die Kampagnenzeile, die ihre
+   * eigene Farbe zeigt. Tailwind-Klasse, kein Farbwert: gebaut werden Klassen hier
+   * nie zur Laufzeit (siehe `campaignColors.ts`).
+   */
+  dot?: string | undefined;
   label: string;
   hint: string;
   onClick: () => void;
@@ -382,7 +437,11 @@ function ActionRow(props: {
       disabled={props.disabled}
       className="flex w-full items-start gap-3 rounded-lg border border-slate-700 p-3 text-left enabled:hover:bg-slate-800 disabled:opacity-40"
     >
-      <span className="text-lg leading-none">{props.icon}</span>
+      {props.dot === undefined ? (
+        <span className="text-lg leading-none">{props.icon}</span>
+      ) : (
+        <span className={`mt-1 h-3.5 w-3.5 shrink-0 rounded-full ${props.dot}`} />
+      )}
       <span className="min-w-0">
         <span className="block text-sm font-medium">{props.label}</span>
         <span className="block text-xs text-slate-500">{props.hint}</span>

@@ -95,6 +95,44 @@ export function charactersToRecolor(
   );
 }
 
+/**
+ * Ein Abschnitt der Startseite: eine Kampagne und ihre Bögen.
+ *
+ * `campaign === undefined` ist der letzte Abschnitt — die Bögen, die zu keiner
+ * Kampagne gehören. Er ist keine Kampagne mit leerem Namen, sondern der Rest.
+ */
+export interface CampaignGroup {
+  campaign: CampaignSummary | undefined;
+  characters: Character[];
+}
+
+/**
+ * Die Bögen nach Kampagne gruppieren — Kampagnen nach Namen, der Rest zuletzt.
+ *
+ * Steht im Kern und nicht in der Liste, weil es eine reine Umsortierung ist und
+ * genau die Reihenfolge festlegt, gegen die die Kartenstufen gerechnet werden
+ * (`ui/cardTier.ts` braucht die ANZAHL der Abschnitte). Zwei Stellen, die das
+ * unterschiedlich zählen, ergäben eine Karte, die unter die Leiste rutscht.
+ *
+ * Innerhalb eines Abschnitts bleibt die Reihenfolge, in der die Bögen ankommen —
+ * die Liste sortiert sie schon nach Namen, und hier nochmal zu sortieren würde
+ * diese Entscheidung verdoppeln.
+ */
+export function groupByCampaign(characters: Character[]): CampaignGroup[] {
+  const groups: CampaignGroup[] = campaignsOf(characters).map((campaign) => ({
+    campaign,
+    characters: characters.filter(
+      (c) => c.campaign !== undefined && key(c.campaign.name) === key(campaign.name),
+    ),
+  }));
+
+  const rest = characters.filter(
+    (c) => c.campaign === undefined || c.campaign.name.trim() === "",
+  );
+  if (rest.length > 0) groups.push({ campaign: undefined, characters: rest });
+  return groups;
+}
+
 /** Die Farbe, die eine bestehende Kampagne schon trägt — für die Vorbelegung. */
 export function colorOfCampaign(
   characters: Character[],

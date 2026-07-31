@@ -343,6 +343,33 @@ export const S = {
       "Zum Freigeben brauchst du einen eigenen GitHub-Zugang — denselben wie beim Geräte-Abgleich. Mitlesen geht ohne.",
   },
 
+  /**
+   * Die Kampagne. Eigener Abschnitt, weil sie an vier Stellen auftaucht
+   * (Startseite, Bogen, ⋯-Menü, Assistent) — dasselbe Muster wie `group`.
+   *
+   * „Kampagne" und nicht „Gruppe": Gruppe ist in dieser App schon vergeben (die
+   * Regale der Mitspieler). Zwei Wörter für zwei Dinge, die sich überschneiden, aber
+   * nicht dasselbe sind — dieselben Leute können zwei Kampagnen spielen.
+   */
+  campaign: {
+    label: "Kampagne",
+    placeholder: "z.B. Die Zinnen von Karrath",
+    hint: "Sortiert die Startseite und färbt die Karten. Leer lassen ist in Ordnung.",
+    color: "Farbe dieser Kampagne",
+    none: "Ohne Kampagne",
+    existing: "Schon vorhanden",
+    /** Steht unter der Farbreihe, sobald der Wechsel mehr als diesen einen Bogen trifft. */
+    alsoAffects: (names: string[]) =>
+      `Gilt auch für ${names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} und ${names[names.length - 1]}`} — die Farbe gehört der Kampagne, nicht dem einzelnen Bogen.`,
+    /**
+     * Zwei Geräte haben verschiedene Farben geschrieben. Das ist der Preis dafür,
+     * dass die Farbe am Bogen hängt und mitreist — es soll dastehen, nicht
+     * verschwiegen werden.
+     */
+    mixed: "Auf diesem Gerät stehen zwei Farben für diese Kampagne. Wähle eine, dann gilt sie für alle.",
+    sheets: (count: number) => `${count} ${count === 1 ? "Bogen" : "Bögen"}`,
+  },
+
   combat: {
     title: "Kampfoptionen",
     hint: "Gilt für diese Runde. Die Werte oben ändern sich mit.",

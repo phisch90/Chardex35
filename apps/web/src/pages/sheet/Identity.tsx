@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { S } from "../../strings.js";
-import { Card, SectionTitle } from "../../ui/bits.js";
+import { Card, Field, SectionTitle, inputClass } from "../../ui/bits.js";
+import { CampaignPicker } from "../../ui/CampaignPicker.js";
 import type { TabProps } from "./index.js";
 
 /**
@@ -49,21 +50,23 @@ export function IdentityCard({ character, save }: Pick<TabProps, "character" | "
   return (
     <Card>
       <SectionTitle>{S.sheet.identity}</SectionTitle>
+      {/* Field/inputClass statt zweier handkopierter Klassenketten — bits.tsx nennt
+          genau diese Datei als Fundstelle der Kopie. */}
       <div className="space-y-2">
-        <label className="block">
-          <span className="text-xs text-slate-400">{S.sheet.characterName}</span>
+        <Field label={S.sheet.characterName}>
           <input
             value={shown}
             onChange={(e) => onName(e.target.value)}
             onBlur={() => setDraftName(null)}
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+            className={inputClass}
           />
+          {/* Bernstein und nicht der graue Hinweis-Ton: das ist eine Warnung, kein
+              Beipackzettel — so lange sie steht, ist der Name NICHT gespeichert. */}
           {draftName !== null && (
             <span className="mt-1 block text-[11px] text-amber-300">{S.sheet.nameEmptyHint}</span>
           )}
-        </label>
-        <label className="block">
-          <span className="text-xs text-slate-400">{S.wizard.playerName}</span>
+        </Field>
+        <Field label={S.wizard.playerName}>
           <input
             value={character.playerName ?? ""}
             placeholder={S.sheet.playerPlaceholder}
@@ -76,9 +79,23 @@ export function IdentityCard({ character, save }: Pick<TabProps, "character" | "
                 else c.playerName = value;
               });
             }}
-            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+            className={inputClass}
           />
-        </label>
+        </Field>
+        {/*
+          Die Kampagne steht hier, weil sie zu Name und Spieler:in gehört: alle drei
+          sagen, WESSEN Bogen das ist und an welchem Tisch er liegt — keine Regelwerte.
+        */}
+        <CampaignPicker
+          value={character.campaign}
+          ownId={character.id}
+          onChange={(next) =>
+            save((c) => {
+              if (next === undefined) delete c.campaign;
+              else c.campaign = next;
+            })
+          }
+        />
       </div>
     </Card>
   );
