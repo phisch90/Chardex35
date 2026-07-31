@@ -106,6 +106,20 @@ Zweite Falle, aus dem Prüfbericht: **ein Feld, das seinen Wert in eine eigene K
 zieht und nur beim Verlassen speichert.** Dabei geht Tippen verloren. Durchschreiben,
 nicht zwischenspeichern.
 
+Dritte Falle, aus der Startseite: **eine Klasse, die hinten angehängt wird, gewinnt
+nicht.** Tailwind entscheidet bei gleicher Spezifität nach der Reihenfolge im
+STYLESHEET, und dort steht `slate` hinter allen Buntfarben. Ein
+`bg-emerald-950/40` im `className` einer Karte blieb deshalb wirkungslos — die
+Kampagnenfarbe war unsichtbar, obwohl die Klasse am Element stand. Dasselbe für
+`p-2` gegen ein eingebautes `p-3`. Wer Farbe oder Polster ändern will, ERSETZT sie
+(`Card` hat dafür `tone` und `padding`), statt sie zu ergänzen.
+
+Vierte Falle, ebenfalls von dort: **die angesagte Menge ist nicht die geschriebene.**
+Der Hinweis „gilt auch für Torben" hing an der Liste der Bögen mit ABWEICHENDER
+Farbe — die ist leer, solange alle dieselbe tragen, also im Normalfall immer. Beim
+Schreiben ist der Filter richtig (keine rev-Erhöhungen ohne Bedeutung), bei der
+Ansage falsch: angesagt wird, wer BETROFFEN ist, geschrieben, wer sich ÄNDERT.
+
 ## Beantwortete Entscheidungen (nicht neu fragen)
 
 - **Geräte:** iPhone UND iPad, beide. Deshalb war der Abgleich-Fehler dringend — er
@@ -136,6 +150,14 @@ nicht zwischenspeichern.
   volle Attacke spielt. Fight Club zeigt sie ihm seit zwei Jahren als „+9/+4",
   ohne ein Wort dazu. Bis zur Antwort NICHT anfassen — das würde jeden Bogen
   ändern.
+- **Startseite: Kampagne mit Farbe, keine TP, Karten in Stufen.** Gefragt und
+  entschieden: eintragen an ALLEN DREI Stellen (Bogen bei Name/Spieler, ⋯-Menü der
+  Karte, Assistent) · **nach Kampagne gruppieren**, nicht nur färben · **in Stufen
+  kleiner werden, dann scrollen** — keine zweite Spalte auf dem iPad, „ab etwa zehn"
+  wird gescrollt. Die Kartengröße RECHNET (`ui/cardTier.ts`, vier Stufen gegen 634px
+  bei 390×844); kommt eine Kampagnen-Überschrift dazu, rutscht die Stufe von allein.
+  Der Kampagnenname steht in der Abschnitts-Überschrift, nicht zusätzlich auf jeder
+  Karte — die trägt die Farbe.
 
 ## Noch offen
 
