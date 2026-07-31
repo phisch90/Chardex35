@@ -278,15 +278,31 @@ export function NumberStepper(props: {
   );
 }
 
-export function Chip(props: { children: ReactNode; active?: boolean; onClick?: () => void }) {
+export function Chip(props: {
+  children: ReactNode;
+  active?: boolean;
+  onClick?: () => void;
+  /**
+   * Sichtbar, aber noch nicht benutzbar — für die Schritte des Assistenten, die
+   * hinter einer Sperre liegen. Ausblenden wäre falsch: dann weiß er nicht, was noch
+   * kommt.
+   */
+  dimmed?: boolean;
+  /** Grund, warum es (noch) nicht geht — Tooltip und Vorlese-Beschriftung. */
+  title?: string;
+}) {
   return (
     <button
       type="button"
       onClick={props.onClick}
+      disabled={props.dimmed === true}
+      {...(props.title === undefined ? {} : { title: props.title, "aria-label": props.title })}
       className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-        props.active
-          ? "border-amber-500 bg-amber-600/20 text-amber-300"
-          : "border-slate-600 text-slate-300 hover:bg-slate-800"
+        props.dimmed === true
+          ? "border-slate-800 text-slate-600"
+          : props.active
+            ? "border-amber-500 bg-amber-600/20 text-amber-300"
+            : "border-slate-600 text-slate-300 hover:bg-slate-800"
       }`}
     >
       {props.children}

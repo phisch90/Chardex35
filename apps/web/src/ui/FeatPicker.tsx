@@ -66,6 +66,13 @@ export function FeatPicker(props: {
   const [query, setQuery] = useState("");
   const [type, setType] = useState<string | null>(null);
   const [showEpic, setShowEpic] = useState(false);
+  /*
+    Nur die wählbaren zeigen — sein Wunsch: „Man sieht, okay, ich kann 86 nehmen. Das
+    wär jetzt noch toll, wenn ich das filtern könnte, dass man nur diese 86 anzeigt."
+    Aus, nicht an: der Abschnitt „Noch nicht erfüllt" ist ja der Grund, warum man
+    sieht, was später kommt. Wer wählen WILL, schaltet ihn weg.
+  */
+  const [onlyEligible, setOnlyEligible] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [askId, setAskId] = useState<string | null>(null);
 
@@ -118,7 +125,7 @@ export function FeatPicker(props: {
   }, [all, query, type, showEpic, props.sheet, props.compendium]);
 
   const eligible = rows.filter((r) => r.eligibility.eligible);
-  const blocked = rows.filter((r) => !r.eligibility.eligible);
+  const blocked = onlyEligible ? [] : rows.filter((r) => !r.eligibility.eligible);
 
   const row = (entry: (typeof rows)[number]) => {
     const { feat, eligibility } = entry;
@@ -197,7 +204,7 @@ export function FeatPicker(props: {
                       </span>
                     ) : (
                       <span className="text-slate-500">
-                        ? {line.label} — {S.feats.unverifiable}
+                        <span className="italic">{S.feats.unverifiable}</span> — {line.label}
                       </span>
                     )}
                   </li>
@@ -228,6 +235,9 @@ export function FeatPicker(props: {
             {S.feats.types[t] ?? t}
           </Chip>
         ))}
+        <Chip active={onlyEligible} onClick={() => setOnlyEligible(!onlyEligible)}>
+          {S.feats.onlyEligible}
+        </Chip>
         <Chip active={showEpic} onClick={() => setShowEpic(!showEpic)}>
           {S.feats.showEpic}
         </Chip>
@@ -309,11 +319,19 @@ function Marks(props: {
           {S.feats.requires} {text}
         </span>
       ))}
-      {unverifiable.length > 0 && (
-        <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">
-          ? {S.feats.unverifiable}
+      {/*
+        Die Voraussetzung SELBST in der Marke, nicht ein Fragezeichen ohne Bezug. Er
+        hat gefragt, was „? kann ich nicht prüfen" bedeuten soll — die Antwort war,
+        dass die Marke gar nicht sagte, WORAUF sie sich bezieht.
+      */}
+      {unverifiable.map((text) => (
+        <span
+          key={text}
+          className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] italic text-slate-400"
+        >
+          {S.feats.unverifiableMark(text)}
         </span>
-      )}
+      ))}
     </div>
   );
 }

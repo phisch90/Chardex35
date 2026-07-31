@@ -27,6 +27,7 @@ import { itemSummary } from "../ui/itemSummary.js";
 import { ItemPicker } from "../ui/ItemPicker.js";
 import { FeatPicker } from "../ui/FeatPicker.js";
 import { CampaignPicker, type CampaignValue } from "../ui/CampaignPicker.js";
+import { DraftSummary } from "../ui/DraftSummary.js";
 import { FeatText } from "../ui/FeatText.js";
 import { ClassInfo, RaceInfo, classDetailLine, raceDetailLine } from "../ui/RaceClassInfo.js";
 
@@ -74,12 +75,44 @@ function draftToCharacter(draft: Draft): Character {
   });
 }
 
+/**
+ * Die Schritte mit Namen statt Zahlen.
+ *
+ * Die Reihenfolge ist Volk → KLASSE → Attribute, und das ist seine Entscheidung:
+ * „weil dann kann man ein bisschen schauen, wenn man würfelt, dass man die Attribute
+ * der Rasse und Klasse anpasst." Vorher standen die Attribute vor der Klasse.
+ *
+ * Benannt, weil hier vorher `step === 2` stand und niemand ohne Nachzählen wusste,
+ * welcher Schritt das ist — beim Tauschen genau die Stelle, an der man sich verrechnet.
+ */
+const STEP = {
+  race: 0,
+  klass: 1,
+  abilities: 2,
+  skills: 3,
+  feats: 4,
+  gear: 5,
+  done: 6,
+} as const;
+
+/**
+ * Was ein Schritt ERZWINGT, bevor es weitergehen darf.
+ *
+ * Diese Liste beantwortet zwei Fragen aus einer Quelle: ob „Weiter" gehen darf, und
+ * ob ein Reiter oben antippbar ist. Zwei getrennte Regeln würden auseinanderlaufen —
+ * dann führt ein Reiter in einen Schritt, aus dem „Weiter" nicht herauskommt.
+ */
+const GATES: { step: number; ok: (draft: Draft) => boolean }[] = [
+  { step: STEP.race, ok: (d) => d.raceId !== null },
+  { step: STEP.klass, ok: (d) => d.classId !== null },
+];
+
 export function CharacterWizardPage() {
   const navigate = useNavigate();
   const entities = useAllEntities();
   const compendium = useCompendium();
   const houseRules = useHouseRules();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState<number>(STEP.race);
   const [draft, setDraft] = useState<Draft>(INITIAL);
   const [showNpcClasses, setShowNpcClasses] = useState(false);
 
@@ -102,17 +135,49 @@ export function CharacterWizardPage() {
     .filter((e) => showNpcClasses || classCategory(e) !== "npc")
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  /** Darf „Weiter" (bzw. „Anlegen") aus DIESEM Schritt heraus? */
   const canNext = () => {
-    switch (step) {
-      case 0:
-        return draft.raceId !== null;
-      case 2:
-        return draft.classId !== null;
-      case 6:
-        return draft.name.trim().length > 0;
-      default:
-        return true;
+    if (step === STEP.done) return draft.name.trim().length > 0;
+    return GATES.filter((g) => g.step === step).every((g) => g.ok(draft));
+  };
+
+  /**
+   * Ist dieser Reiter antippbar?
+   *
+   * Vorher stand hier `i < step` — man kam nur zurück, nie vorwärts. Er hat es genau
+   * erkannt: „man kann oben auf die einzelnen Reiter klicken, aber immer nur auf die,
+   * die davor waren, also um zurückzukommen, nicht um weiterzukommen."
+   *
+   * Neue Regel: erreichbar, wenn alle Sperren DAVOR erfüllt sind. Wer Volk und Klasse
+   * gewählt hat, springt also frei. Zurück geht immer — was man schon gesehen hat,
+   * kann man wieder ansehen.
+   */
+  const reachable = (i: number) =>
+    i <= step || GATES.filter((g) => g.step < i).every((g) => g.ok(draft));
+
+  /**
+   * Der Kontostand des Schritts — steht in der haftenden Leiste.
+   *
+   * Sein Einwand: „nicht immer nur ganz oben steht, wie viel Slots übrig sind, sondern
+   * dass auch unten direkt schon gemeldet wird, ach Du kannst keins mehr nehmen."
+   * Genau dort, wo der Daumen ohnehin liegt.
+   */
+  const budget = (): { text: string; warn: boolean } | null => {
+    if (sheet === undefined) return null;
+    if (step === STEP.skills) {
+      const left = sheet.skillPoints.available - sheet.skillPoints.spent;
+      return left < 0
+        ? { text: S.wizard.tooMany(-left), warn: true }
+        : { text: `${S.wizard.pointsLeft}: ${left}`, warn: false };
     }
+    if (step === STEP.feats) {
+      const left = sheet.featSlots.available - sheet.featSlots.used;
+      if (left < 0) return { text: S.wizard.tooMany(-left), warn: true };
+      return left === 0
+        ? { text: S.wizard.noSlotsLeft, warn: false }
+        : { text: `${S.wizard.slotsLeft}: ${left}`, warn: false };
+    }
+    return null;
   };
 
   const finish = async () => {
@@ -122,18 +187,45 @@ export function CharacterWizardPage() {
     void navigate({ to: "/charaktere/$charId", params: { charId: created.id } });
   };
 
+  const chosenRace = draft.raceId === null ? undefined : compendium.get(draft.raceId);
+  const chosenClass = draft.classId === null ? undefined : compendium.get(draft.classId);
+  /*
+    Volk und Klasse dauerhaft im Kopf — sein Wunsch: „bei der Charaktererstellung, dass
+    ganz oben immer auch steht, welches Volk und welche Klasse gewählt worden ist
+    bisher." Vorher stand dort nur „Neuer Charakter", und im Talentschritt wusste man
+    nicht mehr, für wen man gerade wählt.
+  */
+  const who = [chosenRace, chosenClass]
+    .filter((e): e is NonNullable<typeof e> => e !== undefined)
+    .map((e) => displayName(e))
+    .join(" ");
+
+  const stepBudget = budget();
+
   return (
     <div className="space-y-3">
-      <h1 className="text-xl font-bold">{S.wizard.title}</h1>
+      <h1 className="flex flex-wrap items-baseline gap-x-2 text-xl font-bold">
+        {S.wizard.title}
+        {who !== "" && <span className="text-sm font-medium text-amber-300">{who}</span>}
+      </h1>
       <div className="flex flex-wrap gap-1">
-        {S.wizard.steps.map((label, i) => (
-          <Chip key={label} active={i === step} onClick={() => i < step && setStep(i)}>
-            {i + 1}. {label}
-          </Chip>
-        ))}
+        {S.wizard.steps.map((label, i) => {
+          const open = reachable(i);
+          return (
+            <Chip
+              key={label}
+              active={i === step}
+              {...(open ? { onClick: () => setStep(i) } : {})}
+              {...(open ? {} : { title: S.wizard.needRaceAndClass })}
+              dimmed={!open}
+            >
+              {i + 1}. {label}
+            </Chip>
+          );
+        })}
       </div>
 
-      {step === 0 && (
+      {step === STEP.race && (
         <PickList
           items={races}
           selectedId={draft.raceId}
@@ -143,7 +235,7 @@ export function CharacterWizardPage() {
         />
       )}
 
-      {step === 1 && (
+      {step === STEP.abilities && (
         <Card>
           <div className="mb-3 flex flex-wrap gap-2">
             <Chip
@@ -214,7 +306,7 @@ export function CharacterWizardPage() {
         </Card>
       )}
 
-      {step === 2 && (
+      {step === STEP.klass && (
         <>
           <Chip active={showNpcClasses} onClick={() => setShowNpcClasses(!showNpcClasses)}>
             {S.wizard.showNpcClasses}
@@ -229,7 +321,7 @@ export function CharacterWizardPage() {
         </>
       )}
 
-      {step === 3 && (
+      {step === STEP.skills && (
         <SkillStep
           draft={draft}
           setDraft={setDraft}
@@ -239,7 +331,7 @@ export function CharacterWizardPage() {
         />
       )}
 
-      {step === 4 && (
+      {step === STEP.feats && (
         <FeatStep
           draft={draft}
           setDraft={setDraft}
@@ -249,9 +341,9 @@ export function CharacterWizardPage() {
         />
       )}
 
-      {step === 5 && <GearStep draft={draft} setDraft={setDraft} entities={entities} />}
+      {step === STEP.gear && <GearStep draft={draft} setDraft={setDraft} entities={entities} />}
 
-      {step === 6 && (
+      {step === STEP.done && (
         <Card className="space-y-3">
           <label className="block">
             <span className="text-xs uppercase text-slate-400">{S.wizard.name}</span>
@@ -279,37 +371,58 @@ export function CharacterWizardPage() {
             value={draft.campaign}
             onChange={(next) => setDraft({ ...draft, campaign: next })}
           />
-          {sheet && (
-            <div className="rounded-lg bg-slate-800/60 p-3 text-sm">
-              <div>
-                {S.sheet.hp} {sheet.hp.max} · {S.sheet.ac} {sheet.ac.total.total} · {S.sheet.init}{" "}
-                {fmtMod(sheet.init.total)}
-              </div>
-              {sheet.issues.length > 0 && (
-                <ul className="mt-2 list-inside list-disc text-xs text-amber-400">
-                  {sheet.issues.map((issue, i) => (
-                    <li key={i}>{issue.message}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
         </Card>
       )}
 
-      <div className="flex justify-between">
-        <GhostButton onClick={() => (step === 0 ? void navigate({ to: "/" }) : setStep(step - 1))}>
-          {S.actions.back}
-        </GhostButton>
-        {step < S.wizard.steps.length - 1 ? (
-          <PrimaryButton disabled={!canNext()} onClick={() => setStep(step + 1)}>
-            {S.actions.next}
-          </PrimaryButton>
-        ) : (
-          <PrimaryButton disabled={!canNext()} onClick={() => void finish()}>
-            {S.actions.create}
-          </PrimaryButton>
+      {/*
+        Der ganze Bogen, bevor er entsteht. Vorher stand hier eine Zeile
+        („TP 10 · RK 10 · Initiative +0"), und sein Urteil war: „Find ich nicht so
+        schön. Könnte man noch mal so 'n kompletten Bogen machen."
+      */}
+      {step === STEP.done && sheet !== undefined && (
+        <DraftSummary sheet={sheet} compendium={compendium} />
+      )}
+
+      {/*
+        Die haftende Leiste — der Kern dieser Runde.
+
+        Vorher stand die Knopfzeile als letztes Kind im Fluss und scrollte mit. Im
+        Talentschritt sind das über hundert Zeilen, an denen er vorbeimusste, wörtlich:
+        „Da muss ich jetzt ganz runterscrollen, bis ich auch weiterklicken kann.
+        Supernervig."
+
+        Der Abstand nach unten ist DERSELBE Ausdruck wie das untere Polster von `main`
+        (`ui/Layout.tsx`): der Scroll-Container reicht bis zum Bildschirmrand, und die
+        feste Navigationsleiste liegt darüber. Mit `bottom-0` klebte die Leiste hinter
+        der Navigation. Die negativen Ränder ziehen sie über die Seitenpolster hinweg,
+        damit sie wie eine Leiste aussieht und nicht wie eine Karte.
+      */}
+      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] -mx-3 border-t border-slate-800 bg-slate-950/95 px-3 py-2 backdrop-blur sm:-mx-4 sm:px-4">
+        {stepBudget !== null && (
+          <p
+            className={`mb-1.5 text-xs font-semibold ${
+              stepBudget.warn ? "text-red-400" : "text-emerald-400"
+            }`}
+          >
+            {stepBudget.text}
+          </p>
         )}
+        <div className="flex items-center justify-between gap-2">
+          <GhostButton
+            onClick={() => (step === STEP.race ? void navigate({ to: "/" }) : setStep(step - 1))}
+          >
+            {S.actions.back}
+          </GhostButton>
+          {step < STEP.done ? (
+            <PrimaryButton disabled={!canNext()} onClick={() => setStep(step + 1)}>
+              {S.actions.next}
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton disabled={!canNext()} onClick={() => void finish()}>
+              {S.actions.create}
+            </PrimaryButton>
+          )}
+        </div>
       </div>
     </div>
   );
