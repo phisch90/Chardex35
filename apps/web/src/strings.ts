@@ -351,6 +351,53 @@ export const S = {
    * Regale der Mitspieler). Zwei Wörter für zwei Dinge, die sich überschneiden, aber
    * nicht dasselbe sind — dieselben Leute können zwei Kampagnen spielen.
    */
+  /**
+   * Die Talentwahl.
+   *
+   * Sein Auftrag, wörtlich: „Es muss klar sein, welche Vorraussetzungen die Talente
+   * haben. Dann sollte es auch verhindert werden, dass ich ein Talent wählen kann für
+   * das ich die Mindestanforderungen nicht erfülle. Grundsätzlich sollte einfach bei
+   * der Wahl der Talente klar sein was der Effekt und Bonus sind."
+   */
+  feats: {
+    eligible: "Kannst du nehmen",
+    blocked: "Noch nicht erfüllt",
+    /** Steht an einem Talent, das er schon hat. */
+    already: "schon gewählt",
+    /** Mehrfach wählbare Talente (Toughness) dürfen wieder vorkommen. */
+    againOk: "mehrfach möglich",
+    requires: "Braucht",
+    /** Voraussetzung, die die App nicht prüfen kann — steht dran, sperrt nicht. */
+    unverifiable: "kann ich nicht prüfen",
+    unverifiableHint:
+      "Das steht in den Daten nur als Satz, nicht als Zahl. Ich zeige es, sperre aber nicht — du weißt, ob es passt.",
+    noSheetYet: "Voraussetzungen kann ich erst prüfen, wenn Volk und Klasse stehen.",
+    /** Die Rückfrage beim Notausgang. */
+    overrideAsk: (missing: string[]) =>
+      `Es fehlt: ${missing.join(", ")}. Trotzdem nehmen?`,
+    overrideYes: "Ja, mein DM erlaubt es",
+    overrideNo: "Nein",
+    /** Der Hinweis, dass die Warnung am Bogen bleibt. */
+    overrideNote: "Der Bogen weist danach weiter darauf hin — gewollt.",
+    showEpic: "Epische zeigen",
+    epicHint: "Epische Talente gibt es ab Stufe 21.",
+    allTypes: "Alle",
+    noMatches: "Kein Talent passt dazu.",
+    /** Talentarten — englisch aus den Daten, deutsch beschriftet. */
+    types: {
+      General: "Allgemein",
+      Metamagic: "Metamagie",
+      "Item Creation": "Gegenstände",
+      Divine: "Göttlich",
+      Wild: "Wildform",
+      Special: "Besonders",
+      Epic: "Episch",
+    } as Record<string, string>,
+    onlyEnglish: "nur englisch",
+    more: "mehr zeigen",
+    less: "weniger zeigen",
+  },
+
   campaign: {
     label: "Kampagne",
     placeholder: "z.B. Die Zinnen von Karrath",

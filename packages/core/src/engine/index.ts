@@ -27,7 +27,9 @@ export function deriveSheet(
   const effects = collectEffects(resolved, timeline, issues);
   const abilities = deriveAbilities(resolved, timeline, effects);
   const sheet = deriveSheetValues(resolved, timeline, effects, abilities, houseRules, issues);
-  validate(resolved, timeline, sheet);
+  // Das Kompendium geht mit, damit die Warnungen NAMEN nennen können statt
+  // Kennungen („Talent Power Attack" statt „Talent srd:feat:power-attack").
+  validate(resolved, sheet, compendium);
   return sheet;
 }
 
@@ -38,6 +40,7 @@ export * from "./spells.js";
 export * from "./tables.js";
 export * from "./trackers.js";
 export * from "./rest.js";
+export * from "./prereqs.js";
 export * from "./types.js";
 export { stackContributions, withoutContributions } from "./stack.js";
 export {

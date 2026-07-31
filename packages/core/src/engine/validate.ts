@@ -1,17 +1,8 @@
-import type { Ability } from "../schema/common.js";
-import type { Prerequisite } from "../schema/entities.js";
-import type { ResolvedCharacter, TimelineResult } from "./internal.js";
+import type { Entity } from "../schema/entities.js";
+import { displayName } from "../schema/entities.js";
+import type { ResolvedCharacter } from "./internal.js";
+import { featEligibility } from "./prereqs.js";
 import type { DerivedSheet } from "./types.js";
-
-/** Englische Regelkürzel wie in den Büchern — nicht „GE", das muss man übersetzen. */
-const ABILITY_LABEL: Record<Ability, string> = {
-  str: "STR",
-  dex: "DEX",
-  con: "CON",
-  int: "INT",
-  wis: "WIS",
-  cha: "CHA",
-};
 
 /**
  * Stufe 7 — validate: WARNUNGEN, nie Blocker. Der DM hat Recht (Homebrew-first);
@@ -19,8 +10,8 @@ const ABILITY_LABEL: Record<Ability, string> = {
  */
 export function validate(
   resolved: ResolvedCharacter,
-  timeline: TimelineResult,
   sheet: DerivedSheet,
+  compendium?: ReadonlyMap<string, Entity>,
 ): void {
   const { character } = resolved;
   const issues = sheet.issues;
@@ -69,57 +60,28 @@ export function validate(
     });
   }
 
-  // Talent-Voraussetzungen (gegen den aktuellen Stand — warn-only).
-  const featIds = new Set(character.feats.map((f) => f.featId));
-  /**
-   * Voraussetzungen nennen die Grundfertigkeit („8 Ränge Knowledge (arcana)"
-   * steht als `srd:skill:knowledge` in den Daten). Es zählt das beste
-   * Teilgebiet — sonst erfüllt niemand mit Teilgebieten je eine Voraussetzung.
-   */
-  const ranksOf = (skillId: string) => {
-    let best = character.skillRanks[skillId] ?? 0;
-    const prefix = `${skillId}#`;
-    for (const [key, ranks] of Object.entries(character.skillRanks)) {
-      if (key.startsWith(prefix)) best = Math.max(best, ranks);
-    }
-    return best;
-  };
-  const maxCasterLevel = Math.max(0, ...sheet.spellcasting.map((s) => s.casterLevel.total));
-  const classLevelOf = (classId: string) => resolved.classLevelCounts.get(classId) ?? 0;
+  /*
+    Talent-Voraussetzungen — warn-only, und über GENAU DIE Funktion, mit der die
+    Talentauswahl sperrt (`engine/prereqs.ts`).
 
-  const unmet = (p: Prerequisite): string | null => {
-    switch (p.type) {
-      case "minAbility":
-        return sheet.abilities[p.ability].score.total >= p.value
-          ? null
-          : `${ABILITY_LABEL[p.ability]} ${p.value}`;
-      case "minBab":
-        return timeline.bab >= p.value ? null : `GAB +${p.value}`;
-      case "hasFeat":
-        return featIds.has(p.featId) ? null : `Talent ${p.featId}`;
-      case "minSkillRanks":
-        return ranksOf(p.skillId) >= p.ranks ? null : `${p.ranks} Ränge in ${p.skillId}`;
-      case "minCasterLevel":
-        return maxCasterLevel >= p.value ? null : `Zauberstufe ${p.value}`;
-      case "classLevel":
-        return classLevelOf(p.classId) >= p.level ? null : `${p.classId} Stufe ${p.level}`;
-      case "custom":
-        return null; // Nur Anzeige — nie maschinell geprüft.
-    }
-  };
+    Vorher stand die Prüfung hier als eigene Closure. Sie war damit von außen nicht
+    erreichbar, also hätte die Auswahl ihre eigene bauen müssen — und zwei Fassungen
+    derselben Regel laufen auseinander: dann sperrt die Auswahl etwas, das der Bogen
+    nicht beanstandet, oder umgekehrt. Eine Funktion, zwei Aufrufer.
 
+    Nebenbei nennen die Meldungen jetzt Namen statt Kennungen. Vorher stand hier
+    „Voraussetzung nicht erfüllt (Talent srd:feat:power-attack)".
+  */
   for (const feat of resolved.feats) {
     if (!feat.entity) continue;
-    for (const p of feat.entity.data.prerequisites) {
-      const missing = unmet(p);
-      if (missing) {
-        issues.push({
-          severity: "warning",
-          code: "feat-prerequisite",
-          message: `${feat.entity.name}: Voraussetzung nicht erfüllt (${missing}).`,
-          ref: feat.entity.id,
-        });
-      }
+    const { missing } = featEligibility(feat.entity, sheet, compendium);
+    for (const label of missing) {
+      issues.push({
+        severity: "warning",
+        code: "feat-prerequisite",
+        message: `${displayName(feat.entity)}: Voraussetzung nicht erfüllt (${label}).`,
+        ref: feat.entity.id,
+      });
     }
   }
 

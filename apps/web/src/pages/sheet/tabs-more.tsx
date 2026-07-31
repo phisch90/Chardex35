@@ -16,6 +16,7 @@ import {
 import { S } from "../../strings.js";
 import { toPortraitDataUrl } from "../../lib/image.js";
 import { FeatText } from "../../ui/FeatText.js";
+import { FeatPicker } from "../../ui/FeatPicker.js";
 import { FeatModifiers } from "../../ui/FeatModifiers.js";
 import { describeModifier } from "../../ui/modifierTargets.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
@@ -504,18 +505,11 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
 
 export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
   const entities = useAllEntities();
+  const compendium = useCompendium();
   const skillEntities = (entities ?? []).filter((e) => e.kind === "skill" && !e.deletedAt);
-  const [query, setQuery] = useState("");
   // Talente sind Stufenaufstiege in Papierform — die dürfen nicht auf einen Tap
   // verschwinden. Ändern und Löschen nur im Bearbeiten-Modus.
   const undo = useUndo();
-  const q = query.trim().toLowerCase();
-  const results =
-    q.length >= 2
-      ? (entities ?? [])
-          .filter((e) => e.kind === "feat" && !e.deletedAt && e.name.toLowerCase().includes(q))
-          .slice(0, 20)
-      : [];
 
   return (
     <div className="space-y-3">
@@ -654,22 +648,22 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
           })}
           {character.feats.length === 0 && <li className="py-2 text-sm text-slate-500">Keine.</li>}
         </ul>
-        <SearchInput value={query} onChange={setQuery} placeholder={S.actions.search} />
-        <ul className="mt-1 divide-y divide-slate-800">
-          {/* Erklärung schon in der Trefferliste: man soll wissen, was man
-              wählt, bevor man es wählt. */}
-          {results.map((feat) => (
-            <li key={feat.id} className="flex items-start justify-between gap-2 py-2 text-sm">
-              <div className="min-w-0 flex-1">
-                <span className="font-medium">{displayName(feat)}</span>
-                <FeatText entity={feat} />
-              </div>
-              <GhostButton onClick={() => save((c) => void c.feats.push({ featId: feat.id, extraEffects: [] }))}>
-                {S.actions.add}
-              </GhostButton>
-            </li>
-          ))}
-        </ul>
+        {/*
+          Derselbe Blätterer wie im Assistenten und im Stufenaufstieg.
+
+          Hier stand eine Suche, die erst ab zwei getippten Zeichen etwas zeigte und
+          dann 20 Treffer — blättern war gar nicht vorgesehen. Genau das hat er bei
+          der Ausrüstung schon einmal beanstandet, und dazu fehlte jedes Wort über
+          die Voraussetzungen.
+        */}
+        {compendium !== undefined && (
+          <FeatPicker
+            compendium={compendium}
+            sheet={sheet}
+            chosen={character.feats.map((f) => f.featId)}
+            onPick={(feat) => save((c) => void c.feats.push({ featId: feat.id, extraEffects: [] }))}
+          />
+        )}
       </Card>
 
       <Card>
