@@ -24,7 +24,7 @@ import {
   useSheet,
 } from "../lib/hooks.js";
 import { Card, Chip, GhostButton, PrimaryButton, SearchInput, SectionTitle, fmtMod } from "../ui/bits.js";
-import { FeatText } from "../ui/FeatText.js";
+import { FeatPicker } from "../ui/FeatPicker.js";
 import { ClassInfo } from "../ui/RaceClassInfo.js";
 
 export function LevelUpPage() {
@@ -181,14 +181,11 @@ export function LevelUpPage() {
     setNewSubtypes([...newSubtypes, { skillId, subtype }]);
   };
 
-  // Bereits vorhandene Talente ausblenden — außer sie sind stackable (Toughness).
-  const ownedFeatIds = new Set(character.feats.map((f) => f.featId));
-  const feats = entities
-    .filter((e) => e.kind === "feat" && !e.deletedAt)
-    .filter((e) => e.kind === "feat" && (e.data.stackable || !ownedFeatIds.has(e.id)))
-    .filter((e) => !featQuery.trim() || e.name.toLowerCase().includes(featQuery.trim().toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .slice(0, 40);
+  /*
+    Die Talentliste steckt jetzt im `FeatPicker` — samt Suche, Voraussetzungen,
+    Abschnitten und dem Ausblenden schon gewählter Talente. Hier stand vorher eine
+    eigene Fassung mit `slice(0, 40)`, die still 287 der 327 Talente wegließ.
+  */
 
   return (
     <div className="space-y-3">
@@ -402,24 +399,23 @@ export function LevelUpPage() {
               })}
             </div>
           )}
-          <SearchInput value={featQuery} onChange={setFeatQuery} placeholder={S.actions.search} />
-          <ul className="mt-1 max-h-60 divide-y divide-slate-800 overflow-y-auto">
-            {feats.map((feat) => (
-              <li key={feat.id} className="flex items-start justify-between gap-2 py-2 text-sm">
-                <div className="min-w-0 flex-1">
-                  {/* Vorher stand hier der englische Regeltext mit `truncate` —
-                      eine abgeschnittene Regel hilft bei der Wahl nicht. */}
-                  <div className="font-medium">{displayName(feat)}</div>
-                  <FeatText entity={feat} />
-                </div>
-                {!newFeatIds.includes(feat.id) && (
-                  <GhostButton onClick={() => setNewFeatIds([...newFeatIds, feat.id])}>
-                    {S.actions.add}
-                  </GhostButton>
-                )}
-              </li>
-            ))}
-          </ul>
+          {/*
+            Derselbe Blätterer wie im Assistenten und im Talente-Reiter.
+
+            Hier stand eine eigene Liste mit eigener Suche — die dritte Kopie
+            derselben Sache, und wie die anderen zwei ohne ein Wort über die
+            Voraussetzungen. Der Bogen, gegen den geprüft wird, ist der VOR dem
+            Aufstieg: was er sich beim Aufstieg an GAB und Attributen dazuholt,
+            zählt für die Voraussetzung eines Talents in derselben Stufe nicht.
+            Das ist regeltechnisch die strengere Lesart; wo sein Tisch es anders
+            spielt, hilft der Notausgang.
+          */}
+          <FeatPicker
+            compendium={compendium}
+            sheet={sheetBefore}
+            chosen={[...(sheetBefore?.featIds ?? []), ...newFeatIds]}
+            onPick={(feat) => setNewFeatIds([...newFeatIds, feat.id])}
+          />
         </Card>
       )}
 

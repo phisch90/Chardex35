@@ -13,6 +13,7 @@ import {
   skillPointCost,
   type Ability,
   type Character,
+  type DerivedSheet,
   type Entity,
   type EquipSlot,
   type SkillLine,
@@ -24,6 +25,7 @@ import { Card, Chip, GhostButton, PrimaryButton, SearchInput, fmtMod } from "../
 import { EquipMark } from "../ui/EquipMark.js";
 import { itemSummary } from "../ui/itemSummary.js";
 import { ItemPicker } from "../ui/ItemPicker.js";
+import { FeatPicker } from "../ui/FeatPicker.js";
 import { CampaignPicker, type CampaignValue } from "../ui/CampaignPicker.js";
 import { FeatText } from "../ui/FeatText.js";
 import { ClassInfo, RaceInfo, classDetailLine, raceDetailLine } from "../ui/RaceClassInfo.js";
@@ -238,7 +240,13 @@ export function CharacterWizardPage() {
       )}
 
       {step === 4 && (
-        <FeatStep draft={draft} setDraft={setDraft} entities={entities} slots={sheet?.featSlots} />
+        <FeatStep
+          draft={draft}
+          setDraft={setDraft}
+          compendium={compendium}
+          sheet={sheet}
+          slots={sheet?.featSlots}
+        />
       )}
 
       {step === 5 && <GearStep draft={draft} setDraft={setDraft} entities={entities} />}
@@ -456,21 +464,26 @@ function SkillStep(props: {
   );
 }
 
+/**
+ * Talente im Assistenten.
+ *
+ * Hier stand dieselbe magere Liste wie an den zwei anderen Auswahlstellen: Name,
+ * Erklärung, `slice(0, 60)`, keine Voraussetzung. Genau darüber seine Kritik — „Es
+ * muss klar sein, welche Vorraussetzungen die Talente haben." Der gemeinsame
+ * `FeatPicker` kann das und wird hier einfach mitbenutzt.
+ *
+ * Das ENTFERNEN bleibt hier: was gewählt ist, steht oben als Liste zum Wegnehmen.
+ * Der Picker bietet nur an — jede der drei Stellen hat eigene Regeln fürs Entfernen
+ * (im Bogen zum Beispiel mit Rückfrage), und die gehören nicht in den Blätterer.
+ */
 function FeatStep(props: {
   draft: Draft;
   setDraft: (d: Draft) => void;
-  entities: Entity[];
+  compendium: Map<string, Entity>;
+  sheet: DerivedSheet | undefined;
   slots: { available: number; used: number } | undefined;
 }) {
   const { draft, setDraft } = props;
-  const [query, setQuery] = useState("");
-  const chosen = new Set(draft.featIds.map((f) => f.featId));
-  const q = query.trim().toLowerCase();
-  const feats = props.entities
-    .filter((e) => e.kind === "feat" && !e.deletedAt)
-    .filter((e) => !q || e.name.toLowerCase().includes(q))
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .slice(0, 60);
   const left = props.slots ? props.slots.available - props.slots.used : 0;
 
   return (
@@ -478,33 +491,35 @@ function FeatStep(props: {
       <div className={`text-sm font-semibold ${left < 0 ? "text-red-400" : "text-emerald-400"}`}>
         {S.wizard.slotsLeft}: {left}
       </div>
-      <SearchInput value={query} onChange={setQuery} placeholder={S.actions.search} />
-      <ul className="divide-y divide-slate-800">
-        {feats.map((feat) => (
-          <li key={feat.id} className="flex items-start justify-between gap-2 py-2 text-sm">
-            <div className="min-w-0 flex-1">
-              <div className="font-medium">{displayName(feat)}</div>
-              <FeatText entity={feat} />
-            </div>
-            {chosen.has(feat.id) ? (
-              <GhostButton
-                danger
+
+      {draft.featIds.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {draft.featIds.map((entry) => {
+            const feat = props.compendium.get(entry.featId);
+            return (
+              <Chip
+                key={entry.featId}
+                active
                 onClick={() =>
-                  setDraft({ ...draft, featIds: draft.featIds.filter((f) => f.featId !== feat.id) })
+                  setDraft({
+                    ...draft,
+                    featIds: draft.featIds.filter((f) => f.featId !== entry.featId),
+                  })
                 }
               >
-                {S.actions.remove}
-              </GhostButton>
-            ) : (
-              <GhostButton
-                onClick={() => setDraft({ ...draft, featIds: [...draft.featIds, { featId: feat.id }] })}
-              >
-                {S.actions.add}
-              </GhostButton>
-            )}
-          </li>
-        ))}
-      </ul>
+                {feat ? displayName(feat) : entry.featId} ✕
+              </Chip>
+            );
+          })}
+        </div>
+      )}
+
+      <FeatPicker
+        compendium={props.compendium}
+        sheet={props.sheet}
+        chosen={draft.featIds.map((f) => f.featId)}
+        onPick={(feat) => setDraft({ ...draft, featIds: [...draft.featIds, { featId: feat.id }] })}
+      />
     </Card>
   );
 }
