@@ -41,6 +41,7 @@ import {
   reducedSpeed,
   xpForLevel,
 } from "./tables.js";
+import { ABILITY_BASE_SOURCE } from "./types.js";
 import type {
   AbilityBlock,
   AttackLine,
@@ -68,7 +69,7 @@ export function deriveAbilities(
   const blocks = {} as Record<Ability, AbilityBlock>;
   for (const ability of ABILITIES) {
     const base = character.abilities.base[ability];
-    const contributions: Contribution[] = [baseContribution("Basiswert", base)];
+    const contributions: Contribution[] = [baseContribution(ABILITY_BASE_SOURCE, base)];
 
     const racialMod = race?.data.abilityMods[ability];
     if (race && racialMod) {
