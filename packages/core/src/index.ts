@@ -1,5 +1,6 @@
 export * from "./schema/common.js";
 export * from "./schema/entities.js";
+export * from "./schema/campaign.js";
 export * from "./schema/character.js";
 export * from "./engine/index.js";
 export * from "./dice/dice.js";
@@ -12,6 +13,7 @@ export * from "./import/prerequisites.js";
 export * from "./sync/merge.js";
 export * from "./sync/backupStatus.js";
 export * from "./sync/refs.js";
+export * from "./group/campaigns.js";
 export * from "./group/shelf.js";
 export * from "./group/orders.js";
 export * from "./group/build.js";

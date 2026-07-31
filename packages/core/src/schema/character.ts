@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { abilitySchema, bonusTypeSchema, statPathSchema } from "./common.js";
 import { effectSchema, entitySchema } from "./entities.js";
+import { campaignColorSchema } from "./campaign.js";
 
 export const CURRENT_SCHEMA_VERSION = 1;
 export const CURRENT_EXPORT_FORMAT_VERSION = 1;
@@ -98,6 +99,32 @@ export const characterSchema = z.object({
 
   name: z.string(),
   playerName: z.string().optional(),
+
+  /**
+   * Zu welcher Kampagne der Bogen gehört — Name plus Farbe.
+   *
+   * Der Anlass: „jede Kampagne soll dann auch irgendwie optisch anders dargestellt
+   * werden […] man trägt den Kampagnennamen ein und sucht sich eine Farbe aus, die
+   * dann diese Kampagne trägt." Auf der Startseite ist damit auf einen Blick klar,
+   * welcher Bogen zu welchem Tisch gehört.
+   *
+   * Die Farbe steht am CHARAKTER und nicht in den Einstellungen, obwohl sie
+   * eigentlich der Kampagne gehört. Zwei Gründe: sie reist so mit dem Bogen aufs
+   * iPad (Einstellungen werden nicht abgeglichen), und sie überlebt das Teilen. Die
+   * Oberfläche behandelt die Kampagne trotzdem als EINE Sache — wer die Farbe
+   * ändert, ändert sie für alle Bögen dieser Kampagne (`charactersToRecolor`).
+   *
+   * KEIN Aufbau: der Fingerabdruck der Spielleiter-Aufträge lässt das Feld
+   * ausdrücklich weg (`group/orders.ts`). Eine Rettungskopie, weil jemand eine
+   * Farbe gewählt hat, wäre genau der Fehler, den das Porträt schon einmal
+   * verursacht hat.
+   */
+  campaign: z
+    .object({
+      name: z.string(),
+      color: campaignColorSchema.default("slate"),
+    })
+    .optional(),
 
   /**
    * ENTWURF: ID des Charakters, aus dem dieser hier kopiert wurde. Gesetzt =

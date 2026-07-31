@@ -26,6 +26,24 @@ fertig melden, was nicht in der echten App gelaufen ist.
    Programmierentscheidung.
 2. Alles, was Daten löscht oder unwiederbringlich umschreibt.
 
+## Wie wir Schirm für Schirm durchgehen
+
+Er will die App Ansicht für Ansicht durchgehen — wörtlich: „Lass uns jetzt mal gemeinsam
+jede Ansicht, jede Seite von der App durchgehen und schauen, was wir verbessern können."
+Gefragt, wie viel er dabei mitentscheiden will, hat er sich entschieden: **automatisch,
+mit Fragen bei Geschmack.**
+
+Der Ablauf je Schirm ist damit:
+
+1. Er sagt, was ihn an diesem Schirm stört.
+2. Wo sein GESCHMACK oder eine Regel seines Tisches entscheidet, kommen vorher 2–4 Fragen
+   mit Antwortmöglichkeiten. Wo es eine Programmierentscheidung ist, entscheide ich.
+3. Bauen, im gebauten Bogen prüfen, mergen, Commit melden.
+
+**Kein Planungsmodus je Schirm** — er hatte ihn einmal versucht und wieder verworfen. Die
+zwei Ausnahmen oben (Zahlen bestehender Bögen, Daten löschen) gelten unverändert weiter:
+dort wird gefragt, egal wie automatisch der Rest läuft.
+
 ## Was live ist, immer dazusagen
 
 Nach jedem Merge: welcher Commit jetzt unter https://phisch90.github.io/Chardex35/

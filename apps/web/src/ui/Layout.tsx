@@ -54,7 +54,13 @@ export function Layout() {
         ))}
       </nav>
 
-      <main className="flex-1 overflow-y-auto pb-20 md:pb-4">
+      {/*
+        Der Freiraum unten muss die Leiste WIRKLICH freihalten. Vorher stand hier
+        `pb-20` = 80px, die Leiste ist aber `3.5rem + env(safe-area-inset-bottom)` —
+        als Web-App auf dem iPhone rund 90px. Die unterste Karte war also
+        angeschnitten. Jetzt dieselbe Rechnung wie die Leiste, plus 8px Luft.
+      */}
+      <main className="flex-1 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-4">
         {seedMessage && (
           <div className="bg-amber-900/40 px-4 py-2 text-center text-xs text-amber-200">
             {seedMessage}

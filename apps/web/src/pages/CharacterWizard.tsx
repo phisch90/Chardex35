@@ -24,12 +24,15 @@ import { Card, Chip, GhostButton, PrimaryButton, SearchInput, fmtMod } from "../
 import { EquipMark } from "../ui/EquipMark.js";
 import { itemSummary } from "../ui/itemSummary.js";
 import { ItemPicker } from "../ui/ItemPicker.js";
+import { CampaignPicker, type CampaignValue } from "../ui/CampaignPicker.js";
 import { FeatText } from "../ui/FeatText.js";
 import { ClassInfo, RaceInfo, classDetailLine, raceDetailLine } from "../ui/RaceClassInfo.js";
 
 interface Draft {
   name: string;
   playerName: string;
+  /** Kampagne und Farbe — schon beim Anlegen, seine Entscheidung. */
+  campaign: CampaignValue | undefined;
   raceId: string | null;
   base: Record<Ability, number>;
   classId: string | null;
@@ -42,6 +45,7 @@ interface Draft {
 const INITIAL: Draft = {
   name: "",
   playerName: "",
+  campaign: undefined,
   raceId: null,
   base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   classId: null,
@@ -57,6 +61,7 @@ function draftToCharacter(draft: Draft): Character {
     id: "draft",
     name: draft.name || "Unbenannt",
     playerName: draft.playerName || undefined,
+    campaign: draft.campaign,
     raceId: draft.raceId ?? "",
     abilities: { base: draft.base },
     levels: draft.classId ? [{ classId: draft.classId, hpRoll: "max" }] : [],
@@ -256,6 +261,16 @@ export function CharacterWizardPage() {
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2"
             />
           </label>
+          {/*
+            Die Kampagne schon hier, nicht erst am fertigen Bogen — sonst legt er
+            einen Charakter an, landet in der Liste und muss ihn nochmal aufmachen,
+            nur um zu sagen, wohin er gehört. `ownId` fehlt: der Bogen existiert
+            noch nicht, also gibt es auch keinen eigenen zu überspringen.
+          */}
+          <CampaignPicker
+            value={draft.campaign}
+            onChange={(next) => setDraft({ ...draft, campaign: next })}
+          />
           {sheet && (
             <div className="rounded-lg bg-slate-800/60 p-3 text-sm">
               <div>

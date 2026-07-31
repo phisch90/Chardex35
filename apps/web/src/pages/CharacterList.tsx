@@ -2,16 +2,19 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   displayName,
+  groupByCampaign,
   readOrderMarker,
   redundantConflictCopies,
   stripConflictSuffix,
   type Character,
 } from "@codex35/core";
 import { S } from "../strings.js";
-import { useCharacters, useCompendium, useSheet } from "../lib/hooks.js";
+import { useCharacters, useCompendium } from "../lib/hooks.js";
 import { CharacterRepo } from "../db/repo.js";
 import { importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton } from "../ui/bits.js";
+import { campaignLook } from "../ui/campaignColors.js";
+import { cardTier, type CardTier } from "../ui/cardTier.js";
 import { VersionBadge } from "../ui/VersionBadge.js";
 import { CharacterActionsSheet, DiscardDraftButton } from "../ui/CharacterActions.js";
 import { useCachedShelves } from "../group/useGroup.js";
@@ -40,6 +43,18 @@ export function CharacterListPage() {
     };
   }, [characters]);
 
+  /*
+    Nach Kampagne gruppieren — seine Entscheidung („nach Kampagne gruppieren"), und
+    zwar bevor die Kartengröße bestimmt wird: jede Überschrift kostet Platz, den die
+    Karten dann nicht mehr haben. Beides aus derselben Quelle zu rechnen ist der
+    Grund, warum `groupByCampaign` im Kern steht und nicht hier.
+  */
+  const groups = useMemo(() => groupByCampaign(real), [real]);
+  const tier = cardTier(real.length, groups.length);
+  // Eine einzige Gruppe beschriftet sich nicht selbst — „Ohne Kampagne" über der
+  // einzigen Liste wäre Lärm. `cardTier` rechnet mit derselben Regel.
+  const withHeadings = groups.length > 1;
+
   return (
     <div className="space-y-3">
       {/* Version zwischen Titel und Knopf — dort sieht er sie jedes Mal, ohne
@@ -64,8 +79,33 @@ export function CharacterListPage() {
         <p className="py-10 text-center text-slate-400">{S.misc.noCharacters}</p>
       )}
 
-      {real.map((character) => (
-        <CharacterRow key={character.id} character={character} />
+      {groups.map((group) => (
+        <div key={group.campaign?.name ?? "ohne"}>
+          {withHeadings && (
+            <h2
+              className={`mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest ${
+                group.campaign === undefined
+                  ? "text-slate-500"
+                  : campaignLook(group.campaign.color).heading
+              }`}
+            >
+              {group.campaign !== undefined && (
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${campaignLook(group.campaign.color).dot}`}
+                />
+              )}
+              {group.campaign?.name ?? S.campaign.none}
+            </h2>
+          )}
+          {group.characters.map((character) => (
+            <CharacterRow
+              key={character.id}
+              character={character}
+              tier={tier}
+              {...(group.campaign === undefined ? {} : { look: campaignLook(group.campaign.color) })}
+            />
+          ))}
+        </div>
       ))}
 
       {drafts.length > 0 && (
@@ -262,7 +302,7 @@ function ConflictCleanupCard({ characters }: { characters: Character[] }) {
   const kept = stripConflictSuffix(redundant[0]?.name ?? "");
 
   return (
-    <Card className="border-amber-700 bg-amber-950/30">
+    <Card tone="border-amber-700 bg-amber-950/30">
       <p className="text-sm font-semibold text-amber-200">{S.cleanup.title(redundant.length)}</p>
       <p className="mt-1 text-xs leading-relaxed text-amber-100/80">{S.cleanup.why(kept)}</p>
       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -287,9 +327,17 @@ function ConflictCleanupCard({ characters }: { characters: Character[] }) {
 // Zeilen
 // ---------------------------------------------------------------------------
 
+/**
+ * Rasse und Klassen als Text.
+ *
+ * Holt AUSDRÜCKLICH keinen abgeleiteten Bogen. Solange hier die TP standen, zog
+ * jede Zeile eine vollständige Ableitung samt Kompendium — bei sechs Charakteren
+ * waren das 18 Abfragen über 3046 Einträge, und man sah es: Name und Stufe standen
+ * sofort da, die Unterzeile rückte nach. Die TP sind weg (er wollte sie hier nicht),
+ * und damit auch der Grund für die Ableitung.
+ */
 function useRowSummary(character: Character) {
   const compendium = useCompendium();
-  const sheet = useSheet(character);
   const race = compendium?.get(character.raceId);
   const classSummary = new Map<string, number>();
   for (const level of character.levels) {
@@ -301,69 +349,112 @@ function useRowSummary(character: Character) {
       return `${cls ? displayName(cls) : classId} ${count}`;
     })
     .join(" / ");
-  return { sheet, raceText: race ? displayName(race) : "", classText };
+  return { raceText: race ? displayName(race) : "", classText };
 }
 
-function CharacterRow({ character }: { character: Character }) {
-  const { sheet, raceText, classText } = useRowSummary(character);
+/**
+ * Eine Charakterkarte.
+ *
+ * Was darauf steht, hat er Zeile für Zeile vorgegeben: „den Namen des Charakters und
+ * daneben etwas anders geschrieben […] den Namen des Spielers, darunter die Rasse und
+ * die Klassen. Stufe sieben daneben ist auch in Ordnung, Trefferpunkte müssen wir
+ * dort nicht anzeigen."
+ *
+ * Der Kampagnenname steht NICHT auf der Karte, obwohl er ihn hier haben wollte —
+ * er steht in der Überschrift des Abschnitts, unter der die Karte liegt. Zweimal
+ * dasselbe Wort auf 390px Breite ist Verschwendung; die Karte trägt die FARBE der
+ * Kampagne, und das war der eigentliche Wunsch („dass halt dieser ganze Reiter […]
+ * in einer anderen Farbe dargestellt werden").
+ */
+function CharacterRow(props: {
+  character: Character;
+  tier: CardTier;
+  /** Fehlt bei Bögen ohne Kampagne — dann bleibt die Karte grau wie bisher. */
+  look?: { card: string } | undefined;
+}) {
+  const { character, tier } = props;
+  const { raceText, classText } = useRowSummary(character);
   const [actionsOpen, setActionsOpen] = useState(false);
-
-  const hpColor =
-    sheet === undefined
-      ? "text-slate-400"
-      : sheet.hp.current <= sheet.hp.max / 4
-        ? "text-red-400"
-        : sheet.hp.current <= sheet.hp.max / 2
-          ? "text-amber-400"
-          : "text-emerald-400";
 
   return (
     <>
-      {/* Karte ist KEIN Link mehr: der Aktionsknopf darf nicht in einem Link
-          liegen, sonst öffnet jeder Tap darauf auch den Bogen. */}
-      <Card className="mb-2 flex items-center gap-3 transition-colors hover:border-amber-600/50">
+      {/* Karte ist KEIN Link: der Aktionsknopf darf nicht in einem Link liegen,
+          sonst öffnet jeder Tap darauf auch den Bogen. */}
+      {/*
+        `tone` und `padding` statt `className`: eine Klasse, die hinten angehängt
+        wird, gewinnt nicht — Tailwind entscheidet nach der Reihenfolge im
+        Stylesheet, und dort steht `slate` hinter allen Buntfarben. Die
+        Kampagnenfarbe war so unsichtbar, obwohl sie am Element stand.
+      */}
+      <Card
+        {...(props.look === undefined ? {} : { tone: props.look.card })}
+        padding={tier.padding}
+        className={`${tier.gap} flex items-center gap-3 transition-colors hover:border-amber-600/50`}
+      >
         <Link
           to="/charaktere/$charId"
           params={{ charId: character.id }}
           className="flex min-w-0 flex-1 items-center gap-3"
         >
           {character.portrait ? (
-            <img src={character.portrait} alt="" className="h-14 w-14 rounded-lg object-cover" />
+            <img
+              src={character.portrait}
+              alt=""
+              className={`${tier.portrait} shrink-0 rounded-lg object-cover`}
+            />
           ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-slate-800 text-2xl">
+            <div
+              className={`${tier.portrait} ${tier.emoji} flex shrink-0 items-center justify-center rounded-lg bg-slate-800`}
+            >
               🛡️
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <div className="truncate text-base font-semibold">{character.name}</div>
-            <div className="truncate text-sm text-slate-400">
+            {/*
+              Name und Spielername in EINER Zeile, aber deutlich verschieden gesetzt
+              („etwas anders formatiert"): fett gegen normal, hell gegen gedämpft.
+              `items-baseline`, damit die beiden trotz verschiedener Größe auf einer
+              Linie sitzen. Beim Umbruch geht der Spielername als erstes verloren —
+              deshalb `truncate` am Namen und `shrink-0` nicht am Spieler.
+            */}
+            <div className="flex min-w-0 items-baseline gap-1.5">
+              <span className={`${tier.name} truncate font-semibold`}>{character.name}</span>
+              {character.playerName !== undefined && (
+                <span className={`${tier.sub} min-w-0 truncate font-normal text-slate-500`}>
+                  {character.playerName}
+                </span>
+              )}
+            </div>
+            <div className={`${tier.sub} truncate text-slate-400`}>
               {raceText} {classText && `· ${classText}`}
             </div>
           </div>
-          <div className="shrink-0 text-right">
-            <div className="rounded-full bg-slate-800 px-2 py-0.5 text-xs font-semibold text-amber-300">
-              {S.sheet.level} {character.levels.length}
-            </div>
-            {sheet && (
-              <div className={`mt-1 text-xs font-semibold tabular-nums ${hpColor}`}>
-                {S.sheet.hp} {sheet.hp.current}/{sheet.hp.max}
-              </div>
-            )}
+          {/* Nur noch die Stufe — sie kommt aus `character.levels`, nicht aus einer
+              Ableitung, und steht deshalb sofort da. */}
+          <div className="shrink-0 rounded-full bg-slate-800/80 px-2 py-0.5 text-xs font-semibold text-amber-300">
+            {S.sheet.level} {character.levels.length}
           </div>
         </Link>
         <button
           onClick={() => setActionsOpen(true)}
           aria-label={`${character.name}: Aktionen`}
-          className="shrink-0 rounded-lg px-2 py-3 text-lg text-slate-400 hover:bg-slate-800"
+          className={`${tier.action} shrink-0 rounded-lg text-slate-400 hover:bg-slate-800`}
         >
           ⋯
         </button>
       </Card>
-      <CharacterActionsSheet
-        character={character}
-        open={actionsOpen}
-        onClose={() => setActionsOpen(false)}
-      />
+      {/*
+        Erst rendern, wenn es offen ist. Vorher hing es an JEDER Zeile und zog
+        unbesehen `useAllEntities()` + `useHouseRules()` — ein Drittel der
+        Kompendiums-Abfragen dieser Seite für ein Blatt, das niemand geöffnet hat.
+      */}
+      {actionsOpen && (
+        <CharacterActionsSheet
+          character={character}
+          open
+          onClose={() => setActionsOpen(false)}
+        />
+      )}
     </>
   );
 }
