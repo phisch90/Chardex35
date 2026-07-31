@@ -51,6 +51,13 @@ export function CharacterListPage() {
   */
   const groups = useMemo(() => groupByCampaign(real), [real]);
   const tier = cardTier(real.length, groups.length);
+  /*
+    Welcher Bogen sein Aktions-Blatt offen hat — als KENNUNG, nicht als Objekt. Der
+    Charakter selbst kommt frisch aus der Liste, sonst zeigte das Blatt einen Stand
+    von vor der letzten Änderung (die Kampagne, die man gerade darin eingetragen hat).
+  */
+  const [openFor, setOpenFor] = useState<string | null>(null);
+  const openCharacter = openFor === null ? undefined : real.find((c) => c.id === openFor);
   // Eine einzige Gruppe beschriftet sich nicht selbst — „Ohne Kampagne" über der
   // einzigen Liste wäre Lärm. `cardTier` rechnet mit derselben Regel.
   const withHeadings = groups.length > 1;
@@ -79,8 +86,20 @@ export function CharacterListPage() {
         <p className="py-10 text-center text-slate-400">{S.misc.noCharacters}</p>
       )}
 
-      {groups.map((group) => (
-        <div key={group.campaign?.name ?? "ohne"}>
+      {/*
+        Der `key` ist die POSITION des Abschnitts, nicht sein Name — und das ist aus
+        Schaden gelernt. Vorher stand hier `key={group.campaign?.name ?? "ohne"}`,
+        also der Wert, den er im Kampagnenfeld gerade TIPPT. Jeder Buchstabe machte
+        daraus einen anderen Schlüssel („N", „Na", „Nac"), für React also ein anderes
+        Element: der ganze Abschnitt wurde abgeräumt und neu gebaut. Damit starb das
+        Eingabefeld nach dem ersten Zeichen.
+
+        Die Karten darin tragen `key={character.id}`, werden also innerhalb des
+        Abschnitts weiter richtig zugeordnet — die Position als Schlüssel ist hier
+        genau richtig, weil ein Abschnitt eine Position IST und keine Identität hat.
+      */}
+      {groups.map((group, index) => (
+        <div key={index}>
           {withHeadings && (
             <h2
               className={`mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest ${
@@ -102,11 +121,28 @@ export function CharacterListPage() {
               key={character.id}
               character={character}
               tier={tier}
+              onOpenActions={() => setOpenFor(character.id)}
               {...(group.campaign === undefined ? {} : { look: campaignLook(group.campaign.color) })}
             />
           ))}
         </div>
       ))}
+
+      {/*
+        Das Aktions-Blatt liegt auf SEITENebene, nicht in der Kartenzeile.
+
+        Ein Dialog in einem Listeneintrag stirbt mit jeder Umsortierung der Liste —
+        und genau das ist passiert: das Kampagnenfeld darin nahm nur einen Buchstaben,
+        weil das Tippen die Abschnitte umbaute. Hier oben ist es von der Liste
+        entkoppelt, und es gibt garantiert nur eine Instanz statt einer je Bogen.
+      */}
+      {openCharacter !== undefined && (
+        <CharacterActionsSheet
+          character={openCharacter}
+          open
+          onClose={() => setOpenFor(null)}
+        />
+      )}
 
       {drafts.length > 0 && (
         <div className="pt-2">
@@ -369,12 +405,13 @@ function useRowSummary(character: Character) {
 function CharacterRow(props: {
   character: Character;
   tier: CardTier;
+  /** Öffnet das Aktions-Blatt — das liegt auf Seitenebene, nicht hier. */
+  onOpenActions: () => void;
   /** Fehlt bei Bögen ohne Kampagne — dann bleibt die Karte grau wie bisher. */
   look?: { card: string } | undefined;
 }) {
   const { character, tier } = props;
   const { raceText, classText } = useRowSummary(character);
-  const [actionsOpen, setActionsOpen] = useState(false);
 
   return (
     <>
@@ -436,25 +473,13 @@ function CharacterRow(props: {
           </div>
         </Link>
         <button
-          onClick={() => setActionsOpen(true)}
+          onClick={props.onOpenActions}
           aria-label={`${character.name}: Aktionen`}
           className={`${tier.action} shrink-0 rounded-lg text-slate-400 hover:bg-slate-800`}
         >
           ⋯
         </button>
       </Card>
-      {/*
-        Erst rendern, wenn es offen ist. Vorher hing es an JEDER Zeile und zog
-        unbesehen `useAllEntities()` + `useHouseRules()` — ein Drittel der
-        Kompendiums-Abfragen dieser Seite für ein Blatt, das niemand geöffnet hat.
-      */}
-      {actionsOpen && (
-        <CharacterActionsSheet
-          character={character}
-          open
-          onClose={() => setActionsOpen(false)}
-        />
-      )}
     </>
   );
 }
