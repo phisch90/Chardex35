@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ABILITIES,
+  ABILITY_BASE_SOURCE,
   characterSchema,
   classCategory,
   conflictingEquipIds,
@@ -12,6 +13,7 @@ import {
   resolveCompendium,
   skillPointCost,
   type Ability,
+  type AbilityBlock,
   type Character,
   type DerivedSheet,
   type Entity,
@@ -291,11 +293,7 @@ export function CharacterWizardPage() {
                   }
                   className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-lg font-semibold"
                 />
-                {sheet && (
-                  <span className="text-xs text-slate-400">
-                    final {sheet.abilities[ability].score.total} ({fmtMod(sheet.abilities[ability].mod)})
-                  </span>
-                )}
+                {sheet && <AbilityResult block={sheet.abilities[ability]} />}
               </label>
             ))}
           </div>
@@ -425,6 +423,37 @@ export function CharacterWizardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Was unter dem Eingabefeld eines Attributs steht.
+ *
+ * Vorher stand dort „final 15 (+2)". Seine Frage: **„Was hat es mit ‚final' auf sich?"**
+ * Zwei Mängel auf einmal — das Wort ist englisch in einer deutschen Oberfläche (nur
+ * REGELKÜRZEL bleiben englisch, DEX statt GE), und es sagt nicht, WOHER die Änderung
+ * kommt. Bei seinem Halb-Ork verschieben sich drei von sechs Werten ohne ein Wort dazu.
+ *
+ * Die Quellen kommen aus den Beiträgen des abgeleiteten Werts, NICHT aus einer eigenen
+ * Volks-Rechnung: so steht hier von allein auch ein Stufenanstieg oder ein Gegenstand,
+ * sobald er mitwirkt. Eine zweite „Volks-Modifikator"-Rechnung wäre der abgeleitete Wert,
+ * der gespeichert wurde — die Fehlerfamilie dieses Projekts, nur im Anzeigecode.
+ */
+function AbilityResult({ block }: { block: AbilityBlock }) {
+  const sources = block.score.contributions.filter(
+    (c) => c.source !== ABILITY_BASE_SOURCE && c.value !== 0,
+  );
+  return (
+    <span className="text-xs text-slate-400">
+      {S.wizard.abilityResult(block.score.total, fmtMod(block.mod))}
+      {sources.length > 0 && (
+        <span className="ml-1.5 text-slate-500">
+          {sources
+            .map((c) => `${c.source} ${fmtMod(c.value)}${c.applied ? "" : " (wirkt nicht)"}`)
+            .join(" · ")}
+        </span>
+      )}
+    </span>
   );
 }
 

@@ -24,6 +24,14 @@ export interface AbilityBlock {
   mod: number;
 }
 
+/**
+ * Das Label des Grundbeitrags in `AbilityBlock.score.contributions` — der getippte Wert
+ * selbst. Steht hier und nicht zweimal als Literal, damit die Anzeige („woher kommt die
+ * Änderung?") und die Engine dasselbe Wort meinen: wer alles AUSSER dem Grundwert zeigen
+ * will, muss ihn erkennen können.
+ */
+export const ABILITY_BASE_SOURCE = "Basiswert";
+
 export interface AcBlock {
   total: StatValue;
   /** Ohne Rüstung, Schild und natürliche Rüstung — mit Aufschlüsselung. */

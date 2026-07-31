@@ -227,6 +227,11 @@ export const S = {
     /** Warum ein Reiter noch nicht angetippt werden kann. */
     needRaceAndClass: "Erst Volk und Klasse wählen",
     summary: "Der Bogen, wie er wird",
+    /**
+     * Unter dem Eingabefeld eines Attributs. Hieß „final" — englisch in einer deutschen
+     * Oberfläche, und seine Frage dazu war berechtigt.
+     */
+    abilityResult: (total: number, mod: string) => `ergibt ${total} (${mod})`,
     standardArray: "Standardreihe (15/14/13/12/10/8)",
     rollAll: "🎲 Alle würfeln (4W6, niedrigster fällt)",
     /** NPC-Klassen sind kein Spielerfutter — aber erreichbar, für Gefolge und NSCs. */
