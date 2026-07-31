@@ -58,6 +58,13 @@ export function buildFingerprint(character: Character): string {
       gebaut. Welches Bild gewinnt, regelt die Zusammenführung weiter unten.
     */
     if (key === "portrait" || key === "draftOf") continue;
+    /*
+      Die Kampagne zählt aus demselben Grund nicht als Aufbau: Name und Farbe sind
+      Ordnung und Geschmack, keine Regel. Ohne diese Zeile hätte ein Farbwechsel den
+      nächsten Auftrag eine Rettungskopie anlegen lassen — genau der Porträt-Fehler
+      eine Zeile weiter oben, nur mit einer Farbe statt einem Bild.
+    */
+    if (key === "campaign") continue;
     if (key === "hp") {
       // Nur das Maximum gehört zum Aufbau; Schaden und temporäre Punkte nicht.
       rest[key] = { overrideMax: (value as Character["hp"]).overrideMax ?? null };
