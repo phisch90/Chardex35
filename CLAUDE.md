@@ -120,6 +120,16 @@ Farbe — die ist leer, solange alle dieselbe tragen, also im Normalfall immer. 
 Schreiben ist der Filter richtig (keine rev-Erhöhungen ohne Bedeutung), bei der
 Ansage falsch: angesagt wird, wer BETROFFEN ist, geschrieben, wer sich ÄNDERT.
 
+Fünfte Falle, von seinem iPad-Bild: **ein Abstand, der ein Element einrechnet, das es in
+dieser Breite nicht gibt.** Die untere Reiterleiste ist `md:hidden` — ab 768px steht links
+die Seitenleiste, unten ist nichts. Der Weiter-Balken des Assistenten rechnete ihre Höhe
+aber in JEDER Breite ein und schwebte auf dem iPad deshalb 64px über dem Rand: ein Band
+quer durch die Liste, mit Text, der durch die halbdurchsichtige Fläche schien. Sein Wort
+dazu: „So hab ich den Balken immer im Weg." Wer eine Höhe aus der Hülle in `bottom-…`
+einrechnet, muss sie ab `md` zurückstellen — `ui/UndoBar.tsx` (`md:bottom-4`) und
+`ui/SyncBadge.tsx` (`md:bottom-3`) machen es richtig vor. Und geprüft wird in DREI Größen,
+nicht in einer: 390×844, 1180×820, 820×1180.
+
 ## Beantwortete Entscheidungen (nicht neu fragen)
 
 - **Geräte:** iPhone UND iPad, beide. Deshalb war der Abgleich-Fehler dringend — er
