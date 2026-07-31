@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   ABILITIES,
+  adviceFor,
   classCategory,
   deriveSheet,
   displayName,
@@ -26,6 +27,7 @@ import {
 import { Card, Chip, GhostButton, PrimaryButton, SearchInput, SectionTitle, fmtMod } from "../ui/bits.js";
 import { FeatPicker } from "../ui/FeatPicker.js";
 import { ClassInfo } from "../ui/RaceClassInfo.js";
+import { SkillAdviceLine, SkillMark, suggestionWhy } from "../ui/SkillAdvice.js";
 
 export function LevelUpPage() {
   const { charId } = useParams({ strict: false }) as { charId: string };
@@ -99,6 +101,12 @@ export function LevelUpPage() {
 
   const chosenClass = classId ? compendium.get(classId) : undefined;
   const hitDie = chosenClass?.kind === "class" ? chosenClass.data.hitDie : null;
+  /*
+    Die Fertigkeits-Empfehlung hängt an der Klasse, in DIE aufgestiegen wird — beim
+    Multiklassen ist das nicht die von Stufe 1. Das Volk bleibt hier außen vor: es
+    kommentiert Attribute, und die verteilt der Aufstieg nur alle vier Stufen.
+  */
+  const advice = adviceFor(chosenClass, undefined);
 
   // Klassenwechsel setzt die Zauberauswahl zurück — sonst landen die Picks
   // der alten Klasse unsichtbar im spellState der neuen.
@@ -324,6 +332,12 @@ export function LevelUpPage() {
         <div className={`mb-2 text-sm font-semibold ${skillLeft < 0 ? "text-red-400" : "text-emerald-400"}`}>
           {S.wizard.pointsLeft}: {skillLeft}
         </div>
+        {/*
+          Dieselbe Auskunft wie im Assistenten, sein Wunsch: Fertigkeits-Vorschläge „auch
+          beim Stufenaufstieg". Die Empfehlung hängt an der Klasse, in DIE aufgestiegen
+          wird — beim Multiklassen ist das nicht dieselbe wie auf Stufe 1.
+        */}
+        <SkillAdviceLine advice={advice} klass={chosenClass} compendium={compendium} />
         <ul className="max-h-80 divide-y divide-slate-800 overflow-y-auto">
           {skills.map((skill) => {
             const isClass = skill.isClassSkill;
@@ -346,6 +360,7 @@ export function LevelUpPage() {
                 <span className={isClass ? "" : "text-slate-400"}>
                   {skill.name}
                   {isClass && <span className="ml-1 text-[11px] text-amber-400">✧</span>}
+                  <SkillMark why={suggestionWhy(advice, skill)} />
                   {!isSubtypeAnchor && (
                     <span className="ml-1 text-xs text-slate-500">
                       {current}/{max}
