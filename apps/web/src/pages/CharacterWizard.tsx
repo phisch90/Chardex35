@@ -204,27 +204,92 @@ export function CharacterWizardPage() {
 
   const stepBudget = budget();
 
+  /*
+    Zurück und Weiter — EINMAL beschrieben, an zwei Orten gezeigt.
+
+    Sein Bild vom iPad, rot eingekreist: „Bitte weiter und zurück anders darstellen. So
+    hab ich den Balken immer im Weg." Gefragt und entschieden: je Gerät getrennt. Am
+    Handy unten, wo der Daumen liegt; ab `md` oben im Kopf, denn dort gibt es die untere
+    Reiterleiste gar nicht (`ui/Layout.tsx:75` ist `md:hidden`) und ein Balken am unteren
+    Rand hätte nichts, woran er sich anlehnt.
+
+    Dasselbe Element-Objekt wird in beiden Hüllen gerendert — React macht daraus zwei
+    Instanzen, aber `canNext()` und `finish()` stehen nur einmal da. Zwei Abschriften
+    wären zwei Stellen, an denen eine Sperre vergessen werden kann.
+
+    Der Kontostand geht in BEIDE: die Karten der Schritte schreiben nur das nackte
+    „Slots übrig: -1" (`SkillStep`, `FeatStep`), die guten Sätze („Keine Talent-Slots
+    mehr frei", „1 zu viel gewählt") kommen aus `budget()` hier.
+  */
+  const navButtons = (
+    <>
+      {stepBudget !== null && (
+        <p
+          className={`text-xs font-semibold ${
+            stepBudget.warn ? "text-red-400" : "text-emerald-400"
+          }`}
+        >
+          {stepBudget.text}
+        </p>
+      )}
+      <div className="flex items-center justify-between gap-2">
+        <GhostButton
+          onClick={() => (step === STEP.race ? void navigate({ to: "/" }) : setStep(step - 1))}
+        >
+          {S.actions.back}
+        </GhostButton>
+        {step < STEP.done ? (
+          <PrimaryButton disabled={!canNext()} onClick={() => setStep(step + 1)}>
+            {S.actions.next}
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton disabled={!canNext()} onClick={() => void finish()}>
+            {S.actions.create}
+          </PrimaryButton>
+        )}
+      </div>
+    </>
+  );
+
   return (
-    <div className="space-y-3">
-      <h1 className="flex flex-wrap items-baseline gap-x-2 text-xl font-bold">
-        {S.wizard.title}
-        {who !== "" && <span className="text-sm font-medium text-amber-300">{who}</span>}
-      </h1>
-      <div className="flex flex-wrap gap-1">
-        {S.wizard.steps.map((label, i) => {
-          const open = reachable(i);
-          return (
-            <Chip
-              key={label}
-              active={i === step}
-              {...(open ? { onClick: () => setStep(i) } : {})}
-              {...(open ? {} : { title: S.wizard.needRaceAndClass })}
-              dimmed={!open}
-            >
-              {i + 1}. {label}
-            </Chip>
-          );
-        })}
+    /*
+      `pb-20` hält am Handy den Platz für die feste Knopfleiste frei (siehe unten) — ab
+      `md` steht sie im Kopf, dort braucht es nichts. Genauso löst der Bogen es
+      (`pages/sheet/index.tsx:163`: `pb-14 md:pb-0`).
+    */
+    <div className="space-y-3 pb-20 md:pb-0">
+      {/*
+        Der Kopf: Titel, Volk+Klasse, die sieben Schritt-Marken — und ab `md` die
+        Knopfzeile rechts in der Titelzeile. NICHT in die Marken-Zeile: die sieben Marken
+        brauchen bei `max-w-3xl` schon rund 630 von 736px, die Knöpfe würden umbrechen.
+
+        Ab `md` haftet der ganze Block oben. Am Handy bleibt er, wie er war (er scrollt
+        mit) — dort steht die Knopfzeile unten.
+      */}
+      <div className="space-y-2 md:sticky md:top-0 md:z-20 md:-mx-4 md:border-b md:border-slate-800 md:bg-slate-950 md:px-4 md:pb-2 md:pt-3">
+        <div className="flex flex-wrap items-baseline gap-x-2">
+          <h1 className="flex flex-wrap items-baseline gap-x-2 text-xl font-bold">
+            {S.wizard.title}
+            {who !== "" && <span className="text-sm font-medium text-amber-300">{who}</span>}
+          </h1>
+          <div className="ml-auto hidden items-center gap-3 md:flex">{navButtons}</div>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {S.wizard.steps.map((label, i) => {
+            const open = reachable(i);
+            return (
+              <Chip
+                key={label}
+                active={i === step}
+                {...(open ? { onClick: () => setStep(i) } : {})}
+                {...(open ? {} : { title: S.wizard.needRaceAndClass })}
+                dimmed={!open}
+              >
+                {i + 1}. {label}
+              </Chip>
+            );
+          })}
+        </div>
       </div>
 
       {step === STEP.race && (
@@ -382,45 +447,36 @@ export function CharacterWizardPage() {
       )}
 
       {/*
-        Die haftende Leiste — der Kern dieser Runde.
+        Die haftende Leiste am Handy — und NUR am Handy (`md:hidden`).
 
         Vorher stand die Knopfzeile als letztes Kind im Fluss und scrollte mit. Im
         Talentschritt sind das über hundert Zeilen, an denen er vorbeimusste, wörtlich:
         „Da muss ich jetzt ganz runterscrollen, bis ich auch weiterklicken kann.
         Supernervig."
 
-        Der Abstand nach unten ist DERSELBE Ausdruck wie das untere Polster von `main`
-        (`ui/Layout.tsx`): der Scroll-Container reicht bis zum Bildschirmrand, und die
-        feste Navigationsleiste liegt darüber. Mit `bottom-0` klebte die Leiste hinter
-        der Navigation. Die negativen Ränder ziehen sie über die Seitenpolster hinweg,
-        damit sie wie eine Leiste aussieht und nicht wie eine Karte.
+        Drei Dinge daran waren dann falsch, alle vom iPad-Bild belegt:
+
+        1. Der Abstand rechnete die untere Reiterleiste ein — die es ab `md` nicht gibt
+           (`ui/Layout.tsx:75` ist `md:hidden`). Die Leiste schwebte dort 64px über dem
+           Rand und schnitt als Band durch die Liste. Deshalb jetzt `md:hidden`.
+        2. `4rem` waren 8px zu viel: die Reiterleiste ist genau
+           `3.5rem + env(safe-area-inset-bottom)` hoch. Durch den Spalt blieb Liste
+           sichtbar. Dieselbe Rechnung wie die Reiterzeile des Bogens
+           (`pages/sheet/index.tsx`).
+        3. `bg-slate-950/95` + `backdrop-blur` ließen Text durchscheinen — es sah kaputt
+           aus, nicht wie eine Leiste. Jetzt voll deckend.
+
+        Und `sticky` war überhaupt das falsche Werkzeug: es rechnet gegen den
+        INHALTSRAND des Scroll-Containers, und `main` hält unten schon
+        `4rem + safe-area` frei. Gemessen lag die Leiste deshalb bei 724 statt 788 — 64px
+        Liste blieben darunter sichtbar. Also `fixed` wie die Reiterzeile des Bogens
+        (`pages/sheet/index.tsx:346`), mit demselben Abstand: dann sitzt sie wirklich auf
+        der Reiterleiste. Den Platz dafür reserviert `pb-20` an der Wurzel dieser Seite —
+        auch das genau wie der Bogen (dort `pb-14`), sonst verschwindet die letzte Karte
+        hinter der Leiste.
       */}
-      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] -mx-3 border-t border-slate-800 bg-slate-950/95 px-3 py-2 backdrop-blur sm:-mx-4 sm:px-4">
-        {stepBudget !== null && (
-          <p
-            className={`mb-1.5 text-xs font-semibold ${
-              stepBudget.warn ? "text-red-400" : "text-emerald-400"
-            }`}
-          >
-            {stepBudget.text}
-          </p>
-        )}
-        <div className="flex items-center justify-between gap-2">
-          <GhostButton
-            onClick={() => (step === STEP.race ? void navigate({ to: "/" }) : setStep(step - 1))}
-          >
-            {S.actions.back}
-          </GhostButton>
-          {step < STEP.done ? (
-            <PrimaryButton disabled={!canNext()} onClick={() => setStep(step + 1)}>
-              {S.actions.next}
-            </PrimaryButton>
-          ) : (
-            <PrimaryButton disabled={!canNext()} onClick={() => void finish()}>
-              {S.actions.create}
-            </PrimaryButton>
-          )}
-        </div>
+      <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 space-y-1.5 border-t border-slate-800 bg-slate-950 px-3 py-2 sm:px-4 md:hidden">
+        {navButtons}
       </div>
     </div>
   );
