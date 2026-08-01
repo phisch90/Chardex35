@@ -33,6 +33,13 @@ const PLAY_STATE_FIELDS = [
   // Auftrag selbst (`note`) und nicht in dessen Notizfeld.
   "notes",
   "noteSections",
+  /*
+    „Passt so" gehört dem, der auf den Bogen schaut — es ist eine Entscheidung über
+    die ANZEIGE, keine Regel. Damit zählt es auch nicht zum Aufbau (die Schleife
+    unten überspringt diese Felder), und ein weggetippter Hinweis legt keine
+    Rettungskopie an. Genau der Fehler, den das Porträt schon einmal gemacht hat.
+  */
+  "mutedWarnings",
 ] as const satisfies readonly (keyof Character)[];
 
 /**

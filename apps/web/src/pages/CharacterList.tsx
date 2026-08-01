@@ -1,15 +1,17 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
+  deriveSheet,
   displayName,
   groupByCampaign,
+  openWork,
   readOrderMarker,
   redundantConflictCopies,
   stripConflictSuffix,
   type Character,
 } from "@codex35/core";
 import { S } from "../strings.js";
-import { useCharacters, useCompendium } from "../lib/hooks.js";
+import { useCharacters, useCompendium, useHouseRules } from "../lib/hooks.js";
 import { CharacterRepo } from "../db/repo.js";
 import { importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton } from "../ui/bits.js";
@@ -372,6 +374,24 @@ function ConflictCleanupCard({ characters }: { characters: Character[] }) {
  * sofort da, die Unterzeile rückte nach. Die TP sind weg (er wollte sie hier nicht),
  * und damit auch der Grund für die Ableitung.
  */
+/**
+ * Was an diesem Bogen noch offen ist — für die Marke auf der Karte.
+ *
+ * Die Karte rechnete bisher bewusst KEINEN Bogen aus („nur noch die Stufe — sie
+ * kommt aus `character.levels`"). Vor dem Einbauen gemessen: `deriveSheet` braucht
+ * 0,67 ms je Bogen, zehn Bögen also 6,7 ms. Das ist kein Grund, die Regel ein
+ * zweites Mal in der Liste nachzubauen — und ein zweiter Nachbau wäre die
+ * eigentliche Gefahr, nicht die Rechenzeit.
+ */
+function useOpenWork(character: Character) {
+  const compendium = useCompendium();
+  const houseRules = useHouseRules();
+  return useMemo(() => {
+    if (!compendium) return [];
+    return openWork(deriveSheet(character, compendium, houseRules)).map((i) => i.message);
+  }, [character, compendium, houseRules]);
+}
+
 function useRowSummary(character: Character) {
   const compendium = useCompendium();
   const race = compendium?.get(character.raceId);
@@ -412,6 +432,7 @@ function CharacterRow(props: {
 }) {
   const { character, tier } = props;
   const { raceText, classText } = useRowSummary(character);
+  const open = useOpenWork(character);
 
   return (
     <>
@@ -466,10 +487,27 @@ function CharacterRow(props: {
               {raceText} {classText && `· ${classText}`}
             </div>
           </div>
-          {/* Nur noch die Stufe — sie kommt aus `character.levels`, nicht aus einer
-              Ableitung, und steht deshalb sofort da. */}
-          <div className="shrink-0 rounded-full bg-slate-800/80 px-2 py-0.5 text-xs font-semibold text-amber-300">
-            {S.sheet.level} {character.levels.length}
+          {/*
+            Die Marke „3 offen" — seine Wahl: „damit du es schon in der Liste
+            siehst", ohne den Bogen zu öffnen. Nützlich nach dem Stufenaufstieg von
+            drei Bögen. Was genau offen ist, steht im Titel; auf der Karte wäre es
+            zu viel Text für 390px.
+          */}
+          <div className={`${tier.gap} flex shrink-0 flex-col items-end gap-1`}>
+            {open.length > 0 && (
+              <span
+                title={S.open.markTitle(open)}
+                aria-label={S.open.markTitle(open)}
+                className="rounded-full bg-amber-950/60 px-2 py-0.5 text-[10px] font-semibold text-amber-300"
+              >
+                {S.open.mark(open.length)}
+              </span>
+            )}
+            {/* Nur noch die Stufe — sie kommt aus `character.levels`, nicht aus einer
+                Ableitung, und steht deshalb sofort da. */}
+            <span className="rounded-full bg-slate-800/80 px-2 py-0.5 text-xs font-semibold text-amber-300">
+              {S.sheet.level} {character.levels.length}
+            </span>
           </div>
         </Link>
         <button

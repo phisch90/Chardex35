@@ -6,7 +6,17 @@ import type { DerivedSheet } from "./types.js";
 
 /**
  * Stufe 7 — validate: WARNUNGEN, nie Blocker. Der DM hat Recht (Homebrew-first);
- * jede Warnung ist in der UI pro Charakter stummschaltbar.
+ * jede Warnung mit `muteKey` ist am Bogen abstellbar („passt so").
+ *
+ * Lange Zeit stand hier von jedem Topf nur EINE Hälfte: die App meldete, wenn man
+ * zu VIEL ausgegeben hatte, und schwieg, wenn etwas offen blieb. Sein Satz dazu:
+ * „Wir brauchen eine Warnung wenn man etwas vergessen hat. Wenn man zb ein Talent
+ * zu wenig oder noch skill Punkte offen sind." Die Zahlen dafür rechnete die
+ * Engine längst (`skillPoints`, `featSlots`) — sie sagte nur nichts dazu.
+ *
+ * Deshalb stehen die beiden Hälften hier jetzt IMMER als Paar beieinander. Eine
+ * Warnung über „zu wenig" an eine andere Stelle zu schreiben wäre der Anfang
+ * davon, dass die beiden auseinanderlaufen.
  */
 export function validate(
   resolved: ResolvedCharacter,
@@ -24,6 +34,7 @@ export function validate(
         code: "max-ranks",
         message: `${skill.name}: ${skill.ranks} Ränge übersteigen das Maximum von ${skill.maxRanks}${skill.isClassSkill ? "" : " (klassenfremd)"}.`,
         ref: skill.skillId,
+        tab: "skills",
       });
     }
   }
@@ -38,25 +49,57 @@ export function validate(
         code: "skill-needs-subtype",
         message: `${skill.name}: ${skill.ranks} Ränge liegen auf der Grundfertigkeit. Leg ein Teilgebiet an (z.B. „${skill.name} (arcana)") und trag die Ränge dort ein.`,
         ref: skill.skillId,
+        tab: "skills",
       });
     }
   }
 
-  // Fertigkeitspunkte gesamt.
-  if (sheet.skillPoints.spent > sheet.skillPoints.available) {
+  /*
+    Fertigkeitspunkte — beide Hälften.
+
+    Der offene Rest ist NICHT abstellbar per Menge allein, sondern genauso wie die
+    Talente: „passt so" merkt sich die Zahl. Wer sechs Punkte liegen lässt, weil er
+    sie beim nächsten Aufstieg zusammen ausgeben will, sagt es einmal.
+  */
+  const skillsLeft = sheet.skillPoints.available - sheet.skillPoints.spent;
+  if (skillsLeft < 0) {
     issues.push({
       severity: "warning",
       code: "skill-points-overspent",
       message: `Fertigkeitspunkte: ${sheet.skillPoints.spent} ausgegeben, nur ${sheet.skillPoints.available} verfügbar.`,
+      tab: "skills",
+    });
+  } else if (skillsLeft > 0) {
+    issues.push({
+      severity: "warning",
+      code: "skill-points-open",
+      message: `Fertigkeitspunkte: ${skillsLeft} von ${sheet.skillPoints.available} noch nicht verteilt.`,
+      tab: "skills",
+      muteKey: "skill-points-open",
+      open: skillsLeft,
     });
   }
 
-  // Talent-Slots.
-  if (sheet.featSlots.used > sheet.featSlots.available) {
+  // Talent-Slots — beide Hälften.
+  const featsLeft = sheet.featSlots.available - sheet.featSlots.used;
+  if (featsLeft < 0) {
     issues.push({
       severity: "warning",
       code: "feat-slots-overspent",
       message: `Talente: ${sheet.featSlots.used} gewählt, nur ${sheet.featSlots.available} Slots verfügbar.`,
+      tab: "feats",
+    });
+  } else if (featsLeft > 0) {
+    issues.push({
+      severity: "warning",
+      code: "feat-slots-open",
+      message:
+        featsLeft === 1
+          ? `Talente: 1 Slot ist noch frei (${sheet.featSlots.used} von ${sheet.featSlots.available} gewählt).`
+          : `Talente: ${featsLeft} Slots sind noch frei (${sheet.featSlots.used} von ${sheet.featSlots.available} gewählt).`,
+      tab: "feats",
+      muteKey: "feat-slots-open",
+      open: featsLeft,
     });
   }
 
@@ -81,6 +124,7 @@ export function validate(
         code: "feat-prerequisite",
         message: `${displayName(feat.entity)}: Voraussetzung nicht erfüllt (${label}).`,
         ref: feat.entity.id,
+        tab: "feats",
       });
     }
   }
@@ -94,6 +138,7 @@ export function validate(
         severity: "warning",
         code: "hp-roll-out-of-range",
         message: `Stufe ${i + 1}: TP-Wurf ${level.hpRoll} liegt außerhalb von 1–${cls.data.hitDie} (W${cls.data.hitDie}).`,
+        tab: "stats",
       });
     }
   });
@@ -116,6 +161,9 @@ export function validate(
             ? `${block.className}: ${block.domains.length} von ${block.domainPick} Domänen gewählt. Im Zauber-Reiter nachtragen — sonst fehlen dir die Domänenzauber.`
             : `${block.className}: ${block.domains.length} Domänen gewählt, die Klasse hat ${block.domainPick}.`,
         ref: block.classId,
+        tab: "spells",
+        muteKey: `domains-missing:${block.classId}`,
+        open: Math.abs(block.domainPick - block.domains.length),
       });
     }
 
@@ -132,8 +180,58 @@ export function validate(
           code: "prepared-over-slots",
           message: `${block.className}: ${count} Zauber Grad ${slot.level} vorbereitet, nur ${slot.total} Slots.`,
           ref: block.classId,
+          tab: "spells",
         });
       }
     }
+
+    /*
+      Und die andere Hälfte: leere Plätze.
+
+      NUR bei vorbereitenden Klassen. Ein Barde oder Hexenmeister hat nichts
+      vorzubereiten — er wirkt spontan aus seinen bekannten Zaubern, und seine
+      Plätze sind erst leer, wenn er sie verbraucht hat. Eine Warnung dort wäre
+      nicht nur nutzlos, sie wäre falsch.
+
+      EINE Meldung je Klasse, nicht eine je Grad. Ein Kleriker der Stufe 7 hätte
+      sonst fünf Zeilen für dieselbe Sache, und der Punkt am Reiter wäre derselbe.
+    */
+    if (block.model !== "prepared") continue;
+    const emptyByLevel: string[] = [];
+    let emptyTotal = 0;
+    for (const slot of block.slots) {
+      if (slot.total === null || slot.total === 0) continue;
+      const left = slot.total - (countByLevel.get(slot.level) ?? 0);
+      if (left <= 0) continue;
+      emptyTotal += left;
+      emptyByLevel.push(`Grad ${slot.level}: ${left}`);
+    }
+    if (emptyTotal > 0) {
+      issues.push({
+        severity: "warning",
+        code: "spell-slots-open",
+        message: `${block.className}: ${emptyTotal} Zauberplätze nicht belegt (${emptyByLevel.join(" · ")}).`,
+        ref: block.classId,
+        tab: "spells",
+        muteKey: `spell-slots-open:${block.classId}`,
+        open: emptyTotal,
+        daily: true,
+      });
+    }
+  }
+
+  /*
+    Zum Schluss: was der Bogen selbst abgestellt hat.
+
+    Die Warnungen bleiben in der Liste und werden nur MARKIERT. Sie ganz
+    wegzulassen wäre bequemer, aber dann gäbe es keinen Weg zurück — ein Schalter
+    ohne Rückweg ist in dieser App dasselbe wie Löschen.
+  */
+  const muted = new Map(character.mutedWarnings.map((m) => [m.key, m.upTo]));
+  for (const issue of issues) {
+    if (issue.muteKey === undefined) continue;
+    const upTo = muted.get(issue.muteKey);
+    if (upTo === undefined) continue;
+    if ((issue.open ?? 0) <= upTo) issue.muted = true;
   }
 }
