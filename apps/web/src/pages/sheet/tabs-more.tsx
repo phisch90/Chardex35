@@ -25,6 +25,7 @@ import { useAllEntities, useCompendium, useHouseRules } from "../../lib/hooks.js
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import { EquipMark } from "../../ui/EquipMark.js";
 import { HandsCard } from "./Hands.js";
+import { ItemName, ItemText } from "../../ui/ItemName.js";
 import { itemLabel, itemSummary } from "../../ui/itemSummary.js";
 import { ItemPicker } from "../../ui/ItemPicker.js";
 import { ItemEditor } from "../../ui/ItemEditor.js";
@@ -50,6 +51,13 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
   const [editor, setEditor] = useState<
     { entity?: ItemEntity | undefined; usedBy?: { count: number; names: string[] } } | null
   >(null);
+  /*
+    Welche Zeile ihre Erklärung zeigt — EINE, nicht jede. Alle ausgeklappt wäre
+    aus einer Gepäckliste ein Aufsatz geworden; im Kampf will er die Zeile sehen,
+    nicht den Text. Ein Tipp auf den Namen klappt auf, der nächste woanders klappt
+    hier zu.
+  */
+  const [explainId, setExplainId] = useState<string | null>(null);
 
   const openEditorFor = (entity: ItemEntity) => {
     setEditor({ entity });
@@ -160,8 +168,19 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
       <li key={row.id} className="py-1.5 text-sm">
         <div className="flex items-center gap-2">
         <EquipMark slot={row.slot} onClick={() => cycleSlot(row.id)} />
-        <div className="min-w-0 flex-1">
-          <div className="truncate">{name}</div>
+        {/*
+          Der Name ist antippbar: darunter kommt die deutsche Erklärung. Vorher
+          war die Zeile stumm — bei „Tanglefoot bag" stand nur „50 gp · 4 lb", und
+          was das Ding tut, musste man außerhalb der App nachschlagen.
+        */}
+        <button
+          onClick={() => setExplainId(explainId === row.id ? null : row.id)}
+          className="min-w-0 flex-1 text-left"
+          title={S.items.explain}
+        >
+          <div className="truncate">
+            <ItemName entity={entity} customName={row.customName} />
+          </div>
           <div className="text-xs text-slate-500">
             {[
               row.qty > 1 ? `×${row.qty}` : "",
@@ -171,7 +190,7 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               .filter((p) => p !== "")
               .join(" · ")}
           </div>
-        </div>
+        </button>
         {/*
           Die Menge stand hier als −/+ neben jeder Zeile und nahm den Platz von
           etwas Wichtigerem ein. Philipp: „dass man mehr als ein Kurzschwert dabei
@@ -235,6 +254,7 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           />
         )}
         </div>
+        {explainId === row.id && <ItemText entity={entity} />}
         {/*
           Eigene Boni AM GEGENSTAND — „die dann auch wirklich rechnen", wörtlich
           sein Wunsch. Die Engine wendet `extraEffects` an Inventarzeilen schon

@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { entitySchema, type Entity, type ItemEntity } from "@codex35/core";
+import { entitySchema, withGermanItemNames, type Entity, type ItemEntity } from "@codex35/core";
 import { buildItemSearchIndex, groupForQuery, normalize, searchItems } from "./itemSearch.js";
 
 /**
@@ -112,5 +112,51 @@ describe.skipIf(!packsAvailable)("Gegenstände suchen", () => {
       const list = group.items.map((i) => i.name);
       expect(list).toEqual([...list].sort((a, b) => a.localeCompare(b)));
     }
+  });
+});
+
+/*
+  Und jetzt DEUTSCH. Ab dieser Runde tragen die Gegenstände einen deutschen Namen
+  (`localized.de.name`, beim Einrichten übergelegt). Der Suchschlüssel nimmt ihn
+  mit — sonst wäre die Übersetzung ein Rückschritt: er läse „Langschwert" auf dem
+  Bogen und fände es unter diesem Wort nicht wieder.
+*/
+describe.skipIf(!packsAvailable)("Suchen mit deutschen Namen", () => {
+  const items = packsAvailable
+    ? (withGermanItemNames(loadItems()).filter((e): e is ItemEntity => e.kind === "item") as ItemEntity[])
+    : [];
+  const index = buildItemSearchIndex(items);
+  const names = (query: string) => searchItems(index, query).flatMap((g) => g.items.map((i) => i.name));
+
+  it("findet Longsword unter „Langschwert“", () => {
+    expect(names("langschwert")).toContain("Longsword");
+  });
+
+  it("findet Banded mail unter „Bandrüstung“ — auch als „bandruestung“", () => {
+    expect(names("bandrüstung")).toContain("Banded mail");
+    expect(names("bandruestung")).toContain("Banded mail");
+  });
+
+  it("findet den Rucksack, den Kampfstab und den Wetzstein auf Deutsch", () => {
+    expect(names("rucksack")).toContain("Backpack (empty)");
+    expect(names("kampfstab")).toContain("Quarterstaff");
+    expect(names("wetzstein")).toContain("Whetstone");
+  });
+
+  it("der englische Name findet weiter alles — er ist nicht ersetzt, nur ergänzt", () => {
+    expect(names("longsword")).toContain("Longsword");
+    expect(names("shortsword")).toContain("Sword, short");
+    expect(names("wooden heavy shield")).toContain("Shield, heavy wooden");
+  });
+
+  it("„schriftrolle“ findet Rollen jetzt auch über den NAMEN, nicht nur die Gruppe", () => {
+    // Vorher: 0 von 734 Rollen trugen das Wort. Jetzt trägt es jede — deutsch.
+    const hits = searchItems(index, "schriftrolle").find((g) => g.group === "scroll");
+    expect(hits?.items.length).toBeGreaterThan(700);
+  });
+
+  it("„eigenschaft“ findet die Waffen- und Rüstungseigenschaften", () => {
+    const hits = searchItems(index, "eigenschaft").find((g) => g.group === "specialAbility");
+    expect(hits?.items.length).toBeGreaterThan(90);
   });
 });

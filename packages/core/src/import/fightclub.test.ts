@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { entitySchema, resolveCompendium, type Entity } from "../schema/entities.js";
 import { deriveSheet } from "../engine/index.js";
+import { withGermanItemNames } from "../compendium/itemGerman.js";
 import { importFightClubXml, parseFightClubXml, parseRaceClass } from "./fightclub.js";
 
 /**
@@ -546,5 +547,66 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     const result = importFightClubXml(xml, compendium, { idFactory }).results[0]!;
     expect(result.issues.some((i) => i.code === "class-unmatched")).toBe(true);
     expect(result.character.levels).toHaveLength(3);
+  });
+});
+
+/*
+  Der Import gegen das Kompendium, wie es in der APP steht — also MIT den
+  deutschen Namen darüber.
+
+  Das ist kein Formtest, sondern der Schutz für seine echte Datei. Zwei Dinge
+  könnten hier kaputtgehen:
+
+  1. Der Namensindex baut sich aus `entity.name` UND `displayName(entity)`. Wäre
+     nur der deutsche Name drin, fände „Longsword" aus Fight Club nichts mehr —
+     und der Bogen käme ohne Waffe an.
+  2. Der Index sortiert für die Präfix-Zuordnung ABSTEIGEND nach Länge. Deutsche
+     Namen sind oft länger („Orkische Doppelaxt" gegen „Axe, orc double"), stehen
+     also weiter vorn und könnten einen kürzeren, richtigen englischen Treffer
+     überstimmen.
+
+  Deshalb wird das Ergebnis nicht auf Einzelheiten geprüft, sondern GEGEN den
+  Import ohne Überzug gestellt: es muss Zeichen für Zeichen dasselbe sein.
+*/
+describe.skipIf(!packsAvailable)("Fight-Club-Import mit deutschen Gegenstandsnamen", () => {
+  const plain = packsAvailable ? loadPackEntities() : [];
+  const german = withGermanItemNames(plain);
+
+  const run = (entities: Entity[]) => {
+    let n = 0;
+    return importFightClubXml(XML, resolveCompendium(entities), { idFactory: () => `x-${++n}` })
+      .results[0]!;
+  };
+
+  it("liefert genau dasselbe Ergebnis wie ohne deutsche Namen", () => {
+    const before = run(plain);
+    const after = run(german);
+    expect(after.character).toEqual(before.character);
+    expect(after.issues).toEqual(before.issues);
+    expect(after.comparisons).toEqual(before.comparisons);
+  });
+
+  it("findet die englischen Namen aus seiner Datei weiter", () => {
+    const after = run(german);
+    // Was in XML steht, muss auf SRD-Kennungen zeigen — nicht auf Homebrew-Notlösungen.
+    const srdIds = after.character.inventory.filter((row) =>
+      (row.itemId ?? "").startsWith("srd:item:"),
+    );
+    expect(srdIds.length).toBeGreaterThan(0);
+    expect(after.issues.filter((i) => i.code === "item-unmatched")).toEqual(
+      run(plain).issues.filter((i) => i.code === "item-unmatched"),
+    );
+  });
+
+  it("und die Werte am fertigen Bogen bleiben Zahl für Zahl gleich", () => {
+    const before = run(plain);
+    const after = run(german);
+    const sheetOf = (result: typeof before, entities: Entity[]) =>
+      deriveSheet(result.character, resolveCompendium([...entities, ...result.entities]));
+    const a = sheetOf(before, plain);
+    const b = sheetOf(after, german);
+    expect(b.ac.total.total).toBe(a.ac.total.total);
+    expect(b.hp.max).toBe(a.hp.max);
+    expect(b.attacks.length).toBe(a.attacks.length);
   });
 });

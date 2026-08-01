@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import {
   ITEM_GROUPS,
-  displayName,
   groupItems,
   isEpicItem,
   itemSubgroupOf,
@@ -13,6 +12,7 @@ import {
 import { S } from "../strings.js";
 import { Chip, GhostButton, SearchInput } from "./bits.js";
 import { buildItemSearchIndex, groupForQuery, searchItems } from "./itemSearch.js";
+import { ItemName, ItemText } from "./ItemName.js";
 import { itemSummary } from "./itemSummary.js";
 
 /**
@@ -243,6 +243,12 @@ function ItemRow({
   onPick: (entity: ItemEntity) => void;
   scroll?: { grade: number; tradition: "arcane" | "divine" } | undefined;
 }) {
+  /*
+    Die Erklärung ist EINGEKLAPPT. Ausgeklappt wären es bei 78 Waffen 78 Absätze
+    auf einem Handy-Bildschirm — man würde nicht mehr vergleichen können, und
+    genau dafür ist die Liste da. Ein Tipp auf den Namen zeigt sie.
+  */
+  const [open, setOpen] = useState(false);
   const summary = itemSummary(entity);
   const scrollText =
     scroll === undefined
@@ -252,16 +258,21 @@ function ItemRow({
           scroll.tradition === "arcane" ? S.items.arcane : S.items.divine,
         );
   return (
-    <li className="flex items-center gap-2 py-1.5">
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-sm">{displayName(entity)}</div>
-        {(scrollText !== undefined || summary !== "") && (
-          <div className="truncate text-[11px] text-slate-500">
-            {[scrollText, summary].filter((p) => p !== undefined && p !== "").join(" · ")}
+    <li className="py-1.5">
+      <div className="flex items-center gap-2">
+        <button onClick={() => setOpen(!open)} className="min-w-0 flex-1 text-left">
+          <div className="truncate text-sm">
+            <ItemName entity={entity} />
           </div>
-        )}
+          {(scrollText !== undefined || summary !== "") && (
+            <div className="truncate text-[11px] text-slate-500">
+              {[scrollText, summary].filter((p) => p !== undefined && p !== "").join(" · ")}
+            </div>
+          )}
+        </button>
+        <GhostButton onClick={() => onPick(entity)}>{S.actions.add}</GhostButton>
       </div>
-      <GhostButton onClick={() => onPick(entity)}>{S.actions.add}</GhostButton>
+      {open && <ItemText entity={entity} />}
     </li>
   );
 }
