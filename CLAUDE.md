@@ -130,6 +130,21 @@ einrechnet, muss sie ab `md` zurückstellen — `ui/UndoBar.tsx` (`md:bottom-4`)
 `ui/SyncBadge.tsx` (`md:bottom-3`) machen es richtig vor. Und geprüft wird in DREI Größen,
 nicht in einer: 390×844, 1180×820, 820×1180.
 
+Sechste Falle, und die ist mir jetzt VIERMAL passiert: **CSS `uppercase` verändert
+`innerText`.** Wer im Playwright-Lauf gegen einen Titel prüft, der `uppercase` trägt
+(`SectionTitle`, die Überschrift der Empfehlungskarte, die Schritt-Marken), bekommt
+„ZAUBER FÜR DEINEN BARD" und findet „Zauber für deinen Bard" nicht. Der Test schlägt fehl,
+obwohl die App recht hat — und man sucht den Fehler in der App. Regel: **jede Textprüfung
+im gebauten Bogen mit `/i`**, außer es geht ausdrücklich um Groß- und Kleinschreibung.
+
+Siebte Falle, aus derselben Runde: **ein `prompt()` ist keine Auswahl.** Für Teilgebiete
+zählte der Browser-Dialog die zehn möglichen Werte AUF und stellte ein leeres Feld zum
+Abschreiben daneben. Sein Urteil: „Find ich ja irgendwie sehr unprofessionell, dass man da
+dann das Ganze abtippen soll, was man auswählt." Wo die App die Möglichkeiten KENNT, gehört
+jede einzelne als Knopf hin (`ui/SubtypePicker.tsx`); das Freitextfeld bleibt daneben, weil
+die SRD-Listen nicht abschließend sind. Der E2E-Lauf prüft es hart: es darf überhaupt kein
+Browser-Dialog mehr aufgehen (`page.on("dialog", …)` muss leer bleiben).
+
 ## Beantwortete Entscheidungen (nicht neu fragen)
 
 - **Geräte:** iPhone UND iPad, beide. Deshalb war der Abgleich-Fehler dringend — er

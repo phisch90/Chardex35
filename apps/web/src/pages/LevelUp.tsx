@@ -10,7 +10,6 @@ import {
   skillPointCost,
   parseDice,
   rollDice,
-  spellsForList,
   type Ability,
   type Character,
 } from "@codex35/core";
@@ -24,10 +23,12 @@ import {
   useHouseRules,
   useSheet,
 } from "../lib/hooks.js";
-import { Card, Chip, GhostButton, PrimaryButton, SearchInput, SectionTitle, fmtMod } from "../ui/bits.js";
+import { Card, Chip, GhostButton, PrimaryButton, SectionTitle, fmtMod } from "../ui/bits.js";
 import { FeatPicker } from "../ui/FeatPicker.js";
 import { ClassInfo } from "../ui/RaceClassInfo.js";
 import { SkillAdviceLine, SkillMark, suggestionWhy } from "../ui/SkillAdvice.js";
+import { SubtypePicker } from "../ui/SubtypePicker.js";
+import { SpellPicker } from "../ui/SpellPicker.js";
 
 export function LevelUpPage() {
   const { charId } = useParams({ strict: false }) as { charId: string };
@@ -47,10 +48,10 @@ export function LevelUpPage() {
   const [ranks, setRanks] = useState<Record<string, number> | null>(null);
   /** Beim Aufstieg neu angelegte Teilgebiete (z.B. erstes Knowledge (arcana)). */
   const [newSubtypes, setNewSubtypes] = useState<{ skillId: string; subtype: string }[]>([]);
+  const [subtypeFor, setSubtypeFor] = useState<string | null>(null);
   const [newFeatIds, setNewFeatIds] = useState<string[]>([]);
   const [newKnown, setNewKnown] = useState<string[]>([]);
   const [featQuery, setFeatQuery] = useState("");
-  const [spellQuery, setSpellQuery] = useState("");
 
   // Defaults, sobald der Charakter geladen ist.
   useEffect(() => {
@@ -140,24 +141,11 @@ export function LevelUpPage() {
   const knownCount = classId
     ? (character.spellState[classId]?.known.length ?? 0) + newKnown.length
     : 0;
-  const spellEntries =
-    isSpontaneous && castingAfter ? spellsForList(compendium, castingAfter.spellListId) : [];
-  const maxSpellLevel = castingAfter
-    ? Math.max(-1, ...castingAfter.slots.filter((s) => s.total !== null).map((s) => s.level))
-    : -1;
-
-  // Je-Grad-Limit aus der spellsKnown-Zeile durchsetzen (Hexenmeister 4 darf
-  // genau 1 Grad-2-Zauber kennen, nicht drei).
-  const knownAtLevel = (level: number) => {
-    const existing = classId ? (character?.spellState[classId]?.known ?? []) : [];
-    const knownIds = new Set([...existing, ...newKnown]);
-    return spellEntries.filter((e) => e.level === level && knownIds.has(e.spellId)).length;
-  };
-  const canLearnLevel = (level: number) => {
-    const limit = castingAfter?.spellsKnown?.[level];
-    if (limit === undefined || limit === null) return true;
-    return knownAtLevel(level) < limit;
-  };
+  /*
+    Die Zauberliste, die Grad-Grenze („Hexenmeister 4 darf genau EINEN Grad-2-Zauber
+    kennen") und die Suche stehen jetzt im `SpellPicker` — hier standen sie als eigene
+    Fassung, und der Assistent hätte eine dritte gebraucht.
+  */
 
   const rollHp = () => {
     if (!hitDie) return;
@@ -174,14 +162,8 @@ export function LevelUpPage() {
   // Fertigkeitszeilen kommen aus der Ableitung — nur so sind Teilgebiete dabei.
   const skills = sheetAfter?.skills ?? sheetBefore?.skills ?? [];
 
-  const addSubtype = (skillId: string) => {
-    const entity = compendium.get(skillId);
-    const suggestions = entity?.kind === "skill" ? entity.data.subtypeSuggestions.join(", ") : "";
-    const value = prompt(
-      suggestions === "" ? S.sheet.subtypePrompt : `${S.sheet.subtypePrompt}\n\n${suggestions}`,
-    );
-    const subtype = value?.trim();
-    if (!subtype) return;
+  /* Kein `prompt()` mehr — derselbe Auswähler wie im Assistenten und am Bogen. */
+  const addSubtype = (skillId: string, subtype: string) => {
     const exists =
       character.skillSubtypes.some((s) => s.skillId === skillId && s.subtype === subtype) ||
       newSubtypes.some((s) => s.skillId === skillId && s.subtype === subtype);
@@ -372,7 +354,9 @@ export function LevelUpPage() {
                 </span>
                 <span className="flex items-center gap-2">
                   {isSubtypeAnchor && (
-                    <GhostButton onClick={() => addSubtype(skill.skillId)}>+ {S.sheet.subtype}</GhostButton>
+                    <GhostButton onClick={() => setSubtypeFor(skill.skillId)}>
+                      + {S.sheet.subtype}
+                    </GhostButton>
                   )}
                   {!isSubtypeAnchor && (
                     <>
@@ -395,6 +379,16 @@ export function LevelUpPage() {
             );
           })}
         </ul>
+        {subtypeFor !== null && (
+          <SubtypePicker
+            skill={compendium.get(subtypeFor)}
+            taken={[...character.skillSubtypes, ...newSubtypes]
+              .filter((entry) => entry.skillId === subtypeFor)
+              .map((entry) => entry.subtype)}
+            onPick={(subtype) => addSubtype(subtypeFor, subtype)}
+            onClose={() => setSubtypeFor(null)}
+          />
+        )}
       </Card>
 
       {(featSlotsLeft > 0 || newFeatIds.length > 0) && (
@@ -434,6 +428,11 @@ export function LevelUpPage() {
         </Card>
       )}
 
+      {/*
+        Die Zauberliste stand hier als eigene Kopie mit eigener Suche — die zweite Fassung
+        derselben Sache, und beim Assistenten wäre die dritte dazugekommen. Jetzt derselbe
+        Auswähler wie dort: eine Liste, eine Grenze je Grad, ein Verhalten.
+      */}
       {isSpontaneous && (
         <Card>
           <SectionTitle>
@@ -444,48 +443,14 @@ export function LevelUpPage() {
               </span>
             )}
           </SectionTitle>
-          {newKnown.length > 0 && (
-            <div className="mb-1 flex flex-wrap gap-1.5">
-              {newKnown.map((id) => {
-                const spell = compendium.get(id);
-                return (
-                  <Chip key={id} active onClick={() => setNewKnown(newKnown.filter((s) => s !== id))}>
-                    {spell ? displayName(spell) : id} ✕
-                  </Chip>
-                );
-              })}
-            </div>
-          )}
-          <SearchInput value={spellQuery} onChange={setSpellQuery} placeholder={S.actions.search} />
-          <ul className="mt-1 max-h-60 divide-y divide-slate-800 overflow-y-auto">
-            {spellEntries
-              .filter((e) => e.spell !== null && e.level <= maxSpellLevel)
-              .filter((e) => !character.spellState[classId ?? ""]?.known.includes(e.spellId))
-              .filter(
-                (e) =>
-                  !spellQuery.trim() ||
-                  e.spell!.name.toLowerCase().includes(spellQuery.trim().toLowerCase()),
-              )
-              .slice(0, 40)
-              .map((entry) => (
-                <li key={entry.spellId} className="flex items-center justify-between gap-2 py-1.5 text-sm">
-                  <span className="min-w-0 truncate">
-                    {displayName(entry.spell!)}
-                    <span className="ml-1 text-xs text-slate-500">
-                      {S.spells.level} {entry.level}
-                    </span>
-                  </span>
-                  {!newKnown.includes(entry.spellId) && (
-                    <GhostButton
-                      disabled={!canLearnLevel(entry.level)}
-                      onClick={() => setNewKnown([...newKnown, entry.spellId])}
-                    >
-                      {S.actions.add}
-                    </GhostButton>
-                  )}
-                </li>
-              ))}
-          </ul>
+          <SpellPicker
+            compendium={compendium}
+            block={castingAfter}
+            alreadyKnown={classId === null ? [] : (character.spellState[classId]?.known ?? [])}
+            picked={newKnown}
+            onPick={(id) => setNewKnown([...newKnown, id])}
+            onDrop={(id) => setNewKnown(newKnown.filter((x) => x !== id))}
+          />
         </Card>
       )}
 
