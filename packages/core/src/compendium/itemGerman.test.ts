@@ -144,6 +144,34 @@ describe.skipIf(!packsAvailable)("Deutsche Namen für die Ausrüstung", () => {
     expect(withoutSummary.map((e) => e.id)).toEqual([]);
   });
 
+  it("zwei verschiedene Gegenstände heißen nicht gleich auf Deutsch", () => {
+    /*
+      Am Bogen steht der deutsche Name. Tragen zwei VERSCHIEDENE Gegenstände
+      denselben, sind sie in der Gepäckliste nicht mehr zu unterscheiden — und man
+      legt den falschen an.
+
+      Der Vergleich läuft über den ENGLISCHEN Namen: das Pack führt selbst 206
+      Namen doppelt („Cure Light Wounds" gibt es als Trank, zweimal als Rolle und
+      als Zauberstab). Wo schon das Original gleich ist, darf die Übersetzung es
+      auch sein — dort geht nichts verloren, das nicht vorher schon fehlte. Genau
+      diese Prüfung hat „Amulet of Health" und „Periapt of Health" auseinander
+      gebracht: beides hieß erst „Amulett der Gesundheit", jetzt ist der Periapt
+      ein „Anhänger".
+    */
+    const byGerman = new Map<string, Set<string>>();
+    for (const entity of items) {
+      const german = itemGerman(entity)?.name;
+      if (german === undefined) continue;
+      const set = byGerman.get(german) ?? new Set<string>();
+      set.add(entity.name);
+      byGerman.set(german, set);
+    }
+    const collisions = [...byGerman]
+      .filter(([, originals]) => originals.size > 1)
+      .map(([german, originals]) => `${german} ← ${[...originals].join(" / ")}`);
+    expect(collisions).toEqual([]);
+  });
+
   it("nennt die Namen, die Philipp am Bogen sieht", () => {
     expect(itemGerman(item("longsword"))?.name).toBe("Langschwert");
     expect(itemGerman(item("banded-mail"))?.name).toBe("Bandrüstung");

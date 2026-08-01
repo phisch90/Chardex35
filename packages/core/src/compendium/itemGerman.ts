@@ -2109,20 +2109,26 @@ const WONDROUS: Record<string, ItemGerman> = {
   ...plusFamily(
     "periapt-of-epic-wisdom",
     [8, 10, 12],
-    "Amulett der epischen Weisheit",
+    "Anhänger der epischen Weisheit",
     "Erhöht WIS jenseits von +6 — episch, also erst ab Stufe 21.",
   ),
   "periapt-of-health": {
-    name: "Amulett der Gesundheit",
+    name: "Anhänger der Gesundheit",
     summary: "Immun gegen Krankheit — auch gegen magische.",
   },
   "periapt-of-proof-against-poison": {
-    name: "Amulett gegen Gift",
+    name: "Anhänger gegen Gift",
     summary: "Immun gegen alles Gift.",
   },
-  ...plusFamily("periapt-of-wisdom", [2, 4, 6], "Amulett der Weisheit", "Erhöht WIS — beim Kleriker also auch die Zauber."),
+  /*
+    „Amulet" ist Amulett, „Periapt" ist Anhänger. Das Regelwerk hat für beides ein
+    eigenes Wort, und es gibt beide zum selben Thema: „Amulet of Health +2" gibt CON,
+    „Periapt of Health" macht immun gegen Krankheit. Beide „Amulett der Gesundheit"
+    zu nennen wäre am Tisch zum Verwechseln.
+  */
+  ...plusFamily("periapt-of-wisdom", [2, 4, 6], "Anhänger der Weisheit", "Erhöht WIS — beim Kleriker also auch die Zauber."),
   "periapt-of-wound-closure": {
-    name: "Amulett des Wundverschlusses",
+    name: "Anhänger des Wundverschlusses",
     summary: "Wunden bluten nicht weiter, und Heilung wirkt doppelt schnell.",
   },
   "phylactery-of-faithfulness": {
@@ -2937,7 +2943,7 @@ const OTHER: Record<string, ItemGerman> = {
     summary: "Verflucht: es funktioniert nur unter Wasser — an Land ist es ein gewöhnliches Netz.",
   },
   "periapt-of-foul-rotting": {
-    name: "Amulett der übelen Fäulnis",
+    name: "Anhänger der üblen Fäulnis",
     summary: "Verflucht: der Träger verfällt — 1 Punkt CON am Tag, bis er es loswird.",
   },
   "philosopher-s-stone": {
