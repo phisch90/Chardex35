@@ -4,10 +4,12 @@ import {
   groupItems,
   isEpicItem,
   itemSubgroupOf,
+  proficiencyOf,
   scrollInfo,
   type Entity,
   type ItemEntity,
   type ItemGroup,
+  type Proficiency,
 } from "@codex35/core";
 import { S } from "../strings.js";
 import { Chip, GhostButton, SearchInput } from "./bits.js";
@@ -41,11 +43,22 @@ export function ItemPicker({
   compendium,
   onPick,
   startGroup,
+  proficiency,
+  suggestions,
 }: {
   compendium: Map<string, Entity>;
   onPick: (entity: ItemEntity) => void;
   /** Wo die Auswahl aufschlägt — im Assistenten sinnvollerweise die Ausrüstung. */
   startGroup?: ItemGroup;
+  /**
+   * Was der Charakter führen darf. Fehlt es (Gegenstands-Editor), bleibt die
+   * Marke weg — dort gibt es keinen Charakter, auf den sie sich beziehen könnte.
+   *
+   * WARNEN STATT SPERREN: die Marke sagt, was es kostet, sie nimmt nichts weg.
+   */
+  proficiency?: Proficiency | undefined;
+  /** Was zum Aufbau passt (Talentwahl, Volk) — itemId → Grund. */
+  suggestions?: Map<string, string> | undefined;
 }) {
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<ItemGroup | null>(startGroup ?? null);
@@ -107,7 +120,13 @@ export function ItemPicker({
               </div>
               <ul className="divide-y divide-slate-800">
                 {shown.slice(0, HITS_PER_GROUP).map((entity) => (
-                  <ItemRow key={entity.id} entity={entity} onPick={onPick} />
+                  <ItemRow
+                    key={entity.id}
+                    entity={entity}
+                    onPick={onPick}
+                    proficiency={proficiency}
+                    suggestion={suggestions?.get(entity.id)}
+                  />
                 ))}
               </ul>
               {shown.length > HITS_PER_GROUP && (
@@ -206,6 +225,8 @@ export function ItemPicker({
             entity={entity}
             onPick={onPick}
             scroll={group === "scroll" ? scrollInfo(entity, compendium) : undefined}
+            proficiency={proficiency}
+            suggestion={suggestions?.get(entity.id)}
           />
         ))}
         {list.length === 0 && <li className="py-2 text-sm text-slate-500">{S.compendium.empty}</li>}
@@ -238,10 +259,14 @@ function ItemRow({
   entity,
   onPick,
   scroll,
+  proficiency,
+  suggestion,
 }: {
   entity: ItemEntity;
   onPick: (entity: ItemEntity) => void;
   scroll?: { grade: number; tradition: "arcane" | "divine" } | undefined;
+  proficiency?: Proficiency | undefined;
+  suggestion?: string | undefined;
 }) {
   /*
     Die Erklärung ist EINGEKLAPPT. Ausgeklappt wären es bei 78 Waffen 78 Absätze
@@ -250,6 +275,13 @@ function ItemRow({
   */
   const [open, setOpen] = useState(false);
   const summary = itemSummary(entity);
+  /*
+    Die Übungsmarke. Sie steht NUR an Waffen, Rüstung und Schilden — an einem
+    Rucksack wäre „ohne Übung" Unsinn, und nach drei solchen Zeilen sieht man die
+    Marke nirgends mehr. `notApplicable` deckt genau das ab, dazu Munition und den
+    waffenlosen Schlag.
+  */
+  const verdict = proficiency === undefined ? undefined : proficiencyOf(entity, proficiency);
   const scrollText =
     scroll === undefined
       ? undefined
@@ -264,6 +296,25 @@ function ItemRow({
           <div className="truncate text-sm">
             <ItemName entity={entity} />
           </div>
+          {/*
+            Grün heißt „passt zu dir", bernstein „geht, kostet aber". Beides steht
+            in derselben Zeile wie der Name, weil man hier VERGLEICHT — eine
+            Erklärung eine Ebene tiefer würde beim Vergleichen nicht gelesen.
+          */}
+          {(suggestion !== undefined || verdict?.kind === "untrained") && (
+            <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+              {suggestion !== undefined && (
+                <span className="rounded bg-emerald-950/60 px-1 py-0.5 text-emerald-300">
+                  {S.items.fits(suggestion)}
+                </span>
+              )}
+              {verdict?.kind === "untrained" && (
+                <span className="rounded bg-amber-950/60 px-1 py-0.5 text-amber-300">
+                  {S.items.untrained[verdict.reason]}
+                </span>
+              )}
+            </div>
+          )}
           {(scrollText !== undefined || summary !== "") && (
             <div className="truncate text-[11px] text-slate-500">
               {[scrollText, summary].filter((p) => p !== undefined && p !== "").join(" · ")}

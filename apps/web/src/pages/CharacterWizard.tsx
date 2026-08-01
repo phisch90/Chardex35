@@ -12,7 +12,10 @@ import {
   deriveSheet,
   displayName,
   maxRanks,
+  proficiencyFor,
   resolveCompendium,
+  starterKit,
+  weaponSuggestions,
   skillPointCost,
   suggestTrackers,
   type Ability,
@@ -44,6 +47,7 @@ import { ItemPicker } from "../ui/ItemPicker.js";
 import { FeatPicker } from "../ui/FeatPicker.js";
 import { AdviceCard } from "../ui/AdviceCard.js";
 import { SubtypePicker } from "../ui/SubtypePicker.js";
+import { DomainPicker } from "../ui/DomainPicker.js";
 import { SpellPicker } from "../ui/SpellPicker.js";
 import { SkillAdviceLine, SkillMark, suggestionWhy } from "../ui/SkillAdvice.js";
 import { CampaignPicker, type CampaignValue } from "../ui/CampaignPicker.js";
@@ -65,6 +69,14 @@ interface Draft {
   inventory: { id: string; itemId: string; qty: number; slot: EquipSlot }[];
   /** Gewählte Zauber je Klasse — nur für Klassen, die sich festlegen MÜSSEN. */
   known: string[];
+  /**
+   * Gewählte Domänen (Kennungen der Zauberlisten).
+   *
+   * Die WAHL der Domäne ist eine Eingabe und steht am Charakter; der PLATZ je
+   * Zaubergrad ist eine Folge und wird gerechnet. Deshalb steht hier nur die
+   * Kennung — nichts von den neun Zaubern, die daran hängen.
+   */
+  domains: string[];
   /**
    * Welche Zähler-Vorschläge NICHT mitkommen sollen (Schlüssel des Vorschlags).
    *
@@ -89,6 +101,7 @@ const INITIAL: Draft = {
   featIds: [],
   inventory: [],
   known: [],
+  domains: [],
   trackersOff: [],
   ownTrackers: [],
 };
@@ -125,6 +138,16 @@ function draftToCharacter(
       draft.classId !== null && draft.known.length > 0
         ? { [draft.classId]: { known: draft.known, prepared: [], usedSlots: [] } }
         : {},
+    /*
+      Domänen gehören NEBEN `spellState`, nicht hinein: sie sind Aufbau, nicht
+      Spielzustand. Beim Gruppen-Regal gehört der Spielzustand dem Spieler, der
+      Aufbau dem Spielleiter — eine Domäne im Spielzustand könnte der SL nicht
+      setzen. (Dieselbe Trennung wie am Bogen, `character.domains`.)
+    */
+    domains:
+      draft.classId === null
+        ? []
+        : draft.domains.map((spellListId) => ({ classId: draft.classId!, spellListId })),
     trackers,
   });
 }
@@ -180,6 +203,7 @@ const STEP_ORDER = [
   "abilities",
   "skills",
   "feats",
+  "domains",
   "spells",
   "gear",
   "trackers",
@@ -326,7 +350,16 @@ export function CharacterWizardPage() {
   */
   const spellBlock = sheet?.spellcasting[0];
   const needsSpells = mustPickSpells(spellBlock);
-  const steps: StepKey[] = STEP_ORDER.filter((key) => key !== "spells" || needsSpells);
+  /*
+    Der Domänenschritt erscheint nur, wo die Klasse Domänen HAT — beim Kleriker
+    zwei, sonst keine. Dieselbe Regel wie beim Zauberschritt, und aus demselben
+    Grund über SCHLÜSSEL statt Zahlen: ein weggelassener Schritt darf die
+    Nummerierung der folgenden nicht verrutschen lassen.
+  */
+  const domainPick = spellBlock?.domainPick ?? 0;
+  const steps: StepKey[] = STEP_ORDER.filter(
+    (key) => (key !== "spells" || needsSpells) && (key !== "domains" || domainPick > 0),
+  );
   const stepIndex = steps.indexOf(step);
   const goto = (delta: number) => {
     const next = steps[stepIndex + delta];
@@ -576,6 +609,37 @@ export function CharacterWizardPage() {
         Nur für Klassen, die sich festlegen MÜSSEN (seine Entscheidung: „nur wer wählen
         muss"). Der Auswähler ist derselbe wie im Stufenaufstieg.
       */}
+      {/*
+        Die Domänen. Eigener Schritt, seine Entscheidung — und er steht VOR den
+        Zaubern, weil die Domäne bestimmt, welche Zauber überhaupt dazukommen.
+
+        Am Kleriker fehlten sie bisher beim Anlegen ganz: der frische Bogen kam mit
+        „0 von 2 Domänen gewählt" auf die Welt und man musste es im Zauber-Reiter
+        nachtragen.
+      */}
+      {step === "domains" && spellBlock !== undefined && domainPick > 0 && (
+        <Card className="space-y-2">
+          <SectionTitle>{S.spells.domainStepTitle(spellBlock.className)}</SectionTitle>
+          <p className="text-xs leading-relaxed text-slate-400">{S.spells.domainStepHint}</p>
+          <DomainPicker
+            compendium={compendium}
+            picked={draft.domains}
+            pick={domainPick}
+            onAdd={(id) =>
+              setDraft({
+                ...draft,
+                // Doppelte abweisen: zwei Mal War brächte zwei Mal dieselben neun
+                // Zauber und einen Platz, den es nicht gibt.
+                domains: draft.domains.includes(id) ? draft.domains : [...draft.domains, id],
+              })
+            }
+            onRemove={(id) =>
+              setDraft({ ...draft, domains: draft.domains.filter((x) => x !== id) })
+            }
+          />
+        </Card>
+      )}
+
       {step === "spells" && spellBlock !== undefined && (
         <Card className="space-y-2">
           <SectionTitle>
@@ -1103,8 +1167,81 @@ function GearStep(props: { draft: Draft; setDraft: (d: Draft) => void; entities:
   const { draft, setDraft } = props;
   const compendium = useMemo(() => resolveCompendium(props.entities), [props.entities]);
 
+  /*
+    Was er FÜHREN darf, und was zu seinem Aufbau passt — beides eine FOLGE aus
+    Klasse, Volk und Talenten, nichts davon gespeichert.
+  */
+  const proficiency = useMemo(
+    () => proficiencyFor(draft.classId === null ? [] : [draft.classId], draft.raceId ?? undefined),
+    [draft.classId, draft.raceId],
+  );
+  const suggestions = useMemo(() => {
+    const hits = weaponSuggestions(draft.featIds, draft.raceId ?? undefined, compendium);
+    return new Map(hits.map((h) => [h.itemId, h.why]));
+  }, [draft.featIds, draft.raceId, compendium]);
+
+  const klass = draft.classId === null ? undefined : compendium.get(draft.classId);
+  const kit = starterKit(draft.classId);
+  const inInventory = new Set(draft.inventory.map((row) => row.itemId));
+  /*
+    Nur was noch NICHT im Gepäck liegt. Ein Knopf, der den Rucksack zum zweiten Mal
+    einpackt, ist schlimmer als kein Knopf — und „Übernehmen" soll man auch nach dem
+    ersten Tap noch drücken können, ohne Schaden anzurichten.
+  */
+  const missing = kit.filter((entry) => !inInventory.has(entry.itemId));
+  const takeKit = () =>
+    setDraft({
+      ...draft,
+      inventory: [
+        ...draft.inventory,
+        ...missing.map((entry) => ({
+          id: crypto.randomUUID(),
+          itemId: entry.itemId,
+          qty: entry.qty,
+          slot: "none" as EquipSlot,
+        })),
+      ],
+    });
+
   return (
     <Card className="space-y-2">
+      {/*
+        Der Vorschlag steht OBEN und ist ein Angebot, kein Zwang: seine Antwort
+        war „alle drei" — Übung markieren, Aufbau vorschlagen UND ein Paket zum
+        Übernehmen. Jede Zeile lässt sich danach einzeln wieder wegnehmen.
+      */}
+      {kit.length > 0 && klass !== undefined && (
+        <div className="rounded-xl border border-emerald-800/60 bg-emerald-950/20 px-2.5 py-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <span className="text-xs font-semibold text-emerald-200">
+              {S.items.kitTitle(displayName(klass))}
+            </span>
+            {missing.length > 0 ? (
+              <GhostButton onClick={takeKit}>{S.items.kitTake}</GhostButton>
+            ) : (
+              <span className="text-[11px] text-emerald-400/80">{S.items.kitAlready}</span>
+            )}
+          </div>
+          <p className="mt-1 text-[11px] leading-snug text-slate-400">{S.items.kitHint}</p>
+          <ul className="mt-1 flex flex-wrap gap-1">
+            {kit.map((entry) => {
+              const entity = compendium.get(entry.itemId);
+              const have = inInventory.has(entry.itemId);
+              return (
+                <li
+                  key={entry.itemId}
+                  className={`rounded px-1.5 py-0.5 text-[11px] ${
+                    have ? "bg-emerald-900/50 text-emerald-200" : "bg-slate-800/70 text-slate-400"
+                  }`}
+                >
+                  {entity === undefined ? entry.itemId : displayName(entity)}
+                  {entry.qty > 1 ? ` ×${entry.qty}` : ""}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
       {draft.inventory.length > 0 && (
         <ul className="divide-y divide-slate-800">
           {draft.inventory.map((row) => {
@@ -1165,6 +1302,8 @@ function GearStep(props: { draft: Draft; setDraft: (d: Draft) => void; entities:
       )}
       <ItemPicker
         compendium={compendium}
+        proficiency={proficiency}
+        suggestions={suggestions}
         onPick={(item) =>
           setDraft({
             ...draft,
