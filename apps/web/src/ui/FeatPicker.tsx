@@ -1,9 +1,12 @@
 import { useMemo, useState } from "react";
 import {
   displayName,
+  featBonusKinds,
   featEligibility,
+  FEAT_BONUS_KINDS,
   type DerivedSheet,
   type Entity,
+  type FeatBonusKind,
   type FeatEligibility,
 } from "@codex35/core";
 import { S } from "../strings.js";
@@ -73,6 +76,14 @@ export function FeatPicker(props: {
     sieht, was später kommt. Wer wählen WILL, schaltet ihn weg.
   */
   const [onlyEligible, setOnlyEligible] = useState(false);
+  /*
+    Der Filter nach WIRKUNG. Eingeklappt, weil vierzehn Marken auf dem Handy drei
+    Zeilen füllen — aber ein aktiver Filter steht immer AM Knopf, auch eingeklappt.
+    Ein Filter, den man nicht sieht, ist der Grund, warum eine leere Liste wie ein
+    Fehler aussieht.
+  */
+  const [bonus, setBonus] = useState<FeatBonusKind | null>(null);
+  const [bonusOpen, setBonusOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [askId, setAskId] = useState<string | null>(null);
 
@@ -98,7 +109,8 @@ export function FeatPicker(props: {
 
   const chosenSet = new Set(props.chosen);
 
-  const rows = useMemo(() => {
+  /** Alles außer dem Wirkungs-Filter — daraus werden auch dessen Mengen gezählt. */
+  const matching = useMemo(() => {
     const q = query.trim().toLowerCase();
     return all
       .filter((feat) => showEpic || !isEpic(feat))
@@ -114,15 +126,36 @@ export function FeatPicker(props: {
           german.toLowerCase().includes(q) ||
           summary.toLowerCase().includes(q)
         );
-      })
-      .map((feat) => ({
-        feat,
-        eligibility:
-          props.sheet === undefined
-            ? ({ lines: [], eligible: true, missing: [], unverifiable: [] } as FeatEligibility)
-            : featEligibility(feat, props.sheet, props.compendium),
-      }));
-  }, [all, query, type, showEpic, props.sheet, props.compendium]);
+      });
+  }, [all, query, type, showEpic]);
+
+  /*
+    Die Menge STEHT an jeder Marke, und eine leere ist gedämpft statt weg. Ein Knopf,
+    der verschwindet, sobald man die Art umstellt, macht die Reihe unruhig; ein Knopf
+    mit „0" sagt dagegen genau das Richtige: dazu gibt es hier nichts.
+  */
+  const counts = useMemo(() => {
+    const map = new Map<FeatBonusKind, number>();
+    for (const kind of FEAT_BONUS_KINDS) map.set(kind, 0);
+    for (const feat of matching) {
+      for (const kind of featBonusKinds(feat)) map.set(kind, (map.get(kind) ?? 0) + 1);
+    }
+    return map;
+  }, [matching]);
+
+  const rows = useMemo(
+    () =>
+      matching
+        .filter((feat) => bonus === null || featBonusKinds(feat).includes(bonus))
+        .map((feat) => ({
+          feat,
+          eligibility:
+            props.sheet === undefined
+              ? ({ lines: [], eligible: true, missing: [], unverifiable: [] } as FeatEligibility)
+              : featEligibility(feat, props.sheet, props.compendium),
+        })),
+    [matching, bonus, props.sheet, props.compendium],
+  );
 
   const eligible = rows.filter((r) => r.eligibility.eligible);
   const blocked = onlyEligible ? [] : rows.filter((r) => !r.eligibility.eligible);
@@ -194,6 +227,7 @@ export function FeatPicker(props: {
         {open && (
           <div className="mt-1 border-l-2 border-slate-700 pl-2">
             <FeatText entity={feat} />
+            <Affects feat={feat} />
             {eligibility.lines.length > 0 && (
               <ul className="mt-1.5 space-y-0.5">
                 {eligibility.lines.map((line, i) => (
@@ -241,7 +275,44 @@ export function FeatPicker(props: {
         <Chip active={showEpic} onClick={() => setShowEpic(!showEpic)}>
           {S.feats.showEpic}
         </Chip>
+        {/*
+          Der Wirkungs-Filter. Am Knopf steht, was gerade gilt — auch wenn die Reihe
+          darunter zu ist.
+        */}
+        <Chip
+          active={bonus !== null || bonusOpen}
+          onClick={() => setBonusOpen(!bonusOpen)}
+          title={S.feats.bonusHint}
+        >
+          {bonus === null
+            ? `${S.feats.bonusFilter} ${bonusOpen ? "▴" : "▾"}`
+            : S.feats.bonusActive(S.feats.bonusKinds[bonus] ?? bonus)}
+        </Chip>
       </div>
+
+      {bonusOpen && (
+        <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-2">
+          <div className="flex flex-wrap gap-1.5">
+            <Chip active={bonus === null} onClick={() => setBonus(null)}>
+              {S.feats.allTypes}
+            </Chip>
+            {FEAT_BONUS_KINDS.map((kind) => {
+              const count = counts.get(kind) ?? 0;
+              return (
+                <Chip
+                  key={kind}
+                  active={bonus === kind}
+                  {...(count === 0 ? { dimmed: true, title: S.feats.bonusEmpty } : {})}
+                  onClick={() => setBonus(bonus === kind ? null : kind)}
+                >
+                  {S.feats.bonusKinds[kind] ?? kind} {count}
+                </Chip>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-[10px] leading-snug text-slate-500">{S.feats.bonusHint}</p>
+        </div>
+      )}
       {showEpic && <p className="text-[10px] text-slate-500">{S.feats.epicHint}</p>}
       {props.sheet === undefined && (
         <p className="text-[11px] text-amber-400/80">{S.feats.noSheetYet}</p>
@@ -282,6 +353,24 @@ function OneLiner({ feat }: { feat: Entity }) {
     <p className={`mt-0.5 text-xs leading-snug ${german ? "text-slate-300" : "text-slate-400"}`}>
       {text}
       {!german && <span className="ml-1 text-[10px] text-slate-600">({S.feats.onlyEnglish})</span>}
+    </p>
+  );
+}
+
+/**
+ * Unter welchen Wirkungs-Filtern dieses Talent auftaucht.
+ *
+ * Steht nur im aufgeklappten Teil, nicht als Marke an jeder Zeile — dort hängen schon
+ * die Boni und die fehlenden Voraussetzungen. Aber irgendwo muss es stehen: die
+ * Zuordnung ist eine Handtabelle, und eine Handtabelle, die man nicht ansehen kann,
+ * ist eine Meinung.
+ */
+function Affects({ feat }: { feat: Entity }) {
+  const kinds = featBonusKinds(feat);
+  if (kinds.length === 0) return null;
+  return (
+    <p className="mt-1 text-[10px] leading-snug text-slate-500">
+      {S.feats.bonusAffects}: {kinds.map((k) => S.feats.bonusKinds[k] ?? k).join(" · ")}
     </p>
   );
 }

@@ -214,6 +214,16 @@ die Gepäckzeile: ihr ERSTER Knopf ist die Anlege-Marke, nicht der Name.
   bei 390×844); kommt eine Kampagnen-Überschrift dazu, rutscht die Stufe von allein.
   Der Kampagnenname steht in der Abschnitts-Überschrift, nicht zusätzlich auf jeder
   Karte — die trägt die Farbe.
+- **Talentfilter: Handtabelle, nicht die eingetragenen Effekte.** Gefragt und
+  entschieden: „Handtabelle: was das Talent verbessert." Der Grund war ein Befund —
+  von 327 Talenten tragen nur **27** einen maschinenlesbaren `effect`; ein Filter
+  darauf hätte 300 Talente versteckt. Also 13 Kategorien nach den Werten, die am Bogen
+  stehen (Angriff, Schaden, RK, Rettung, Fertigkeiten, Zauber, TP, Initiative,
+  Bewegung, Handlungen, Übung, Herstellen, Besonderes), handverlesen für alle **175
+  nicht-epischen** Talente in `core/compendium/featBonus.ts`. Episch wird GERECHNET
+  („Epic Toughness" ist Toughness), nicht zweitabelliert — zwei Tabellen wären zwei
+  Wahrheiten. Die Zuordnung steht beim Aufklappen als „Wirkt auf: RK" dran, weil eine
+  Handtabelle, die man nicht ansehen kann, eine Meinung ist.
 
 ## Noch offen
 
@@ -241,6 +251,12 @@ die Gepäckzeile: ihr ERSTER Knopf ist die Anlege-Marke, nicht der Name.
   Artefakte; der Test in `core/compendium/itemGerman.test.ts` hält genau das fest, damit
   kein gewöhnlicher Gegenstand still hineinrutscht. Wer eine Erklärung nachträgt, senkt
   die Schranke im Test mit.
+- **104 epische Talente tragen noch keine Wirkung.** Alle 175 nicht-epischen haben eine
+  — das ist alles, was bis Stufe 20 vorkommt —, und wo ein episches ein Vorbild hat, erbt
+  es dessen Wirkung über `EPIC_ALIAS`. Die übrigen fallen aus dem Wirkungs-Filter, sind
+  aber ohne ihn weiter da. Der Test in `core/compendium/featBonus.test.ts` hält die
+  Schranke bei 104 und verlangt, dass jedes Fehlende episch IST; wer eine nachträgt,
+  senkt sie mit.
 - **Zauber, Talente, Völker und Klassen haben noch keine deutschen NAMEN.** Diese Runde
   hat nur die Ausrüstung übersetzt. Bei Zaubern ist es Absicht (Zaubernamen sind
   Regelbegriffe), bei Völkern und Klassen ist es offen — „Halb-Ork" statt „Half-Orc"

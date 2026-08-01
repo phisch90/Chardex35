@@ -495,6 +495,42 @@ export const S = {
     onlyEnglish: "nur englisch",
     more: "mehr zeigen",
     less: "weniger zeigen",
+    /*
+      Der Filter nach WIRKUNG — sein Wunsch war „nach Bonus filtern". Die Kategorien
+      sind die Werte, die am Bogen stehen; die Zuordnung ist Handarbeit, weil nur 27
+      der 327 Talente einen eingetragenen Effekt tragen.
+
+      Die Reihe steht eingeklappt, weil vierzehn Marken auf dem Handy drei Zeilen
+      füllen. Ist ein Filter aktiv, steht er AM Knopf — ein Filter, den man nicht
+      sieht, ist der Grund, warum eine Liste unerklärlich leer aussieht.
+    */
+    bonusFilter: "Wirkung",
+    bonusActive: (label: string) => `Wirkung: ${label}`,
+    bonusHint:
+      "Wonach das Talent den Bogen verbessert. Handverlesen für alle 175 Talente bis Stufe 20; epische erben ihr Vorbild.",
+    bonusNone: "keine",
+    bonusEmpty: "Dazu passt hier kein Talent — Art oder Suche ändern.",
+    /*
+      Beim Aufklappen steht dabei, unter welchen Filtern das Talent auftaucht. Die
+      Zuordnung ist Handarbeit, also muss sie nachprüfbar sein — sonst filtert die
+      App nach einer Meinung, die niemand ansehen kann.
+    */
+    bonusAffects: "Wirkt auf",
+    bonusKinds: {
+      attack: "Angriff",
+      damage: "Schaden",
+      ac: "RK",
+      save: "Rettung",
+      skill: "Fertigkeiten",
+      spell: "Zauber",
+      hp: "TP",
+      initiative: "Initiative",
+      speed: "Bewegung",
+      action: "Handlungen",
+      proficiency: "Übung",
+      craft: "Herstellen",
+      special: "Besonderes",
+    } as Record<string, string>,
   },
 
   campaign: {
