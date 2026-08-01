@@ -5,6 +5,7 @@ import { S } from "../../strings.js";
 import { Card, Chip, GhostButton, SectionTitle, StatButton, fmtMod } from "../../ui/bits.js";
 import { useDiceStore } from "../../lib/diceStore.js";
 import { useAppSettings, useCompendium, useHouseRules } from "../../lib/hooks.js";
+import { SubtypePicker } from "../../ui/SubtypePicker.js";
 import { TrackersCard } from "./Trackers.js";
 import { CombatOptionsCard } from "./CombatOptions.js";
 import type { TabProps } from "./index.js";
@@ -351,6 +352,7 @@ export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: T
   const { diceEnabled } = useAppSettings();
   const compendium = useCompendium();
   const [filter, setFilter] = useState<SkillFilter>("all");
+  const [subtypeFor, setSubtypeFor] = useState<string | null>(null);
 
   const visible = sheet.skills.filter((skill) => {
     // Grundzeilen von Teilgebiets-Fertigkeiten bleiben zum Anlegen sichtbar.
@@ -361,15 +363,11 @@ export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: T
   });
 
   /** Teilgebiet anlegen — Vorschläge aus dem SRD, eigene jederzeit möglich. */
-  const addSubtype = (skillId: string) => {
-    const entity = compendium?.get(skillId);
-    const suggestions =
-      entity?.kind === "skill" ? entity.data.subtypeSuggestions.join(", ") : "";
-    const subtype = prompt(
-      suggestions === "" ? S.sheet.subtypePrompt : `${S.sheet.subtypePrompt}\n\n${suggestions}`,
-    );
-    const trimmed = subtype?.trim();
-    if (!trimmed) return;
+  /*
+    Kein `prompt()` mehr — der Auswähler ist derselbe wie im Assistenten und im
+    Stufenaufstieg. Sein Urteil zum Abtippen: „unprofessionell", und er hatte recht.
+  */
+  const addSubtype = (skillId: string, trimmed: string) => {
     save((c) => {
       if (c.skillSubtypes.some((s) => s.skillId === skillId && s.subtype === trimmed)) return;
       c.skillSubtypes.push({ skillId, subtype: trimmed });
@@ -419,7 +417,7 @@ export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: T
                   dass „Craft" erst durch ein Teilgebiet spielbar wird. */}
               {isSubtypeAnchor && (
                 <GhostButton
-                  onClick={() => addSubtype(skill.skillId)}
+                  onClick={() => setSubtypeFor(skill.skillId)}
                   title={S.sheet.addSubtype}
                 >
                   {editMode ? `+ ${S.sheet.subtype}` : "＋"}
@@ -492,6 +490,16 @@ export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: T
         ✧ = {S.sheet.classSkill} · U = untrainiert benutzbar · (n) = Ränge · klassenfremde Ränge
         kosten 2 Punkte je Rang
       </p>
+      {subtypeFor !== null && (
+        <SubtypePicker
+          skill={compendium?.get(subtypeFor)}
+          taken={character.skillSubtypes
+            .filter((entry) => entry.skillId === subtypeFor)
+            .map((entry) => entry.subtype)}
+          onPick={(subtype) => addSubtype(subtypeFor, subtype)}
+          onClose={() => setSubtypeFor(null)}
+        />
+      )}
     </Card>
   );
 }

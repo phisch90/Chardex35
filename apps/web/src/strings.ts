@@ -162,7 +162,13 @@ export const S = {
     skillFilter: { all: "Alle", trained: "Trainiert", class: "Klasse" } as Record<string, string>,
     subtype: "Teilgebiet",
     addSubtype: "Teilgebiet anlegen",
-    subtypePrompt: "Teilgebiet (z.B. arcana, weaponsmithing):",
+    /**
+     * Der Auswähler statt des alten `prompt()`. Sein Urteil dazu: „Find ich ja irgendwie
+     * sehr unprofessionell, dass man da dann das Ganze abtippen soll, was man auswählt."
+     */
+    subtypeFor: (skill: string) => `${skill} — Teilgebiet wählen`,
+    subtypeOwn: "oder ein eigenes",
+    subtypeTaken: "hast du schon",
     conditions: "Zustände",
     features: "Klassenfähigkeiten",
     miscMods: "Sonstige Modifikatoren",
@@ -214,7 +220,22 @@ export const S = {
       Die Reihenfolge hier ist die Wahrheit: `STEP` in `CharacterWizard.tsx` benennt
       dieselben Positionen, damit im Code keine nackten Zahlen stehen.
     */
-    steps: ["Volk", "Klasse", "Attribute", "Fertigkeiten", "Talente", "Ausrüstung", "Fertig"],
+    /**
+     * Nach SCHLÜSSEL, nicht als Liste: der Zauberschritt gibt es nur für Klassen, die
+     * sich festlegen müssen, und dann darf eine Namensliste nicht nach Stelle passen
+     * müssen. Die Nummer davor rechnet die Oberfläche aus den sichtbaren Schritten.
+     */
+    stepName: {
+      race: "Volk",
+      klass: "Klasse",
+      abilities: "Attribute",
+      skills: "Fertigkeiten",
+      feats: "Talente",
+      spells: "Zauber",
+      gear: "Ausrüstung",
+      trackers: "Zähler",
+      done: "Fertig",
+    } as Record<string, string>,
     name: "Name",
     playerName: "Spieler:in",
     hpRoll: "TP-Wurf",
@@ -227,6 +248,19 @@ export const S = {
     /** Warum ein Reiter noch nicht angetippt werden kann. */
     needRaceAndClass: "Erst Volk und Klasse wählen",
     summary: "Der Bogen, wie er wird",
+    /** Zauberschritt — nur für Klassen, die sich festlegen müssen. */
+    spellsFor: (klass: string) => `Zauber für deinen ${klass}`,
+    knownHint: "wähle, was du kennst",
+    spellbookHint: "dein Zauberbuch",
+    /** Zählerschritt. */
+    trackersTitle: "Zähler für den Tisch",
+    trackersHint:
+      "Angehakt kommt mit. Die Obergrenze rechnet die App weiter mit — steigst du auf oder nimmst ein passendes Talent, wächst sie von allein.",
+    trackersNone: "Aus dieser Klasse kennt die App keinen Zähler.",
+    trackersOwn: "Eigener Zähler",
+    trackersOwnName: "Wofür?",
+    trackersOwnMax: "Obergrenze (0 = offen)",
+    trackersAdd: "Zähler anlegen",
     /**
      * Unter dem Eingabefeld eines Attributs. Hieß „final" — englisch in einer deutschen
      * Oberfläche, und seine Frage dazu war berechtigt.
@@ -879,6 +913,9 @@ export const S = {
     level: "Grad",
     dc: "SG",
     noSlotsLeft: "keine Slots mehr",
+    /** Im Zauber-Auswähler: dieser Grad ist voll (Hexenmeister-Grenze je Grad). */
+    levelFull: (level: number) => `Grad ${level} ist voll`,
+    noneFound: "Kein Zauber gefunden.",
     preparedHint:
       "Wirken zählt die Slots des Grads hoch — welcher konkrete Zauber verbraucht ist, merkt ihr euch wie am Tisch üblich.",
     knownLimit: (have: number, max: string) => `${have}/${max} bekannt`,

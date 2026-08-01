@@ -14,6 +14,7 @@ import {
   maxRanks,
   resolveCompendium,
   skillPointCost,
+  suggestTrackers,
   type Ability,
   type AbilityBlock,
   type Advice,
@@ -22,16 +23,28 @@ import {
   type Entity,
   type EquipSlot,
   type SkillLine,
+  type SpellcastingBlock,
 } from "@codex35/core";
 import { S } from "../strings.js";
 import { CharacterRepo } from "../db/repo.js";
 import { useAllEntities, useCompendium, useHouseRules } from "../lib/hooks.js";
-import { Card, Chip, GhostButton, PrimaryButton, SearchInput, fmtMod } from "../ui/bits.js";
+import {
+  Card,
+  Chip,
+  GhostButton,
+  NumberStepper,
+  PrimaryButton,
+  SearchInput,
+  SectionTitle,
+  fmtMod,
+} from "../ui/bits.js";
 import { EquipMark } from "../ui/EquipMark.js";
 import { itemSummary } from "../ui/itemSummary.js";
 import { ItemPicker } from "../ui/ItemPicker.js";
 import { FeatPicker } from "../ui/FeatPicker.js";
 import { AdviceCard } from "../ui/AdviceCard.js";
+import { SubtypePicker } from "../ui/SubtypePicker.js";
+import { SpellPicker } from "../ui/SpellPicker.js";
 import { SkillAdviceLine, SkillMark, suggestionWhy } from "../ui/SkillAdvice.js";
 import { CampaignPicker, type CampaignValue } from "../ui/CampaignPicker.js";
 import { DraftSummary } from "../ui/DraftSummary.js";
@@ -50,6 +63,18 @@ interface Draft {
   skillSubtypes: { skillId: string; subtype: string }[];
   featIds: { featId: string; choice?: string }[];
   inventory: { id: string; itemId: string; qty: number; slot: EquipSlot }[];
+  /** Gewählte Zauber je Klasse — nur für Klassen, die sich festlegen MÜSSEN. */
+  known: string[];
+  /**
+   * Welche Zähler-Vorschläge NICHT mitkommen sollen (Schlüssel des Vorschlags).
+   *
+   * Abgewählte statt gewählte, weil die Vorschläge angehakt SIND (seine
+   * Entscheidung) — und weil die Liste sich ändert, sobald Klasse oder Attribute
+   * sich ändern. Eine Liste der Gewählten wäre nach jedem Klassenwechsel veraltet.
+   */
+  trackersOff: string[];
+  /** Eigene Zähler, schon beim Anlegen. */
+  ownTrackers: { name: string; max: number | null }[];
 }
 
 const INITIAL: Draft = {
@@ -63,10 +88,22 @@ const INITIAL: Draft = {
   skillSubtypes: [],
   featIds: [],
   inventory: [],
+  known: [],
+  trackersOff: [],
+  ownTrackers: [],
 };
 
 /** Entwurf → valider Charakter (Stufe 1, TP max) für Live-Ableitung + Anlage. */
-function draftToCharacter(draft: Draft): Character {
+function draftToCharacter(
+  draft: Draft,
+  /**
+   * Die Zähler. Sie hängen am ABGELEITETEN Bogen (die Vorschläge rechnen mit Stufe und
+   * Attributen), und der entsteht aus genau dieser Funktion — sie können also nicht von
+   * innen kommen. Beim Live-Ableiten während des Assistenten bleiben sie leer; erst beim
+   * Anlegen werden sie mitgegeben.
+   */
+  trackers: ReturnType<typeof trackersFromDraft> = [],
+): Character {
   return characterSchema.parse({
     id: "draft",
     name: draft.name || "Unbenannt",
@@ -79,47 +116,108 @@ function draftToCharacter(draft: Draft): Character {
     skillSubtypes: draft.skillSubtypes,
     feats: draft.featIds,
     inventory: draft.inventory,
+    /*
+      Gewählte Zauber gehören zur Klasse, nicht an den Charakter global: ein
+      Kleriker/Magier hat zwei Zauberblöcke. Im Assistenten gibt es genau eine Klasse,
+      also genau einen Eintrag.
+    */
+    spellState:
+      draft.classId !== null && draft.known.length > 0
+        ? { [draft.classId]: { known: draft.known, prepared: [], usedSlots: [] } }
+        : {},
+    trackers,
   });
 }
 
 /**
- * Die Schritte mit Namen statt Zahlen.
+ * Welche Zähler kommen mit?
+ *
+ * Die Vorschläge sind angehakt (seine Entscheidung), also entstehen sie HIER aus dem
+ * abgeleiteten Bogen und nicht aus einer Liste, die beim Anhaken eingefroren wurde.
+ * Genau daran ist Extra Turning schon einmal gescheitert: ein Zähler mit
+ * abgeschriebenem Maximum veraltet beim nächsten Talent. Deshalb trägt jeder aus einem
+ * Vorschlag entstandene Zähler nur `suggestedFrom` — die Zahl holt sich die Anzeige
+ * jedes Mal frisch (`effectiveTrackerMax`).
+ */
+function trackersFromDraft(draft: Draft, sheet: DerivedSheet | undefined) {
+  const fromSuggestions = (sheet === undefined ? [] : suggestTrackers(sheet))
+    .filter((suggestion) => !draft.trackersOff.includes(suggestion.key))
+    .map((suggestion, i) => ({
+      id: `s${i}-${suggestion.key}`,
+      name: suggestion.name,
+      kind: "counter" as const,
+      value: 0,
+      max: suggestion.max,
+      suggestedFrom: suggestion.key,
+    }));
+  const own = draft.ownTrackers.map((tracker, i) => ({
+    id: `o${i}-${tracker.name}`,
+    name: tracker.name,
+    kind: "counter" as const,
+    value: 0,
+    ...(tracker.max === null ? {} : { max: tracker.max, maxManual: true }),
+  }));
+  return [...fromSuggestions, ...own];
+}
+
+/**
+ * Die Schritte als SCHLÜSSEL, nicht als Zahlen.
  *
  * Die Reihenfolge ist Volk → KLASSE → Attribute, und das ist seine Entscheidung:
  * „weil dann kann man ein bisschen schauen, wenn man würfelt, dass man die Attribute
- * der Rasse und Klasse anpasst." Vorher standen die Attribute vor der Klasse.
+ * der Rasse und Klasse anpasst."
  *
- * Benannt, weil hier vorher `step === 2` stand und niemand ohne Nachzählen wusste,
- * welcher Schritt das ist — beim Tauschen genau die Stelle, an der man sich verrechnet.
+ * Warum Schlüssel und nicht mehr `0…6`: der Zauberschritt gibt es nur für Klassen, die
+ * sich festlegen MÜSSEN (Barde, Hexenmeister, Magier). Ein Kämpfer soll keinen leeren
+ * Schirm durchklicken. Mit Zahlen hieße „Schritt weglassen", dass alle folgenden Indizes
+ * verrutschen — und genau daran ist in diesem Projekt schon einmal etwas kaputtgegangen
+ * (die Liste, die nach dem getippten Wert statt nach der Stelle geschlüsselt war).
+ * Ein Schlüssel bleibt derselbe, egal wer vor ihm fehlt.
  */
-const STEP = {
-  race: 0,
-  klass: 1,
-  abilities: 2,
-  skills: 3,
-  feats: 4,
-  gear: 5,
-  done: 6,
-} as const;
+const STEP_ORDER = [
+  "race",
+  "klass",
+  "abilities",
+  "skills",
+  "feats",
+  "spells",
+  "gear",
+  "trackers",
+  "done",
+] as const;
+type StepKey = (typeof STEP_ORDER)[number];
 
 /**
  * Was ein Schritt ERZWINGT, bevor es weitergehen darf.
  *
- * Diese Liste beantwortet zwei Fragen aus einer Quelle: ob „Weiter" gehen darf, und
- * ob ein Reiter oben antippbar ist. Zwei getrennte Regeln würden auseinanderlaufen —
- * dann führt ein Reiter in einen Schritt, aus dem „Weiter" nicht herauskommt.
+ * Beantwortet zwei Fragen aus EINER Quelle: ob „Weiter" gehen darf, und ob ein Reiter
+ * oben antippbar ist. Zwei getrennte Regeln würden auseinanderlaufen — dann führt ein
+ * Reiter in einen Schritt, aus dem „Weiter" nicht herauskommt.
  */
-const GATES: { step: number; ok: (draft: Draft) => boolean }[] = [
-  { step: STEP.race, ok: (d) => d.raceId !== null },
-  { step: STEP.klass, ok: (d) => d.classId !== null },
+const GATES: { step: StepKey; ok: (draft: Draft) => boolean }[] = [
+  { step: "race", ok: (d) => d.raceId !== null },
+  { step: "klass", ok: (d) => d.classId !== null },
 ];
+
+/**
+ * Muss diese Klasse sich auf Zauber festlegen?
+ *
+ * Seine Entscheidung, gefragt und beantwortet: „nur wer wählen MUSS". Barde und
+ * Hexenmeister kennen nur, was sie gewählt haben; der Magier kann nur vorbereiten, was
+ * in seinem Buch steht. Kleriker und Druide kennen ihre ganze Liste — die wählen nichts
+ * aus, die BEREITEN VOR, und das gehört an den Bogen, nicht ins Anlegen.
+ */
+function mustPickSpells(block: SpellcastingBlock | undefined): boolean {
+  if (block === undefined) return false;
+  return block.model === "spontaneous" || block.usesSpellbook;
+}
 
 export function CharacterWizardPage() {
   const navigate = useNavigate();
   const entities = useAllEntities();
   const compendium = useCompendium();
   const houseRules = useHouseRules();
-  const [step, setStep] = useState<number>(STEP.race);
+  const [step, setStep] = useState<StepKey>("race");
   const [draft, setDraft] = useState<Draft>(INITIAL);
   const [showNpcClasses, setShowNpcClasses] = useState(false);
 
@@ -144,7 +242,7 @@ export function CharacterWizardPage() {
 
   /** Darf „Weiter" (bzw. „Anlegen") aus DIESEM Schritt heraus? */
   const canNext = () => {
-    if (step === STEP.done) return draft.name.trim().length > 0;
+    if (step === "done") return draft.name.trim().length > 0;
     return GATES.filter((g) => g.step === step).every((g) => g.ok(draft));
   };
 
@@ -157,10 +255,14 @@ export function CharacterWizardPage() {
    *
    * Neue Regel: erreichbar, wenn alle Sperren DAVOR erfüllt sind. Wer Volk und Klasse
    * gewählt hat, springt also frei. Zurück geht immer — was man schon gesehen hat,
-   * kann man wieder ansehen.
+   * kann man wieder ansehen. „Davor" heißt in der SICHTBAREN Reihenfolge: fehlt der
+   * Zauberschritt, darf seine Sperre auch nicht plötzlich für die Ausrüstung gelten.
    */
-  const reachable = (i: number) =>
-    i <= step || GATES.filter((g) => g.step < i).every((g) => g.ok(draft));
+  const reachable = (key: StepKey) => {
+    const target = steps.indexOf(key);
+    if (target <= steps.indexOf(step)) return true;
+    return GATES.filter((g) => steps.indexOf(g.step) < target).every((g) => g.ok(draft));
+  };
 
   /**
    * Der Kontostand des Schritts — steht in der haftenden Leiste.
@@ -171,13 +273,13 @@ export function CharacterWizardPage() {
    */
   const budget = (): { text: string; warn: boolean } | null => {
     if (sheet === undefined) return null;
-    if (step === STEP.skills) {
+    if (step === "skills") {
       const left = sheet.skillPoints.available - sheet.skillPoints.spent;
       return left < 0
         ? { text: S.wizard.tooMany(-left), warn: true }
         : { text: `${S.wizard.pointsLeft}: ${left}`, warn: false };
     }
-    if (step === STEP.feats) {
+    if (step === "feats") {
       const left = sheet.featSlots.available - sheet.featSlots.used;
       if (left < 0) return { text: S.wizard.tooMany(-left), warn: true };
       return left === 0
@@ -188,7 +290,7 @@ export function CharacterWizardPage() {
   };
 
   const finish = async () => {
-    const data = draftToCharacter(draft);
+    const data = draftToCharacter(draft, trackersFromDraft(draft, sheet));
     const { id: _drop, ...rest } = data;
     const created = await CharacterRepo.create(rest);
     void navigate({ to: "/charaktere/$charId", params: { charId: created.id } });
@@ -216,6 +318,21 @@ export function CharacterWizardPage() {
     dafür braucht es kein Memo.
   */
   const advice = adviceFor(chosenClass, chosenRace);
+
+  /*
+    Welche Schritte gibt es für DIESE Klasse? Der Zauberschritt fällt weg, wenn die Klasse
+    sich nicht festlegen muss — ein Kämpfer klickt keinen leeren Schirm durch. Zähler gibt
+    es dagegen immer: einen eigenen darf man auch als Kämpfer anlegen.
+  */
+  const spellBlock = sheet?.spellcasting[0];
+  const needsSpells = mustPickSpells(spellBlock);
+  const steps: StepKey[] = STEP_ORDER.filter((key) => key !== "spells" || needsSpells);
+  const stepIndex = steps.indexOf(step);
+  const goto = (delta: number) => {
+    const next = steps[stepIndex + delta];
+    if (next !== undefined) setStep(next);
+  };
+  const isLast = stepIndex === steps.length - 1;
 
   const stepBudget = budget();
 
@@ -249,12 +366,12 @@ export function CharacterWizardPage() {
       )}
       <div className="flex items-center justify-between gap-2">
         <GhostButton
-          onClick={() => (step === STEP.race ? void navigate({ to: "/" }) : setStep(step - 1))}
+          onClick={() => (step === "race" ? void navigate({ to: "/" }) : goto(-1))}
         >
           {S.actions.back}
         </GhostButton>
-        {step < STEP.done ? (
-          <PrimaryButton disabled={!canNext()} onClick={() => setStep(step + 1)}>
+        {!isLast ? (
+          <PrimaryButton disabled={!canNext()} onClick={() => goto(1)}>
             {S.actions.next}
           </PrimaryButton>
         ) : (
@@ -289,25 +406,30 @@ export function CharacterWizardPage() {
           </h1>
           <div className="ml-auto hidden items-center gap-3 md:flex">{navButtons}</div>
         </div>
+        {/*
+          Die Marken kommen aus den SICHTBAREN Schritten, und die Nummer ist die Stelle in
+          dieser Liste — nicht der Index einer festen Tabelle. Fehlt der Zauberschritt,
+          heißt der nächste trotzdem „6.", nicht „7.".
+        */}
         <div className="flex flex-wrap gap-1">
-          {S.wizard.steps.map((label, i) => {
-            const open = reachable(i);
+          {steps.map((key, i) => {
+            const open = reachable(key);
             return (
               <Chip
-                key={label}
-                active={i === step}
-                {...(open ? { onClick: () => setStep(i) } : {})}
+                key={key}
+                active={key === step}
+                {...(open ? { onClick: () => setStep(key) } : {})}
                 {...(open ? {} : { title: S.wizard.needRaceAndClass })}
                 dimmed={!open}
               >
-                {i + 1}. {label}
+                {i + 1}. {S.wizard.stepName[key]}
               </Chip>
             );
           })}
         </div>
       </div>
 
-      {step === STEP.race && (
+      {step === "race" && (
         <PickList
           items={races}
           selectedId={draft.raceId}
@@ -321,11 +443,11 @@ export function CharacterWizardPage() {
         Die Empfehlung steht ÜBER den Feldern, nicht darunter: sie soll gelesen werden,
         bevor getippt wird. Ohne Klasse gibt es keine — dann fehlt die Karte einfach.
       */}
-      {step === STEP.abilities && advice !== undefined && (
+      {step === "abilities" && advice !== undefined && (
         <AdviceCard advice={advice} who={who} />
       )}
 
-      {step === STEP.abilities && (
+      {step === "abilities" && (
         <Card>
           <div className="mb-3 flex flex-wrap gap-2">
             <Chip
@@ -410,7 +532,7 @@ export function CharacterWizardPage() {
         </Card>
       )}
 
-      {step === STEP.klass && (
+      {step === "klass" && (
         <>
           <Chip active={showNpcClasses} onClick={() => setShowNpcClasses(!showNpcClasses)}>
             {S.wizard.showNpcClasses}
@@ -425,7 +547,7 @@ export function CharacterWizardPage() {
         </>
       )}
 
-      {step === STEP.skills && (
+      {step === "skills" && (
         <SkillStep
           draft={draft}
           setDraft={setDraft}
@@ -437,7 +559,7 @@ export function CharacterWizardPage() {
         />
       )}
 
-      {step === STEP.feats && (
+      {step === "feats" && (
         <FeatStep
           draft={draft}
           setDraft={setDraft}
@@ -447,9 +569,45 @@ export function CharacterWizardPage() {
         />
       )}
 
-      {step === STEP.gear && <GearStep draft={draft} setDraft={setDraft} entities={entities} />}
+      {/*
+        Zauber schon beim Anlegen — sein Wunsch: „Beim Barden zum Beispiel hatte ich dir
+        gesagt, dass ich Zauber für Level 1 schon beim Erstellen auswählen will."
 
-      {step === STEP.done && (
+        Nur für Klassen, die sich festlegen MÜSSEN (seine Entscheidung: „nur wer wählen
+        muss"). Der Auswähler ist derselbe wie im Stufenaufstieg.
+      */}
+      {step === "spells" && spellBlock !== undefined && (
+        <Card className="space-y-2">
+          <SectionTitle>
+            {S.wizard.spellsFor(spellBlock.className)}
+            <span className="ml-2 normal-case text-slate-500">
+              {spellBlock.usesSpellbook ? S.wizard.spellbookHint : S.wizard.knownHint}
+            </span>
+          </SectionTitle>
+          <SpellPicker
+            compendium={compendium}
+            block={spellBlock}
+            alreadyKnown={[]}
+            picked={draft.known}
+            onPick={(id) => setDraft({ ...draft, known: [...draft.known, id] })}
+            onDrop={(id) => setDraft({ ...draft, known: draft.known.filter((x) => x !== id) })}
+          />
+        </Card>
+      )}
+
+      {step === "gear" && <GearStep draft={draft} setDraft={setDraft} entities={entities} />}
+
+      {/*
+        Zähler schon beim Anlegen — sein Wunsch: „Ah und die Zähler. Vorschläge bitte
+        automatisch schon beim Erstellen einbauen und da die Möglichkeit für eigene
+        anbieten." Gefragt und entschieden: die Vorschläge sind ANGEHAKT und kommen mit;
+        abhaken kann man sie.
+      */}
+      {step === "trackers" && (
+        <TrackerStep draft={draft} setDraft={setDraft} sheet={sheet} />
+      )}
+
+      {step === "done" && (
         <Card className="space-y-3">
           <label className="block">
             <span className="text-xs uppercase text-slate-400">{S.wizard.name}</span>
@@ -485,7 +643,7 @@ export function CharacterWizardPage() {
         („TP 10 · RK 10 · Initiative +0"), und sein Urteil war: „Find ich nicht so
         schön. Könnte man noch mal so 'n kompletten Bogen machen."
       */}
-      {step === STEP.done && sheet !== undefined && (
+      {step === "done" && sheet !== undefined && (
         <DraftSummary sheet={sheet} compendium={compendium} />
       )}
 
@@ -645,14 +803,14 @@ function SkillStep(props: {
     setDraft({ ...draft, skillRanks });
   };
 
-  const addSubtype = (skillId: string) => {
-    const entity = props.compendium.get(skillId);
-    const suggestions = entity?.kind === "skill" ? entity.data.subtypeSuggestions.join(", ") : "";
-    const value = prompt(
-      suggestions === "" ? S.sheet.subtypePrompt : `${S.sheet.subtypePrompt}\n\n${suggestions}`,
-    );
-    const subtype = value?.trim();
-    if (!subtype) return;
+  /*
+    Hier stand `prompt()`: der Browser-Dialog zählte die zehn möglichen Teilgebiete auf und
+    stellte ein leeres Feld zum ABSCHREIBEN daneben. Sein Urteil: „unprofessionell". Jetzt
+    öffnet ein Auswähler, in dem jedes Teilgebiet ein Knopf ist.
+  */
+  const [subtypeFor, setSubtypeFor] = useState<string | null>(null);
+
+  const addSubtype = (skillId: string, subtype: string) => {
     if (draft.skillSubtypes.some((s) => s.skillId === skillId && s.subtype === subtype)) return;
     setDraft({ ...draft, skillSubtypes: [...draft.skillSubtypes, { skillId, subtype }] });
   };
@@ -689,7 +847,9 @@ function SkillStep(props: {
               </span>
               <span className="flex items-center gap-2">
                 {isSubtypeAnchor && (
-                  <GhostButton onClick={() => addSubtype(skill.skillId)}>+ {S.sheet.subtype}</GhostButton>
+                  <GhostButton onClick={() => setSubtypeFor(skill.skillId)}>
+                    + {S.sheet.subtype}
+                  </GhostButton>
                 )}
                 {!isSubtypeAnchor && (
                   <>
@@ -713,6 +873,152 @@ function SkillStep(props: {
           );
         })}
       </ul>
+      {subtypeFor !== null && (
+        <SubtypePicker
+          skill={props.compendium.get(subtypeFor)}
+          taken={draft.skillSubtypes.filter((s) => s.skillId === subtypeFor).map((s) => s.subtype)}
+          onPick={(subtype) => addSubtype(subtypeFor, subtype)}
+          onClose={() => setSubtypeFor(null)}
+        />
+      )}
+    </Card>
+  );
+}
+
+/**
+ * Zähler schon beim Anlegen.
+ *
+ * Sein Wunsch, wörtlich: „Ah und die Zähler. Vorschläge bitte automatisch schon beim
+ * Erstellen einbauen und da die Möglichkeit für eigene anbieten. Später natürlich auch
+ * noch möglich." Das „später" gab es schon (am Bogen) — hier fehlte es.
+ *
+ * Gefragt und entschieden: die Vorschläge sind ANGEHAKT. Wer sie nicht will, hakt sie ab;
+ * gespeichert wird deshalb die Liste der ABGEWÄHLTEN. Andersherum wäre die Auswahl nach
+ * jedem Klassenwechsel veraltet — die Vorschläge hängen an Klasse, Stufe und Attributen.
+ */
+function TrackerStep(props: {
+  draft: Draft;
+  setDraft: (d: Draft) => void;
+  sheet: DerivedSheet | undefined;
+}) {
+  const { draft, setDraft } = props;
+  const [name, setName] = useState("");
+  const [max, setMax] = useState(0);
+  const suggestions = props.sheet === undefined ? [] : suggestTrackers(props.sheet);
+
+  const toggle = (key: string) => {
+    const off = draft.trackersOff.includes(key)
+      ? draft.trackersOff.filter((k) => k !== key)
+      : [...draft.trackersOff, key];
+    setDraft({ ...draft, trackersOff: off });
+  };
+
+  const addOwn = () => {
+    const trimmed = name.trim();
+    if (trimmed === "") return;
+    setDraft({
+      ...draft,
+      ownTrackers: [...draft.ownTrackers, { name: trimmed, max: max > 0 ? max : null }],
+    });
+    setName("");
+    setMax(0);
+  };
+
+  return (
+    <Card className="space-y-3">
+      <SectionTitle>{S.wizard.trackersTitle}</SectionTitle>
+
+      {suggestions.length === 0 ? (
+        <p className="text-xs text-slate-500">{S.wizard.trackersNone}</p>
+      ) : (
+        <>
+          <ul className="divide-y divide-slate-800">
+            {suggestions.map((suggestion) => {
+              const on = !draft.trackersOff.includes(suggestion.key);
+              return (
+                <li key={suggestion.key} className="flex items-start gap-2 py-2">
+                  {/*
+                    Ein echtes Kästchen, kein Chip: hier geht es um „kommt mit oder nicht",
+                    und das ist eine Mehrfachauswahl. Chips lesen sich wie ein Filter.
+                  */}
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={() => toggle(suggestion.key)}
+                    className="mt-0.5 h-5 w-5 shrink-0 accent-amber-500"
+                    aria-label={suggestion.name}
+                  />
+                  <span className="min-w-0">
+                    <span className={on ? "font-medium" : "text-slate-500"}>{suggestion.name}</span>
+                    <span className="ml-1.5 text-xs text-amber-300 tabular-nums">
+                      {suggestion.max}×
+                    </span>
+                    <span className="block text-xs leading-snug text-slate-500">
+                      {suggestion.note}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="text-[11px] leading-snug text-slate-500">{S.wizard.trackersHint}</p>
+        </>
+      )}
+
+      {draft.ownTrackers.length > 0 && (
+        <ul className="divide-y divide-slate-800">
+          {draft.ownTrackers.map((tracker, i) => (
+            <li key={`${tracker.name}-${i}`} className="flex items-center justify-between gap-2 py-2 text-sm">
+              <span>
+                {tracker.name}
+                <span className="ml-1.5 text-xs text-amber-300 tabular-nums">
+                  {tracker.max === null ? "offen" : `${tracker.max}×`}
+                </span>
+              </span>
+              <GhostButton
+                onClick={() =>
+                  setDraft({
+                    ...draft,
+                    ownTrackers: draft.ownTrackers.filter((_, index) => index !== i),
+                  })
+                }
+              >
+                {S.actions.remove}
+              </GhostButton>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="space-y-2 rounded-lg border border-slate-700/60 p-2">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          {S.wizard.trackersOwn}
+        </div>
+        <label className="block text-xs text-slate-400">
+          {S.wizard.trackersOwnName}
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") addOwn();
+            }}
+            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-base"
+          />
+        </label>
+        <NumberStepper
+          label={S.wizard.trackersOwnMax}
+          value={max}
+          onChange={setMax}
+          min={0}
+          max={99}
+        />
+        <div className="flex justify-end">
+          <PrimaryButton disabled={name.trim() === ""} onClick={addOwn}>
+            {S.wizard.trackersAdd}
+          </PrimaryButton>
+        </div>
+      </div>
     </Card>
   );
 }
