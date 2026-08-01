@@ -1060,8 +1060,33 @@ export const S = {
     noCharacters: "Noch keine Charaktere. Leg deinen ersten an!",
     confirmDelete: (name: string) => `„${name}" wirklich löschen?`,
     issues: "Hinweise",
-    updateAvailable: "Update verfügbar — neu laden?",
     offlineReady: "App ist offline verfügbar.",
+  },
+
+  /*
+    Die neue Fassung holen.
+
+    Sein Satz war „Es kommt kein Update". Vorher stand hier ein Browser-Dialog
+    („Update verfügbar — neu laden?"), der auf dem iPhone nie aufging: gesucht wurde
+    nur beim Laden der Seite, und eine installierte App lädt nie neu. Jetzt eine
+    Leiste in der App — dieselbe Entscheidung wie beim Teilgebiet-Auswähler: wo die
+    App etwas anzubieten hat, gehört ein Knopf hin und kein Browser-Dialog.
+  */
+  update: {
+    /** Der neue Stand liegt schon auf dem Gerät — ein Tap genügt. */
+    ready: "Neue Fassung ist da",
+    /** Auf dem Server liegt etwas anderes, heruntergeladen ist es noch nicht. */
+    onServer: "Es gibt eine neue Fassung",
+    apply: "Jetzt laden",
+    busy: "Lädt…",
+    dismiss: "Meldung schließen",
+    /**
+     * Was ein Tap tut. Wichtig ist der zweite Halbsatz: im Notfall wird der
+     * Zwischenspeicher geleert, und dann ist die App bis zum nächsten Laden nicht
+     * offline benutzbar. Das gehört dazugesagt, bevor er drückt.
+     */
+    hint:
+      "Deine Bögen bleiben unangetastet — sie liegen im Gerät, nicht in der App. Falls nötig wird der Zwischenspeicher geleert; dann braucht die App beim nächsten Start einmal Netz.",
   },
 
   /*

@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { registerSW } from "virtual:pwa-register";
 import "./styles.css";
-import { S } from "./strings.js";
+import { startUpdateWatch } from "./lib/updateStore.js";
 import { Layout } from "./ui/Layout.js";
 import { CharacterListPage } from "./pages/CharacterList.js";
 import { CharacterWizardPage } from "./pages/CharacterWizard.js";
@@ -113,12 +113,20 @@ declare module "@tanstack/react-router" {
   }
 }
 
-// PWA: Update nie stillschweigend mitten in der Session.
-const updateSW = registerSW({
-  onNeedRefresh() {
-    if (confirm(S.misc.updateAvailable)) void updateSW(true);
-  },
-});
+/*
+  PWA: Update nie stillschweigend mitten in der Session — aber es MUSS ankommen.
+
+  Vorher stand hier ein `confirm()`, das auf seinem iPhone nie aufging: `registerSW`
+  prüft nur beim LADEN der Seite auf einen neuen Service Worker, und eine
+  installierte App wird aus dem Hintergrund geholt und nicht neu geladen. Sein Satz
+  dazu war „Es kommt kein Update".
+
+  `startUpdateWatch` hängt deshalb drei Auslöser dran (Vordergrund, wieder online,
+  halbstündlich) und meldet in den Speicher statt in einen Browser-Dialog. Die
+  Leiste dazu steht in `ui/UpdateBar.tsx`, der Weg zum wirklichen Aktualisieren in
+  `lib/swUpdate.ts`.
+*/
+startUpdateWatch(registerSW);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
