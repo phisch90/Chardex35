@@ -149,6 +149,23 @@ export interface FeatureLine {
   active: boolean;
 }
 
+/**
+ * Der Reiter des Bogens, auf dem man etwas gegen die Warnung tun kann.
+ *
+ * Die Namen sind DIE der Oberfläche (`pages/sheet/index.tsx`). Das ist bewusst:
+ * eine Warnung, die ihren Ort nicht kennt, landet in einer Sammelkarte, und wer
+ * sie liest, muss selbst raten, wo er hin soll. Vorher war genau eine Warnung
+ * verortet — die Kampfoptionen —, und zwar per `filter` in der Anzeige.
+ */
+export type IssueTab =
+  | "stats"
+  | "combat"
+  | "skills"
+  | "spells"
+  | "inventory"
+  | "feats"
+  | "notes";
+
 export interface DerivedIssue {
   severity: "error" | "warning";
   code: string;
@@ -156,6 +173,33 @@ export interface DerivedIssue {
   message: string;
   /** Entity-/Skill-ID etc. für Deep-Links. */
   ref?: string | undefined;
+  /** Wo man es beheben kann. Fehlt bei Meldungen über die Daten selbst. */
+  tab?: IssueTab | undefined;
+  /**
+   * Schlüssel für „passt so". Fehlt = nicht abstellbar.
+   *
+   * Er darf KEINE Menge enthalten. Sonst gilt ein „passt so" für „6 Punkte offen"
+   * nicht mehr, sobald es 5 sind — und die Warnung kommt zurück, ohne dass sich
+   * etwas geändert hätte, was ihn interessiert.
+   */
+  muteKey?: string | undefined;
+  /**
+   * Wie viel offen ist. Ein „passt so" merkt sich diese Zahl und gilt nur bis zu
+   * ihr: wer einen Talent-Slot absichtlich aufspart, wird nicht erinnert — wer beim
+   * nächsten Stufenaufstieg einen zweiten liegen lässt, schon.
+   */
+  open?: number | undefined;
+  /** Von diesem Bogen abgestellt. Steht in der Liste, wird aber nicht gezeigt. */
+  muted?: boolean | undefined;
+  /**
+   * Geht es um HEUTE statt um den Aufbau?
+   *
+   * Genau eine Warnung ist so: unbelegte Zauberplätze. Am Bogen gehört sie hin —
+   * „habe ich heute morgen alles vorbereitet?" ist eine echte Frage am Tisch. In
+   * der Rückfrage am Ende des Assistenten wäre sie Unsinn: einen Kleriker der
+   * Stufe 7 anzulegen heißt nicht, vorher 23 Zauber vorzubereiten.
+   */
+  daily?: boolean | undefined;
 }
 
 export interface DerivedSheet {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import type { Character, DerivedSheet, StatValue } from "@codex35/core";
-import { applyHpChange, displayName, readOrderMarker } from "@codex35/core";
+import { applyHpChange, displayName, readOrderMarker, tabsWithIssues } from "@codex35/core";
 import { S } from "../../strings.js";
 import { CharacterRepo } from "../../db/repo.js";
 import { useAppSettings, useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
@@ -14,6 +14,7 @@ import { OrderBanner } from "../../group/OrderBanner.js";
 import { IdentityCard } from "./Identity.js";
 import { ShareCharacterButton } from "../../ui/ShareCharacter.js";
 import { CharacterActionsSheet } from "../../ui/CharacterActions.js";
+import { IssueCard } from "../../ui/IssueCard.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
 import { FeatsTab, InventoryTab, NotesTab } from "./tabs-more.js";
 import { SpellsTab } from "./SpellsTab.js";
@@ -152,6 +153,14 @@ export function CharacterSheetPage() {
   const at = tabs.indexOf(active);
   const before = tabs[at - 1];
   const after = tabs[at + 1];
+
+  /*
+    Welche Reiter einen Punkt tragen. Eine FOLGE aus den Warnungen des Bogens —
+    gerechnet, nie gespeichert, und aus derselben Funktion, aus der auch die Karte
+    ihre Zeilen nimmt. Zwei Zählungen liefen sonst auseinander, und dann steht ein
+    Punkt an einem Reiter, auf dem nichts steht.
+  */
+  const issueTabs = tabsWithIssues(sheet);
 
   // Gelöscht wird nur über das Aktions-Sheet: Gefahrenzone aufklappen,
   // Löschen wählen, Namen abtippen. Ein einzelner Fehlgriff darf keinen Bogen
@@ -298,6 +307,18 @@ export function CharacterSheetPage() {
         {tabs.map((key) => (
           <Chip key={key} active={active === key} onClick={() => goTab(key)}>
             {S.sheet.tabs[key]}
+            {/*
+              Der Punkt. Seine Wahl: „Ein Punkt am betroffenen Reiter" — man sieht,
+              WO etwas offen ist, ohne einen Text zu lesen. Die Zahl steht im
+              Vorlese-Text, damit sie nicht verloren ist.
+            */}
+            {issueTabs.has(key) && (
+              <span
+                aria-label={S.open.tabDot(issueTabs.get(key) ?? 0)}
+                title={S.open.tabDot(issueTabs.get(key) ?? 0)}
+                className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-400 align-middle"
+              />
+            )}
           </Chip>
         ))}
       </div>
@@ -326,6 +347,13 @@ export function CharacterSheetPage() {
           suchen hat. */}
       {editMode && <IdentityCard character={character} save={save} />}
 
+      {/*
+        Die Hinweise des AKTIVEN Reiters — einmal hier statt siebenmal in den
+        Reitern. Der Punkt an der Reiterleiste führt hierher, also steht die Karte
+        oben und nicht unten; und ein achter Reiter kann sie nicht vergessen.
+      */}
+      <IssueCard sheet={sheet} tab={active} save={save} />
+
       <SwipeTabs
         onPrev={before === undefined ? undefined : () => goTab(before)}
         onNext={after === undefined ? undefined : () => goTab(after)}
@@ -348,11 +376,23 @@ export function CharacterSheetPage() {
           <button
             key={key}
             onClick={() => goTab(key)}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[9px] font-medium leading-none ${
+            className={`relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[9px] font-medium leading-none ${
               active === key ? "text-amber-400" : "text-slate-400"
             }`}
+            {...(issueTabs.has(key)
+              ? { "aria-label": `${S.sheet.tabs[key]}: ${S.open.tabDot(issueTabs.get(key) ?? 0)}` }
+              : {})}
           >
             <span className="text-base leading-none">{TAB_ICONS[key]}</span>
+            {/*
+              Am Handy sitzt der Punkt AM SYMBOL und nicht hinter dem Wort: die
+              Kurzform („Ausr.", „Fert.") füllt die Zelle schon aus, und ein Zeichen
+              mehr würde umbrechen. `absolute`, damit die Zeile ihre Höhe behält —
+              sonst rutschte die ganze Leiste, sobald ein Punkt auftaucht.
+            */}
+            {issueTabs.has(key) && (
+              <span className="absolute right-[22%] top-1 h-1.5 w-1.5 rounded-full bg-amber-400" />
+            )}
             {S.sheet.tabsShort[key]}
             {active === key && <span className="mt-0.5 h-0.5 w-6 rounded-full bg-amber-400" />}
           </button>

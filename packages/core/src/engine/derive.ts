@@ -307,7 +307,7 @@ export function deriveSheetValues(
     hasGreaterTwoWeaponFighting: featIdSet.has("srd:feat:greater-two-weapon-fighting"),
   });
   for (const message of combat.warnings) {
-    issues.push({ severity: "warning", code: "combat-option", message });
+    issues.push({ severity: "warning", code: "combat-option", message, tab: "combat" });
   }
 
   // --- RK -------------------------------------------------------------------
@@ -435,6 +435,7 @@ export function deriveSheetValues(
       severity: "warning",
       code: "overloaded",
       message: `Überladen: ${loadLb} lb übersteigt die schwere Last (${capacity.heavyMaxLb} lb).`,
+      tab: "inventory",
     });
   }
 

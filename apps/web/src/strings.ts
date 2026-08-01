@@ -1063,4 +1063,36 @@ export const S = {
     updateAvailable: "Update verfügbar — neu laden?",
     offlineReady: "App ist offline verfügbar.",
   },
+
+  /*
+    „Hast du etwas vergessen?"
+
+    Sein Auftrag: „Wir brauchen eine Warnung wenn man etwas vergessen hat. Wenn man
+    zb ein Talent zu wenig oder noch skill Punkte offen sind."
+
+    Die Sätze der Warnungen selbst stehen NICHT hier, sondern in
+    `core/engine/validate.ts` — dort, wo die Zahl herkommt. Ein zweiter Ort für
+    denselben Satz wären zwei Wahrheiten. Hier steht nur, was die Anzeige drumherum
+    braucht.
+  */
+  open: {
+    /** Die Marke auf der Startseite. */
+    mark: (count: number) => (count === 1 ? "1 offen" : `${count} offen`),
+    markTitle: (lines: string[]) => `Noch offen:\n${lines.join("\n")}`,
+    /** „Passt so" — der Hinweis verschwindet, bis mehr offen ist. */
+    mute: "passt so",
+    muteHint:
+      "Der Hinweis ist damit weg. Er kommt wieder, wenn MEHR offen ist als jetzt — ein aufgesparter Talent-Slot bleibt also still, ein zweiter meldet sich.",
+    mutedCount: (count: number) =>
+      count === 1 ? "1 Hinweis ist abgestellt" : `${count} Hinweise sind abgestellt`,
+    unmute: "wieder zeigen",
+    /** Die Rückfrage am Ende des Assistenten und des Stufenaufstiegs. */
+    confirmTitle: "Da ist noch was offen",
+    confirmHint: "Anlegen geht trotzdem — dein DM kann dir Punkte auch später geben.",
+    confirmHintLevelUp: "Fertig geht trotzdem — du kannst alles auch später nachtragen.",
+    confirmYes: "Trotzdem weiter",
+    confirmBack: "Zurück und nachtragen",
+    /** Steht am Reiter-Punkt als Vorlese-Text. */
+    tabDot: (count: number) => (count === 1 ? "1 Hinweis" : `${count} Hinweise`),
+  },
 };

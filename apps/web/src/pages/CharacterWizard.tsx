@@ -12,6 +12,7 @@ import {
   deriveSheet,
   displayName,
   maxRanks,
+  openBuildWork,
   proficiencyFor,
   resolveCompendium,
   starterKit,
@@ -52,6 +53,7 @@ import { SpellPicker } from "../ui/SpellPicker.js";
 import { SkillAdviceLine, SkillMark, suggestionWhy } from "../ui/SkillAdvice.js";
 import { CampaignPicker, type CampaignValue } from "../ui/CampaignPicker.js";
 import { DraftSummary } from "../ui/DraftSummary.js";
+import { OpenWorkConfirm } from "../ui/OpenWorkConfirm.js";
 import { FeatText } from "../ui/FeatText.js";
 import { ClassInfo, RaceInfo, classDetailLine, raceDetailLine } from "../ui/RaceClassInfo.js";
 
@@ -244,6 +246,8 @@ export function CharacterWizardPage() {
   const [step, setStep] = useState<StepKey>("race");
   const [draft, setDraft] = useState<Draft>(INITIAL);
   const [showNpcClasses, setShowNpcClasses] = useState(false);
+  /* Die Rückfrage am Ende — sie erscheint erst auf Tap, nicht als Dauerband. */
+  const [askOpen, setAskOpen] = useState(false);
 
   const sheet = useMemo(() => {
     if (!compendium || !draft.raceId || !draft.classId) return undefined;
@@ -313,12 +317,13 @@ export function CharacterWizardPage() {
     return null;
   };
 
-  const finish = async () => {
+  const create = async () => {
     const data = draftToCharacter(draft, trackersFromDraft(draft, sheet));
     const { id: _drop, ...rest } = data;
     const created = await CharacterRepo.create(rest);
     void navigate({ to: "/charaktere/$charId", params: { charId: created.id } });
   };
+
 
   const chosenRace = draft.raceId === null ? undefined : compendium.get(draft.raceId);
   const chosenClass = draft.classId === null ? undefined : compendium.get(draft.classId);
@@ -366,6 +371,51 @@ export function CharacterWizardPage() {
     if (next !== undefined) setStep(next);
   };
   const isLast = stepIndex === steps.length - 1;
+
+  /*
+    Was beim Anlegen noch offen ist — Punkte, Talent-Slots, Domänen. Nicht das
+    Tagesgeschäft: Zauber bereitet man morgens vor, nicht beim Anlegen
+    (`openBuildWork`).
+  */
+  const openBuild = sheet === undefined ? [] : openBuildWork(sheet);
+
+  /**
+   * Auf welchen SCHRITT eine offene Sache zeigt.
+   *
+   * Nicht einfach `issue.tab`: die Domänen tragen den Reiter „spells“, weil sie am
+   * Bogen dort stehen — im Assistenten haben sie aber ihren eigenen Schritt. Wer
+   * hier den Reiter nimmt, landet in der Zauberauswahl und sucht dort die Domänen.
+   */
+  const stepOfIssue = (issue: (typeof openBuild)[number]): StepKey | undefined => {
+    if (issue.code.startsWith("domains-")) return "domains";
+    const byTab: Partial<Record<string, StepKey>> = {
+      skills: "skills",
+      feats: "feats",
+      spells: "spells",
+      inventory: "gear",
+      stats: "abilities",
+    };
+    const key = issue.tab === undefined ? undefined : byTab[issue.tab];
+    return key !== undefined && steps.includes(key) ? key : undefined;
+  };
+
+  const finish = () => {
+    if (openBuild.length > 0) {
+      setAskOpen(true);
+      return;
+    }
+    void create();
+  };
+
+  /** „Zurück und nachtragen“ — zur ERSTEN offenen Stelle, in Schritt-Reihenfolge. */
+  const backToOpen = () => {
+    const target = openBuild
+      .map(stepOfIssue)
+      .filter((key): key is StepKey => key !== undefined)
+      .sort((a, b) => steps.indexOf(a) - steps.indexOf(b))[0];
+    setAskOpen(false);
+    if (target !== undefined) setStep(target);
+  };
 
   const stepBudget = budget();
 
@@ -708,7 +758,22 @@ export function CharacterWizardPage() {
         schön. Könnte man noch mal so 'n kompletten Bogen machen."
       */}
       {step === "done" && sheet !== undefined && (
-        <DraftSummary sheet={sheet} compendium={compendium} />
+        <DraftSummary sheet={sheet} compendium={compendium} hideIssues={askOpen} />
+      )}
+
+      {/*
+        Die Rückfrage. Sie steht am ENDE der Seite, direkt über der Knopfleiste — dort
+        landet der Blick, wenn „Anlegen" nicht sofort anlegt. Ein Dialog wäre falsch:
+        er verdeckt die Liste, um deren Inhalt es gerade geht.
+      */}
+      {askOpen && openBuild.length > 0 && (
+        <OpenWorkConfirm
+          open={openBuild}
+          hint={S.open.confirmHint}
+          onConfirm={() => void create()}
+          onBack={backToOpen}
+          onCancel={() => setAskOpen(false)}
+        />
       )}
 
       {/*

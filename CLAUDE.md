@@ -225,6 +225,38 @@ die Gepäckzeile: ihr ERSTER Knopf ist die Anlege-Marke, nicht der Name.
   Wahrheiten. Die Zuordnung steht beim Aufklappen als „Wirkt auf: RK" dran, weil eine
   Handtabelle, die man nicht ansehen kann, eine Meinung ist.
 
+- **Warnung, wenn etwas offen ist.** Sein Auftrag: „Wir brauchen eine Warnung wenn man
+  etwas vergessen hat. Wenn man zb ein Talent zu wenig oder noch skill Punkte offen
+  sind." Gefragt und entschieden: **Punkt am betroffenen Reiter** UND **Marke auf der
+  Startseite** (kein Band oben am Bogen) · gewarnt wird über **Fertigkeitspunkte,
+  Talent-Slots und unbelegte Zauberplätze** · am Ende von Assistent und Stufenaufstieg
+  **warnen und einmal nachfragen**, nicht sperren · und **„passt so" je Bogen und je
+  Warnung**. Die Prüfungen stehen als PAAR bei ihrer jeweiligen anderen Hälfte in
+  `core/engine/validate.ts`; die Anzeige-Regeln in `core/engine/issues.ts`.
+
+## Die zweite Fehlerfamilie: eine Schranke, die nur eine Richtung prüft
+
+`validate.ts` meldete jahrelang, wenn ein Topf ÜBERZOGEN war, und schwieg, wenn etwas
+darin liegen blieb — bei Fertigkeitspunkten, Talent-Slots und vorbereiteten Zaubern
+gleich dreimal. Die Zahlen dafür rechnete die Engine längst (`skillPoints`,
+`featSlots`); es fehlte nur der Satz dazu. Die einzige Ausnahme waren die Domänen, und
+zwar weil sie erst spät dazukamen und deshalb von Anfang an `!==` prüften statt `>`.
+
+Lehre: **wer `>` schreibt, muss `<` mitdenken.** Beide Hälften stehen jetzt
+unmittelbar beieinander, weil sie sich ausschließen müssen („3 zu viel ausgegeben" und
+„3 noch offen" dürfen nie zusammen dastehen) — und der Test prüft genau das.
+
+Dazu zwei kleinere Fallen aus derselben Runde:
+
+- **Ein Abstell-Schlüssel darf keine Menge enthalten.** Hieße „passt so" bei sechs
+  offenen Punkten `skill-points-open:6`, wäre der Schalter bei fünf wieder wirkungslos
+  — scheinbar zufällig vergessen. Der Schlüssel trägt deshalb nur die Art, und die
+  Menge steht daneben (`upTo`): so gilt die Entscheidung für genau das, was er gesehen
+  hat, und wächst der Rest, meldet sich die App wieder. Der Test verbietet jede Ziffer
+  im Schlüssel.
+- **Ein Schalter ohne Rückweg ist Löschen.** Abgestellte Hinweise werden nur MARKIERT,
+  nicht entfernt, und stehen gedämpft unter „1 Hinweis ist abgestellt — wieder zeigen".
+
 ## Noch offen
 
 - **Halber Stärkeschaden in der zweiten Hand** (Dolch 1d4+1 statt 1d4+2) und die

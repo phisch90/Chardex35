@@ -1,6 +1,7 @@
 import {
   ABILITIES,
   displayName,
+  buildIssues,
   type DerivedSheet,
   type Entity,
   type StatValue,
@@ -27,9 +28,19 @@ import { Card, SectionTitle, fmtMod } from "./bits.js";
 export function DraftSummary({
   sheet,
   compendium,
+  hideIssues = false,
 }: {
   sheet: DerivedSheet;
   compendium: ReadonlyMap<string, Entity>;
+  /**
+   * Warnungen weglassen, weil sie gerade woanders stehen.
+   *
+   * Der Fall: die Rückfrage vor dem Anlegen zählt genau dieselben Zeilen auf und
+   * steht direkt unter dieser Karte. Zweimal dasselbe, zwanzig Pixel auseinander —
+   * das sah man erst im gebauten Bogen. Solange die Rückfrage offen ist, gehört die
+   * Liste ihr: dort wird gerade entschieden.
+   */
+  hideIssues?: boolean;
 }) {
   return (
     <Card className="space-y-3">
@@ -145,9 +156,14 @@ export function DraftSummary({
         Zahlen — hier bleiben sie, aber am Ende: erst der Bogen, dann was daran noch
         klemmt.
       */}
-      {sheet.issues.length > 0 && (
+      {/*
+        Nur die sichtbaren — „passt so" gilt auch hier —, und ohne das
+        Tagesgeschäft: ein Bogen, der noch nicht existiert, hat kein „heute", und
+        „5 Zauberplätze nicht belegt" wäre beim Anlegen kein Versäumnis.
+      */}
+      {!hideIssues && buildIssues(sheet).length > 0 && (
         <ul className="list-inside list-disc space-y-0.5 rounded-lg border border-amber-800/60 bg-amber-950/20 p-2 text-xs leading-snug text-amber-300">
-          {sheet.issues.map((issue, i) => (
+          {buildIssues(sheet).map((issue, i) => (
             <li key={i}>{issue.message}</li>
           ))}
         </ul>

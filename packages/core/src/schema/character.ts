@@ -273,6 +273,32 @@ export const characterSchema = z.object({
 
   xp: z.number().int().default(0),
 
+  /**
+   * Abgestellte Hinweise — „passt so".
+   *
+   * Eine EINGABE, keine Folge: dass ein freier Talent-Slot Absicht ist, weiß nur
+   * er. Gespeichert wird deshalb seine Entscheidung, nicht ihr Ergebnis; welche
+   * Warnung dadurch verschwindet, rechnet die Engine bei jedem Aufbau neu.
+   *
+   * `upTo` ist der Kern. Ohne die Zahl wäre ein „passt so" ein Blindschalter: wer
+   * einen Slot aufspart und das einmal sagt, bekäme beim nächsten Stufenaufstieg
+   * auch den zweiten nicht mehr gemeldet. Mit ihr gilt die Entscheidung genau für
+   * die Menge, die er gesehen hat — wächst sie, meldet sich die App wieder.
+   *
+   * Der `key` darf deshalb keine Menge enthalten (siehe `DerivedIssue.muteKey`),
+   * sonst hängt das „passt so" an einer Zahl, die sich bei jeder Änderung
+   * verschiebt.
+   */
+  mutedWarnings: z
+    .array(
+      z.object({
+        key: z.string(),
+        /** Bis zu dieser Menge gilt „passt so". */
+        upTo: z.number().int().default(0),
+      }),
+    )
+    .default([]),
+
   /** Referenzen auf condition-Entities. */
   conditionIds: z.array(z.string()).default([]),
 

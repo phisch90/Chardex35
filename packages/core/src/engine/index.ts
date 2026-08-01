@@ -44,6 +44,7 @@ export * from "./prereqs.js";
 export * from "./advice.js";
 export * from "./classFeatures.js";
 export * from "./domains.js";
+export * from "./issues.js";
 export * from "./types.js";
 export { stackContributions, withoutContributions } from "./stack.js";
 export {

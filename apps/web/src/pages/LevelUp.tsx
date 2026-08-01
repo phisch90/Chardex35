@@ -7,6 +7,8 @@ import {
   deriveSheet,
   displayName,
   maxRanks,
+  buildIssues,
+  openBuildWork,
   skillPointCost,
   parseDice,
   rollDice,
@@ -24,6 +26,7 @@ import {
   useSheet,
 } from "../lib/hooks.js";
 import { Card, Chip, GhostButton, PrimaryButton, SectionTitle, fmtMod } from "../ui/bits.js";
+import { OpenWorkConfirm } from "../ui/OpenWorkConfirm.js";
 import { FeatPicker } from "../ui/FeatPicker.js";
 import { ClassInfo } from "../ui/RaceClassInfo.js";
 import { SkillAdviceLine, SkillMark, suggestionWhy } from "../ui/SkillAdvice.js";
@@ -50,6 +53,8 @@ export function LevelUpPage() {
   const [newSubtypes, setNewSubtypes] = useState<{ skillId: string; subtype: string }[]>([]);
   const [subtypeFor, setSubtypeFor] = useState<string | null>(null);
   const [newFeatIds, setNewFeatIds] = useState<string[]>([]);
+  /* Die Rückfrage am Ende — erst auf Tap, nicht als Dauerband. */
+  const [askOpen, setAskOpen] = useState(false);
   const [newKnown, setNewKnown] = useState<string[]>([]);
   const [featQuery, setFeatQuery] = useState("");
 
@@ -153,10 +158,27 @@ export function LevelUpPage() {
     if (expr) setHpRoll(rollDice(expr, cryptoRng).total);
   };
 
-  const apply = async () => {
+  const save = async () => {
     if (!afterCharacter) return;
     await CharacterRepo.save(afterCharacter);
     void navigate({ to: "/charaktere/$charId", params: { charId } });
+  };
+
+  /*
+    Was nach dem Aufstieg offen bliebe — dieselbe Rückfrage wie im Assistenten, aus
+    derselben Funktion. Der Aufstieg ist der Moment, in dem man etwas vergisst: neue
+    Punkte, ein neues Talent, und dann noch der Trefferpunkt-Wurf.
+
+    Ohne `daily`: die Zauberplätze sind nach dem Aufstieg natürlich leer, und das ist
+    kein Versäumnis (`openBuildWork`).
+  */
+  const openBuild = sheetAfter === undefined ? [] : openBuildWork(sheetAfter);
+  const apply = () => {
+    if (openBuild.length > 0) {
+      setAskOpen(true);
+      return;
+    }
+    void save();
   };
 
   // Fertigkeitszeilen kommen aus der Ableitung — nur so sind Teilgebiete dabei.
@@ -482,9 +504,16 @@ export function LevelUpPage() {
               </li>
             ))}
           </ul>
-          {sheetAfter.issues.length > 0 && (
+          {/*
+            Nur die SICHTBAREN: was am Bogen mit „passt so" abgestellt wurde, darf
+            hier nicht wieder auftauchen — sonst hätte der Schalter am Bogen keine
+            Wirkung, sobald man aufsteigt. Und ohne das Tagesgeschäft: nach einem
+            Aufstieg sind die neuen Zauberplätze natürlich leer, das ist kein
+            Versäumnis (am Bogen steht es weiterhin).
+          */}
+          {buildIssues(sheetAfter).length > 0 && (
             <ul className="mt-2 list-inside list-disc text-xs text-amber-400">
-              {sheetAfter.issues.map((issue, i) => (
+              {buildIssues(sheetAfter).map((issue, i) => (
                 <li key={i}>{issue.message}</li>
               ))}
             </ul>
@@ -492,11 +521,26 @@ export function LevelUpPage() {
         </Card>
       )}
 
+      {/*
+        Dieselbe Rückfrage wie im Assistenten. „Zurück und nachtragen" gibt es hier
+        nicht: der Aufstieg ist EINE Seite — wer nachtragen will, scrollt hoch, und
+        ein Knopf, der nichts anderes tut als das Kärtchen zu schließen, verspricht
+        mehr als er hält.
+      */}
+      {askOpen && openBuild.length > 0 && (
+        <OpenWorkConfirm
+          open={openBuild}
+          hint={S.open.confirmHintLevelUp}
+          onConfirm={() => void save()}
+          onCancel={() => setAskOpen(false)}
+        />
+      )}
+
       <div className="flex justify-between">
         <Link to="/charaktere/$charId" params={{ charId }}>
           <GhostButton>{S.actions.cancel}</GhostButton>
         </Link>
-        <PrimaryButton disabled={!afterCharacter || !classId} onClick={() => void apply()}>
+        <PrimaryButton disabled={!afterCharacter || !classId} onClick={apply}>
           ⬆ {S.levelUp.apply}
         </PrimaryButton>
       </div>
