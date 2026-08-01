@@ -20,4 +20,5 @@ export * from "./group/build.js";
 export * from "./group/envelope.js";
 export * from "./group/workcopy.js";
 export * from "./compendium/items.js";
+export * from "./compendium/itemGerman.js";
 export * from "./compendium/homebrewItem.js";

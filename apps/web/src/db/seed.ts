@@ -1,4 +1,4 @@
-import { entitySchema, type Entity } from "@codex35/core";
+import { entitySchema, withGermanItemNames, type Entity } from "@codex35/core";
 import { db } from "./db.js";
 import { clearEntityCache } from "./hydrateEntities.js";
 
@@ -15,6 +15,17 @@ const packUrls = import.meta.glob("../../../../packs/srd/*.json", {
 }) as Record<string, string>;
 
 const SRD_REV_KEY = "srdRev";
+
+/**
+ * Stand der deutschen Namen, die über die Packs gelegt werden.
+ *
+ * Ohne diese Zahl wäre die neue Übersetzung für ihn UNSICHTBAR: das Kompendium
+ * wird nur dann neu eingerichtet, wenn `srdRev` im Build höher ist als in der
+ * Datenbank — und die Packs selbst haben sich nicht geändert. Sein iPhone hätte
+ * also weiter „Longsword" gezeigt. Wer die deutsche Tabelle ändert, erhöht hier
+ * um eins; die Packs bleiben unangetastet.
+ */
+const GERMAN_REV = 1;
 
 interface Manifest {
   srdRev: number;
@@ -46,8 +57,14 @@ export async function ensureSeeded(onProgress?: (msg: string) => void): Promise<
     return;
   }
   const manifest = await fetchJson<Manifest>(manifestUrl);
+  /*
+    Der gespeicherte Stand ist die Pack-Nummer UND der Stand der deutschen
+    Namen. Früher stand hier die Zahl allein — eine Übersetzung ohne neue Packs
+    wäre damit auf jedem Gerät, das die App schon hat, nie angekommen.
+  */
+  const wanted = `${manifest.srdRev}+de${GERMAN_REV}`;
   const stored = await db.settings.get(SRD_REV_KEY);
-  if (stored && stored.value === manifest.srdRev) return;
+  if (stored && stored.value === wanted) return;
 
   onProgress?.("Lade SRD-Daten…");
   const allEntities: Entity[] = [];
@@ -67,10 +84,18 @@ export async function ensureSeeded(onProgress?: (msg: string) => void): Promise<
   }
 
   onProgress?.("Richte Kompendium ein…");
+  /*
+    Die deutschen Namen kommen HIER dazu, nicht in den Packs: sie sind eine
+    Folge aus dem Eintrag und keine Eingabe (die Fehlerfamilie dieses Projekts).
+    In den Packs stünden sie als Daten und müssten bei jeder Verbesserung neu
+    erzeugt werden — und eine Kennung, die dabei wandert, kostet jeden Bogen
+    seinen Gegenstand.
+  */
+  const withGerman = withGermanItemNames(allEntities);
   await db.transaction("rw", db.entities, db.settings, async () => {
     await db.entities.where("source").equals("srd").delete();
-    await db.entities.bulkPut(allEntities);
-    await db.settings.put({ key: SRD_REV_KEY, value: manifest.srdRev });
+    await db.entities.bulkPut(withGerman);
+    await db.settings.put({ key: SRD_REV_KEY, value: wanted });
   });
   // Die ersetzten Zeilen tragen dieselbe id/rev/updatedAt wie vorher — der
   // Lese-Cache erkennt das nicht von allein und würde weiter die alten Inhalte

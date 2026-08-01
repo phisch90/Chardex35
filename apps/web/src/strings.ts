@@ -618,6 +618,17 @@ export const S = {
     /** Die sechs Sammelrollen, die keinem einzelnen Zauber zuzuordnen sind. */
     scrollUnmapped: "Rollen, deren Zauber ich nicht zuordnen kann",
     scrollMine: "Was ich wirken kann",
+    /*
+      Deutsche Namen und Erklärungen: sein Wort war „Bitte alle
+      Ausrüstungsgegenstände immer auf deutsch im Namen und Erklärung. Englischen
+      og namen klein daneben." Die drei Zeilen hier sind der Rest, der nicht am
+      Gegenstand selbst steht.
+    */
+    onlyEnglish: "nur englisch — deutsche Erklärung fehlt noch",
+    showOriginal: "englischen Regeltext zeigen",
+    hideOriginal: "Regeltext ausblenden",
+    /** Der Knopf, der die Erklärung an einer Gepäckzeile auf- und zuklappt. */
+    explain: "Was ist das?",
     /** Für die Werte-Karte: worauf wirkt was. */
     acArmor: "Rüstungsbonus. Zählt, solange du die Rüstung anhast. Gegen Berührungsangriffe zählt er nicht mit.",
     acShield: "Schildbonus. Zählt, solange du das Schild in der Schildhand hältst — im Rucksack zählt es nicht.",

@@ -1,5 +1,6 @@
 import {
   buildHomebrewItem,
+  displayName,
   homebrewFromTemplate,
   type HomebrewItemInput,
   type HomebrewItemKind,
@@ -260,8 +261,14 @@ export function draftFromEntity(entity: ItemEntity): ItemDraft {
   return {
     ...EMPTY_ITEM_DRAFT,
     kind,
-    name: entity.name,
-    description: entity.description ?? "",
+    /*
+      Der DEUTSCHE Name als Vorschlag, nicht der englische. Wer „Langschwert" als
+      Vorlage nimmt, um daraus „Torbens Klinge" zu machen, soll das Feld nicht
+      erst von „Longsword" leerräumen müssen. Bei einem eigenen Gegenstand ohne
+      deutschen Namen ist es derselbe Text wie vorher.
+    */
+    name: displayName(entity),
+    description: entity.localized?.de?.summary ?? entity.description ?? "",
     weightLb: entity.data.weightLb === undefined ? "" : String(entity.data.weightLb),
     costGp: entity.data.costGp === undefined ? "" : String(entity.data.costGp),
     ...(entity.basedOn === undefined ? {} : { basedOn: entity.basedOn }),

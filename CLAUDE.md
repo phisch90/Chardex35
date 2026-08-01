@@ -58,6 +58,17 @@ Sitzung, nicht per `curl`.
 
 - **Oberfläche deutsch, Regelinhalte englisch** (SRD). Regelkürzel bleiben englisch:
   DEX, nicht GE. Steht so in seinen Büchern, in der Gruppen-Excel und in Fight Club.
+- **Gegenstände: deutscher Name UND deutsche Erklärung, englisches Original klein
+  daneben.** Wörtlich: „Bitte alle Ausrüstungsgegenstände immer auf deutsch im Namen und
+  Erklärung. Englischen og namen klein daneben." Die Grenze zur Regel oben liegt
+  zwischen DING und BEGRIFF: „Longsword" ist ein Ding, also „Langschwert"; „Acid Arrow"
+  auf einer Schriftrolle ist ein Zaubername, bleibt also englisch und bekommt ein
+  deutsches Wort davor („Schriftrolle: Acid Arrow") — am Bogen gruppiert nichts nach Art,
+  dort muss der Name selbst sagen, was das Stück ist. Alles in
+  `core/compendium/itemGerman.ts`, beim Einrichten als `localized.de` übergelegt; die
+  Packs bleiben unverändert. Anzeige über `ui/ItemName.tsx` (`ItemName`, `ItemText`).
+  ACHTUNG: die Reihenfolge ist hier UMGEKEHRT zu den Klassenmerkmalen — dort wollte er
+  „Englisch zuerst", bei der Ausrüstung Deutsch zuerst.
 - **Kein Fachjargon** in Texten für ihn — weder in der App noch im Chat. „Regal"
   statt Gist, „Kennwort" statt Passphrase, „Auftrag" statt Patch.
 - **Nur OGL/SRD-Inhalte im Repo.** Seine Bücher sind sein Eigentum für den privaten
@@ -145,6 +156,26 @@ jede einzelne als Knopf hin (`ui/SubtypePicker.tsx`); das Freitextfeld bleibt da
 die SRD-Listen nicht abschließend sind. Der E2E-Lauf prüft es hart: es darf überhaupt kein
 Browser-Dialog mehr aufgehen (`page.on("dialog", …)` muss leer bleiben).
 
+Achte Falle, aus der Ausrüstungs-Übersetzung: **ein Überzug, der nur beim
+Neu-Einrichten greift, kommt auf seinem Gerät nie an.** Das Kompendium wird genau dann
+neu eingespielt, wenn `manifest.srdRev` im Build höher ist als der Wert in der Datenbank
+(`db/seed.ts`). Die 1866 deutschen Namen werden aber NICHT in die Packs geschrieben,
+sondern beim Einrichten als `localized.de` übergelegt — die Packs sind also unverändert,
+`srdRev` bleibt gleich, und sein iPhone hätte weiter „Longsword" gezeigt. Behoben durch
+einen zweiten Stand im gespeicherten Schlüssel (`${srdRev}+de${GERMAN_REV}`): wer die
+deutsche Tabelle ändert, erhöht `GERMAN_REV` um eins. Regel: **wer etwas beim Seeding
+BERECHNET statt es in die Daten zu schreiben, braucht seine eigene Versionsnummer.**
+
+Neunte Falle, aus demselben Lauf: **die Reiterleiste des Bogens heißt am Handy anders
+als im Code.** Unten steht `S.sheet.tabsShort` („Ausr.", „Fert.", „Notiz") mit einem
+Symbol darüber, also lautet `innerText` „🎒\nAusr." — ab `md` steht oben eine Chip-Reihe
+mit dem vollen „Ausrüstung". Ein `filter({hasText: /^Ausrüstung$/})` traf deshalb am
+Handy nichts, und weil meine Hilfsfunktion still `false` zurückgab, prüfte der Test
+danach den WERTE-Reiter und meldete, das Gepäck sei leer. Zwei Lehren: beide Formen
+prüfen (`nav button` zuerst, dann die Chips) — und **eine Navigationshilfe im Test darf
+nicht still scheitern**, sonst zeigt der Fehler auf die falsche Stelle. Dasselbe gilt für
+die Gepäckzeile: ihr ERSTER Knopf ist die Anlege-Marke, nicht der Name.
+
 ## Beantwortete Entscheidungen (nicht neu fragen)
 
 - **Geräte:** iPhone UND iPad, beide. Deshalb war der Abgleich-Fehler dringend — er
@@ -205,5 +236,14 @@ Browser-Dialog mehr aufgehen (`page.on("dialog", …)` muss leer bleiben).
 - **Ein fehlgeschlagenes Speichern sieht er nicht.** Es steht jetzt in der Konsole,
   aber auf dem Handy schaut da niemand hinein. Eine sichtbare Meldung fehlt.
 - **Behälter** (Inventar/Geldbeutel, Münzgewicht) und Umsortieren per Ziehen.
+- **97 Gegenstände tragen noch keine deutsche ERKLÄRUNG** — Name haben alle 1866. Die 97
+  sind ausnahmslos episch (Stufe 21+, im Blätterer standardmäßig ausgeblendet) oder
+  Artefakte; der Test in `core/compendium/itemGerman.test.ts` hält genau das fest, damit
+  kein gewöhnlicher Gegenstand still hineinrutscht. Wer eine Erklärung nachträgt, senkt
+  die Schranke im Test mit.
+- **Zauber, Talente, Völker und Klassen haben noch keine deutschen NAMEN.** Diese Runde
+  hat nur die Ausrüstung übersetzt. Bei Zaubern ist es Absicht (Zaubernamen sind
+  Regelbegriffe), bei Völkern und Klassen ist es offen — „Halb-Ork" statt „Half-Orc"
+  wäre möglich, verschiebt aber jede Überschrift und braucht sein Wort.
 
 Details: `PRUEFBERICHT.md`.
