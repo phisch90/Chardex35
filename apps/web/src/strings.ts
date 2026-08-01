@@ -239,6 +239,20 @@ export const S = {
   },
 
   /**
+   * Klassenmerkmale im Assistenten. Der englische Name steht vorn (seine Entscheidung —
+   * so heißt es in seinen Büchern und in Fight Club), der deutsche daneben.
+   */
+  classFeatures: {
+    /** Merkmale, die die Klassenbeschreibung ausführt, die Stufentabelle aber nicht kennt. */
+    always: "Gilt immer",
+    byLevel: "Auf welcher Stufe",
+    level: (level: number) => `Stufe ${level}`,
+    showText: "englischen Regeltext zeigen",
+    hideText: "Regeltext ausblenden",
+    noGerman: "nur englisch — deutsche Erklärung fehlt noch",
+  },
+
+  /**
    * Empfehlungen im Assistenten und beim Stufenaufstieg. Sie EMPFEHLEN — der Satz
    * `disclaimer` steht mit Absicht dabei: an seinem Tisch entscheidet der DM, nicht die App.
    */
