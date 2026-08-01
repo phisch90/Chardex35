@@ -2,13 +2,13 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   displayName,
-  domainSpellLists,
   spellsForCaster,
   type Character,
   type SpellEntity,
   type SpellcastingBlock,
 } from "@codex35/core";
 import { S } from "../../strings.js";
+import { DomainPicker } from "../../ui/DomainPicker.js";
 import { useCompendium } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import type { TabProps } from "./index.js";
@@ -55,10 +55,6 @@ function CasterBlock({
   const entries = useMemo(
     () => (compendium ? spellsForCaster(compendium, block) : []),
     [compendium, block],
-  );
-  const allDomains = useMemo(
-    () => (compendium && block.domainPick > 0 ? domainSpellLists(compendium) : []),
-    [compendium, block.domainPick],
   );
   const state = character.spellState[block.classId] ?? emptySpellState();
   const knownSet = new Set(state.known);
@@ -232,23 +228,26 @@ function CasterBlock({
               </span>
             )}
           </div>
-          {editMode && (
-            <select
-              value=""
-              onChange={(e) => {
-                if (e.target.value !== "") addDomain(e.target.value);
-              }}
-              className="mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100"
-            >
-              <option value="">{S.spells.pickDomain}</option>
-              {allDomains.map((domain) => (
-                <option key={domain.id} value={domain.id}>
-                  {domain.name}
-                </option>
-              ))}
-            </select>
+          {/*
+            Vorher stand hier ein `<select>` mit 36 Namen. Ein Name allein sagt
+            nicht, was die Domäne GEWÄHRT — und genau das ist der Grund, aus dem man
+            wählt. Jetzt derselbe Auswähler wie im Assistenten: eine Komponente,
+            eine Wahrheit über dieselbe Regel.
+          */}
+          {editMode && compendium !== undefined && (
+            <div className="mt-1.5">
+              <DomainPicker
+                compendium={compendium}
+                picked={block.domains.map((d) => d.spellListId)}
+                pick={block.domainPick}
+                onAdd={addDomain}
+                onRemove={removeDomain}
+              />
+            </div>
           )}
-          <p className="mt-1 text-[10px] leading-snug text-slate-500">{S.spells.domainsHint}</p>
+          {!editMode && (
+            <p className="mt-1 text-[10px] leading-snug text-slate-500">{S.spells.domainsHint}</p>
+          )}
         </div>
       )}
 

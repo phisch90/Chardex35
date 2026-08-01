@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BONUS_TYPES,
   allowedSlots,
@@ -7,6 +7,8 @@ import {
   isStatPath,
   cycleEquipSlot,
   itemKind,
+  proficiencyFor,
+  weaponSuggestions,
   type BonusType,
   type EquipSlot,
   type ItemEntity,
@@ -58,6 +60,29 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
     hier zu.
   */
   const [explainId, setExplainId] = useState<string | null>(null);
+
+  /*
+    Übung und Aufbau-Vorschläge auch HIER, nicht nur im Assistenten: nachgetragen
+    wird meistens am fertigen Bogen. Beides ist eine FOLGE aus Klassen, Volk und
+    Talenten — gerechnet, nichts davon gespeichert.
+  */
+  const proficiency = useMemo(
+    () =>
+      proficiencyFor(
+        character.levels.map((level) => level.classId),
+        character.raceId === "" ? undefined : character.raceId,
+      ),
+    [character.levels, character.raceId],
+  );
+  const suggestions = useMemo(() => {
+    if (compendium === undefined) return undefined;
+    const hits = weaponSuggestions(
+      character.feats,
+      character.raceId === "" ? undefined : character.raceId,
+      compendium,
+    );
+    return new Map(hits.map((h) => [h.itemId, h.why]));
+  }, [character.feats, character.raceId, compendium]);
 
   const openEditorFor = (entity: ItemEntity) => {
     setEditor({ entity });
@@ -461,6 +486,8 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
         ) : (
           <ItemPicker
             compendium={compendium}
+            proficiency={proficiency}
+            suggestions={suggestions}
             onPick={(item) =>
               save((c) =>
                 void c.inventory.push({

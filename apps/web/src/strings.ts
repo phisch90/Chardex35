@@ -231,6 +231,7 @@ export const S = {
       abilities: "Attribute",
       skills: "Fertigkeiten",
       feats: "Talente",
+      domains: "Domänen",
       spells: "Zauber",
       gear: "Ausrüstung",
       trackers: "Zähler",
@@ -629,6 +630,27 @@ export const S = {
     hideOriginal: "Regeltext ausblenden",
     /** Der Knopf, der die Erklärung an einer Gepäckzeile auf- und zuklappt. */
     explain: "Was ist das?",
+    /*
+      Übung und Aufbau-Vorschlag — die zwei Marken in der Auswahl.
+
+      Aus seiner Sprachnachricht: die Liste zeigt 78 Waffen und sagt nicht, ob sein
+      Kleriker damit umgehen kann. WARNEN STATT SPERREN: wählbar bleibt alles, die
+      Marke sagt nur, was es kostet.
+    */
+    untrained: {
+      weapon: "ohne Übung: −4 Angriff",
+      armor: "ohne Übung: Rüstungsmalus auch auf Angriff",
+      shield: "ohne Übung: Schildmalus auch auf Angriff",
+      material: "erlaubt deine Klasse nicht",
+    } as Record<string, string>,
+    fits: (why: string) => `passt: ${why}`,
+    /** Die Startausrüstung im Assistenten. */
+    kitTitle: (className: string) => `Vorschlag für deinen ${className}`,
+    kitHint:
+      "Waffe, Rüstung und das Werkzeug, ohne das die Klasse nicht arbeitet — dazu Reisegepäck. Alles einzeln abwählbar, und das Geld rechnet die App nicht ab.",
+    kitTake: "Übernehmen",
+    kitTaken: (n: number) => `${n} Stück übernommen`,
+    kitAlready: "Steht schon im Gepäck",
     /** Für die Werte-Karte: worauf wirkt was. */
     acArmor: "Rüstungsbonus. Zählt, solange du die Rüstung anhast. Gegen Berührungsangriffe zählt er nicht mit.",
     acShield: "Schildbonus. Zählt, solange du das Schild in der Schildhand hältst — im Rucksack zählt es nicht.",
@@ -945,12 +967,21 @@ export const S = {
     domainSlot: "Domänenplatz",
     /** Die Marke am Zauber, der nur über die Domäne dazukommt. */
     fromDomain: "Domäne",
-    pickDomain: "Domäne wählen…",
     domainsMissing: (have: number, want: number) =>
       `${have} von ${want} gewählt — im Bearbeiten-Modus nachtragen.`,
     domainsHint:
       "Jede Domäne bringt ihre neun Zauber mit und je Zaubergrad einen zusätzlichen Platz. Der Platz gehört einem Domänenzauber.",
     domainRemove: "Domäne entfernen",
+    /*
+      Die Auswahl selbst. Sie ersetzt das `<select>` mit 36 Namen — dort stand
+      nicht, was eine Domäne GEWÄHRT, und genau das ist der Grund, aus dem man
+      wählt.
+    */
+    domainCount: (have: number, want: number) => `Domänen: ${have} von ${want} gewählt`,
+    domainFull: "Beide Domänen sind gewählt — erst eine entfernen.",
+    domainStepTitle: (className: string) => `Domänen für deinen ${className}`,
+    domainStepHint:
+      "Jede Domäne bringt eine Fähigkeit und ihre neun Zauber mit, dazu je Zaubergrad einen zusätzlichen Platz. Ein Tipp auf den Namen zeigt die Zauber.",
   },
 
   import: {
