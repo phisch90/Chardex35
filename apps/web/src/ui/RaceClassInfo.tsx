@@ -7,6 +7,7 @@ import {
   type Entity,
 } from "@codex35/core";
 import { S } from "../strings.js";
+import { ClassFeatureList, ClassFeatureRows, featuresOfLevel } from "./ClassFeatureList.js";
 import { fmtMod } from "./bits.js";
 
 /**
@@ -211,7 +212,13 @@ export function ClassInfo({
                 außer Trefferpunkten nichts — auf dieser Stufe steht die Tabelle still
               </div>
             )}
-          <DetailList title="" items={gain.features} />
+          {/*
+            Vorher standen hier die nackten Namen aus dem Bestand — „bardic knowledge",
+            „countersong", klein geschrieben und ohne ein Wort dazu. Genau darüber seine
+            Beschwerde. Jetzt dieselben Zeilen wie unten in der Liste, samt deutschem Namen
+            und Erklärung; die Liste unten lässt diese Stufe dafür aus.
+          */}
+          <ClassFeatureRows features={featuresOfLevel(klass, gain.level)} />
         </div>
       )}
 
@@ -244,6 +251,17 @@ export function ClassInfo({
           items={[{ name: "Vertrautheiten (Regeltext)", description: summary.proficiencies }]}
         />
       )}
+      {/*
+        Was die Klasse KANN — der Grund für diese Runde. Sein Satz zum Klassenschritt:
+        „Bardic Music, Bardic Knowledge, Countersong, Fascinate, Inspire Courage — die
+        sagen mir nichts." Die Liste steht bewusst UNTER den Kennzahlen: die Zahlen
+        vergleicht man zwischen Klassen, die Merkmale liest man, wenn man sich festlegt.
+      */}
+      <ClassFeatureList
+        klass={klass}
+        {...(gain !== null ? { skipLevel: gain.level } : {})}
+      />
+
       {summary.requirements.length > 0 && (
         <Fact label="Voraussetzungen">
           {summary.requirements

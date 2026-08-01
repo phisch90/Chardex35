@@ -42,6 +42,7 @@ export * from "./trackers.js";
 export * from "./rest.js";
 export * from "./prereqs.js";
 export * from "./advice.js";
+export * from "./classFeatures.js";
 export * from "./types.js";
 export { stackContributions, withoutContributions } from "./stack.js";
 export {
