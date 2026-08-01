@@ -54,6 +54,12 @@ blockt `github.io`). Der Stand lässt sich am Lauf „Deploy (GitHub Pages)" abl
 Die GitHub-API ist ebenfalls nicht direkt erreichbar — nur über die MCP-Tools der
 Sitzung, nicht per `curl`.
 
+**Und der wichtige Zusatz, gelernt durch „Es kommt kein Update":** ein grüner
+Deploy-Lauf heißt, dass der Stand auf dem SERVER liegt — nicht, dass er auf seinem
+Gerät ist. Monatelang stand in meinen Meldungen „läuft jetzt live", während seine
+Web-App auf dem Homescreen unverändert weiterlief. Wer einen Stand meldet, meldet
+den Server; ob das Gerät ihn hat, sagt die Versionsnummer IN der App.
+
 ## Inhalte
 
 - **Oberfläche deutsch, Regelinhalte englisch** (SRD). Regelkürzel bleiben englisch:
@@ -233,6 +239,34 @@ die Gepäckzeile: ihr ERSTER Knopf ist die Anlege-Marke, nicht der Name.
   **warnen und einmal nachfragen**, nicht sperren · und **„passt so" je Bogen und je
   Warnung**. Die Prüfungen stehen als PAAR bei ihrer jeweiligen anderen Hälfte in
   `core/engine/validate.ts`; die Anzeige-Regeln in `core/engine/issues.ts`.
+
+## Die dritte Fehlerfamilie: etwas WEISS es, und etwas anderes KANN es nicht
+
+Sein Satz: „Es kommt kein Update." Zwei Fehler lagen auf demselben Weg, und jeder
+sah für sich richtig aus:
+
+1. **Der Knopf konnte es nicht.** Die Versionsmarke fragte `version.json` ab (das
+   liegt bewusst außerhalb des Cache — gut gebaut) und meldete richtig „veraltet".
+   Ihr `onClick` war `window.location.reload()`. Der Service Worker registriert aber
+   `new NavigationRoute(createHandlerBoundToURL("index.html"))` — **jede Navigation
+   wird aus dem Precache beantwortet.** Ein Neuladen brachte also garantiert die
+   alte App zurück. Die Marke konnte ewig „veraltet" sagen; der Knopf daneben konnte
+   daran nichts ändern.
+2. **Es suchte niemand.** `registerSW` prüft nur beim LADEN der Seite auf ein neues
+   `sw.js`. Eine installierte Web-App auf dem iPhone wird aus dem Hintergrund geholt
+   und nie neu geladen — die Prüfung lief nie, und das `confirm("Update verfügbar")`
+   ging nie auf.
+
+Lehre, und sie gilt über die PWA hinaus: **eine Anzeige, die etwas weiß, und eine
+Aktion, die es nicht kann, sind zusammen schlimmer als keine Anzeige.** Wer einen
+Zustand meldet, muss den Weg dorthin mitprüfen — im Zweifel im gebauten Bogen, mit
+zwei echten Ständen hintereinander (`e2e-update.mjs` macht genau das).
+
+Konkret für diese App: `window.location.reload()` ist in einer PWA KEIN Weg zu einer
+neuen Fassung. Der Weg steht als Leiter in `lib/swUpdate.ts` — wartenden Worker
+übernehmen, sonst `registration.update()` und noch einmal schauen, und erst zuletzt
+den Zwischenspeicher leeren (das kostet die Offline-Bereitschaft, deshalb zuletzt).
+Gesucht wird bei Rückkehr in den Vordergrund, bei „wieder online" und halbstündlich.
 
 ## Die zweite Fehlerfamilie: eine Schranke, die nur eine Richtung prüft
 

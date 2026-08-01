@@ -6,6 +6,7 @@ import { useAppSettings } from "../lib/hooks.js";
 import { DiceResultSheet } from "./DiceSheet.js";
 import { SyncGate } from "../sync/SyncGate.js";
 import { SyncBadge } from "./SyncBadge.js";
+import { UpdateBar } from "./UpdateBar.js";
 
 const NAV = [
   { to: "/", label: S.nav.characters, icon: "🛡️" },
@@ -91,6 +92,8 @@ export function Layout() {
       {/* Hält den Geräte-Abgleich am Laufen; zeigt selbst nichts an. */}
       <SyncGate />
       <SyncBadge />
+      {/* „Neue Fassung ist da" — einmal für die ganze App, nicht je Seite. */}
+      <UpdateBar />
     </div>
   );
 }
