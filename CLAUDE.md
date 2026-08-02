@@ -366,9 +366,19 @@ Dazu zwei kleinere Fallen aus derselben Runde:
 
 ## Hausregeln seines Tisches, die er noch mit dem DM klärt
 
-Vier neue kamen auf einmal, und bei jeder fehlt genau ein Stück. Sie stehen deshalb
-NICHT gebaut da, sondern als Fragen in `FRAGEN-AN-DEN-DM.md` — dort in seiner Sprache,
-mit Antwortmöglichkeiten zum Ankreuzen, damit er sie vorlegen kann. Wörtlich:
+**Zustand: geparkt.** Die Liste liegt bei **Martin**, seinem Spielleiter. Sein Wort dazu:
+„Alles offene erstmal zur Seite legen bis Martin der DM mir antwortet." Also nicht
+nachfragen, nicht anfangen, und keine dieser Regeln „vorsichtshalber" bauen — eine
+erfundene Antwort ist hier schlimmer als keine. Kommt seine Antwort, wandert sie hierher
+und wird in `FRAGEN-AN-DEN-DM.md` gestrichen.
+
+Was in der Zwischenzeit geht, hängt an KEINER dieser Antworten: die sichtbare Meldung bei
+einem fehlgeschlagenen Speichern, die Werte-Karte „Was deine Rüstung kostet", Behälter und
+Münzgewicht, die Klassenmerkmale am Bogen selbst, die fehlenden deutschen Erklärungen.
+
+Vier neue Hausregeln kamen auf einmal, und bei jeder fehlt genau ein Stück. Sie stehen
+deshalb NICHT gebaut da, sondern als Fragen in `FRAGEN-AN-DEN-DM.md` — dort in seiner
+Sprache, mit Antwortmöglichkeiten zum Ankreuzen, damit er sie vorlegen kann. Wörtlich:
 
 1. **„Actionpoints hat jeder 6. wann und wie man neue bekommt muss ich nochmal abklären
    beim DM."** Die Menge ist damit klar, der Nachschub nicht. Ein Zähler-VORSCHLAG
