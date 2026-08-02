@@ -202,6 +202,15 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
                         maxManual: false,
                         note: suggestion.note,
                         suggestedFrom: suggestion.key,
+                        /*
+                          Die Bedingung dagegen SCHON — sie ist am Zähler eine
+                          Eingabe, und ohne sie fiele er auf „kurze Pause" zurück.
+                          Bei den Aktionspunkten wäre das die falsche Antwort auf
+                          Martins Regel („Reset bei Stufenaufstieg").
+                        */
+                        ...(suggestion.refill === undefined
+                          ? {}
+                          : { refill: [...suggestion.refill] }),
                       }),
                     )
                   }

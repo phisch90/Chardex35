@@ -647,6 +647,27 @@ describe("deriveSheet — Angriffe und Waffen", () => {
     expect(line.critical).toBe("19-20/x2");
   });
 
+  it("Zweihänder mit SCHWACHER Stärke: der Malus zählt anderthalbfach mit", () => {
+    /*
+      Martins Antwort, wörtlich: „Zweihändig / 1,5x Stärke: wird immer angewendet, auch
+      bei negativem Mod." Die App tut das schon — `Math.floor(strMod * 1.5)` macht aus
+      −1 eine −2, weil floor nach UNTEN rundet.
+
+      Dieser Test ändert also nichts, er hält fest. Ohne ihn sieht die Zeile wie ein
+      Rundungsfehler aus, den jemand später „aufräumt" — und dann wäre eine
+      Tischentscheidung still weg. Genau das ist bei den Zählern schon passiert.
+    */
+    const schwach = fighterDwarf4({
+      abilities: { base: { str: 8, dex: 12, con: 14, int: 10, wis: 10, cha: 8 } },
+      inventory: [{ id: "w1", itemId: "test:item:greatsword", equipped: true }],
+    });
+    const line = deriveSheet(schwach, COMPENDIUM, HOUSE).attacks.find(
+      (a) => a.key === "weapon:w1",
+    )!;
+    // STR 8 = −1, davon anderthalbfach und abgerundet = −2 (nicht −1).
+    expect(line.damageText).toBe("2d6-2");
+  });
+
   it("Weapon Finesse: leichte Waffe nutzt GE statt ST", () => {
     const c = fighterDwarf4({
       abilities: { base: { str: 10, dex: 16, con: 14, int: 10, wis: 12, cha: 8 } },

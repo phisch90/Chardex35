@@ -20,6 +20,17 @@ export interface TrackerSuggestion {
   max: number;
   /** Woher die Zahl kommt — steht in der Oberfläche unter dem Vorschlag. */
   note: string;
+  /**
+   * Wann sich dieser Zähler von allein füllt — falls der Vorschlag es WEISS.
+   *
+   * Ohne diese Angabe fällt `refillOf` auf „short" zurück (siehe dort), und das ist
+   * für einen Tageszähler richtig. Für die Aktionspunkte wäre es falsch: Martins
+   * Antwort ist „Reset bei Stufenaufstieg", und eine kurze Pause darf sie nicht
+   * auffüllen. Ein Vorschlag, der die Antwort kennt, gibt sie deshalb mit — und die
+   * beiden Stellen, die aus einem Vorschlag einen Zähler machen, schreiben sie
+   * ausdrücklich an den Zähler. Am Zähler ist es dann eine Eingabe, keine Ableitung.
+   */
+  refill?: readonly TrackerRefillKind[];
 }
 
 const CLASS_IDS = {
@@ -171,6 +182,23 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
       note: `${suggestion.note} · ${signed(extra)} aus Talenten`,
     });
   };
+
+  /*
+    Aktionspunkte — die einzige Mechanik hier, die an KEINER Klasse hängt: „Actionpoints
+    hat jeder 6", und Martins Antwort auf den Nachschub: „Reset bei Stufenaufstieg."
+
+    Deshalb steht der Vorschlag vor allen Klassenblöcken (die Reihenfolge hier ist die
+    Anzeigereihenfolge) und trägt seine Bedingung selbst. Er geht trotzdem durch `push`:
+    schreibt sein Tisch später ein Talent, das mehr Punkte gibt, hebt `extraUses` die
+    Grenze von allein — dieselbe Lehre wie bei Extra Turning.
+  */
+  push({
+    key: "action-points",
+    name: "Aktionspunkte",
+    max: 6,
+    note: "Hausregel am Tisch: jeder hat 6 · zurück beim Stufenaufstieg",
+    refill: ["levelUp"],
+  });
 
   // Untote vertreiben: 3 + CHA-Modifikator pro Tag (Kleriker, Paladin ab Stufe 4).
   const cleric = levelOf(sheet, CLASS_IDS.cleric);

@@ -298,10 +298,32 @@ describe("suggestTrackers", () => {
   });
 
   it("Klassen ohne eindeutige Formel bekommen keinen Vorschlag", () => {
-    // Nichts erfinden: ein falscher Vorschlag ist schlimmer als keiner.
-    expect(suggestTrackers(sheetFor("srd:class:cleric", 5)).map((s) => s.key)).toEqual([
-      "turn-undead",
-    ]);
+    /*
+      Nichts erfinden: ein falscher Vorschlag ist schlimmer als keiner. Geprüft wird
+      deshalb die Liste OHNE die Aktionspunkte — die hängen an keiner Klasse, sondern an
+      Martins Tischregel („jeder hat 6"), und sind damit keine erfundene Formel.
+    */
+    const keys = suggestTrackers(sheetFor("srd:class:cleric", 5)).map((s) => s.key);
+    expect(keys.filter((k) => k !== "action-points")).toEqual(["turn-undead"]);
+  });
+
+  it("Aktionspunkte werden JEDEM angeboten — 6, zurück beim Stufenaufstieg", () => {
+    /*
+      Martin: „Action Points: Reset bei Stufenaufstieg", dazu Philipps „Actionpoints hat
+      jeder 6". Der Vorschlag trägt die Bedingung selbst, weil ein Zähler ohne `refill`
+      auf „kurze Pause" zurückfällt — und das wäre genau die falsche Antwort.
+    */
+    for (const [classId, level] of [
+      ["srd:class:fighter", 1],
+      ["srd:class:cleric", 5],
+      ["srd:class:wizard", 12],
+    ] as const) {
+      const found = suggestTrackers(sheetFor(classId, level)).find(
+        (s) => s.key === "action-points",
+      );
+      expect(found?.max, classId).toBe(6);
+      expect(found?.refill, classId).toEqual(["levelUp"]);
+    }
   });
 
   it("Schlüssel sind eindeutig — sonst wird derselbe Zähler zweimal angeboten", () => {

@@ -163,6 +163,17 @@ function draftToCharacter(
  * abgeschriebenem Maximum veraltet beim nächsten Talent. Deshalb trägt jeder aus einem
  * Vorschlag entstandene Zähler nur `suggestedFrom` — die Zahl holt sich die Anzeige
  * jedes Mal frisch (`effectiveTrackerMax`).
+ *
+ * Zwei Dinge standen hier trotzdem falsch, und beide fielen erst auf, als die
+ * Aktionspunkte durch DIESEN Weg liefen:
+ *
+ * 1. `max: suggestion.max` wurde mitgeschrieben — genau das, was der Absatz darüber
+ *    verspricht NICHT zu tun. Es fiel nicht auf, weil `maxManual` dabei ungesetzt blieb
+ *    und `effectiveTrackerMax` dann sowieso den Vorschlag gewinnen lässt. Eine
+ *    Momentaufnahme, die niemand liest, ist trotzdem eine Momentaufnahme.
+ * 2. `value: 0` — ein im Assistenten angelegter Bogen startete mit LEEREN Zählern
+ *    („Untote vertreiben 0/3"), während derselbe Zähler am Bogen voll beginnt. Eine
+ *    neue Figur hat ihre Tagesfähigkeiten noch nicht verbraucht.
  */
 function trackersFromDraft(draft: Draft, sheet: DerivedSheet | undefined) {
   const fromSuggestions = (sheet === undefined ? [] : suggestTrackers(sheet))
@@ -171,9 +182,12 @@ function trackersFromDraft(draft: Draft, sheet: DerivedSheet | undefined) {
       id: `s${i}-${suggestion.key}`,
       name: suggestion.name,
       kind: "counter" as const,
-      value: 0,
-      max: suggestion.max,
+      value: suggestion.max,
+      maxManual: false,
       suggestedFrom: suggestion.key,
+      // Die Bedingung ist am Zähler eine Eingabe — ohne sie fiele er auf „kurze
+      // Pause" zurück, und die Aktionspunkte füllten sich zu früh.
+      ...(suggestion.refill === undefined ? {} : { refill: [...suggestion.refill] }),
     }));
   const own = draft.ownTrackers.map((tracker, i) => ({
     id: `o${i}-${tracker.name}`,
