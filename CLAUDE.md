@@ -364,44 +364,61 @@ Dazu zwei kleinere Fallen aus derselben Runde:
   sind frei und die Zähler voll" — auch wenn ein Zähler bei 2 von 3 stand und bloß
   nicht mitrastet. Eine falsche Auskunft, gefunden im gebauten Bogen.
 
-## Hausregeln seines Tisches, die er noch mit dem DM klärt
+## Martins Hausregeln — beantwortet und entschieden
 
-**Zustand: geparkt.** Die Liste liegt bei **Martin**, seinem Spielleiter. Sein Wort dazu:
-„Alles offene erstmal zur Seite legen bis Martin der DM mir antwortet." Also nicht
-nachfragen, nicht anfangen, und keine dieser Regeln „vorsichtshalber" bauen — eine
-erfundene Antwort ist hier schlimmer als keine. Kommt seine Antwort, wandert sie hierher
-und wird in `FRAGEN-AN-DEN-DM.md` gestrichen.
+Martin, sein Spielleiter, hat geantwortet. Sechs Regeln, hier wörtlich, mit dem was
+jeweils daraus folgt. **Diese sechs sind entschieden — nicht neu fragen.**
 
-Was in der Zwischenzeit geht, hängt an KEINER dieser Antworten: die sichtbare Meldung bei
-einem fehlgeschlagenen Speichern, die Werte-Karte „Was deine Rüstung kostet", Behälter und
-Münzgewicht, die Klassenmerkmale am Bogen selbst, die fehlenden deutschen Erklärungen.
+1. **„TP bei Levelup: volle Hit Die der Klasse (Krieger +10), kein Wurf."** Und auf die
+   Rückfrage, ob das auch für die schon eingetragenen Stufen gilt: **nur ab dem nächsten
+   Aufstieg.** Bestehende Bögen bleiben Zahl für Zahl, wie sie sind — genau deshalb wird
+   der Wert beim Aufstieg als `hpRoll: "max"` an die STUFE geschrieben und nicht als
+   Hausregel-Schalter, den die Engine über alle Stufen legt. Ein Schalter hätte jeden
+   gespeicherten Wurf neu gedeutet; das ist die Fehlerfamilie 1 in ihrer bösen Form
+   (dieselbe Zahl bedeutet plötzlich etwas anderes). Der Würfel-Knopf verschwindet damit
+   auch: „kein Wurf" heißt kein Knopf.
+2. **„Trainer 0 Spells: müssen nicht vorbereitet werden, allgemein lockere Handhabung,
+   gilt für alle."** „Trainer 0" ist Grad 0. Auf die Rückfrage, ob die Plätze weiter
+   mitzählen: **Plätze bleiben, nur die Wahl fällt weg** — ein Cleric 1 hat weiter drei
+   Grad-0-Plätze am Tag und entscheidet beim Wirken, welcher Zauber es wird. „Gilt für
+   alle" heißt ALLE Klassen, auch der Magier (den er selbst nicht genannt hatte) und die
+   spontanen. Folge in der App: auf Grad 0 kein Vorbereiten mehr, und die Warnung
+   „Zauberplätze nicht belegt" zählt Grad 0 nicht mehr mit — dort ist nichts zu belegen.
+3. **„Action Points: Reset bei Stufenaufstieg."** Zusammen mit seinem früheren
+   „Actionpoints hat jeder 6" ist der Zähler damit vollständig: Vorschlag für JEDEN
+   Charakter, Höchstwert 6, `refill: ["levelUp"]`. Ausdrücklich NICHT „short" — genau
+   dieser Rückfall war der Grund, den Vorschlag vorher nicht zu bauen.
+4. **„Zweihändig / 1,5x Stärke: wird immer angewendet, auch bei negativem Mod."** Das ist
+   das Verhalten, das die App schon hat (`Math.floor(strMod * 1.5)`, aus −1 wird −2).
+   Nichts zu ändern — aber jetzt steht ein Test daneben, der es festhält, damit es nicht
+   jemand später als Fehler „aufräumt".
+5. **„Zweiwaffenkampf: Off Hand nur halber Stärkebonus (relevant für Daniel)."** Das
+   verschiebt Zahlen auf einem bestehenden Bogen, und sein Wort deckt es ausdrücklich —
+   er nennt Daniel selbst. Gerechnet als `Math.floor(strMod / 2)`, dieselbe Rundung wie
+   im Anderthalbfach-Pfad: +4 → +2, +3 → +1, −1 → −1.
+6. **„Sterben: Tod erst bei HP gleich negativem CON Wert. Zwischen 0 und minus CON Mod:
+   Selbststabilisierung per Fort Save DC 10 (oder DM Ermessen). Unterhalb des negativen
+   Mods: keine Probe mehr, automatisch 1 HP Verlust pro Runde."** Achtung auf den
+   Unterschied im Satz: der Tod steht beim negativen CON-**WERT** (CON 14 → tot bei −14),
+   die Probenzone endet beim negativen CON-**MODIFIKATOR** (−2). Das sind drei Zonen, und
+   damit bekommt das Hausregel-Feld `deathAt` („negCon") endlich eine Wirkung.
 
-Vier neue Hausregeln kamen auf einmal, und bei jeder fehlt genau ein Stück. Sie stehen
-deshalb NICHT gebaut da, sondern als Fragen in `FRAGEN-AN-DEN-DM.md` — dort in seiner
-Sprache, mit Antwortmöglichkeiten zum Ankreuzen, damit er sie vorlegen kann. Wörtlich:
+**Gebaut sind bisher 3, 4 und 5** (Aktionspunkte, der Test zum Anderthalbfachen, die
+zweite Hand). **1, 2 und 6** — volle Trefferwürfel, Grad-0-Zauber und die drei
+Sterbe-Zonen — folgen in der nächsten Runde; sie fassen die Oberfläche an und brauchen
+ihren eigenen Durchlauf im gebauten Bogen.
 
-1. **„Actionpoints hat jeder 6. wann und wie man neue bekommt muss ich nochmal abklären
-   beim DM."** Die Menge ist damit klar, der Nachschub nicht. Ein Zähler-VORSCHLAG
-   „Aktionspunkte: 6" wäre schnell gebaut — aber ein Vorschlag ohne `refill` fällt in
-   `refillOf` auf „short" zurück, und dann füllte die kurze Pause sie auf. Das wäre
-   eine erfundene Antwort auf genau die Frage, die er stellen will. Also erst fragen.
-2. **„Cantrips müssen nicht vorbereitet werden. Man kann, sofern man noch für Level 0
-   ausreichend zauberpunkte hat, beliebig aus den cantrips wählen. Halt nur für
-   vorbereiter (Druide und Kleriker)."** Vier Lücken: verbraucht ein Cantrip weiter
-   einen Grad-0-Platz · gilt es auch für den MAGIER (er nennt ihn nicht, obwohl der
-   dritte Vorbereiter ist) · frei aus der Klassenliste oder nur aus dem Bekannten ·
-   nur Grad 0 oder auch höher.
-3. **„…eine spellcraft Probe machen um einen Zauber ohne einen zauberpunkt zu
-   verbrauchen wirken."** Ohne SG und ohne die Folge eines misslungenen Wurfs nicht
-   baubar.
-4. **„Dann würfeln wir die TP bei levelup nicht."** Was stattdessen, ist offen. Die App
-   kann heute schon würfeln ODER den Durchschnitt nehmen (`averageHitDie` rundet AB, beim
-   W8 also 4) — es fehlt nur die Antwort, welcher Wert gilt. **Und darunter liegt eine
-   zweite Frage, ohne die die erste auf seinen echten Bögen nichts tut:** der
-   Fight-Club-Import schreibt die alte Summe als festes Maximum
-   (`import/fightclub.ts:867`), und `overrideMax` überstimmt jede Rechnung
-   (`derive.ts:464`). Auf Torbens Bogen bewegt sich also gar nichts, solange diese Zahl
-   steht — auch beim nächsten Aufstieg nicht.
+Zwei Dinge, die beim Bauen von 3 auffielen und mitgeradegerückt wurden: ein Vorschlag
+kann jetzt seine Auffüll-Bedingung MITGEBEN (`TrackerSuggestion.refill`), weil ein Zähler
+ohne sie auf „kurze Pause" zurückfällt — bei den Aktionspunkten wäre das genau die
+falsche Antwort. Und der Assistent schrieb bisher `value: 0` in jeden Zähler aus einem
+Vorschlag: ein neu angelegter Kleriker startete mit „Untote vertreiben 0 von 3", während
+derselbe Zähler am Bogen voll beginnt. Eine neue Figur hat ihre Tagesfähigkeiten noch
+nicht verbraucht.
+
+**Noch keine Antwort von Martin** haben: die Spellcraft-Probe statt eines Zauberplatzes,
+die volle Attacke ab GAB +6, die EP-Strafe beim Mischen von Klassen und das Punktebudget
+für die Attribute. Die stehen als Teil 2 in `FRAGEN-AN-DEN-DM.md`.
 
 Quer über 2 und 3 stand zweimal **„Zauberpunkte"**, und das war die Frage mit der
 größten Folge: bei einem echten Punktevorrat hätte die App einen ZWEITEN Weg gebraucht,

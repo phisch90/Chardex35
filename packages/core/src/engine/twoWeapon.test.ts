@@ -302,17 +302,72 @@ describe.skipIf(!packsAvailable)("Zweiwaffenkampf", () => {
     expect(lines(aus).byLabel.get("Sword, short")!.notes.join(" ")).not.toContain("volle Attacke");
   });
 
-  it("Der Schaden bleibt unberührt — das ist eine eigene Frage", () => {
-    /*
-      Der halbe Stärkebonus auf den Schaden der zweiten Hand ist NICHT gebaut.
-      Philipps Wort deckt den Angriffsmalus; die Schadensregel ist eine zweite
-      Entscheidung, und sie steht in unseren Daten nirgends (der SRD-Rohdump
-      enthält das Kampf-Kapitel nicht). Dieser Test hält den Stand fest, damit die
-      Änderung sichtbar wird, wenn die Antwort kommt.
-    */
-    const c = hike({ hands: beideHaende, twoWeaponFighting: true });
-    const { byLabel } = lines(c);
-    expect(byLabel.get("Dagger")?.damageText).toBe("1d4+2");
-    expect(byLabel.get("Sword, short")?.damageText).toBe("1d6+3");
+  /*
+    Der halbe Stärkeschaden der zweiten Hand — Martins Antwort: „Zweiwaffenkampf: Off
+    Hand nur halber Stärkebonus (relevant für Daniel)."
+
+    Vorher stand hier ein Test, der das GEGENTEIL festhielt („der Schaden bleibt
+    unberührt — das ist eine eigene Frage"), weil die Regel noch offen war. Genau so
+    soll es sein: die Antwort kommt, der Test dreht sich, und die Änderung ist an einer
+    Stelle sichtbar statt still.
+  */
+  describe("Halber Stärkeschaden in der zweiten Hand", () => {
+    it("Die zweite Hand bekommt die Hälfte, die Haupthand den vollen Bonus", () => {
+      // STR 15 (+2): der Dolch bekommt +1, das Kurzschwert +2 und sein eigenes +1.
+      const c = hike({ hands: beideHaende, twoWeaponFighting: true });
+      const { byLabel } = lines(c);
+      expect(byLabel.get("Dagger")?.damageText).toBe("1d4+1");
+      expect(byLabel.get("Sword, short")?.damageText).toBe("1d6+3");
+    });
+
+    it("Ohne eingeschalteten Zweiwaffenkampf zählt die Stärke voll", () => {
+      /*
+        Die Halbierung hängt an derselben Bedingung wie der Angriffsmalus: man zahlt
+        sie, WEIL man mit beiden Waffen angreift. Wer den Dolch nur dabei hat und
+        einmal zusticht, führt ihn als Primärwaffe.
+      */
+      const c = hike({ hands: beideHaende });
+      expect(lines(c).byLabel.get("Dagger")?.damageText).toBe("1d4+2");
+    });
+
+    it("Der Bogen sagt es auch in Worten, mit der echten Zahl", () => {
+      const c = hike({ hands: beideHaende, twoWeaponFighting: true });
+      const notes = lines(c).byLabel.get("Dagger")!.notes.join(" ");
+      expect(notes).toMatch(/halbe STR-Bonus/i);
+      expect(notes).toContain("+2 → +1");
+    });
+
+    it("Die Aufschlüsselung benennt den halben Bonus", () => {
+      const c = hike({ hands: beideHaende, twoWeaponFighting: true });
+      const quellen = lines(c)
+        .byLabel.get("Dagger")!
+        .damageBonus.contributions.map((d) => d.source)
+        .join(" | ");
+      expect(quellen).toContain("½ zweite Hand");
+    });
+
+    it("Ein STR-MALUS wird NICHT halbiert — er zählt voll", () => {
+      /*
+        Halbiert wird ein BONUS. Ein Malus bleibt ganz, und zwar aus derselben
+        Richtung wie Martins andere Antwort („1,5x wird immer angewendet, auch bei
+        negativem Mod"): es geht nie zugunsten des Charakters. `Math.floor` hätte es
+        von allein falsch gemacht — floor(−2 × 0,5) ist −1.
+      */
+      const schwach = characterSchema.parse({
+        ...JSON.parse(JSON.stringify(hike({ hands: beideHaende, twoWeaponFighting: true }))),
+        abilities: { base: { str: 7, dex: 12, con: 12, int: 10, wis: 11, cha: 10 } },
+      });
+      const { byLabel } = lines(schwach);
+      // STR 7 = −2: beide Hände tragen die volle −2 (das Kurzschwert hat +1 dazu).
+      expect(byLabel.get("Dagger")?.damageText).toBe("1d4-2");
+      expect(byLabel.get("Sword, short")?.damageText).toBe("1d6-1");
+      expect(byLabel.get("Dagger")!.notes.join(" ")).toMatch(/Malus zählt voll/i);
+    });
+
+    it("Eine zweihändige Waffe bleibt beim Anderthalbfachen", () => {
+      // Gegenprobe: der neue Zweig darf den ×1,5-Weg nicht anfassen. STR +2 × 1,5 = +3.
+      const c = hike({ hands: [{ itemId: GREAT, slot: "bothHands" }] });
+      expect(lines(c).byLabel.get("Greatsword")?.damageText).toBe("2d6+3");
+    });
   });
 });

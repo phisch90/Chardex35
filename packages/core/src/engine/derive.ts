@@ -579,11 +579,23 @@ export function deriveSheetValues(
           penaltyOnly  Bögen — nur der Malus, kein Bonus
           none         Armbrüste
 
-        Ohne Angabe: Fernkampf `none`, Nahkampf voll (zweihändig ×1,5).
+        Ohne Angabe: Fernkampf `none`, Nahkampf voll (zweihändig ×1,5, zweite Hand ½).
+
+        Die zweite Hand ist Martins Regel: „Zweiwaffenkampf: Off Hand nur halber
+        Stärkebonus." Sie hängt an `offHandSteps` und nicht am Platz allein — genau
+        dieselbe Bedingung wie der Angriffsmalus. Liegt die einzige Waffe in der
+        Schildhand, ist sie die Primärwaffe und bekommt den vollen Bonus.
+
+        Ein MALUS wird nicht halbiert. Das ist keine eigene Regel, sondern dieselbe
+        Richtung wie oben: der ×1,5-Weg vervielfacht auch den Malus (Martin: „wird
+        immer angewendet, auch bei negativem Mod") — es geht also nie zugunsten des
+        Charakters. Ein halbierter Malus würde ihn kleiner machen, und `Math.floor`
+        täte es sogar von allein falsch: floor(−2 × 0,5) ist −1.
       */
       const strMod = mod("str");
       const ranged = mode === "ranged";
       const rule = weaponData.strDamage ?? (ranged ? "none" : "full");
+      const offHandHalf = hand === "off" && offHandSteps.length > 0;
       const strFactor =
         rule === "none"
           ? 0
@@ -591,13 +603,22 @@ export function deriveSheetValues(
             ? strMod < 0
               ? 1
               : 0
-            : ranged || !wieldedInTwoHands
-              ? 1
-              : 1.5;
+            : offHandHalf
+              ? strMod < 0
+                ? 1
+                : 0.5
+              : ranged || !wieldedInTwoHands
+                ? 1
+                : 1.5;
       const strDamage = Math.floor(strMod * strFactor);
       if (strFactor > 0 && strDamage !== 0) {
         damageContributions.push({
-          source: strFactor === 1.5 ? "STR-Modifikator (×1,5 zweihändig)" : "STR-Modifikator",
+          source:
+            strFactor === 1.5
+              ? "STR-Modifikator (×1,5 zweihändig)"
+              : strFactor === 0.5
+                ? "STR-Modifikator (½ zweite Hand)"
+                : "STR-Modifikator",
           bonusType: "untyped",
           value: strDamage,
           applied: true,
@@ -620,6 +641,21 @@ export function deriveSheetValues(
             ? "Zweite Hand: ein zusätzlicher Angriff bei voller Attacke."
             : `Zweite Hand: ${offHandSteps.length} Angriffe bei voller Attacke (aus deinen Zweiwaffen-Talenten).`,
         );
+        /*
+          Der halbe Bonus gehört als SATZ hierher und nicht nur in die
+          Aufschlüsselung: bei STR 12 (+1) ist die Hälfte 0, dann entsteht oben gar
+          keine Zeile — und am Bogen stünde „1d6" ohne ein Wort dazu, warum die
+          Stärke fehlt. Der Satz hängt an der Hand, nicht an der Zahl.
+        */
+        if (!ranged && strMod > 0) {
+          notes.push(
+            `Zweite Hand: nur der halbe STR-Bonus auf den Schaden (+${strMod} → ${
+              strDamage >= 0 ? "+" : ""
+            }${strDamage}).`,
+          );
+        } else if (!ranged && strMod < 0) {
+          notes.push("Zweite Hand: halbiert wird nur ein BONUS — ein STR-Malus zählt voll.");
+        }
       }
       /*
         Der Malus gilt nur, WEIL man mit beiden Waffen angreift. Ein einzelner
