@@ -393,10 +393,16 @@ mit Antwortmöglichkeiten zum Ankreuzen, damit er sie vorlegen kann. Wörtlich:
    (`derive.ts:464`). Auf Torbens Bogen bewegt sich also gar nichts, solange diese Zahl
    steht — auch beim nächsten Aufstieg nicht.
 
-Und quer über 2 und 3: er schreibt zweimal **„Zauberpunkte"**. Die App rechnet mit
-PLÄTZEN je Grad. Ob das nur ein anderes Wort ist oder ihr Tisch einen echten
-Punktevorrat spielt, ist die Frage mit der größten Folge — im zweiten Fall bräuchte die
-App einen zweiten Weg, Zauber zu verbuchen.
+Quer über 2 und 3 stand zweimal **„Zauberpunkte"**, und das war die Frage mit der
+größten Folge: bei einem echten Punktevorrat hätte die App einen ZWEITEN Weg gebraucht,
+Zauber zu verbuchen. **Erledigt, er hat es selbst richtiggestellt:** „Zauberränge. Sorry
+nicht Punkte." Es ist also das, was die App PLATZ nennt — einer je Zaubergrad und Tag,
+wie im Regelwerk. Kein zweites Modell.
+
+Übrig bleibt eine Wortfrage an IHN (nicht an den DM): die App sagt „Zauberplätze", er
+sagt „Zauberränge". Umbenennen ginge, kollidiert aber mit den Fertigkeits-RÄNGEN — „3
+Ränge in Spellcraft" neben „3 Zauberränge Grad 1" wären zwei Bedeutungen für ein Wort.
+Deshalb bleibt „Platz" stehen, bis er etwas anderes sagt.
 
 **Beim Zusammentragen aufgefallen: drei Hausregel-Felder haben keine Wirkung.**
 `houseRulesSchema` hat sechs Felder; drei rechnen (`fractionalBabAndSaves`,
