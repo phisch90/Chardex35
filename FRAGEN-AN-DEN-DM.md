@@ -1,7 +1,11 @@
-# Fragen an den Spielleiter
+# Fragen an Martin (Spielleiter)
 
 Alles, was an Chardex35 auf eine Regelentscheidung wartet — an einer Stelle, zum
 Vorlesen oder Weiterschicken.
+
+**Stand: liegt bei Martin.** Bis seine Antwort da ist, wird an diesen Punkten nichts
+gebaut — Philipps Wort dazu: „Alles offene erstmal zur Seite legen bis Martin der DM mir
+antwortet." Kommt eine Antwort, wandert sie nach `CLAUDE.md` und wird hier gestrichen.
 
 Warum die Liste hier liegt und nicht im Chat: ein Chat fängt irgendwann von vorn an,
 diese Fragen gelten dann trotzdem. Wenn eine Antwort da ist, wird sie in `CLAUDE.md`
