@@ -385,8 +385,13 @@ mit Antwortmöglichkeiten zum Ankreuzen, damit er sie vorlegen kann. Wörtlich:
    verbrauchen wirken."** Ohne SG und ohne die Folge eines misslungenen Wurfs nicht
    baubar.
 4. **„Dann würfeln wir die TP bei levelup nicht."** Was stattdessen, ist offen. Die App
-   kann heute schon würfeln ODER den Durchschnitt nehmen — es fehlt nur die Antwort,
-   welcher Wert gilt.
+   kann heute schon würfeln ODER den Durchschnitt nehmen (`averageHitDie` rundet AB, beim
+   W8 also 4) — es fehlt nur die Antwort, welcher Wert gilt. **Und darunter liegt eine
+   zweite Frage, ohne die die erste auf seinen echten Bögen nichts tut:** der
+   Fight-Club-Import schreibt die alte Summe als festes Maximum
+   (`import/fightclub.ts:867`), und `overrideMax` überstimmt jede Rechnung
+   (`derive.ts:464`). Auf Torbens Bogen bewegt sich also gar nichts, solange diese Zahl
+   steht — auch beim nächsten Aufstieg nicht.
 
 Und quer über 2 und 3: er schreibt zweimal **„Zauberpunkte"**. Die App rechnet mit
 PLÄTZEN je Grad. Ob das nur ein anderes Wort ist oder ihr Tisch einen echten

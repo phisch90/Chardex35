@@ -73,6 +73,20 @@ Bögen verschieben. Das passiert in dieser App nur auf ausdrückliche Ansage.
 - [ ] mindestens 1 TP pro Stufe (steht so im Regelwerk, und so rechnet die App heute)
 - [ ] es darf auch 0 sein — eine Stufe kann dann nichts bringen
 
+### 1.6 Und die Bögen, die aus Fight Club übernommen wurden?
+
+Auf denen steht die alte TP-Summe als **feste Zahl** (der Import trägt sie ein, damit
+nach dem Umzug genau dasselbe auf dem Bogen steht wie vorher). Diese feste Zahl
+überstimmt jede Rechnung — auch beim nächsten Aufstieg.
+
+- [ ] die Zahl vom alten Bogen gilt; die App rechnet nur die neuen Stufen dazu
+- [ ] die App rechnet alles neu — die Summe darf sich dabei auch nach unten ändern
+- [ ] die App rechnet neu, aber nie nach unten: wer mehr hat, behält es
+
+*Warum das nicht dasselbe wie 1.4 ist:* solange die feste Zahl gilt, bewegt sich auf
+diesen Bögen gar nichts, egal wie 1.4 ausfällt. Erst diese Antwort macht die neue Regel
+auf Torbens Bogen wirksam.
+
 ---
 
 ## 2. Cantrips bei Vorbereitern (Kleriker, Druide)
@@ -111,6 +125,31 @@ vorbereitet.
 
 - [ ] nur Grad 0
 - [ ] auch höhere Grade (dann wären Kleriker und Druide spontane Zauberwirker)
+
+### 2.5 Wie viele Cantrips hat man am Tag?
+
+Mit der neuen Regel ist diese Zahl die **einzige** Grenze für Cantrips — vorher war sie
+bloß die Zahl der Zeilen, die man morgens ausfüllt.
+
+- [ ] nur die Zahl aus der Klassentabelle (Kleriker Stufe 1: drei — so rechnet die App)
+- [ ] ein hoher WIS bzw. INT gibt auch auf Grad 0 zusätzliche Zauber
+- [ ] Grad 0 wird gar nicht mehr gezählt (siehe 2.1)
+
+*Warum:* im Regelwerk geben Bonus-Zauber aus einem hohen Attribut erst ab Grad 1 etwas
+her. Wenn das bei euch anders ist, hätte ein Kleriker mit WIS 18 vier statt drei.
+
+### 2.6 Und Barde und Hexenmeister?
+
+Die zaubern ohne Vorbereitung, verbrauchen für einen Cantrip aber weiter einen Platz.
+
+- [ ] auch für sie — Grad 0 kostet dann niemanden mehr einen Platz
+- [ ] nein, bei ihnen bleibt es beim Tageslimit
+- [ ] die Frage entfällt: Grad 0 bleibt auch bei den Vorbereitern begrenzt, nur die Wahl
+      wird frei
+
+*Warum:* falls Grad 0 bei Kleriker und Druide ungezählt wird, steht der Hexenmeister auf
+Grad 0 plötzlich schlechter da als sie. Das ist eine Entscheidung für euren Tisch, keine
+der App.
 
 ---
 
@@ -151,9 +190,41 @@ vorbereitet.
 - [ ] ja, mindestens 1 Rang
 - [ ] nein, ungeübt geht auch
 
-*Warum die vier Fragen:* die App soll die Probe anbieten und den Platz nur dann
-abziehen, wenn er wirklich weg ist. Ohne 3.2 wüsste sie nicht, was sie nach einem
-misslungenen Wurf tun soll.
+### 3.6 Braucht man dafür noch einen freien Platz? ← die wichtigste hier
+
+- [ ] **nur mit freiem Platz** — die Probe SPART ihn, das Tageslimit bleibt ein Limit
+- [ ] **auch wenn alle Plätze dieses Grades verbraucht sind** — das Tageslimit ist damit
+      nach oben offen
+- [ ] auch bei Zaubergraden, die die Figur noch gar nicht hat
+
+*Warum das die wichtigste Frage des Abschnitts ist:* bei der ersten Antwort genügt ein
+zweiter Knopf neben „Wirken". Bei der zweiten muss die Sperre weg, und der Bogen braucht
+eine eigene Zeile für „über dem Tageslimit gewirkt" — sonst weiß nach dem dritten Mal
+niemand mehr, wie viel schon über der Grenze liegt.
+
+### 3.7 Welchen Zauber darf man so wirken?
+
+- [ ] nur einen, den man morgens vorbereitet hat
+- [ ] jeden aus der Klassenliste
+- [ ] beim Magier jeden aus seinem Zauberbuch, bei Kleriker und Druide die ganze Liste
+
+*Warum:* „nur vorbereitet" ist ein Knopf mehr an einer Zeile, die es schon gibt. „Ganze
+Klassenliste" heißt: bei einem Kleriker der Stufe 7 stehen über 200 Zauber mit einem
+Wirken-Knopf im Bogen, und der braucht dann eine eigene Suche.
+
+### 3.8 Gilt die Probe auch für Cantrips?
+
+- [ ] ja, auch auf Grad 0
+- [ ] nein, erst ab Grad 1
+
+*Warum:* hier greifen die zwei neuen Regeln ineinander. Wenn der Schwierigkeitsgrad mit
+dem Zaubergrad steigt, wäre die Probe auf Grad 0 die leichteste — Cantrips wären damit
+praktisch unbegrenzt, egal wie 2.1 ausfällt. Zwei Regeln, von denen eine die andere
+aushebelt.
+
+*Warum die Fragen in diesem Abschnitt so viele sind:* die App soll die Probe anbieten und
+den Platz nur dann abziehen, wenn er wirklich weg ist. Ohne 3.2 wüsste sie nicht, was
+nach einem misslungenen Wurf passiert; ohne 3.6 nicht, ob das Tageslimit noch gilt.
 
 ---
 
@@ -185,15 +256,19 @@ drin.
 
 ### 5.1 Wann kommen sie zurück?
 
+Mehrfach ankreuzen ist erlaubt.
+
 - [ ] nach einer langen Rast (acht Stunden)
+- [ ] **auch bei einer kurzen Pause** (eure Hausregel — die App erkennt sie sicher)
 - [ ] beim Stufenaufstieg
 - [ ] pro Spielabend
 - [ ] nur wenn der Spielleiter welche gibt
 - [ ] anders: ______
 
-*Warum:* die App kann Zähler bei Rast und Aufstieg von allein zurücksetzen — aber nur,
-wenn sie weiß, bei welcher Gelegenheit. „Pro Spielabend" kann sie nicht erkennen; dann
-bliebe ein Knopf zum Selbst-Auffüllen.
+*Warum:* die App kann Zähler bei langer Rast, kurzer Pause und Aufstieg von allein
+zurücksetzen — aber nur, wenn sie weiß, bei welcher Gelegenheit. „Pro Spielabend" kann
+sie nicht erkennen; dann bliebe ein Knopf zum Selbst-Auffüllen. Der Unterschied am Tisch
+ist groß: bei „kurze Pause" stehen die Punkte mehrmals am Abend wieder da.
 
 ### 5.2 Bleiben es 6?
 
@@ -206,6 +281,16 @@ bliebe ein Knopf zum Selbst-Auffüllen.
 
 - [ ] übrige Punkte verfallen beim Auffüllen
 - [ ] sie werden mitgenommen (dann kann man mehr als 6 haben)
+
+### 5.4 Wer trägt sie ein, wenn du welche vergibst?
+
+- [ ] jeder Spieler an seinem eigenen Bogen
+- [ ] der Spielleiter setzt sie an den Bögen der Spieler
+
+*Warum:* in dieser App besitzt der Spielleiter den AUFBAU eines Bogens (Stufen, Talente,
+Ausrüstung) und der Spieler den SPIELZUSTAND (Schaden, verbrauchte Zauber, Zähler).
+Aktionspunkte sind Spielzustand — der Weg vom Spielleiter zum Zähler eines Spielers ist
+heute also zu. Wenn du sie setzen willst, muss dafür ein Weg gebaut werden.
 
 ---
 
