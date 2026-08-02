@@ -92,19 +92,23 @@ auf Torbens Bogen wirksam.
 ## 2. Cantrips bei Vorbereitern (Kleriker, Druide)
 
 > Philipp: „Cantrips müssen nicht vorbereitet werden. Man kann, sofern man noch für
-> Level 0 ausreichend zauberpunkte hat, beliebig aus den cantrips wählen. Halt nur für
+> Level 0 ausreichend Zauberränge hat, beliebig aus den cantrips wählen. Halt nur für
 > vorbereiter (Druide und Kleriker)."
+
+„Zauberrang" ist hier sein Wort für das, was die App **Zauberplatz** nennt: einer je
+Zaubergrad und Tag. Kein eigener Punktevorrat.
 
 **Heute:** die App verlangt auch auf Grad 0, dass Zauber vorbereitet werden, und meldet
 freie Grad-0-Plätze als „noch offen".
 
-### 2.1 Verbraucht ein Cantrip trotzdem einen Grad-0-Platz?
+### 2.1 Verbraucht ein Cantrip trotzdem einen Grad-0-Platz? (nur zur Bestätigung)
 
-- [ ] ja — die Plätze bleiben, nur die Wahl fällt weg (so klingt Philipps Satz)
+- [ ] **ja** — die Plätze bleiben, nur die Wahl fällt weg
 - [ ] nein — Cantrips sind unbegrenzt
 
-*Warum:* davon hängt ab, ob die App auf Grad 0 weiter mitzählt oder dort gar keine
-Grenze mehr kennt.
+*Warum trotzdem gefragt:* „sofern man noch ausreichend hat" sagt es eigentlich schon —
+die Grenze bleibt, man entscheidet nur später, welcher Zauber es wird. Ein Häkchen
+genügt, damit die App das nicht bloß annimmt.
 
 ### 2.2 Gilt es auch für den Magier?
 
@@ -156,7 +160,7 @@ der App.
 ## 3. Die Spellcraft-Probe statt eines Platzes
 
 > Philipp: „Eine weitere ist, dass wir eine spellcraft Probe machen können um einen
-> Zauber ohne einen zauberpunkt zu verbrauchen wirken wollen. Muss ich aber auch
+> Zauber ohne einen Zauberrang zu verbrauchen wirken wollen. Muss ich aber auch
 > nochmal beim dm fragen."
 
 **Heute:** kennt die App nicht — wirken heißt Platz verbrauchen.
@@ -228,20 +232,23 @@ nach einem misslungenen Wurf passiert; ohne 3.6 nicht, ob das Tageslimit noch gi
 
 ---
 
-## 4. „Zauberpunkte" oder Zauberplätze?
+## 4. ~~„Zauberpunkte" oder Zauberplätze?~~ — erledigt
 
-In den zwei Regeln oben steht zweimal „Zauberpunkte". Die App rechnet mit **Plätzen je
-Grad** (drei Grad-0-Plätze, zwei Grad-1-Plätze, …) wie im Regelwerk.
+**Diese Frage ist beantwortet und muss nicht gestellt werden.** Sie stand hier, weil in
+den zwei Regeln oben zweimal „Zauberpunkte" stand und das ein echter Punktevorrat hätte
+sein können — ein anderes Rechenmodell, nicht bloß ein anderes Wort.
 
-### 4.1 Ist das dasselbe?
+Philipps Nachtrag: **„Zauberränge. Sorry nicht Punkte."**
 
-- [ ] ja, „Punkt" ist bei uns einfach das Wort für einen Platz
-- [ ] nein — wir haben einen echten Vorrat an Punkten, aus dem Zauber aller Grade
-      bezahlt werden
+Damit ist es dasselbe wie das, was die App **Zauberplatz** nennt — einer je Zaubergrad
+und Tag, wie im Regelwerk. Kein Vorrat, aus dem Zauber aller Grade bezahlt werden, und
+also auch kein zweiter Weg, Zauber zu verbuchen.
 
-*Warum:* das ist der Unterschied zwischen einem anderen Wort und einem anderen
-Rechenmodell. Beim zweiten Fall bräuchte die App einen zweiten Weg, Zauber zu
-verbuchen — machbar, aber gut zu wissen, bevor der erste gebaut wird.
+*Bleibt als kleine Sache übrig:* die App sagt „Zauberplätze", er sagt „Zauberränge". Ein
+Umbenennen wäre möglich, hat aber einen Haken — „Rang" heißt in dieser App schon etwas
+anderes (die Ränge in einer Fertigkeit), und „3 Ränge in Spellcraft" neben „3 Zauberränge
+Grad 1" wären zwei Bedeutungen für ein Wort. Das ist eine Frage an Philipp, nicht an den
+Spielleiter.
 
 ---
 
