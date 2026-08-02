@@ -162,7 +162,7 @@ export function DraftSummary({
         „5 Zauberplätze nicht belegt" wäre beim Anlegen kein Versäumnis.
       */}
       {!hideIssues && buildIssues(sheet).length > 0 && (
-        <ul className="list-inside list-disc space-y-0.5 rounded-lg border border-amber-800/60 bg-amber-950/20 p-2 text-xs leading-snug text-amber-300">
+        <ul className="list-inside list-disc space-y-0.5 rounded-lg border border-rose-800/70 bg-rose-950/20 p-2 text-xs leading-snug text-rose-200">
           {buildIssues(sheet).map((issue, i) => (
             <li key={i}>{issue.message}</li>
           ))}

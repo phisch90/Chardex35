@@ -278,6 +278,52 @@ export function NumberStepper(props: {
   );
 }
 
+/*
+  „Da ist noch etwas offen" — EINE Farbe für alle drei Stellen, die es sagen: der
+  Punkt an der Reiterleiste, die Marke auf der Startseite, die Karte oben am Bogen.
+
+  Sie war amber, und damit dieselbe Farbe wie alles andere in dieser App: der aktive
+  Reiter, die Sterne an den Klassenfertigkeiten, jeder Hauptknopf. Am Handy sitzt der
+  Punkt zusätzlich AM SYMBOL — über „Zauber" steht ✨, und ein gelber Punkt an gelben
+  Funken ist kein Punkt mehr. Sein Wort dazu: „Übersieht man leicht."
+
+  Rosé bedeutet im Bogen sonst nichts (rot ist der TP-Balken, grün der gesunde Stand,
+  amber die Bedienung), und weil der Punkt jetzt die einzige rosé Sache in der
+  Reiterleiste ist, muss ihn auch der Test nicht mehr am Durchmesser vom Unterstrich
+  des aktiven Reiters unterscheiden.
+*/
+export const OPEN_MARK = "border border-rose-700/70 bg-rose-950/60 text-rose-200";
+export const OPEN_CARD = "border-rose-800/70 bg-slate-900";
+
+/**
+ * Der Punkt. `className` trägt nur Lage und Abstand — Farbe und Größe stehen HIER,
+ * weil eine hinten angehängte Klasse bei gleicher Spezifität nicht gewinnt (dieselbe
+ * Regel wie bei `Card`).
+ *
+ * `ring` trennt den Punkt von dem, was hinter ihm liegt: in der unteren Leiste ist
+ * das ein Symbol, dessen Farbe wir nicht bestimmen. Wo er hinter einem Wort steht,
+ * braucht er den Ring nicht.
+ *
+ * Ohne `label` ist er für den Vorleser unsichtbar — in der unteren Leiste sagt schon
+ * der Knopf, was offen ist, und zweimal dasselbe zu hören hilft niemandem.
+ */
+export function OpenDot(props: {
+  label?: string | undefined;
+  className?: string | undefined;
+  ring?: boolean | undefined;
+}) {
+  return (
+    <span
+      {...(props.label === undefined
+        ? { "aria-hidden": true }
+        : { role: "img", "aria-label": props.label, title: props.label })}
+      className={`inline-block h-2 w-2 rounded-full bg-rose-500 ${
+        props.ring === false ? "" : "ring-2 ring-slate-900"
+      } ${props.className ?? ""}`}
+    />
+  );
+}
+
 export function Chip(props: {
   children: ReactNode;
   active?: boolean;

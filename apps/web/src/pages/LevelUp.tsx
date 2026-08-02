@@ -546,7 +546,7 @@ export function LevelUpPage() {
             Versäumnis (am Bogen steht es weiterhin).
           */}
           {buildIssues(sheetAfter).length > 0 && (
-            <ul className="mt-2 list-inside list-disc text-xs text-amber-400">
+            <ul className="mt-2 list-inside list-disc text-xs text-rose-300">
               {buildIssues(sheetAfter).map((issue, i) => (
                 <li key={i}>{issue.message}</li>
               ))}
