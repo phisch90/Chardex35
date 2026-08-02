@@ -12,6 +12,7 @@ import {
 } from "@codex35/core";
 import { S } from "../strings.js";
 import { useAllEntities, useCompendium } from "../lib/hooks.js";
+import { CompendiumRepo } from "../db/repo.js";
 import { BackButton } from "../ui/BackButton.js";
 import { Card, Chip, SearchInput, fmtMod } from "../ui/bits.js";
 
@@ -26,6 +27,26 @@ export function CompendiumPage() {
   const entities = useAllEntities();
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<"all" | "srd" | "homebrew">("all");
+  /*
+    Der Rückweg zum Löschen. Gelöscht heißt in dieser App MARKIERT, nicht entfernt
+    (`CompendiumRepo.remove` setzt `deletedAt`) — aber bisher zeigte das niemand an,
+    und damit war ein Löschen faktisch endgültig. Ein Schalter ohne Rückweg ist hier
+    dasselbe wie Löschen, und selbstgebaute Gegenstände sind Arbeit.
+  */
+  const [showDeleted, setShowDeleted] = useState(false);
+
+  const deletedCount =
+    entities?.filter((e) => e.kind === kind && e.deletedAt !== undefined).length ?? 0;
+  /*
+    Der WIRKSAME Schalter, nicht der gemerkte. Im gebauten Bogen gesehen: holt man den
+    letzten gelöschten Eintrag zurück, verschwindet der Knopf (es gibt nichts mehr zu
+    zeigen) — der Zustand blieb aber an, und das Kompendium stand leer da, ohne
+    sichtbaren Filter und ohne Weg zurück.
+
+    Genau die Falle, die beim Talentfilter im Kommentar steht: ein Filter, den man
+    nicht sieht, ist der Grund, warum eine leere Liste wie ein Fehler aussieht.
+  */
+  const onlyDeleted = showDeleted && deletedCount > 0;
 
   /*
     Erst Art + Suche, DANN die Quelle — in dieser Reihenfolge, weil an den
@@ -40,7 +61,16 @@ export function CompendiumPage() {
     if (!entities) return undefined;
     const q = query.trim().toLowerCase();
     return entities
-      .filter((e) => e.kind === kind && !e.deletedAt)
+      /*
+        NUR die Gelöschten, wenn der Schalter an ist — nicht „auch die Gelöschten".
+        Erst im gebauten Bogen gesehen: eingereiht zwischen 1866 Gegenständen ist ein
+        gelöschter Eintrag unauffindbar, und die Liste hört ohnehin bei 300 auf. Ein
+        Rückweg, den man nicht findet, ist keiner.
+      */
+      .filter((e) =>
+        e.kind === kind &&
+        (onlyDeleted ? e.deletedAt !== undefined : e.deletedAt === undefined),
+      )
       .filter(
         (e) =>
           !q ||
@@ -48,7 +78,7 @@ export function CompendiumPage() {
           (e.localized?.de?.name ?? "").toLowerCase().includes(q),
       )
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [entities, kind, query]);
+  }, [entities, kind, query, onlyDeleted]);
 
   const srdCount = matching?.filter((e) => e.source === "srd").length ?? 0;
   const homebrewCount = matching?.filter((e) => e.source === "homebrew").length ?? 0;
@@ -79,6 +109,21 @@ export function CompendiumPage() {
           {S.compendium.sourceHomebrew} {homebrewCount}
         </Chip>
       </div>
+
+      {/*
+        Nur zeigen, wenn es etwas zu zeigen gibt: ein Schalter, der bei jedem
+        Kompendium-Besuch „0" daneben hat, ist Lärm.
+      */}
+      {deletedCount > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Chip active={onlyDeleted} onClick={() => setShowDeleted(!showDeleted)}>
+            {S.compendium.showDeleted} {deletedCount}
+          </Chip>
+          {onlyDeleted && (
+            <span className="text-[11px] text-slate-500">{S.compendium.deletedHint}</span>
+          )}
+        </div>
+      )}
 
       {/* Solange es kein eigenes Homebrew gibt, trennen die Knöpfe nichts. Das
           gehört dahin geschrieben, statt es als wirkungslosen Tap zu erleben. */}
@@ -130,7 +175,27 @@ function EntityList({ entities, kind }: { entities: Entity[]; kind: EntityKind }
   return (
     <ul className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-900/50">
       {entities.map((entity) => (
-        <li key={entity.id}>
+        <li key={entity.id} className={entity.deletedAt === undefined ? "" : "opacity-60"}>
+          {/*
+            Zurückholen steht NEBEN dem Link, nicht darin: ein Knopf in einem Link
+            öffnet beim Tap auch den Link. Dasselbe Muster wie der ⋯-Knopf an der
+            Charakterkarte.
+          */}
+          {entity.deletedAt !== undefined && (
+            <div className="flex items-center justify-between gap-2 px-3 pt-2">
+              <span className="text-[11px] text-slate-500">{S.compendium.deletedMark}</span>
+              <button
+                onClick={() =>
+                  void CompendiumRepo.restore(entity).catch((error: unknown) =>
+                    console.error("Zurückholen ist fehlgeschlagen:", error),
+                  )
+                }
+                className="shrink-0 rounded border border-emerald-700 px-2 py-0.5 text-[11px] font-medium text-emerald-300 hover:bg-emerald-950/50"
+              >
+                {S.compendium.restore}
+              </button>
+            </div>
+          )}
           <Link
             to="/kompendium/$kind/$entityId"
             params={{ kind, entityId: entity.id }}

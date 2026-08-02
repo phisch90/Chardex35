@@ -456,7 +456,21 @@ export function applyFullExtras(
       value: tracker.value,
       max: tracker.max,
       maxManual: true,
-      ...(tracker.perDay ? { note: "füllt sich bei der Rast" } : {}),
+      /*
+        `resetType 1` heißt in Fight Club „füllt sich bei der Rast". Das stand hier
+        vorher als SATZ im Notizfeld — lesbar für ihn, aber unerreichbar für jede
+        Regel: `planRest` konnte damit nichts anfangen und entschied stattdessen
+        danach, ob der Zähler aus einem Vorschlag der App entstand. Ein importierter
+        „Aktionspunkte"-Zähler rastete deshalb nicht mit, obwohl in der Datei stand,
+        dass er es tut.
+
+        Jetzt landet es im Feld — und zwar als "short", weil das der Wert ist, den
+        seine anderen Tageszähler haben: seine kurze Pause füllt sie mit („Kurze
+        Pause (nur Tageszähler)"). Ein importierter Zähler soll sich verhalten wie
+        einer, den die App selbst vorgeschlagen hätte. Auf acht Stunden beschränken
+        kann er ihn am Zähler.
+      */
+      ...(tracker.perDay ? { refill: "short" as const } : {}),
     });
   }
 

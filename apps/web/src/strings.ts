@@ -819,6 +819,30 @@ export const S = {
           ? "Dieser Gegenstand liegt nur auf diesem Bogen."
           : `Dieser Gegenstand liegt auf ${count} Bögen auf diesem Gerät (${names.join(", ")}). Deine Änderung gilt für alle.`,
       failed: (message: string) => `Konnte nicht gespeichert werden: ${message}`,
+      /*
+        LÖSCHEN eigener Gegenstandstypen. Es gab das bewusst nicht, weil ein
+        gelöschter Typ jeden Bogen beschädigt, der ihn noch trägt — er verliert RK
+        bzw. Angriffszeile und zeigt eine Fehlermeldung. Sein Wort dazu ist jetzt da:
+        „ja".
+
+        Gebaut wie bei den Talenten: gesperrt, aber mit Notausgang. Die App nennt die
+        betroffenen Bögen namentlich; wer trotzdem will, bestätigt einmal. Der
+        Grundsatz dieses Projekts bleibt damit gewahrt — der DM hat Recht, nicht die
+        App —, ohne dass ein Fehlgriff einen Bogen kostet.
+      */
+      remove: "Diesen Typ löschen",
+      removeFree: "Kein Bogen trägt ihn — Löschen ist gefahrlos.",
+      removeBlocked: (names: string[]) =>
+        names.length === 1
+          ? `${names[0]} trägt ihn noch. Beim Löschen verliert der Bogen die Werte dieses Stücks und zeigt eine Fehlermeldung.`
+          : `${names.join(", ")} tragen ihn noch. Beim Löschen verlieren diese Bögen die Werte dieses Stücks und zeigen eine Fehlermeldung.`,
+      removeYes: "Ja, löschen",
+      removeAnyway: "Ja, mein DM erlaubt es",
+      removeNo: "Nein",
+      /** Nach dem Löschen — der Rückweg steht im Kompendium. */
+      removeDone: "Gelöscht. Im Kompendium lässt er sich zurückholen.",
+      removeHint:
+        "Gelöscht heißt hier nur markiert: der Typ verschwindet aus den Listen, bleibt aber im Kompendium unter „Gelöschte zeigen“ und lässt sich zurückholen.",
     },
   },
 
@@ -840,15 +864,37 @@ export const S = {
     shortHint: "Füllt nur die Tageszähler. Die Zauberplätze bleiben verbraucht.",
     slotsUntouched: "Zauberplätze bleiben, wie sie sind.",
     nothing: "Nichts aufzufüllen — alle Plätze sind frei und die Zähler voll.",
+    /*
+      Und der Fall dazwischen, gefunden im gebauten Bogen: es ist nichts aufzufüllen,
+      aber NICHT weil alles voll ist — sondern weil die betroffenen Zähler nicht
+      mitrasten. Vorher stand dann „alle Plätze sind frei und die Zähler voll", und
+      das war schlicht falsch: sein Zähler stand auf 2 von 3.
+
+      Eine Rast, die nichts tut, muss sagen warum. Genau diese Stille hat ihn an
+      „Aktionspunkte" gestört.
+    */
+    nothingSkipped: (lines: string[]) =>
+      `Nichts aufzufüllen. ${lines.join(" · ")}`,
     confirmTitle: "Das ändert sich:",
     slotLine: (className: string, freed: number) =>
       `${className}: ${freed} ${freed === 1 ? "verbrauchter Platz wird" : "verbrauchte Plätze werden"} frei`,
     trackerLine: (name: string, from: number, to: number) => `${name}: ${from} → ${to}`,
     skippedTitle: "Bleibt in Ruhe:",
+    /*
+      Warum ein Zähler in Ruhe bleibt. Die Tabelle MUSS jeden Grund kennen, den
+      `RestSkippedLine` kennt — fehlt einer, steht in der Ansage nichts, und ein
+      Zähler, der stillschweigend nicht mitrastet, ist genau das, was ihn an
+      „Aktionspunkte" gestört hat.
+
+      „eigene Mechanik" hieß früher „die Regel dazu kenne ich nicht". Das stimmt
+      nicht mehr: seit er es je Zähler einstellen kann, ist es keine fehlende Regel,
+      sondern eine, die er noch nicht gesetzt hat — und der Satz sagt jetzt, wo.
+    */
     skippedReasons: {
-      "eigene Mechanik": "die Regel dazu kenne ich nicht",
+      "eigene Mechanik": "füllt sich nicht von allein — am Zähler mit ⟳ einstellen",
       "keine Grenze": "keine Obergrenze eingetragen",
       "schon voll": "schon voll",
+      "erst nach acht Stunden": "füllt sich erst bei der langen Rast",
     } as Record<string, string>,
     /*
       Der Satz, der die zwei offenen Regelfragen benennt statt sie zu erfinden:
@@ -877,6 +923,15 @@ export const S = {
     } as Record<string, string>,
     sourceSrd: "SRD",
     sourceHomebrew: "Homebrew",
+    /*
+      Der Rückweg zum Löschen eigener Typen. Gelöscht heißt in dieser App MARKIERT,
+      nicht entfernt — aber bis jetzt zeigte das niemand an, und damit war ein
+      Löschen faktisch endgültig.
+    */
+    showDeleted: "Gelöschte zeigen",
+    deletedHint: "Gelöschte Einträge sind nur markiert. Sie tauchen in keiner Auswahl auf.",
+    deletedMark: "gelöscht",
+    restore: "Zurückholen",
     empty: "Nichts gefunden.",
     emptyHomebrew: "Hier liegt noch nichts Eigenes — Homebrew-Einträge erscheinen, sobald du welche anlegst oder importierst.",
     /** Warum „nur SRD" nichts ändert, solange es nichts anderes gibt. */
@@ -937,6 +992,22 @@ export const S = {
     empty: "Noch keine Zähler. Leg einen an für Aktionspunkte & Co.",
     suggestHint: "Aus deinen Klassen ergeben sich diese Zähler:",
     suggestAdd: "anlegen",
+    /*
+      Füllt sich bei der Rast — jetzt einstellbar, sein Wunsch: „ja, bzw soll man
+      das selber einstellen können."
+
+      Der Zustand steht als SATZ unter dem Namen, nicht als Zeichen am Knopf. Ein
+      Knopf, der drei Zustände durchtippt, ohne dass einer davon zu lesen ist, ist
+      ein Ratespiel — und die Zeile darunter war ohnehin schon da (dort steht die
+      Herkunft der Grenze).
+    */
+    refill: {
+      long: "füllt sich bei der Rast (8 Stunden)",
+      short: "füllt sich bei Rast und kurzer Pause",
+      never: "füllt sich nicht von allein",
+    } as Record<string, string>,
+    /** Am Knopf, der durchschaltet. */
+    refillCycle: "Wann füllt sich der Zähler? Antippen zum Wechseln.",
   },
 
   /*

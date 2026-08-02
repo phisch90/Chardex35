@@ -394,6 +394,26 @@ export const characterSchema = z.object({
          */
         suggestedFrom: z.string().optional(),
         /**
+         * Füllt sich dieser Zähler bei der Rast — und bei welcher?
+         *
+         * Sein Wunsch, wörtlich: „ja, bzw soll man das selber einstellen können."
+         *
+         * Vorher gab es dieses Feld nicht, und `planRest` entschied nach
+         * `suggestedFrom`: aus einem Vorschlag der App entstanden = füllt sich.
+         * Das war eine FOLGE als Ersatz für eine Eingabe — bei „Aktionspunkte"
+         * kannte die App die Regel nicht und sagte das, obwohl sein Tisch sie
+         * kennt. Der Fight-Club-Import las `resetType 1` sogar richtig, schrieb es
+         * aber als Satz in die NOTIZ, wo keine Regel drankommt.
+         *
+         * `undefined` heißt „nie gesagt": dann gilt weiter die alte Ableitung
+         * (siehe `refillOf` in `engine/trackers.ts`). Ohne diesen Rückfall hätte
+         * die Umstellung sein „Untote vertreiben" stillgelegt.
+         *
+         * „short" schließt die lange Rast mit ein — was sich nach einer kurzen
+         * Pause füllt, füllt sich nach acht Stunden auch.
+         */
+        refill: z.enum(["long", "short", "never"]).optional(),
+        /**
          * Hat die Obergrenze jemand VON HAND gesetzt?
          *
          * Ohne diese Unterscheidung war `max` eine Momentaufnahme vom Anlegen —

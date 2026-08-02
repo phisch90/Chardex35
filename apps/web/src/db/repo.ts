@@ -291,6 +291,21 @@ export const CompendiumRepo = {
     if (entity.source !== "homebrew") throw new Error("SRD-Einträge können nicht gelöscht werden.");
     await db.entities.put({ ...entity, deletedAt: now(), rev: entity.rev + 1, updatedAt: now() });
   },
+
+  /**
+   * Und zurück. Gelöscht heißt hier MARKIERT, nicht entfernt — ohne diesen Weg wäre
+   * es faktisch endgültig gewesen, und selbstgebaute Gegenstände sind Arbeit, die
+   * niemand sonst hat.
+   *
+   * `deletedAt` wird gelöscht und nicht auf `undefined` gesetzt: Dexie schreibt das
+   * Objekt, wie es ist, und ein Feld mit dem Wert `undefined` überlebt den Weg durch
+   * IndexedDB nicht verlässlich als „nicht da".
+   */
+  async restore(entity: Entity): Promise<void> {
+    const next = { ...entity, rev: entity.rev + 1, updatedAt: now() };
+    delete next.deletedAt;
+    await db.entities.put(next);
+  },
 };
 
 const HOUSE_RULES_KEY = "houseRules";

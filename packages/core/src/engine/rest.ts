@@ -1,6 +1,6 @@
 import type { Character } from "../schema/character.js";
 import type { DerivedSheet } from "./types.js";
-import { effectiveTrackerMax } from "./trackers.js";
+import { effectiveTrackerMax, refillOf } from "./trackers.js";
 
 /**
  * Die Rast — an EINER Stelle, mit Ansage.
@@ -61,7 +61,12 @@ export interface RestSkippedLine {
    * Warum dieser Zähler in Ruhe bleibt. Steht in der Ansage — ein Zähler, der
    * stillschweigend nicht mitrastet, ist schlimmer als einer, der es begründet.
    */
-  reason: "eigene Mechanik" | "keine Grenze" | "schon voll";
+  reason:
+    | "eigene Mechanik"
+    | "keine Grenze"
+    | "schon voll"
+    /* Füllt sich, aber erst nach acht Stunden — bei der kurzen Pause. */
+    | "erst nach acht Stunden";
 }
 
 /**
@@ -119,18 +124,31 @@ export function planRest(
     if (tracker.kind !== "counter") continue;
 
     /*
-      „Füllt sich bei der Rast" steht nirgends in den Daten — das Zähler-Schema hat
-      kein solches Feld. Was es gibt, ist `suggestedFrom`: der Zähler ist aus einem
-      Vorschlag der App entstanden, und JEDER dieser Vorschläge ist eine Fähigkeit
-      pro Tag (Untote vertreiben, Raserei, Bardenmusik, Niederstrecken, Tiergestalt,
-      Betäubender Schlag, dazu alles mit „X/day" aus den Klassenmerkmalen).
+      „Füllt sich bei der Rast" steht jetzt IM ZÄHLER (`refill`) — seine Antwort war
+      „ja, bzw soll man das selber einstellen können."
 
-      Ein selbst angelegter Zähler bleibt deshalb in Ruhe: bei „Aktionspunkte" oder
-      „Schicksalspunkten" kennt die App die Regel nicht, und eine geratene Regel
-      ist schlimmer als eine fehlende. Er erfährt es in der Ansage.
+      Vorher entschied hier `suggestedFrom`: aus einem Vorschlag der App entstanden
+      = füllt sich. Das war eine Folge als Ersatz für eine Eingabe. Bei
+      „Aktionspunkte" kannte die App die Regel nicht und sagte das — obwohl SEIN
+      Tisch sie kennt, und er es also nur eintragen können müsste.
+
+      `refillOf` trägt den Rückfall auf die alte Ableitung für alles, was schon
+      gespeichert ist. Und es ist EINE Funktion, die auch die Oberfläche fragt:
+      sonst füllt sich am Bogen etwas, das die Ansage vorher nicht genannt hat.
     */
-    if (tracker.suggestedFrom === undefined) {
+    const refill = refillOf(tracker);
+    if (refill === "never") {
       skipped.push({ name: tracker.name, reason: "eigene Mechanik" });
+      continue;
+    }
+    /*
+      Die kurze Pause füllt nur, was ausdrücklich dafür markiert ist. Sie ist eine
+      Hausregel seines Tisches — im Regelwerk füllen sich Fähigkeiten pro Tag erst
+      nach acht Stunden —, und deshalb darf sie nicht stillschweigend alles
+      mitnehmen, was sich nach einer Nacht füllt.
+    */
+    if (scope === "short" && refill !== "short") {
+      skipped.push({ name: tracker.name, reason: "erst nach acht Stunden" });
       continue;
     }
 

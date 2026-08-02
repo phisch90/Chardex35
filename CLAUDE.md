@@ -291,6 +291,29 @@ Dazu zwei kleinere Fallen aus derselben Runde:
 - **Ein Schalter ohne Rückweg ist Löschen.** Abgestellte Hinweise werden nur MARKIERT,
   nicht entfernt, und stehen gedämpft unter „1 Hinweis ist abgestellt — wieder zeigen".
 
+- **Eigene Gegenstandstypen löschen: ja.** Sein Wort dazu ist da. Gebaut wie die
+  Talentwahl — **gesperrt mit Notausgang**: die App nennt die betroffenen Bögen
+  NAMENTLICH und sagt, was passiert (der Bogen verliert RK bzw. Angriffszeile), und
+  wer trotzdem will, bestätigt mit „Ja, mein DM erlaubt es". Gelöscht heißt
+  MARKIERT (`deletedAt`), und der Rückweg steht im Kompendium unter „Gelöschte
+  zeigen" mit „Zurückholen". Zwei Sachen fielen erst im gebauten Bogen auf: der
+  Schalter muss **nur** die Gelöschten zeigen (zwischen 1866 Gegenständen findet man
+  sonst nichts, und die Liste hört bei 300 auf), und er darf nicht am gemerkten
+  Zustand hängen — holt man den letzten zurück, verschwand der Knopf, der Filter
+  blieb an, und das Kompendium stand leer da. Dieselbe Falle wie beim Talentfilter.
+- **Zähler bei der Rast: einstellbar.** Wörtlich: „ja, bzw soll man das selber
+  einstellen können." Drei Werte je Zähler (`refill`: lange Rast / auch kurze Pause
+  / nie), durchgeschaltet mit ⟳, und der Zustand steht als SATZ unter dem Namen.
+  `refillOf` in `core/engine/trackers.ts` ist die EINE Stelle, die die Frage
+  beantwortet — mit Rückfall auf die alte Ableitung für alles, was schon
+  gespeichert ist. Der Rückfall ist „short" und nicht „long": die kurze Pause füllte
+  bisher die Tageszähler, und das war seine Entscheidung. Ein Test hat genau diesen
+  Rückschritt gefangen. Der Fight-Club-Import schreibt `resetType 1` jetzt ins FELD
+  statt als Satz in die Notiz.
+- **Eine Rast, die nichts tut, sagt warum.** Vorher stand dort immer „alle Plätze
+  sind frei und die Zähler voll" — auch wenn ein Zähler bei 2 von 3 stand und bloß
+  nicht mitrastet. Eine falsche Auskunft, gefunden im gebauten Bogen.
+
 ## Noch offen
 
 - **Halber Stärkeschaden in der zweiten Hand** (Dolch 1d4+1 statt 1d4+2) und die
@@ -301,14 +324,6 @@ Dazu zwei kleinere Fallen aus derselben Runde:
   Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in
   `core/compendium/homebrewItem.ts`), und der Assistent benutzt jetzt denselben
   Blätterer wie der Bogen.
-- **Eigene Gegenstände LÖSCHEN** gibt es bewusst nicht: jeder Bogen, der einen
-  gelöschten Typ noch trägt, verliert RK und Angriffszeile und zeigt eine
-  Fehlermeldung. Das braucht sein Wort (Löschen ist eine der zwei Ausnahmen).
-- **Eigene Zähler bei der Rast:** aufgefüllt wird nur, was aus einem Vorschlag der
-  App entstand (`suggestedFrom`) — bei „Aktionspunkte" kennt die App die Regel
-  nicht und sagt das. Damit Fight-Club-Zähler mitrasten, bräuchte der Zähler ein
-  echtes Feld „füllt sich bei der Rast" (der Import liest es schon als `perDay` und
-  wirft es weg).
 - **Ein fehlgeschlagenes Speichern sieht er nicht.** Es steht jetzt in der Konsole,
   aber auf dem Handy schaut da niemand hinein. Eine sichtbare Meldung fehlt.
 - **Behälter** (Inventar/Geldbeutel, Münzgewicht) und Umsortieren per Ziehen.
