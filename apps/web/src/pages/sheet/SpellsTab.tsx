@@ -320,6 +320,17 @@ function CasterBlock({
                       .length
                   : 0;
                 const active = isPrepared ? count > 0 : knownSet.has(entry.spellId);
+                /*
+                  Grad 0 ohne Vorbereitung — Martins Regel: „müssen nicht vorbereitet
+                  werden, allgemein lockere Handhabung, gilt für alle." Die PLÄTZE
+                  bleiben (seine Entscheidung), nur die Wahl fällt beim Wirken.
+
+                  Betroffen sind allein die Vorbereiter: ein Barde oder Hexenmeister
+                  entscheidet ohnehin erst beim Wirken, für ihn ändert die Regel nichts.
+                  Deshalb hängt das hier an `isPrepared` und nicht am Grad allein.
+                */
+                const freeCantrip = isPrepared && level === 0;
+                const castable = freeCantrip || active;
                 const blocked = active
                   ? false
                   : isPrepared
@@ -371,7 +382,7 @@ function CasterBlock({
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       {/* Wirken zuerst und hervorgehoben — das ist der Handgriff
                           am Spieltisch. */}
-                      {active && (
+                      {castable && (
                         <button
                           disabled={!canCastAt(level)}
                           onClick={() => castAt(level)}
@@ -380,23 +391,28 @@ function CasterBlock({
                           {S.spells.cast}
                         </button>
                       )}
-                      <GhostButton
-                        disabled={blocked}
-                        onClick={() =>
-                          isPrepared
-                            ? togglePrepared(entry.spellId, level)
-                            : toggleKnown(entry.spellId, level)
-                        }
-                      >
-                        {active
-                          ? isPrepared
-                            ? S.spells.unprepare
-                            : S.spells.unlearn
-                          : isPrepared
-                            ? S.spells.prepare
-                            : S.spells.learn}
-                      </GhostButton>
-                      {isPrepared && count > 0 && (
+                      {/* Auf Grad 0 gibt es nichts vorzubereiten — also auch keinen Knopf
+                          dafür. Ein „Vorbereiten", das nichts bedeutet, ist schlimmer
+                          als keins. */}
+                      {!freeCantrip && (
+                        <GhostButton
+                          disabled={blocked}
+                          onClick={() =>
+                            isPrepared
+                              ? togglePrepared(entry.spellId, level)
+                              : toggleKnown(entry.spellId, level)
+                          }
+                        >
+                          {active
+                            ? isPrepared
+                              ? S.spells.unprepare
+                              : S.spells.unlearn
+                            : isPrepared
+                              ? S.spells.prepare
+                              : S.spells.learn}
+                        </GhostButton>
+                      )}
+                      {isPrepared && !freeCantrip && count > 0 && (
                         <GhostButton
                           disabled={!canPrepareAt(level)}
                           onClick={() =>

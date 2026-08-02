@@ -5,6 +5,7 @@ const state = (overrides: Partial<HpState> = {}): HpState => ({
   damage: 0,
   nonlethal: 0,
   temp: 0,
+  stabilized: false,
   ...overrides,
 });
 

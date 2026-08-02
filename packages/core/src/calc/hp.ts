@@ -19,6 +19,11 @@ export type HpChangeMode = "heal" | "temp" | "damage" | "nonlethal";
  *   die die App nicht kennt (zwei Zauber vs. ein Zauber zweimal), also bleibt
  *   es beim Addieren: der Spieler weiß, was er eintippt. Regel-Hinweis statt
  *   Blocker, wie überall.
+ * - **Neuer Schaden löscht die Stabilisierung.** Wer wieder getroffen wird, ist nicht
+ *   mehr stabil — das ist eine Regel und gehört deshalb hierher und nicht in die
+ *   Oberfläche. Ohne diese Zeile hinge ein „stabilisiert: ja" vom letzten Kampf noch
+ *   drin, wenn er drei Abende später wieder umfällt: eine gespeicherte Wahrheit, die
+ *   nicht mehr stimmt.
  *
  * Mutiert nichts, sondern liefert den neuen Zustand.
  */
@@ -29,7 +34,12 @@ export function applyHpChange(hp: HpState, mode: HpChangeMode, amount: number): 
   switch (mode) {
     case "damage": {
       const fromTemp = Math.min(hp.temp, value);
-      return { ...hp, temp: hp.temp - fromTemp, damage: hp.damage + (value - fromTemp) };
+      return {
+        ...hp,
+        temp: hp.temp - fromTemp,
+        damage: hp.damage + (value - fromTemp),
+        stabilized: false,
+      };
     }
     case "nonlethal":
       return { ...hp, nonlethal: hp.nonlethal + value };

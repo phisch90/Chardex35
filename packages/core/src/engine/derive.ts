@@ -14,6 +14,7 @@ import {
   type TwoWeaponSetup,
   type WieldContext,
 } from "./combatOptions.js";
+import { dyingStatus } from "./dying.js";
 import { isNaturalOrUnarmed } from "./equipment.js";
 import type { ActiveEffect, ResolvedCharacter, TimelineResult } from "./internal.js";
 import {
@@ -462,17 +463,32 @@ export function deriveSheetValues(
    */
   const computedMax = hpMax;
   if (character.hp.overrideMax !== undefined) hpMax = character.hp.overrideMax;
+  /**
+   * Darf negativ werden — genau diese Zahl braucht der Tisch, deshalb wird hier NICHT
+   * auf 0 geklemmt (siehe fightclub.test.ts: ein sterbender Import bleibt sterbend).
+   */
+  const current = hpMax - character.hp.damage;
+  /*
+    Wo dieser Stand liegt, entscheidet Martins Hausregel — gerechnet, nicht gespeichert
+    (`engine/dying.ts`). Die Grenzen kommen als ZAHLEN mit, damit der Bogen sie anzeigen
+    kann statt sie ein zweites Mal auszurechnen.
+  */
+  const dying = dyingStatus({
+    current,
+    conScore: abilities.con.score.total,
+    conMod,
+    deathAt: houseRules.deathAt,
+    stabilized: character.hp.stabilized,
+  });
   const hp = {
     max: hpMax,
     computedMax,
-    /**
-     * Darf negativ werden — in 3.5 ist −1 bis −9 sterbend und −10 tot. Genau
-     * diese Zahl braucht der Tisch, deshalb wird hier NICHT auf 0 geklemmt
-     * (siehe fightclub.test.ts: ein sterbender Import bleibt sterbend).
-     */
-    current: hpMax - character.hp.damage,
+    current,
     nonlethal: character.hp.nonlethal,
     temp: character.hp.temp,
+    state: dying.state,
+    deadAt: dying.deadAt,
+    saveZoneDownTo: dying.saveZoneDownTo,
   };
 
   // --- Angriffe ---------------------------------------------------------------

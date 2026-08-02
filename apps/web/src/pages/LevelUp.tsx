@@ -12,14 +12,11 @@ import {
   openBuildWork,
   planLevelUpRefill,
   skillPointCost,
-  parseDice,
-  rollDice,
   type Ability,
   type Character,
 } from "@codex35/core";
 import { S } from "../strings.js";
 import { CharacterRepo } from "../db/repo.js";
-import { cryptoRng } from "../lib/rng.js";
 import {
   useAllEntities,
   useCharacter,
@@ -48,7 +45,6 @@ export function LevelUpPage() {
   const [showAllClasses, setShowAllClasses] = useState(false);
   const [showNpcClasses, setShowNpcClasses] = useState(false);
   const [infoClassId, setInfoClassId] = useState<string | null>(null);
-  const [hpRoll, setHpRoll] = useState<number | null>(null);
   const [abilityPick, setAbilityPick] = useState<Ability | null>(null);
   const [ranks, setRanks] = useState<Record<string, number> | null>(null);
   /** Beim Aufstieg neu angelegte Teilgebiete (z.B. erstes Knowledge (arcana)). */
@@ -73,13 +69,15 @@ export function LevelUpPage() {
   const afterCharacter: Character | null = useMemo(() => {
     if (!character || !classId || ranks === null) return null;
     const copy = structuredClone(character);
-    // TP-Wurf hart auf 1..TW klemmen und runden — getippte Dezimal-/Ausreißer-
-    // Werte würden sonst das Schema (int) und damit den Export brechen.
-    const cls = compendium?.get(classId);
-    const die = cls?.kind === "class" ? cls.data.hitDie : 12;
-    const clampedHp =
-      hpRoll === null ? ("avg" as const) : Math.min(Math.max(1, Math.round(hpRoll)), die);
-    copy.levels.push({ classId, hpRoll: clampedHp });
+    /*
+      Martins Regel: „TP bei Levelup: volle Hit Die der Klasse (Krieger +10), kein Wurf."
+
+      `"max"` kennt die Engine schon (`derive.ts`: bei „max" gilt der Würfel als
+      Höchstwurf), es ist also kein neues Feld — und es steht an DIESER Stufe. Damit
+      bleiben alle bisherigen Stufen unangetastet, so wie er es entschieden hat. Vorher
+      stand hier „leer = Durchschnitt" mit einem Eingabefeld und einem Würfel daneben.
+    */
+    copy.levels.push({ classId, hpRoll: "max" });
     if (needsAbility) {
       const index = Math.floor(newTotal / 4) - 1;
       const ups = [...copy.abilities.levelUps];
@@ -95,7 +93,7 @@ export function LevelUpPage() {
       state.known = [...state.known, ...newKnown.filter((id) => !state.known.includes(id))];
     }
     return copy;
-  }, [character, classId, ranks, hpRoll, needsAbility, newTotal, abilityPick, newFeatIds, newKnown, newSubtypes, compendium]);
+  }, [character, classId, ranks, needsAbility, newTotal, abilityPick, newFeatIds, newKnown, newSubtypes, compendium]);
 
   const sheetAfter = useMemo(
     () => (afterCharacter && compendium ? deriveSheet(afterCharacter, compendium, houseRules) : undefined),
@@ -153,12 +151,6 @@ export function LevelUpPage() {
     kennen") und die Suche stehen jetzt im `SpellPicker` — hier standen sie als eigene
     Fassung, und der Assistent hätte eine dritte gebraucht.
   */
-
-  const rollHp = () => {
-    if (!hitDie) return;
-    const expr = parseDice(`1d${hitDie}`);
-    if (expr) setHpRoll(rollDice(expr, cryptoRng).total);
-  };
 
   /*
     Zähler, die beim Stufenaufstieg zurückgehen — gerechnet gegen den Bogen NACH dem
@@ -311,26 +303,26 @@ export function LevelUpPage() {
         </details>
       </Card>
 
+      {/*
+        Kein Würfelfeld mehr. Martins Regel: „TP bei Levelup: volle Hit Die der Klasse
+        (Krieger +10), kein Wurf." Kein Wurf heißt kein Knopf — ein Eingabefeld daneben
+        würde behaupten, es gäbe hier noch etwas zu entscheiden.
+
+        Geschrieben wird `hpRoll: "max"` an die STUFE und nicht als Hausregel über alle
+        Stufen: bestehende Bögen bleiben Zahl für Zahl, wie sie sind (seine Entscheidung
+        auf die Rückfrage). Ein Schalter hätte jeden gespeicherten Wurf neu gedeutet.
+      */}
       <Card>
-        <SectionTitle>
-          {S.levelUp.hpRoll} {hitDie ? `(W${hitDie})` : ""}
-        </SectionTitle>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min={1}
-            max={hitDie ?? 12}
-            value={hpRoll ?? ""}
-            onChange={(e) =>
-              setHpRoll(Number.isNaN(e.target.valueAsNumber) ? null : Math.round(e.target.valueAsNumber))
-            }
-            className="w-24 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-lg font-semibold"
-          />
-          <GhostButton onClick={rollHp} disabled={!hitDie}>
-            🎲 {S.levelUp.rollHp}
-          </GhostButton>
-          <span className="text-xs text-slate-500">leer = Durchschnitt</span>
-        </div>
+        <SectionTitle>{S.levelUp.hpTitle}</SectionTitle>
+        <p className="text-sm text-slate-200">
+          {hitDie === null
+            ? S.levelUp.hpNoClass
+            : S.levelUp.hpFull(
+                hitDie,
+                sheetAfter && sheetBefore ? sheetAfter.hp.max - sheetBefore.hp.max : hitDie,
+              )}
+        </p>
+        <p className="mt-1 text-[11px] leading-snug text-slate-500">{S.levelUp.hpFullWhy}</p>
       </Card>
 
       {needsAbility && (

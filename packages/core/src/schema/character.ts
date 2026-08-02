@@ -17,7 +17,16 @@ export const houseRulesSchema = z.object({
   maxHpFirstLevel: z.boolean().default(true),
   /** RAW-Regel, die kaum ein Tisch spielt — Default aus. Warn-only. */
   multiclassXpPenalty: z.boolean().default(false),
-  deathAt: z.enum(["minus10", "negCon"]).default("minus10"),
+  /**
+   * Wo der Tod steht. Martins Antwort für diesen Tisch: „Tod erst bei HP gleich
+   * negativem CON Wert."
+   *
+   * Der Standard ist deshalb `negCon` und nicht mehr die Buchregel. Das Feld gab es
+   * schon, aber es hatte weder Oberfläche noch Wirkung — ein nie gezeigter Standardwert
+   * ist keine Entscheidung, die man erhalten müsste. Wirkung: `engine/dying.ts`;
+   * Schalter: die Hausregel-Karte in den Einstellungen.
+   */
+  deathAt: z.enum(["minus10", "negCon"]).default("negCon"),
   pointBuyBudget: z.number().int().optional(),
   /**
    * Traglast komplett ignorieren („wir spielen ohne Gewicht"): keine
@@ -268,8 +277,17 @@ export const characterSchema = z.object({
       nonlethal: z.number().int().default(0),
       temp: z.number().int().default(0),
       overrideMax: z.number().int().optional(),
+      /**
+       * Die Selbststabilisierungs-Probe ist gelungen (Hausregel, Fort DC 10).
+       *
+       * Die EINZIGE Eingabe der ganzen Sterbe-Regel: ein Würfelergebnis am Tisch kann
+       * die App nicht ableiten. Alles andere daran ist eine Folge und wird gerechnet
+       * (`engine/dying.ts`). Neuer Schaden löscht die Marke wieder — wer wieder
+       * getroffen wird, ist nicht mehr stabil (`calc/hp.ts`).
+       */
+      stabilized: z.boolean().default(false),
     })
-    .default({ damage: 0, nonlethal: 0, temp: 0 }),
+    .default({ damage: 0, nonlethal: 0, temp: 0, stabilized: false }),
 
   xp: z.number().int().default(0),
 

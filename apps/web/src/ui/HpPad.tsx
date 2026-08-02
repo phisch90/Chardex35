@@ -31,6 +31,19 @@ export function HpPad(props: {
   overrideMax: number | undefined;
   /** `null` gibt die Rechnung wieder frei. */
   onSetMax: (value: number | null) => void;
+  /**
+   * Der gerechnete Sterbe-Zustand samt seinem Satz — fehlt, wo es ihn nicht gibt
+   * (Gruppenansicht, Vergleich). Der Text kommt von außen, damit die Regel nicht an
+   * zwei Stellen in Worte gefasst wird.
+   */
+  dying?:
+    | {
+        state: string;
+        text: string;
+        stabilized: boolean;
+        onToggleStabilized: () => void;
+      }
+    | undefined;
 }) {
   const [input, setInput] = useState("");
   const [maxDraft, setMaxDraft] = useState<string | null>(null);
@@ -116,6 +129,42 @@ export function HpPad(props: {
             </button>
           )}
         </div>
+        {/*
+          Unter 0: der Zustand und die zwei Handgriffe, die die Regel dann hergibt.
+
+          Sie stehen HIER, weil das die Stelle ist, an der der Schaden eingetippt wird —
+          wer gerade „12" gedrückt hat und unter 0 landet, braucht sie im selben Blick.
+          Automatisch kann die App das „1 TP pro Runde" nicht: sie weiß nicht, wann eine
+          Runde vergeht. Also ein Knopf, der genau einen Schritt tut.
+        */}
+        {props.dying !== undefined && props.dying.state !== "ok" && (
+          <div className="space-y-1.5 border-t border-slate-800 pt-1.5">
+            <p className="leading-snug text-rose-200">{props.dying.text}</p>
+            {props.dying.state !== "dead" && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={props.dying.onToggleStabilized}
+                  className={`rounded-lg border px-2 py-1 text-[11px] font-medium ${
+                    props.dying.stabilized
+                      ? "border-emerald-700 bg-emerald-950/50 text-emerald-200"
+                      : "border-slate-600 text-slate-300"
+                  }`}
+                >
+                  {props.dying.stabilized ? S.dying.stabilizedOn : S.dying.stabilizedOff}
+                </button>
+                {props.dying.state === "bleeding" && (
+                  <button
+                    onClick={() => props.onApply("damage", 1)}
+                    className="rounded-lg border border-rose-700/70 px-2 py-1 text-[11px] font-medium text-rose-200"
+                  >
+                    {S.dying.roundOn}
+                  </button>
+                )}
+              </div>
+            )}
+            <p className="text-[10px] leading-snug text-slate-500">{S.dying.stabilizedHint}</p>
+          </div>
+        )}
         <div className="flex items-center gap-2 border-t border-slate-800 pt-1.5">
           <span className="shrink-0 text-slate-400">Maximum</span>
           <input
