@@ -14,7 +14,7 @@ import { S } from "../strings.js";
 import { useCharacters, useCompendium, useHouseRules } from "../lib/hooks.js";
 import { CharacterRepo } from "../db/repo.js";
 import { importEnvelope, type ImportResult } from "../lib/transfer.js";
-import { Card, GhostButton } from "../ui/bits.js";
+import { Card, GhostButton, OPEN_MARK } from "../ui/bits.js";
 import { campaignLook } from "../ui/campaignColors.js";
 import { cardTier, type CardTier } from "../ui/cardTier.js";
 import { VersionBadge } from "../ui/VersionBadge.js";
@@ -498,7 +498,7 @@ function CharacterRow(props: {
               <span
                 title={S.open.markTitle(open)}
                 aria-label={S.open.markTitle(open)}
-                className="rounded-full bg-amber-950/60 px-2 py-0.5 text-[10px] font-semibold text-amber-300"
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${OPEN_MARK}`}
               >
                 {S.open.mark(open.length)}
               </span>

@@ -8,7 +8,7 @@ import { useAppSettings, useCharacter, useCompendium, useSheet } from "../../lib
 import { useDiceStore } from "../../lib/diceStore.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
-import { Chip, GhostButton, fmtMod } from "../../ui/bits.js";
+import { Chip, GhostButton, OpenDot, fmtMod } from "../../ui/bits.js";
 import { SwipeTabs } from "../../ui/SwipeTabs.js";
 import { OrderBanner } from "../../group/OrderBanner.js";
 import { IdentityCard } from "./Identity.js";
@@ -313,10 +313,10 @@ export function CharacterSheetPage() {
               Vorlese-Text, damit sie nicht verloren ist.
             */}
             {issueTabs.has(key) && (
-              <span
-                aria-label={S.open.tabDot(issueTabs.get(key) ?? 0)}
-                title={S.open.tabDot(issueTabs.get(key) ?? 0)}
-                className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-400 align-middle"
+              <OpenDot
+                label={S.open.tabDot(issueTabs.get(key) ?? 0)}
+                className="ml-1 align-middle"
+                ring={false}
               />
             )}
           </Chip>
@@ -389,10 +389,12 @@ export function CharacterSheetPage() {
               Kurzform („Ausr.", „Fert.") füllt die Zelle schon aus, und ein Zeichen
               mehr würde umbrechen. `absolute`, damit die Zeile ihre Höhe behält —
               sonst rutschte die ganze Leiste, sobald ein Punkt auftaucht.
+
+              Genau hier war er zu leise: neben einem Symbol, dessen Farbe wir nicht
+              bestimmen. Der Ring in der Farbe der Leiste löst ihn vom Symbol, statt
+              auf einen Kontrast zu hoffen, den ✨ oder 🎯 vorgeben.
             */}
-            {issueTabs.has(key) && (
-              <span className="absolute right-[22%] top-1 h-1.5 w-1.5 rounded-full bg-amber-400" />
-            )}
+            {issueTabs.has(key) && <OpenDot className="absolute right-[22%] top-1" />}
             {S.sheet.tabsShort[key]}
             {active === key && <span className="mt-0.5 h-0.5 w-6 rounded-full bg-amber-400" />}
           </button>

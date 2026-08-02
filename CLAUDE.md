@@ -194,6 +194,24 @@ Zähler, ein Kartenzugriff), ist die einfache Zuweisung die richtige Antwort —
 macht es der Assistent bei `advice`. Wo sie teuer wäre, muss der `useMemo` nach oben
 wandern und selbst mit dem noch nicht geladenen Zustand umgehen.
 
+Elfte Falle, von seinem Bild der Reiterleiste: **eine Warnfarbe, die auch die
+Bedienfarbe ist, ist keine Warnfarbe.** Der Punkt „hier ist noch etwas offen" war
+`bg-amber-400` — dieselbe Farbe wie der aktive Reiter, die Sterne an den
+Klassenfertigkeiten und jeder Hauptknopf. Am Handy sitzt er zusätzlich AM SYMBOL, und
+über „Zauber" steht ✨: ein gelber Punkt an gelben Funken ist kein Punkt mehr. Sein Wort:
+„Übersieht man leicht." Zwei Lehren. **Erstens**: eine Farbe, die alles bedeutet, bedeutet
+nichts — die Warnung hat jetzt ihre eigene (rosé, `ui/bits.tsx`: `OpenDot`, `OPEN_MARK`,
+`OPEN_CARD`), und alle vier Stellen, die „offen" sagen, holen sie von dort. **Zweitens**:
+wo ein Zeichen auf einem Emoji liegt, hilft kein Kontrast, weil das Emoji die Farbe
+bestimmt — dort trennt ein `ring` in der Farbe des Untergrunds. Nebenbei ist damit auch
+die Testsonde ehrlich geworden: sie musste den Punkt am Durchmesser (`w-1.5` gegen `w-6`)
+vom Unterstrich des aktiven Reiters unterscheiden, weil beide amber waren.
+
+Und die Gegenprobe, die dazugehört: 🎒 hat selbst einen runden roten Fleck oben rechts,
+genau dort, wo der Punkt sitzt. Im Bild sah der Ausrüstungs-Reiter deshalb aus, als
+trüge er einen — er tut es nicht (auf den Ausrüstungs-Reiter zeigt gar keine Warnung).
+Wer eine Marke an einem Symbol prüft, prüft sie im DOM und nicht am Bild.
+
 ## Beantwortete Entscheidungen (nicht neu fragen)
 
 - **Geräte:** iPhone UND iPad, beide. Deshalb war der Abgleich-Fehler dringend — er

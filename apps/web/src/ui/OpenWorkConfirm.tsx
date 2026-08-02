@@ -24,9 +24,12 @@ export function OpenWorkConfirm(props: {
   onCancel: () => void;
 }) {
   return (
-    <Card tone="border-amber-700 bg-amber-950/30">
+    /* Auch hier die Farbe von „offen" — dieselbe Sache darf nicht an drei Stellen
+       drei Farben haben. Die Fläche bleibt getönt, weil das eine Rückfrage IM Weg
+       ist und keine Karte am Rand. */
+    <Card tone="border-rose-700/70 bg-rose-950/30">
       <SectionTitle>{S.open.confirmTitle}</SectionTitle>
-      <ul className="list-inside list-disc space-y-0.5 text-xs leading-snug text-amber-200">
+      <ul className="list-inside list-disc space-y-0.5 text-xs leading-snug text-rose-200">
         {props.open.map((issue, i) => (
           <li key={i}>{issue.message}</li>
         ))}

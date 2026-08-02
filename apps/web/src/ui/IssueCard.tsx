@@ -1,6 +1,6 @@
 import { issuesForTab, muteIssue, unmuteIssue, type Character, type DerivedIssue, type DerivedSheet, type IssueTab } from "@codex35/core";
 import { S } from "../strings.js";
-import { Card, GhostButton, SectionTitle } from "./bits.js";
+import { Card, GhostButton, OPEN_CARD, SectionTitle } from "./bits.js";
 
 /**
  * Die Hinweise EINES Reiters — oben, wo der Punkt an der Reiterleiste hinführt.
@@ -30,14 +30,16 @@ export function IssueCard(props: {
     props.save((c) => void (c.mutedWarnings = unmuteIssue(c.mutedWarnings, issue)));
 
   return (
-    <Card tone="border-amber-800/60 bg-slate-900">
+    /* Dieselbe Farbe wie der Punkt, der hierher führt — sonst zeigt ein rosé Punkt
+       auf eine amber Karte, und man sucht weiter. */
+    <Card tone={OPEN_CARD}>
       {open.length > 0 && (
         <>
           <SectionTitle>{S.misc.issues}</SectionTitle>
           <ul className="space-y-1.5">
             {open.map((issue, i) => (
               <li key={i} className="flex items-start justify-between gap-2">
-                <span className="min-w-0 flex-1 text-xs leading-snug text-amber-300">
+                <span className="min-w-0 flex-1 text-xs leading-snug text-rose-200">
                   {issue.message}
                 </span>
                 {/*
