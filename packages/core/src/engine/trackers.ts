@@ -70,6 +70,37 @@ export function effectiveTrackerMax(
   return live?.max ?? tracker.max;
 }
 
+/** Wann sich ein Zähler füllt. „short" schließt die lange Rast mit ein. */
+export type TrackerRefill = "long" | "short" | "never";
+
+/**
+ * FÜLLT sich dieser Zähler bei der Rast, und bei welcher?
+ *
+ * Die einzige Stelle, an der diese Frage beantwortet wird — `planRest` und die
+ * Oberfläche fragen beide hier. Zwei Fassungen liefen sonst auseinander, und dann
+ * füllt sich am Bogen etwas, was die Ansage vorher nicht genannt hat.
+ *
+ * Der Rückfall ist der wichtige Teil, und er muss GENAU das alte Verhalten treffen.
+ * Das Feld ist neu; jeder gespeicherte Zähler hat es nicht (die Falle dieses
+ * Projekts: ein gespeicherter Datensatz ist nie auf dem Stand des Schemas).
+ *
+ * Deshalb „short" und nicht „long" für Zähler aus einem Vorschlag: die kurze Pause
+ * füllte bisher die Tageszähler mit, und das ist eine ENTSCHEIDUNG von ihm —
+ * „Kurze Pause (nur Tageszähler)". Ein Rückfall auf „long" hätte seine kurze Pause
+ * wirkungslos gemacht, und zwar unbemerkt, weil eine Rast, die nichts füllt, keine
+ * Fehlermeldung erzeugt. Ein Test in `rest.test.ts` hat genau das gefangen.
+ *
+ * Wer einen Zähler auf acht Stunden BESCHRÄNKEN will, stellt das jetzt ein — das
+ * ist der Gewinn des Feldes, nicht ein neuer Standard.
+ */
+export function refillOf(tracker: {
+  refill?: TrackerRefill | undefined;
+  suggestedFrom?: string | undefined;
+}): TrackerRefill {
+  if (tracker.refill !== undefined) return tracker.refill;
+  return tracker.suggestedFrom === undefined ? "never" : "short";
+}
+
 /** Woher die Zahl kommt — für die Zeile unter dem Zähler. */
 export function trackerMaxNote(
   tracker: { suggestedFrom?: string | undefined; maxManual?: boolean },

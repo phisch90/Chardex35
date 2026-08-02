@@ -54,6 +54,7 @@ export function ItemEditor({
   compendium,
   existing,
   usedBy,
+  onRemove,
   onClose,
   onSave,
 }: {
@@ -63,6 +64,11 @@ export function ItemEditor({
   existing?: ItemEntity | undefined;
   /** Wie viele Bögen auf diesem Gerät den Gegenstand tragen. */
   usedBy?: { count: number; names: string[] } | undefined;
+  /**
+   * Diesen eigenen Typ löschen. Fehlt beim Anlegen (es gibt noch nichts) und beim
+   * SRD (unveränderlich) — dann steht der Bereich gar nicht da.
+   */
+  onRemove?: (() => void) | undefined;
   onClose: () => void;
   /** Bekommt die fertige Entity; das Speichern selbst macht der Aufrufer. */
   onSave: (entity: ItemEntity) => void;
@@ -85,6 +91,7 @@ export function ItemEditor({
         compendium={compendium}
         existing={existing}
         usedBy={usedBy}
+        onRemove={onRemove}
         onClose={onClose}
         onSave={onSave}
       />
@@ -96,12 +103,14 @@ function EditorBody({
   compendium,
   existing,
   usedBy,
+  onRemove,
   onClose,
   onSave,
 }: {
   compendium: Map<string, Entity>;
   existing?: ItemEntity | undefined;
   usedBy?: { count: number; names: string[] } | undefined;
+  onRemove?: (() => void) | undefined;
   onClose: () => void;
   onSave: (entity: ItemEntity) => void;
 }) {
@@ -111,6 +120,8 @@ function EditorBody({
   const [pickTemplate, setPickTemplate] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  /* Die Rückfrage vor dem Löschen — an der Stelle, nicht als Dialog. */
+  const [asking, setAsking] = useState(false);
 
   const E = S.items.editor;
   const fields = fieldsFor(draft.kind);
@@ -458,6 +469,44 @@ function EditorBody({
         <p className="text-[11px] leading-snug text-slate-400">
           {E.usedBy(usedBy.count, usedBy.names)}
         </p>
+      )}
+
+      {/*
+        LÖSCHEN — sein Wort dazu ist da („ja"). Gebaut wie bei den Talenten:
+        gesperrt, aber mit Notausgang.
+
+        Trägt ein Bogen den Typ noch, nennt die App ihn NAMENTLICH und sagt, was
+        beim Löschen passiert (der Bogen verliert RK bzw. Angriffszeile). Wer
+        trotzdem will, bestätigt mit demselben Satz wie bei einem nicht erfüllten
+        Talent. Sperren ohne Ausweg wäre gegen den Grundsatz dieses Projekts;
+        einfach löschen wäre gegen den Bogen.
+      */}
+      {existing !== undefined && onRemove !== undefined && (
+        <div className="border-t border-slate-800 pt-2">
+          {!asking ? (
+            <GhostButton onClick={() => setAsking(true)}>{E.remove}</GhostButton>
+          ) : (
+            <div className="rounded-lg border border-red-800/60 bg-red-950/20 p-2">
+              <p className="text-[11px] leading-snug text-red-200">
+                {usedBy === undefined || usedBy.count === 0
+                  ? E.removeFree
+                  : E.removeBlocked(usedBy.names)}
+              </p>
+              <p className="mt-1 text-[10px] leading-snug text-slate-400">{E.removeHint}</p>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                <GhostButton
+                  onClick={() => {
+                    onRemove();
+                    onClose();
+                  }}
+                >
+                  {usedBy === undefined || usedBy.count === 0 ? E.removeYes : E.removeAnyway}
+                </GhostButton>
+                <GhostButton onClick={() => setAsking(false)}>{E.removeNo}</GhostButton>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       <div className="flex items-center justify-between gap-2 border-t border-slate-800 pt-2">

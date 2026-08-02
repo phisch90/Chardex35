@@ -521,6 +521,21 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           compendium={compendium}
           existing={editor?.entity}
           usedBy={editor?.usedBy}
+          /*
+            Löschen gibt es nur für EIGENE Typen und nur beim Bearbeiten. Beim
+            Anlegen existiert noch nichts, und SRD-Einträge sind unveränderlich —
+            `CompendiumRepo.remove` wirft dort ohnehin.
+          */
+          {...(editor?.entity !== undefined && editor.entity.source === "homebrew"
+            ? {
+                onRemove: () => {
+                  const entity = editor.entity!;
+                  void CompendiumRepo.remove(entity).catch((error: unknown) =>
+                    console.error("Eigener Gegenstandstyp konnte nicht gelöscht werden:", error),
+                  );
+                },
+              }
+            : {})}
           onClose={() => setEditor(null)}
           onSave={(entity) => {
             /*

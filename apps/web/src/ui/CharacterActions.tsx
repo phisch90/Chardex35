@@ -137,10 +137,27 @@ export function CharacterActionsSheet(props: {
   */
   const askRest = (scope: RestScope) => {
     const plan = planRest(character, props.sheet!, scope);
-    // Nichts aufzufüllen: dann sagt sie das, statt eine Rückfrage zu stellen,
-    // deren Antwort nichts ändert.
-    if (plan.nothingToDo) setNote(S.rest.nothing);
-    else setRestPlan(plan);
+    /*
+      Nichts aufzufüllen: dann sagt sie das, statt eine Rückfrage zu stellen, deren
+      Antwort nichts ändert.
+
+      ABER mit Grund, wenn es einen gibt. Vorher stand hier immer „alle Plätze sind
+      frei und die Zähler voll" — auch dann, wenn ein Zähler bei 2 von 3 stand und
+      bloß nicht mitrastet. Das war eine falsche Auskunft, und sie fiel erst im
+      gebauten Bogen auf.
+    */
+    if (plan.nothingToDo) {
+      setNote(
+        plan.skipped.length === 0
+          ? S.rest.nothing
+          : S.rest.nothingSkipped(
+              plan.skipped.map(
+                (line) =>
+                  `${line.name}: ${S.rest.skippedReasons[line.reason] ?? line.reason}`,
+              ),
+            ),
+      );
+    } else setRestPlan(plan);
   };
 
   const doRest = async (plan: RestPlan) => {

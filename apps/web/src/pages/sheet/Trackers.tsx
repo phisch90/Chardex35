@@ -1,10 +1,12 @@
 import {
   effectiveTrackerMax,
   parseDice,
+  refillOf,
   rollDice,
   suggestTrackers,
   trackerMaxNote,
   type Character,
+  type TrackerRefill,
 } from "@codex35/core";
 import { S } from "../../strings.js";
 import { cryptoRng } from "../../lib/rng.js";
@@ -81,6 +83,15 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
                 {trackerMaxNote(tracker, sheet) ?? tracker.note ?? S.trackers.kinds[tracker.kind]}
                 {tracker.kind === "roll" && tracker.formula ? ` · ${tracker.formula}` : ""}
                 {maxOf(tracker) !== undefined ? ` · max. ${maxOf(tracker)}` : ""}
+                {/*
+                  Ob er bei der Rast mitkommt — und zwar IMMER dastehend, nicht nur
+                  im Bearbeiten-Modus. Ein Zähler, der stillschweigend nicht
+                  mitrastet, ist genau das, was ihn an „Aktionspunkte" gestört hat.
+                  Nur bei echten Zählern: ein fester Wert und ein Würfelwurf füllen
+                  sich ohnehin nicht.
+                */}
+                {tracker.kind === "counter" &&
+                  ` · ${S.trackers.refill[refillOf(tracker)] ?? ""}`}
               </div>
             </div>
 
@@ -223,9 +234,32 @@ function TrackerEditor({
     });
   };
 
+  /*
+    Wann sich der Zähler füllt — durchschalten statt eintippen.
+
+    Geschrieben wird IMMER ausdrücklich, auch wenn der neue Wert derselbe ist, den
+    `refillOf` ohnehin geraten hätte: ab dem ersten Tap ist es seine Entscheidung
+    und keine Ableitung mehr, und sie soll auch dann stehen bleiben, wenn dieser
+    Zähler später seinen Vorschlag verliert.
+  */
+  const cycleRefill = () => {
+    const order: TrackerRefill[] = ["short", "long", "never"];
+    const next = order[(order.indexOf(refillOf(tracker)) + 1) % order.length]!;
+    save((c) => {
+      const target = c.trackers.find((t) => t.id === tracker.id);
+      if (target) target.refill = next;
+    });
+  };
+
   return (
     <div className="flex shrink-0 gap-1">
       <GhostButton onClick={cycleKind}>{S.trackers.kinds[tracker.kind]?.[0] ?? "?"}</GhostButton>
+      {/* Nur echte Zähler füllen sich — ein fester Wert hat nichts aufzufüllen. */}
+      {tracker.kind === "counter" && (
+        <GhostButton onClick={cycleRefill} title={S.trackers.refillCycle}>
+          {refillOf(tracker) === "never" ? "⟳̶" : "⟳"}
+        </GhostButton>
+      )}
       <GhostButton
         onClick={() => {
           const name = prompt(S.trackers.name, tracker.name);
