@@ -891,10 +891,11 @@ export const S = {
       sondern eine, die er noch nicht gesetzt hat — und der Satz sagt jetzt, wo.
     */
     skippedReasons: {
-      "eigene Mechanik": "füllt sich nicht von allein — am Zähler mit ⟳ einstellen",
+      "eigene Mechanik": "füllt sich nicht von allein — beim Zähler einstellen",
       "keine Grenze": "keine Obergrenze eingetragen",
       "schon voll": "schon voll",
       "erst nach acht Stunden": "füllt sich erst bei der langen Rast",
+      "nur beim Stufenaufstieg": "füllt sich nur beim Stufenaufstieg",
     } as Record<string, string>,
     /*
       Der Satz, der die zwei offenen Regelfragen benennt statt sie zu erfinden:
@@ -1001,13 +1002,33 @@ export const S = {
       ein Ratespiel — und die Zeile darunter war ohnehin schon da (dort steht die
       Herkunft der Grenze).
     */
-    refill: {
-      long: "füllt sich bei der Rast (8 Stunden)",
-      short: "füllt sich bei Rast und kurzer Pause",
-      never: "füllt sich nicht von allein",
+    /*
+      WANN sich der Zähler füllt. Aus dem Durchtipp-Knopf ist eine Knopfreihe
+      geworden: „Es kann ja noch kurze Rast, Tag, Level up als Bedingung für den
+      reset geben" — Begegnung und Tag hat er dann gestrichen, geblieben sind drei.
+      Ab drei Möglichkeiten rät man beim Durchtippen, welcher Zustand als nächstes
+      kommt; und mehrere zugleich („lange Rast ODER Stufenaufstieg") gehen damit
+      ohnehin nicht.
+    */
+    refillTitle: "Füllt sich",
+    refillKinds: {
+      long: "Lange Rast",
+      short: "Kurze Pause",
+      levelUp: "Stufenaufstieg",
     } as Record<string, string>,
-    /** Am Knopf, der durchschaltet. */
-    refillCycle: "Wann füllt sich der Zähler? Antippen zum Wechseln.",
+    /** Der Satz unter dem Namen — aus den gewählten Bedingungen gebaut. */
+    refillNone: "füllt sich nicht von allein",
+    refillLine: (parts: string[]) => `füllt sich bei: ${parts.join(" · ")}`,
+    /*
+      Die Folgerung steht dabei, weil sie sonst wie ein Fehler aussieht: wer „Kurze
+      Pause" antippt, sieht danach AUCH „Lange Rast" leuchten.
+    */
+    refillShortImplies: "Die kurze Pause schließt die lange Rast ein.",
+    /** WORAUF zurückgesetzt wird. */
+    resetToTitle: "Zurück auf",
+    resetToKinds: { max: "voll", zero: "0" } as Record<string, string>,
+    resetToHint:
+      "„voll“ ist richtig für Zähler, die du herunterzählst (7 von 7 Versuchen). „0“ für die, die du hochzählst — verbrauchte Aktionspunkte etwa.",
   },
 
   /*
@@ -1110,6 +1131,13 @@ export const S = {
   },
 
   levelUp: {
+    /*
+      Zähler, die der Aufstieg zurücksetzt. Steht in der Zusammenfassung, bevor er
+      „Anwenden" drückt — dieselbe Regel wie bei der Rast: was er gelesen hat,
+      passiert danach.
+    */
+    trackerLine: (name: string, from: number, to: number) =>
+      `${name}: ${from} → ${to} (Stufenaufstieg)`,
     title: "Stufenaufstieg",
     ready: "⬆ Bereit zum Aufstieg!",
     chooseClass: "Klasse für die neue Stufe",

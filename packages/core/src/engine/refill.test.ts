@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { characterSchema, type Character } from "../schema/character.js";
-import { refillOf } from "./trackers.js";
+import { refillOf, resetToOf } from "./trackers.js";
 import { planRest } from "./rest.js";
 import type { DerivedSheet } from "./types.js";
 
@@ -51,14 +51,14 @@ describe("Füllt sich bei der Rast", () => {
       DAS ist die Zusage an die Vergangenheit. „Kurze Pause (nur Tageszähler)“ war
       seine Entscheidung; ein Rückfall auf „nur 8 Stunden“ hätte sie kassiert.
     */
-    expect(refillOf({ suggestedFrom: "turn-undead" })).toBe("short");
+    expect([...refillOf({ suggestedFrom: "turn-undead" })].sort()).toEqual(["long", "short"]);
     const character = C([counter({ suggestedFrom: "turn-undead" })]);
     expect(planRest(character, sheet, "short").trackers).toHaveLength(1);
     expect(planRest(character, sheet, "full").trackers).toHaveLength(1);
   });
 
   it("nichts gesagt und selbst angelegt: bleibt in Ruhe, wie bisher", () => {
-    expect(refillOf({})).toBe("never");
+    expect(refillOf({}).size).toBe(0);
     const character = C([counter({})]);
     expect(planRest(character, sheet, "full").trackers).toEqual([]);
     expect(planRest(character, sheet, "full").skipped).toEqual([
@@ -141,5 +141,96 @@ describe("Füllt sich bei der Rast", () => {
       { name: "Voll", reason: "schon voll" },
     ]);
     expect(plan.nothingToDo).toBe(true);
+  });
+
+  // ============ Die zweite Runde: Menge, Stufenaufstieg, Richtung ===========
+
+  it("die AUSGELIEFERTE erste Fassung des Feldes gilt weiter", () => {
+    /*
+      `"long" | "short" | "never"` steht auf seinem Gerät in den Zählern — die erste
+      Fassung war schon live. Sie hier zu übersetzen statt die Datenbank umzubauen
+      ist die kleinere Wunde; ein zweites Feld daneben wären zwei Wahrheiten.
+    */
+    expect([...refillOf({ refill: "long" })]).toEqual(["long"]);
+    expect([...refillOf({ refill: "short" })].sort()).toEqual(["long", "short"]);
+    expect(refillOf({ refill: "never" }).size).toBe(0);
+    // Und der Vorschlag darf den ausdrücklichen Wert nicht überstimmen.
+    expect(refillOf({ refill: "never", suggestedFrom: "turn-undead" }).size).toBe(0);
+  });
+
+  it("mehrere Bedingungen zugleich — sein Fall „lange Rast ODER Stufenaufstieg“", () => {
+    const set = refillOf({ refill: ["long", "levelUp"] });
+    expect([...set].sort()).toEqual(["levelUp", "long"]);
+  });
+
+  it("kurze Pause schließt die lange Rast IMMER ein", () => {
+    /*
+      Der Zustand „nur kurze Pause, aber nicht die lange Rast“ hat am Tisch keinen
+      Sinn. Er wird deshalb nicht abgefangen, sondern ist gar nicht herstellbar.
+    */
+    expect([...refillOf({ refill: ["short"] })].sort()).toEqual(["long", "short"]);
+    expect([...refillOf({ refill: ["short", "levelUp"] })].sort()).toEqual([
+      "levelUp",
+      "long",
+      "short",
+    ]);
+  });
+
+  it("leere Liste heißt ausdrücklich „nie“ — auch mit Vorschlag", () => {
+    expect(refillOf({ refill: [], suggestedFrom: "turn-undead" }).size).toBe(0);
+  });
+
+  it("nur beim Stufenaufstieg: keine Rast fasst ihn an, und sie sagt warum", () => {
+    const character = C([counter({ refill: ["levelUp"] })]);
+    for (const scope of ["full", "short"] as const) {
+      const plan = planRest(character, sheet, scope);
+      expect(plan.trackers).toEqual([]);
+      expect(plan.skipped).toEqual([
+        {
+          name: "Zähler",
+          reason: scope === "short" ? "erst nach acht Stunden" : "nur beim Stufenaufstieg",
+        },
+      ]);
+    }
+  });
+
+  it("„zurück auf 0“ zählt HERUNTER statt hoch — der Fehler, der da war", () => {
+    /*
+      Vorher setzte die Rast jeden Zähler auf sein MAXIMUM. Für „Aktionspunkte
+      ausgegeben: 3" heißt das „alle ausgegeben“ — genau verkehrt.
+    */
+    const character = C([
+      { ...counter({ refill: ["long"], resetTo: "zero" }), name: "Ausgegeben", value: 3 },
+    ]);
+    expect(planRest(character, sheet, "full").trackers).toEqual([
+      { id: "c1", name: "Ausgegeben", from: 3, to: 0 },
+    ]);
+  });
+
+  it("„auf 0“ braucht keine Obergrenze", () => {
+    // Es gibt nichts zu wissen außer der Null — ein `max` wäre hier eine Hürde
+    // ohne Zweck.
+    const character = C([
+      { ...counter({ refill: ["long"], resetTo: "zero" }), max: undefined, value: 2 },
+    ]);
+    const plan = planRest(character, sheet, "full");
+    expect(plan.trackers).toHaveLength(1);
+    expect(plan.skipped).toEqual([]);
+  });
+
+  it("„auf 0“ und schon 0: bleibt in Ruhe", () => {
+    const character = C([counter({ refill: ["long"], resetTo: "zero", value: 0 })]);
+    expect(planRest(character, sheet, "full").skipped).toEqual([
+      { name: "Zähler", reason: "schon voll" },
+    ]);
+  });
+
+  it("ohne Angabe wird weiter auf VOLL gesetzt", () => {
+    // Ein stiller Wechsel auf 0 hätte jeden bestehenden Zähler geleert.
+    expect(resetToOf({})).toBe("max");
+    const character = C([counter({ refill: ["long"] })]);
+    expect(planRest(character, sheet, "full").trackers).toEqual([
+      { id: "c1", name: "Zähler", from: 0, to: 3 },
+    ]);
   });
 });

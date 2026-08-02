@@ -1,6 +1,6 @@
 import type { Character } from "../schema/character.js";
 import type { DerivedSheet } from "./types.js";
-import { effectiveTrackerMax, refillOf } from "./trackers.js";
+import { effectiveTrackerMax, refillOf, resetToOf } from "./trackers.js";
 
 /**
  * Die Rast — an EINER Stelle, mit Ansage.
@@ -66,7 +66,9 @@ export interface RestSkippedLine {
     | "keine Grenze"
     | "schon voll"
     /* Füllt sich, aber erst nach acht Stunden — bei der kurzen Pause. */
-    | "erst nach acht Stunden";
+    | "erst nach acht Stunden"
+    /* Füllt sich nur beim Stufenaufstieg — dann hilft keine Rast. */
+    | "nur beim Stufenaufstieg";
 }
 
 /**
@@ -137,7 +139,7 @@ export function planRest(
       sonst füllt sich am Bogen etwas, das die Ansage vorher nicht genannt hat.
     */
     const refill = refillOf(tracker);
-    if (refill === "never") {
+    if (refill.size === 0) {
       skipped.push({ name: tracker.name, reason: "eigene Mechanik" });
       continue;
     }
@@ -147,23 +149,25 @@ export function planRest(
       nach acht Stunden —, und deshalb darf sie nicht stillschweigend alles
       mitnehmen, was sich nach einer Nacht füllt.
     */
-    if (scope === "short" && refill !== "short") {
-      skipped.push({ name: tracker.name, reason: "erst nach acht Stunden" });
+    const when = scope === "short" ? "short" : "long";
+    if (!refill.has(when)) {
+      skipped.push({
+        name: tracker.name,
+        // Nur nach dem Aufstieg? Dann hilft auch die lange Rast nicht.
+        reason: when === "short" ? "erst nach acht Stunden" : "nur beim Stufenaufstieg",
+      });
       continue;
     }
 
-    // Die WIRKLICHE Grenze, nicht das gespeicherte `max` — daran ist Extra
-    // Turning schon einmal gescheitert.
-    const max = effectiveTrackerMax(tracker, sheet);
-    if (max === undefined) {
-      skipped.push({ name: tracker.name, reason: "keine Grenze" });
+    const line = resetLine(tracker, sheet);
+    if (line === "keine Grenze" || line === "schon so") {
+      skipped.push({
+        name: tracker.name,
+        reason: line === "keine Grenze" ? "keine Grenze" : "schon voll",
+      });
       continue;
     }
-    if (tracker.value >= max) {
-      skipped.push({ name: tracker.name, reason: "schon voll" });
-      continue;
-    }
-    trackers.push({ id: tracker.id, name: tracker.name, from: tracker.value, to: max });
+    trackers.push(line);
   }
 
   return {
@@ -173,6 +177,69 @@ export function planRest(
     skipped,
     nothingToDo: slots.length === 0 && trackers.length === 0,
   };
+}
+
+/**
+ * Was der STUFENAUFSTIEG an den Zählern ändert.
+ *
+ * Eigene Funktion und nicht ein dritter `RestScope`, weil ein Aufstieg keine Rast
+ * ist: er füllt keine Zauberplätze, und er passiert nicht am Spielabend, sondern
+ * dazwischen. Was er mit den Zählern teilt, ist genau eine Sache — dieselbe
+ * Rechnung „von wo, auf was" (`resetLine`).
+ *
+ * WICHTIG ist der übergebene Bogen: das muss der Bogen NACH dem Aufstieg sein.
+ * Ein Zähler, dessen Grenze aus der Stufe folgt („einmal je Bardenstufe"), soll auf
+ * die NEUE Grenze gehen — sonst wäre das genau der eingefrorene Wert, an dem Extra
+ * Turning schon einmal gescheitert ist.
+ */
+export function planLevelUpRefill(
+  character: Character,
+  sheetAfter: DerivedSheet,
+): RestTrackerLine[] {
+  const out: RestTrackerLine[] = [];
+  for (const tracker of character.trackers) {
+    if (tracker.kind !== "counter") continue;
+    if (!refillOf(tracker).has("levelUp")) continue;
+    const line = resetLine(tracker, sheetAfter);
+    if (typeof line !== "string") out.push(line);
+  }
+  return out;
+}
+
+/** Genau diese Zeilen ausführen — nichts anderes. */
+export function applyTrackerLines(character: Character, lines: readonly RestTrackerLine[]): void {
+  for (const line of lines) {
+    const tracker = character.trackers.find((t) => t.id === line.id);
+    if (tracker !== undefined) tracker.value = line.to;
+  }
+}
+
+/**
+ * Eine Zeile für EINEN Zähler: von wo, auf was — oder warum nichts passiert.
+ *
+ * Steht hier und nicht zweimal, weil der Stufenaufstieg dieselbe Rechnung braucht.
+ * Und `resetToOf` entscheidet die RICHTUNG: „auf voll" ist richtig für „Untote
+ * vertreiben: 7 von 7", aber verkehrt für einen Zähler, den er als VERBRAUCHT führt
+ * — der gehört auf 0.
+ */
+export function resetLine(
+  tracker: { id: string; name: string; value: number } & Parameters<typeof effectiveTrackerMax>[0] &
+    Parameters<typeof resetToOf>[0],
+  sheet: DerivedSheet,
+): RestTrackerLine | "keine Grenze" | "schon so" {
+  const to = resetToOf(tracker);
+  if (to === "zero") {
+    // Auf 0 braucht keine Obergrenze — es gibt nichts zu wissen außer der Null.
+    return tracker.value === 0
+      ? "schon so"
+      : { id: tracker.id, name: tracker.name, from: tracker.value, to: 0 };
+  }
+  // Die WIRKLICHE Grenze, nicht das gespeicherte `max` — daran ist Extra Turning
+  // schon einmal gescheitert.
+  const max = effectiveTrackerMax(tracker, sheet);
+  if (max === undefined) return "keine Grenze";
+  if (tracker.value >= max) return "schon so";
+  return { id: tracker.id, name: tracker.name, from: tracker.value, to: max };
 }
 
 /**

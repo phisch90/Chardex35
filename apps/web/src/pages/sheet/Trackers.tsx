@@ -2,17 +2,19 @@ import {
   effectiveTrackerMax,
   parseDice,
   refillOf,
+  resetToOf,
   rollDice,
   suggestTrackers,
   trackerMaxNote,
+  TRACKER_REFILL_KINDS,
   type Character,
-  type TrackerRefill,
+  type TrackerRefillKind,
 } from "@codex35/core";
 import { S } from "../../strings.js";
 import { cryptoRng } from "../../lib/rng.js";
 import { useAppSettings } from "../../lib/hooks.js";
 import { useDiceStore } from "../../lib/diceStore.js";
-import { Card, GhostButton, SectionTitle } from "../../ui/bits.js";
+import { Card, Chip, GhostButton, SectionTitle } from "../../ui/bits.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
 import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import type { TabProps } from "./index.js";
@@ -90,8 +92,7 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
                   Nur bei echten Zählern: ein fester Wert und ein Würfelwurf füllen
                   sich ohnehin nicht.
                 */}
-                {tracker.kind === "counter" &&
-                  ` · ${S.trackers.refill[refillOf(tracker)] ?? ""}`}
+                {tracker.kind === "counter" && ` · ${refillSentence(tracker)}`}
               </div>
             </div>
 
@@ -147,6 +148,16 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
             </div>
 
             {/* Bearbeiten-Knöpfe in eigener Zeile — der Name soll nicht abgeschnitten werden. */}
+            {/*
+              Die Bedingungen als KNOPFREIHE, in eigener Zeile über den
+              Editor-Knöpfen. Vorher war es ein ⟳, das drei Zustände durchtippte —
+              ab drei rät man, welcher als nächstes kommt, und mehrere zugleich
+              („lange Rast ODER Stufenaufstieg") gehen damit gar nicht.
+            */}
+            {editMode && tracker.kind === "counter" && (
+              <RefillRow tracker={tracker} save={save} />
+            )}
+
             {editMode && (
               <div className="mt-1.5 flex justify-end">
                 <TrackerEditor
@@ -213,6 +224,87 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
   );
 }
 
+/**
+ * Wann füllt sich dieser Zähler, und worauf zurück?
+ *
+ * Geschrieben wird IMMER die ganze Menge, auch wenn sie derselben entspricht, die
+ * `refillOf` ohnehin geraten hätte: ab dem ersten Tap ist es seine Entscheidung und
+ * keine Ableitung mehr, und sie soll auch dann stehen bleiben, wenn der Zähler
+ * später seinen Vorschlag verliert.
+ */
+function RefillRow({
+  tracker,
+  save,
+}: {
+  tracker: Tracker;
+  save: TabProps["save"];
+}) {
+  const active = refillOf(tracker);
+  const toggle = (kind: TrackerRefillKind) => {
+    const next = new Set(active);
+    if (next.has(kind)) next.delete(kind);
+    else next.add(kind);
+    /*
+      „Lange Rast" abwählen, während „Kurze Pause" an ist, wäre ein Zustand, den es
+      nicht gibt (`refillOf` folgert ihn ohnehin zurück). Dann geht die kurze Pause
+      mit — sonst tippt er auf einen Knopf, und es passiert nichts.
+    */
+    if (kind === "long" && !next.has("long")) next.delete("short");
+    save((c) => {
+      const target = c.trackers.find((t) => t.id === tracker.id);
+      if (target) target.refill = TRACKER_REFILL_KINDS.filter((k) => next.has(k));
+    });
+  };
+
+  const to = resetToOf(tracker);
+  const setTo = (value: "max" | "zero") =>
+    save((c) => {
+      const target = c.trackers.find((t) => t.id === tracker.id);
+      if (target) target.resetTo = value;
+    });
+
+  return (
+    <div className="mt-1.5 space-y-1 rounded-lg border border-slate-800 bg-slate-900/40 p-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] uppercase tracking-wide text-slate-500">
+          {S.trackers.refillTitle}
+        </span>
+        {TRACKER_REFILL_KINDS.map((kind) => (
+          <Chip key={kind} active={active.has(kind)} onClick={() => toggle(kind)}>
+            {S.trackers.refillKinds[kind] ?? kind}
+          </Chip>
+        ))}
+      </div>
+      {active.has("short") && (
+        <p className="text-[10px] leading-snug text-slate-500">{S.trackers.refillShortImplies}</p>
+      )}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] uppercase tracking-wide text-slate-500">
+          {S.trackers.resetToTitle}
+        </span>
+        <Chip active={to === "max"} onClick={() => setTo("max")}>
+          {S.trackers.resetToKinds["max"]}
+        </Chip>
+        <Chip active={to === "zero"} onClick={() => setTo("zero")}>
+          {S.trackers.resetToKinds["zero"]}
+        </Chip>
+      </div>
+      <p className="text-[10px] leading-snug text-slate-500">{S.trackers.resetToHint}</p>
+    </div>
+  );
+}
+
+/** Der Satz unter dem Namen: was gilt, im Klartext statt als Zeichen. */
+function refillSentence(tracker: Tracker): string {
+  const active = refillOf(tracker);
+  if (active.size === 0) return S.trackers.refillNone;
+  return S.trackers.refillLine(
+    TRACKER_REFILL_KINDS.filter((kind) => active.has(kind)).map(
+      (kind) => S.trackers.refillKinds[kind] ?? kind,
+    ),
+  );
+}
+
 function TrackerEditor({
   tracker,
   sheet,
@@ -234,32 +326,9 @@ function TrackerEditor({
     });
   };
 
-  /*
-    Wann sich der Zähler füllt — durchschalten statt eintippen.
-
-    Geschrieben wird IMMER ausdrücklich, auch wenn der neue Wert derselbe ist, den
-    `refillOf` ohnehin geraten hätte: ab dem ersten Tap ist es seine Entscheidung
-    und keine Ableitung mehr, und sie soll auch dann stehen bleiben, wenn dieser
-    Zähler später seinen Vorschlag verliert.
-  */
-  const cycleRefill = () => {
-    const order: TrackerRefill[] = ["short", "long", "never"];
-    const next = order[(order.indexOf(refillOf(tracker)) + 1) % order.length]!;
-    save((c) => {
-      const target = c.trackers.find((t) => t.id === tracker.id);
-      if (target) target.refill = next;
-    });
-  };
-
   return (
     <div className="flex shrink-0 gap-1">
       <GhostButton onClick={cycleKind}>{S.trackers.kinds[tracker.kind]?.[0] ?? "?"}</GhostButton>
-      {/* Nur echte Zähler füllen sich — ein fester Wert hat nichts aufzufüllen. */}
-      {tracker.kind === "counter" && (
-        <GhostButton onClick={cycleRefill} title={S.trackers.refillCycle}>
-          {refillOf(tracker) === "never" ? "⟳̶" : "⟳"}
-        </GhostButton>
-      )}
       <GhostButton
         onClick={() => {
           const name = prompt(S.trackers.name, tracker.name);

@@ -182,6 +182,18 @@ prüfen (`nav button` zuerst, dann die Chips) — und **eine Navigationshilfe im
 nicht still scheitern**, sonst zeigt der Fehler auf die falsche Stelle. Dasselbe gilt für
 die Gepäckzeile: ihr ERSTER Knopf ist die Anlege-Marke, nicht der Name.
 
+Zehnte Falle, und sie ist mir jetzt ZWEIMAL passiert: **ein `useMemo` hinter einem frühen
+`return`.** In `pages/LevelUp.tsx` stand die Rechnung für die Zähler unten bei ihrer
+Verwendung — und damit hinter `if (character === undefined) return …`. Solange der
+Charakter lud, lief der Hook nicht; sobald er da war, lief er, und React zählte einen Hook
+mehr als beim Durchlauf davor: „Minified React error #310", die halbe Seite weiß. Der Lauf
+im gebauten Bogen hat es gemeldet, nicht `pnpm test` und nicht `tsc` — ein Hook hinter
+einer Bedingung ist gültiges TypeScript. Regel: **jeder Hook steht VOR dem ersten
+`return`, oder es ist kein Hook.** Wo die Rechnung billig ist (eine Schleife über die
+Zähler, ein Kartenzugriff), ist die einfache Zuweisung die richtige Antwort — genau so
+macht es der Assistent bei `advice`. Wo sie teuer wäre, muss der `useMemo` nach oben
+wandern und selbst mit dem noch nicht geladenen Zustand umgehen.
+
 ## Beantwortete Entscheidungen (nicht neu fragen)
 
 - **Geräte:** iPhone UND iPad, beide. Deshalb war der Abgleich-Fehler dringend — er
@@ -302,14 +314,34 @@ Dazu zwei kleinere Fallen aus derselben Runde:
   Zustand hängen — holt man den letzten zurück, verschwand der Knopf, der Filter
   blieb an, und das Kompendium stand leer da. Dieselbe Falle wie beim Talentfilter.
 - **Zähler bei der Rast: einstellbar.** Wörtlich: „ja, bzw soll man das selber
-  einstellen können." Drei Werte je Zähler (`refill`: lange Rast / auch kurze Pause
-  / nie), durchgeschaltet mit ⟳, und der Zustand steht als SATZ unter dem Namen.
-  `refillOf` in `core/engine/trackers.ts` ist die EINE Stelle, die die Frage
-  beantwortet — mit Rückfall auf die alte Ableitung für alles, was schon
+  einstellen können." `refillOf` in `core/engine/trackers.ts` ist die EINE Stelle, die
+  die Frage beantwortet — mit Rückfall auf die alte Ableitung für alles, was schon
   gespeichert ist. Der Rückfall ist „short" und nicht „long": die kurze Pause füllte
   bisher die Tageszähler, und das war seine Entscheidung. Ein Test hat genau diesen
   Rückschritt gefangen. Der Fight-Club-Import schreibt `resetType 1` jetzt ins FELD
   statt als Satz in die Notiz.
+- **Welche Bedingungen: lange Rast · kurze Pause · Stufenaufstieg.** Sein Auftrag: „Der
+  Zähler reset soll schon automatisch passieren aber halt nur wenn es für den Zähler für
+  eine lange Rast aktiviert ist." Vorgeschlagen hatte ich fünf, gestrichen hat er zwei —
+  wörtlich: „Begegnung kann weg / Neuer Tag auch raus." Geblieben ist, was die App
+  WEISS: acht Stunden, seine Hausregel-Pause, und der Stufenaufstieg. Mehrere zugleich
+  möglich, deshalb eine Knopf-Reihe und keine ⟳-Schleife mehr — bei drei Werten war das
+  Durchschalten noch vertretbar, bei einer Menge ist es Raten. **Und die Richtung ist
+  jetzt wählbar** (`resetTo`: „voll" oder „0"): ein Zähler kann auch etwas MITZÄHLEN,
+  das eine Rast wieder auf null stellt. „voll" bleibt der Standardwert, weil ein stiller
+  Wechsel auf 0 jeden bestehenden Zähler geleert hätte.
+- **Ein Feld, das schon ausgeliefert ist, wird übersetzt und nicht umgebaut.** `refill`
+  stand als `"long" | "short" | "never"` auf seinem Gerät. Der Typ ist deshalb eine
+  Vereinigung aus dieser ersten Fassung und der neuen Liste, und `refillOf` liest beide.
+  Eine Datenbank-Wanderung für drei Werte wäre mehr Risiko als Nutzen, ein zweites Feld
+  daneben wären zwei Wahrheiten. Dass die kurze Pause die lange Rast EINSCHLIESST, steht
+  auch dort und nicht in der Oberfläche — so ist der Zustand „nur kurze Pause, aber nicht
+  die lange Rast" gar nicht herstellbar.
+- **Der Stufenaufstieg sagt vorher an, welcher Zähler zurückgeht.** Gerechnet gegen den
+  Bogen NACH dem Aufstieg (`planLevelUpRefill`), damit eine stufenabhängige Grenze schon
+  die neue ist, und ausgeführt mit derselben Funktion wie bei der Rast
+  (`applyTrackerLines`) — was er gelesen hat, passiert danach. Dieselbe Trennung wie
+  zwischen `planRest` und `applyRest`.
 - **Eine Rast, die nichts tut, sagt warum.** Vorher stand dort immer „alle Plätze
   sind frei und die Zähler voll" — auch wenn ein Zähler bei 2 von 3 stand und bloß
   nicht mitrastet. Eine falsche Auskunft, gefunden im gebauten Bogen.

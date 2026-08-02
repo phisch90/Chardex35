@@ -394,25 +394,45 @@ export const characterSchema = z.object({
          */
         suggestedFrom: z.string().optional(),
         /**
-         * Füllt sich dieser Zähler bei der Rast — und bei welcher?
+         * WANN füllt sich dieser Zähler von allein?
          *
-         * Sein Wunsch, wörtlich: „ja, bzw soll man das selber einstellen können."
+         * Sein Wunsch, wörtlich: „ja, bzw soll man das selber einstellen können." Und
+         * eine Runde später: „Es kann ja noch kurze Rast, Tag, Level up als Bedingung
+         * für den reset geben." Begegnung und „neuer Tag" hat er danach gestrichen —
+         * geblieben sind lange Rast, kurze Pause und Stufenaufstieg.
          *
-         * Vorher gab es dieses Feld nicht, und `planRest` entschied nach
-         * `suggestedFrom`: aus einem Vorschlag der App entstanden = füllt sich.
-         * Das war eine FOLGE als Ersatz für eine Eingabe — bei „Aktionspunkte"
-         * kannte die App die Regel nicht und sagte das, obwohl sein Tisch sie
-         * kennt. Der Fight-Club-Import las `resetType 1` sogar richtig, schrieb es
-         * aber als Satz in die NOTIZ, wo keine Regel drankommt.
+         * MEHRERE zugleich, deshalb eine Liste: „bei der langen Rast ODER beim
+         * Stufenaufstieg" ist ein echter Fall, und mit einem einzigen Wert wäre er
+         * nicht ausdrückbar.
          *
-         * `undefined` heißt „nie gesagt": dann gilt weiter die alte Ableitung
-         * (siehe `refillOf` in `engine/trackers.ts`). Ohne diesen Rückfall hätte
-         * die Umstellung sein „Untote vertreiben" stillgelegt.
+         * ZWEI FORMEN, und das ist Absicht. Die erste Fassung dieses Feldes ist schon
+         * ausgeliefert (`"long" | "short" | "never"`), und auf seinem Gerät stehen
+         * diese Werte in den Zählern. Ein neues Feld daneben wären zwei Wahrheiten;
+         * ein hartes Umstellen hätte die gespeicherten Werte verworfen. Also nimmt das
+         * Schema beides, und `refillOf` in `engine/trackers.ts` ist die EINE Stelle,
+         * die daraus eine Menge macht.
          *
-         * „short" schließt die lange Rast mit ein — was sich nach einer kurzen
-         * Pause füllt, füllt sich nach acht Stunden auch.
+         * Leere Liste heißt ausdrücklich „nie". `undefined` heißt „nie gesagt" — dann
+         * gilt die alte Ableitung aus `suggestedFrom`, sonst hätte diese Runde sein
+         * „Untote vertreiben" stillgelegt.
          */
-        refill: z.enum(["long", "short", "never"]).optional(),
+        refill: z
+          .union([
+            z.enum(["long", "short", "never"]),
+            z.array(z.enum(["long", "short", "levelUp"])),
+          ])
+          .optional(),
+        /**
+         * WORAUF wird zurückgesetzt — auf voll oder auf 0?
+         *
+         * Das fehlte, und es war schlicht falsch: die Rast setzte jeden Zähler auf sein
+         * MAXIMUM. Richtig für „Untote vertreiben: 7 von 7", verkehrt für jeden Zähler,
+         * den man als VERBRAUCHT führt — „Aktionspunkte ausgegeben: 3" landete bei „alle
+         * ausgegeben".
+         *
+         * `undefined` = „max", weil das das bisherige Verhalten ist.
+         */
+        resetTo: z.enum(["max", "zero"]).optional(),
         /**
          * Hat die Obergrenze jemand VON HAND gesetzt?
          *

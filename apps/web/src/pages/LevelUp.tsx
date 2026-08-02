@@ -7,8 +7,10 @@ import {
   deriveSheet,
   displayName,
   maxRanks,
+  applyTrackerLines,
   buildIssues,
   openBuildWork,
+  planLevelUpRefill,
   skillPointCost,
   parseDice,
   rollDice,
@@ -158,9 +160,26 @@ export function LevelUpPage() {
     if (expr) setHpRoll(rollDice(expr, cryptoRng).total);
   };
 
+  /*
+    Zähler, die beim Stufenaufstieg zurückgehen — gerechnet gegen den Bogen NACH dem
+    Aufstieg, damit eine stufenabhängige Grenze schon die neue ist.
+
+    Angesagt wird es in der Zusammenfassung, bevor er „Anwenden" drückt: was er
+    gelesen hat, passiert danach. Dieselbe Trennung wie bei der Rast.
+
+    KEIN `useMemo`: die Stelle liegt HINTER dem frühen `return` für den noch
+    ladenden Charakter, und ein Hook hinter einer Bedingung wirft, sobald die
+    Bedingung umschlägt — der Lauf im gebauten Bogen hat genau das gemeldet
+    (React #310). Die Rechnung ist eine Schleife über die Zähler.
+  */
+  const levelUpTrackers =
+    afterCharacter && sheetAfter ? planLevelUpRefill(afterCharacter, sheetAfter) : [];
+
   const save = async () => {
     if (!afterCharacter) return;
-    await CharacterRepo.save(afterCharacter);
+    const next = structuredClone(afterCharacter);
+    applyTrackerLines(next, levelUpTrackers);
+    await CharacterRepo.save(next);
     void navigate({ to: "/charaktere/$charId", params: { charId } });
   };
 
@@ -504,6 +523,21 @@ export function LevelUpPage() {
               </li>
             ))}
           </ul>
+          {/*
+            Zähler, die der Aufstieg zurücksetzt — ANGESAGT, bevor er drückt. Ein
+            Zähler, der sich stillschweigend ändert, ist genau das, was ihn an der
+            Rast gestört hat.
+          */}
+          {levelUpTrackers.length > 0 && (
+            <ul className="mt-2 list-inside list-disc text-xs text-emerald-300">
+              {levelUpTrackers.map((line) => (
+                <li key={line.id}>
+                  {S.levelUp.trackerLine(line.name, line.from, line.to)}
+                </li>
+              ))}
+            </ul>
+          )}
+
           {/*
             Nur die SICHTBAREN: was am Bogen mit „passt so" abgestellt wurde, darf
             hier nicht wieder auftauchen — sonst hätte der Schalter am Bogen keine
