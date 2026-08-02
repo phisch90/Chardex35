@@ -364,11 +364,56 @@ Dazu zwei kleinere Fallen aus derselben Runde:
   sind frei und die Zähler voll" — auch wenn ein Zähler bei 2 von 3 stand und bloß
   nicht mitrastet. Eine falsche Auskunft, gefunden im gebauten Bogen.
 
+## Hausregeln seines Tisches, die er noch mit dem DM klärt
+
+Vier neue kamen auf einmal, und bei jeder fehlt genau ein Stück. Sie stehen deshalb
+NICHT gebaut da, sondern als Fragen in `FRAGEN-AN-DEN-DM.md` — dort in seiner Sprache,
+mit Antwortmöglichkeiten zum Ankreuzen, damit er sie vorlegen kann. Wörtlich:
+
+1. **„Actionpoints hat jeder 6. wann und wie man neue bekommt muss ich nochmal abklären
+   beim DM."** Die Menge ist damit klar, der Nachschub nicht. Ein Zähler-VORSCHLAG
+   „Aktionspunkte: 6" wäre schnell gebaut — aber ein Vorschlag ohne `refill` fällt in
+   `refillOf` auf „short" zurück, und dann füllte die kurze Pause sie auf. Das wäre
+   eine erfundene Antwort auf genau die Frage, die er stellen will. Also erst fragen.
+2. **„Cantrips müssen nicht vorbereitet werden. Man kann, sofern man noch für Level 0
+   ausreichend zauberpunkte hat, beliebig aus den cantrips wählen. Halt nur für
+   vorbereiter (Druide und Kleriker)."** Vier Lücken: verbraucht ein Cantrip weiter
+   einen Grad-0-Platz · gilt es auch für den MAGIER (er nennt ihn nicht, obwohl der
+   dritte Vorbereiter ist) · frei aus der Klassenliste oder nur aus dem Bekannten ·
+   nur Grad 0 oder auch höher.
+3. **„…eine spellcraft Probe machen um einen Zauber ohne einen zauberpunkt zu
+   verbrauchen wirken."** Ohne SG und ohne die Folge eines misslungenen Wurfs nicht
+   baubar.
+4. **„Dann würfeln wir die TP bei levelup nicht."** Was stattdessen, ist offen. Die App
+   kann heute schon würfeln ODER den Durchschnitt nehmen — es fehlt nur die Antwort,
+   welcher Wert gilt.
+
+Und quer über 2 und 3: er schreibt zweimal **„Zauberpunkte"**. Die App rechnet mit
+PLÄTZEN je Grad. Ob das nur ein anderes Wort ist oder ihr Tisch einen echten
+Punktevorrat spielt, ist die Frage mit der größten Folge — im zweiten Fall bräuchte die
+App einen zweiten Weg, Zauber zu verbuchen.
+
+**Beim Zusammentragen aufgefallen: drei Hausregel-Felder haben keine Wirkung.**
+`houseRulesSchema` hat sechs Felder; drei rechnen (`fractionalBabAndSaves`,
+`maxHpFirstLevel` — Standard AN —, `ignoreEncumbrance`), und drei tun nichts:
+`multiclassXpPenalty` **hat einen Schalter in den Einstellungen, den niemand liest**
+(sein eigener Kommentar sagt „Warn-only", aber es gibt keine Warnung), `deathAt` und
+`pointBuyBudget` haben nicht einmal eine Oberfläche. Das ist die Familie „etwas weiß es,
+und etwas anderes kann es nicht" in ihrer schlichtesten Form: ein Schalter, der etwas
+verspricht und nichts tut, ist schlimmer als kein Schalter. Alle drei sind Tischregeln,
+also stehen sie als Fragen 9.1–9.3 in `FRAGEN-AN-DEN-DM.md` — jede mit einer fertigen
+Hälfte dahinter.
+
 ## Noch offen
 
 - **Halber Stärkeschaden in der zweiten Hand** (Dolch 1d4+1 statt 1d4+2) und die
   Rundung bei negativem Stärkemodifikator im ×1,5-Pfad — beides verschiebt Zahlen,
-  beides braucht sein Wort.
+  beides braucht sein Wort. Nachgelesen für die Fragenliste, damit dort keine Behauptung
+  steht: die zweite Hand bekommt heute den VOLLEN Bonus, und `Math.floor(strMod * 1.5)`
+  macht aus −1 zweihändig eine **−2** (`engine/derive.ts:597`). Beim iterativen Angriff
+  war meine Annahme falsch: der Bogen zeigt die Reihe („+9/+4") längst
+  (`iterativeAttacks`, `derive.ts:563`) — die Frage ist nicht, ob sie dazukommt, sondern
+  ob sie wegkann.
 - **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" fehlt noch.
   Eigene Gegenstände mit echten Rüstungs- und Waffenwerten sind gebaut (Editor im
   Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in
