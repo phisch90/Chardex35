@@ -200,6 +200,17 @@ export function validate(
     const emptyByLevel: string[] = [];
     let emptyTotal = 0;
     for (const slot of block.slots) {
+      /*
+        Grad 0 zählt NICHT mit. Martins Hausregel: „Grad-0-Zauber müssen nicht
+        vorbereitet werden, allgemein lockere Handhabung, gilt für alle." Wo nichts zu
+        belegen ist, kann auch nichts offen sein — die Plätze selbst bleiben (man
+        entscheidet erst beim Wirken), und genau die zählt der Zauber-Reiter weiter.
+
+        Ohne diese Zeile stünde auf jedem Kleriker-Bogen dauerhaft „Grad 0: 3", und ein
+        Hinweis, der immer dasteht, ist Tapete — dann übersieht man die Grade, an denen
+        wirklich etwas fehlt.
+      */
+      if (slot.level === 0) continue;
       if (slot.total === null || slot.total === 0) continue;
       const left = slot.total - (countByLevel.get(slot.level) ?? 0);
       if (left <= 0) continue;

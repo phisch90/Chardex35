@@ -123,6 +123,25 @@ export function SettingsPage() {
           checked={houseRules.multiclassXpPenalty}
           onChange={(v) => setRule({ multiclassXpPenalty: v })}
         />
+        {/*
+          Die Todesgrenze. Das Feld gab es schon lange, aber ohne Wirkung UND ohne
+          Bedienelement — die schlimmste Kombination: eine gespeicherte Einstellung, die
+          niemand sehen und niemand ändern kann. Jetzt rechnet sie (`engine/dying.ts`)
+          und steht hier, in derselben Reihenfolge: erst die Rechnung, dann der Schalter.
+
+          Zwei Werte, also ein Toggle und keine Knopfreihe. Der Satz darunter nennt die
+          Zahl, die dabei herauskommt, weil „negativer CON-Wert" abstrakt ist.
+        */}
+        <Toggle
+          label={S.settings.deathAtNegCon}
+          checked={houseRules.deathAt === "negCon"}
+          onChange={(v) => setRule({ deathAt: v ? "negCon" : "minus10" })}
+        />
+        <p className="mt-0.5 text-[11px] leading-snug text-slate-500">
+          {houseRules.deathAt === "negCon"
+            ? S.settings.deathAtNegConHint
+            : S.settings.deathAtMinus10Hint}
+        </p>
       </Card>
 
       <SyncCard />

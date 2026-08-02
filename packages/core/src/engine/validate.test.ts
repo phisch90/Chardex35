@@ -171,7 +171,13 @@ describe.skipIf(!packsAvailable)("Warnung, wenn etwas offen ist", () => {
     const sheet = sheetOf(cleric7());
     const spells = sheet.issues.filter((i) => i.code === "spell-slots-open");
     expect(spells).toHaveLength(1);
-    expect(spells[0]?.message).toMatch(/^Cleric: 23 Zauberplätze nicht belegt \(Grad 0: 6 · Grad 1: 6/);
+    /*
+      Grad 0 zählt NICHT mit — Martins Hausregel: „Grad-0-Zauber müssen nicht vorbereitet
+      werden." Vorher standen hier 23 (mit „Grad 0: 6"), jetzt sind es 17 und die Zeile
+      fängt bei Grad 1 an. Wo nichts zu belegen ist, kann nichts offen sein.
+    */
+    expect(spells[0]?.message).toMatch(/^Cleric: 17 Zauberplätze nicht belegt \(Grad 1: 6/);
+    expect(spells[0]?.message).not.toMatch(/Grad 0/);
     expect(spells[0]?.tab).toBe("spells");
     // Es geht um HEUTE, nicht um den Aufbau.
     expect(spells[0]?.daily).toBe(true);

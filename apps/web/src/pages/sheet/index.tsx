@@ -272,6 +272,23 @@ export function CharacterSheetPage() {
               </div>
             </div>
           </button>
+          {/*
+            Wo die TP stehen — Martins Sterbe-Regel, sichtbar OHNE Tap, weil der Balken
+            der einzige Ort ist, an dem eine negative Zahl auftaucht. Er sieht anders aus
+            als die Zustands-Marken darunter und hat kein `onClick`: er ist gerechnet,
+            nicht umschaltbar. Sonst tippt man darauf und erwartet, dass „sterbend" geht.
+          */}
+          {sheet.hp.state !== "ok" && (
+            <p
+              className={`mt-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium leading-snug ${
+                sheet.hp.state === "dead"
+                  ? "border-slate-600 bg-slate-800 text-slate-200"
+                  : "border-rose-700/70 bg-rose-950/50 text-rose-200"
+              }`}
+            >
+              {S.dying.line(sheet.hp.state, sheet.hp.deadAt, sheet.hp.saveZoneDownTo)}
+            </p>
+          )}
           {/* Aktive Zustände immer im Blick — Verwaltung im Notizen-Tab. */}
           {character.conditionIds.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
@@ -422,6 +439,13 @@ export function CharacterSheetPage() {
             else c.hp.overrideMax = value;
           })
         }
+        dying={{
+          state: sheet.hp.state,
+          text: S.dying.line(sheet.hp.state, sheet.hp.deadAt, sheet.hp.saveZoneDownTo),
+          stabilized: character.hp.stabilized,
+          onToggleStabilized: () =>
+            save((c) => void (c.hp.stabilized = !c.hp.stabilized)),
+        }}
       />
 
       <BreakdownSheet

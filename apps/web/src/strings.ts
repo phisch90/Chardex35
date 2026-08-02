@@ -316,6 +316,10 @@ export const S = {
     fractional: "Fraktionale BAB/Saves (Unearthed Arcana)",
     maxHpL1: "Volle TP auf Stufe 1",
     xpPenalty: "Multiclass-EP-Strafe (RAW)",
+    deathAtNegCon: "Tod erst beim negativen CON-Wert",
+    deathAtNegConHint:
+      "Eure Hausregel: bei CON 14 ist die Figur erst bei −14 TP tot. Zwischen 0 und dem negativen CON-Modifikator stabilisiert eine Fortitude-Probe gegen SG 10.",
+    deathAtMinus10Hint: "Regel des Buches: tot bei −10 TP, egal wie zäh die Figur ist.",
     exportTitle: "Export / Import",
     exportAll: "Alles exportieren (JSON)",
     importFile: "JSON importieren",
@@ -979,6 +983,41 @@ export const S = {
     negative: "unter 0 — kein Effekt",
   },
 
+  /**
+   * Sterben — Martins Hausregel in Worten.
+   *
+   * Jede Zeile nennt die GRENZE als Zahl, weil die Regel zwei verschiedene hat (den
+   * CON-Modifikator und den CON-Wert) und man am Tisch sonst rechnet, während jemand
+   * blutet. Die Zahlen kommen aus dem Bogen (`sheet.hp.deadAt`, `saveZoneDownTo`), nicht
+   * aus einer zweiten Rechnung hier.
+   */
+  dying: {
+    line: (state: string, deadAt: number, saveZoneDownTo: number | undefined): string => {
+      const tot = `tot bei ${deadAt}`;
+      switch (state) {
+        case "saveZone":
+          return `Unter 0 — eine Fortitude-Probe gegen SG 10 stabilisiert (bis ${
+            saveZoneDownTo ?? 0
+          }). Darunter keine Probe mehr, ${tot}.`;
+        case "stable":
+          return `Stabil — der Verlust ist gestoppt. Neuer Schaden hebt das auf, ${tot}.`;
+        case "bleeding":
+          return `Sterbend — 1 TP pro Runde, keine Probe mehr möglich. ${
+            tot.charAt(0).toUpperCase() + tot.slice(1)
+          }.`;
+        case "dead":
+          return `Tot — bei ${deadAt} TP ist die Grenze erreicht (negativer CON-Wert).`;
+        default:
+          return "";
+      }
+    },
+    /** Der Knopf im TP-Rechner: eine Runde weiter, während die Figur blutet. */
+    roundOn: "Eine Runde weiter: −1 TP",
+    stabilizedOn: "Probe geschafft — stabil",
+    stabilizedOff: "nicht mehr stabil",
+    stabilizedHint: "Fortitude gegen SG 10, oder wie dein DM es entscheidet.",
+  },
+
   trackers: {
     title: "Zähler",
     add: "Zähler anlegen",
@@ -1141,8 +1180,16 @@ export const S = {
     title: "Stufenaufstieg",
     ready: "⬆ Bereit zum Aufstieg!",
     chooseClass: "Klasse für die neue Stufe",
-    hpRoll: "TP-Wurf für diese Stufe",
-    rollHp: "würfeln",
+    /*
+      Kein „TP-Wurf" mehr: an seinem Tisch wird nicht gewürfelt (Martin: „volle Hit Die
+      der Klasse, kein Wurf"). Die Karte sagt jetzt die Zahl, statt eine Eingabe
+      anzubieten, die es nicht mehr gibt.
+    */
+    hpTitle: "Trefferpunkte für diese Stufe",
+    hpFull: (die: number, gain: number) =>
+      `Voller Trefferwürfel: W${die} → ${gain >= 0 ? "+" : ""}${gain} TP (mit CON).`,
+    hpFullWhy: "Hausregel am Tisch: beim Aufstieg wird nicht gewürfelt.",
+    hpNoClass: "Erst eine Klasse wählen.",
     abilityIncrease: "Attributssteigerung (alle 4 Stufen)",
     skills: "Fertigkeitspunkte verteilen",
     feats: "Neues Talent wählen",

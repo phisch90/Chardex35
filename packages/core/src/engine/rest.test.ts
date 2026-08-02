@@ -189,9 +189,9 @@ describe.skipIf(!packsAvailable)("Rast", () => {
       er es entschieden hat. Der Test hält das fest, damit es niemand nebenbei
       einbaut.
     */
-    const c = cleric({ hp: { damage: 12, nonlethal: 5, temp: 4 } });
+    const c = cleric({ hp: { damage: 12, nonlethal: 5, temp: 4, stabilized: false } });
     applyRest(c, planRest(c, deriveSheet(c, compendium)));
-    expect(c.hp).toEqual({ damage: 12, nonlethal: 5, temp: 4 });
+    expect(c.hp).toEqual({ damage: 12, nonlethal: 5, temp: 4, stabilized: false });
   });
 
   it("Aufbau bleibt unberührt — sonst legt der nächste Auftrag eine Rettungskopie an", () => {

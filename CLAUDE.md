@@ -207,6 +207,22 @@ bestimmt — dort trennt ein `ring` in der Farbe des Untergrunds. Nebenbei ist d
 die Testsonde ehrlich geworden: sie musste den Punkt am Durchmesser (`w-1.5` gegen `w-6`)
 vom Unterstrich des aktiven Reiters unterscheiden, weil beide amber waren.
 
+Zwölfte Falle, und sie ist die Folge einer eigenen Änderung: **ein neuer Zähler macht
+jedes `.first()` im Test falsch.** Seit die Aktionspunkte JEDEM Bogen vorgeschlagen werden,
+gibt es mindestens zwei Zähler — und die Strecke, die „Untote vertreiben" prüfte, klickte
+plötzlich die Knopfreihe des anderen. Der Lauf meldete dann sieben Fehler, von denen keiner
+in der App lag. Zwei Lehren: **Klick UND Lesen gehören in denselben Kasten**
+(`page.locator("li").filter({hasText:/Untote vertreiben/})`), und der `li` enthält auch die
+Knopfreihe, in der alle drei Bedingungen als BESCHRIFTUNG stehen — wer „Kurze Pause ist
+weg" prüfen will, muss das Stück nach „füllt sich bei:" ausschneiden, sonst findet er das
+Wort auf dem Knopf. Nebenbei war der zuerst gemeldete Fehler richtig und harmlos: ein
+voller Zähler wird beim Aufstieg gar nicht angesagt, weil es nichts aufzufüllen gibt.
+
+Und die Falle mit `uppercase` (sechste, oben) ist mir in derselben Runde ZUM FÜNFTEN MAL
+passiert: der Grad-Kopf im Zauber-Reiter heißt im `innerText` „GRAD 0", mein `/Grad 0/`
+traf nichts, und die Prüfung zeigte auf die App statt auf den Test. Es hilft offenbar
+nicht, es aufzuschreiben — deshalb steht es jetzt auch im Kopf der Teststrecken selbst.
+
 Und die Gegenprobe, die dazugehört: 🎒 hat selbst einen runden roten Fleck oben rechts,
 genau dort, wo der Punkt sitzt. Im Bild sah der Ausrüstungs-Reiter deshalb aus, als
 trüge er einen — er tut es nicht (auf den Ausrüstungs-Reiter zeigt gar keine Warnung).
@@ -403,10 +419,30 @@ jeweils daraus folgt. **Diese sechs sind entschieden — nicht neu fragen.**
    die Probenzone endet beim negativen CON-**MODIFIKATOR** (−2). Das sind drei Zonen, und
    damit bekommt das Hausregel-Feld `deathAt` („negCon") endlich eine Wirkung.
 
-**Gebaut sind bisher 3, 4 und 5** (Aktionspunkte, der Test zum Anderthalbfachen, die
-zweite Hand). **1, 2 und 6** — volle Trefferwürfel, Grad-0-Zauber und die drei
-Sterbe-Zonen — folgen in der nächsten Runde; sie fassen die Oberfläche an und brauchen
-ihren eigenen Durchlauf im gebauten Bogen.
+**Alle sechs sind gebaut**, in zwei Runden: erst 3, 4, 5 (Aktionspunkte, der Test zum
+Anderthalbfachen, die zweite Hand), dann 1, 2, 6 (volle Trefferwürfel, Grad-0-Zauber,
+Sterbe-Zonen).
+
+Drei Dinge daran sind einer Notiz wert:
+
+- **Die Sterbe-Regel hat ihr eigenes Modul** (`core/engine/dying.ts`), weil sie zwei
+  Grenzen hat, die man leicht verwechselt: die Probenzone endet beim CON-**Modifikator**,
+  der Tod steht beim CON-**Wert**. Bei CON 14 also Probe bis −2, tot bei −14 — wer hier
+  den Modifikator für den Wert nimmt, tötet Charaktere zwölf Punkte zu früh. Der Zustand
+  ist eine FOLGE (`sheet.hp.state`) und darf nie in `conditionIds` landen; die Versuchung
+  ist eingebaut, weil es dort anklickbare Zustände „sterbend" und „stabil" gibt. Genau
+  EINE Eingabe hat die Regel: `hp.stabilized`, das Ergebnis der Fort-Probe am Tisch — und
+  neuer Schaden löscht sie in `applyHpChange`, nicht in der Oberfläche.
+- **`deathAt` hat jetzt einen Leser UND einen Schalter.** Vorher war es das Musterbeispiel
+  für „etwas weiß es, und etwas anderes kann es nicht": ein gespeichertes Feld ohne
+  Wirkung und ohne Bedienelement. Der Standard steht jetzt auf `negCon` (seine Tischregel)
+  — ein nie gezeigter Standardwert ist keine Entscheidung, die man erhalten müsste. Und am
+  Bogen steht die Grenze als ZAHL („tot bei −14"), damit eine falsche Einstellung sofort
+  auffällt statt still zu wirken.
+- **Grad 0 zählt nicht mehr in der Warnung.** Wo nichts zu belegen ist, kann nichts offen
+  sein. Die Plätze selbst BLEIBEN (seine Entscheidung) und stehen weiter im Zauber-Reiter
+  — nur „Vorbereiten" verschwindet dort, und zwar nur bei Vorbereitern: ein Hexenmeister
+  entscheidet ohnehin erst beim Wirken.
 
 Zwei Dinge, die beim Bauen von 3 auffielen und mitgeradegerückt wurden: ein Vorschlag
 kann jetzt seine Auffüll-Bedingung MITGEBEN (`TrackerSuggestion.refill`), weil ein Zähler

@@ -1,5 +1,6 @@
 import type { EquipSlot } from "../schema/character.js";
 import type { Ability, BonusType, Size } from "../schema/common.js";
+import type { DyingZone } from "./dying.js";
 
 /** Ein Beitrag zu einem Wert — bleibt IMMER erhalten (Breakdown-UI). */
 export interface Contribution {
@@ -217,6 +218,16 @@ export interface DerivedSheet {
     current: number;
     nonlethal: number;
     temp: number;
+    /**
+     * In welcher Zone die TP stehen — GERECHNET (`engine/dying.ts`), nie gespeichert.
+     * Er steht hier im hp-Block und nicht bei `conditionIds`, weil er zu den TP gehört
+     * und nichts ist, was man an- oder abschalten kann.
+     */
+    state: DyingZone;
+    /** Bei diesem Stand ist die Figur tot — als Zahl, damit sie am Bogen stehen kann. */
+    deadAt: number;
+    /** Untere Grenze der Probenzone, oder `undefined`, wenn es sie nicht gibt. */
+    saveZoneDownTo: number | undefined;
   };
   ac: AcBlock;
   init: StatValue;
