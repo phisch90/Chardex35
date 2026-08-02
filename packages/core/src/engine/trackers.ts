@@ -70,35 +70,75 @@ export function effectiveTrackerMax(
   return live?.max ?? tracker.max;
 }
 
-/** Wann sich ein Zähler füllt. „short" schließt die lange Rast mit ein. */
-export type TrackerRefill = "long" | "short" | "never";
+/**
+ * WANN ein Zähler sich von allein füllt. Mehrere gleichzeitig möglich.
+ *
+ * Die Liste ist seine, um zwei Einträge gekürzt: „Begegnung kann weg / Neuer Tag
+ * auch raus." Geblieben sind die lange Rast, seine Hausregel-Pause und der
+ * Stufenaufstieg — letzterer ist der präziseste, weil die App genau weiß, wann er
+ * passiert.
+ */
+export const TRACKER_REFILL_KINDS = ["long", "short", "levelUp"] as const;
+export type TrackerRefillKind = (typeof TRACKER_REFILL_KINDS)[number];
+
+/** Was zurücksetzen bedeutet: auf voll oder auf 0. */
+export type TrackerResetTo = "max" | "zero";
 
 /**
- * FÜLLT sich dieser Zähler bei der Rast, und bei welcher?
+ * Die Bedingungen eines Zählers als MENGE — die eine Stelle, die das entscheidet.
  *
- * Die einzige Stelle, an der diese Frage beantwortet wird — `planRest` und die
- * Oberfläche fragen beide hier. Zwei Fassungen liefen sonst auseinander, und dann
- * füllt sich am Bogen etwas, was die Ansage vorher nicht genannt hat.
+ * Drei Dinge laufen hier zusammen, und jedes einzelne hätte sonst eine zweite
+ * Fassung irgendwo in der Oberfläche:
  *
- * Der Rückfall ist der wichtige Teil, und er muss GENAU das alte Verhalten treffen.
- * Das Feld ist neu; jeder gespeicherte Zähler hat es nicht (die Falle dieses
- * Projekts: ein gespeicherter Datensatz ist nie auf dem Stand des Schemas).
- *
- * Deshalb „short" und nicht „long" für Zähler aus einem Vorschlag: die kurze Pause
- * füllte bisher die Tageszähler mit, und das ist eine ENTSCHEIDUNG von ihm —
- * „Kurze Pause (nur Tageszähler)". Ein Rückfall auf „long" hätte seine kurze Pause
- * wirkungslos gemacht, und zwar unbemerkt, weil eine Rast, die nichts füllt, keine
- * Fehlermeldung erzeugt. Ein Test in `rest.test.ts` hat genau das gefangen.
- *
- * Wer einen Zähler auf acht Stunden BESCHRÄNKEN will, stellt das jetzt ein — das
- * ist der Gewinn des Feldes, nicht ein neuer Standard.
+ * 1. **Der Altbestand.** Die erste Fassung des Feldes ist ausgeliefert und steht auf
+ *    seinem Gerät als `"long" | "short" | "never"`. Sie wird hier übersetzt, nicht
+ *    in einer Wanderung — ein Datenbank-Umbau für drei Werte wäre mehr Risiko als
+ *    Nutzen, und ein zweites Feld daneben wären zwei Wahrheiten.
+ * 2. **Der Rückfall.** `undefined` heißt „nie gesagt": dann gilt die alte Ableitung
+ *    aus `suggestedFrom` (aus einem Vorschlag der App entstanden = eine Fähigkeit
+ *    pro Tag). Ohne ihn hätte die Umstellung sein „Untote vertreiben" stillgelegt,
+ *    und zwar unbemerkt — eine Rast, die nichts füllt, sieht aus wie eine Rast.
+ * 3. **Die Folgerung.** Wer sich nach einer kurzen Pause füllt, füllt sich nach acht
+ *    Stunden auch. Das steht HIER und nicht in der Oberfläche, damit man den Zustand
+ *    „nur kurze Pause, aber nicht die lange Rast" gar nicht herstellen kann.
  */
 export function refillOf(tracker: {
-  refill?: TrackerRefill | undefined;
+  refill?: readonly TrackerRefillKind[] | "long" | "short" | "never" | undefined;
   suggestedFrom?: string | undefined;
-}): TrackerRefill {
-  if (tracker.refill !== undefined) return tracker.refill;
-  return tracker.suggestedFrom === undefined ? "never" : "short";
+}): Set<TrackerRefillKind> {
+  const out = new Set<TrackerRefillKind>();
+  const raw = tracker.refill;
+
+  if (raw === undefined) {
+    // Nie gesagt: die alte Ableitung. „short", weil die kurze Pause die Tageszähler
+    // bisher mitgefüllt hat — das war seine Entscheidung.
+    if (tracker.suggestedFrom !== undefined) out.add("short");
+  } else if (typeof raw === "string") {
+    // Die ausgelieferte erste Fassung.
+    if (raw === "long" || raw === "short") out.add(raw);
+  } else {
+    for (const kind of raw) out.add(kind);
+  }
+
+  // Kurze Pause schließt die lange Rast ein.
+  if (out.has("short")) out.add("long");
+  return out;
+}
+
+/** Füllt sich der Zähler bei DIESER Gelegenheit? */
+export function refillsAt(
+  tracker: Parameters<typeof refillOf>[0],
+  when: TrackerRefillKind,
+): boolean {
+  return refillOf(tracker).has(when);
+}
+
+/**
+ * Worauf zurückgesetzt wird. `undefined` = „max", weil das das bisherige Verhalten
+ * ist — und ein stiller Wechsel auf 0 hätte jeden bestehenden Zähler geleert.
+ */
+export function resetToOf(tracker: { resetTo?: TrackerResetTo | undefined }): TrackerResetTo {
+  return tracker.resetTo ?? "max";
 }
 
 /** Woher die Zahl kommt — für die Zeile unter dem Zähler. */
