@@ -1098,6 +1098,11 @@ export const S = {
     known: "Bekannt",
     spellbook: "Zauberbuch",
     prepare: "Vorbereiten",
+    /* Sein Wunsch: Sternchen als Favoriten, und die stehen je Grad oben. */
+    favorite: "Als Favorit merken",
+    unfavorite: "Favorit entfernen",
+    foldedHint: (count: number) =>
+      count === 1 ? "1 Zauber — zugeklappt" : `${count} Zauber — zugeklappt`,
     learn: "Lernen",
     cast: "Wirken",
     /*

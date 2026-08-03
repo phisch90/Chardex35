@@ -60,8 +60,8 @@ describe.skipIf(!packsAvailable)("Rast", () => {
         ...Array.from({ length: 3 }, () => ({ classId: "srd:class:wizard", hpRoll: "avg" as const })),
       ],
       spellState: {
-        "srd:class:cleric": { known: [], prepared: [], usedSlots: [1, 2, 0] },
-        "srd:class:wizard": { known: [], prepared: [], usedSlots: [0, 1] },
+        "srd:class:cleric": { known: [], prepared: [], usedSlots: [1, 2, 0], favorites: [] },
+        "srd:class:wizard": { known: [], prepared: [], usedSlots: [0, 1], favorites: [] },
       },
     });
     const plan = planRest(c, deriveSheet(c, compendium));
@@ -74,7 +74,7 @@ describe.skipIf(!packsAvailable)("Rast", () => {
 
   it("Die Ausführung leert die Plätze wirklich", () => {
     const c = cleric({
-      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [1, 2] } },
+      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [1, 2], favorites: [] } },
     });
     const plan = planRest(c, deriveSheet(c, compendium));
     applyRest(c, plan);
@@ -90,6 +90,7 @@ describe.skipIf(!packsAvailable)("Rast", () => {
           known: ["srd:spell:bless"],
           prepared: [{ spellId: "srd:spell:bless", slotLevel: 1 }],
           usedSlots: [0, 1],
+          favorites: [],
         },
       },
     });
@@ -199,7 +200,7 @@ describe.skipIf(!packsAvailable)("Rast", () => {
     // Zauber, Domänen), ist Aufbau. Eine Rast ist Spielzustand.
     const c = cleric({
       domains: [{ classId: "srd:class:cleric", spellListId: "srd:spelllist:domain-war" }],
-      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 2] } },
+      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 2], favorites: [] } },
       trackers: [
         { id: "t1", name: "Untote vertreiben", kind: "counter", value: 0, suggestedFrom: "turn-undead", maxManual: false },
       ],
@@ -226,7 +227,7 @@ describe.skipIf(!packsAvailable)("Rast", () => {
       acht Stunden. Hausregel seines Tisches, und die gewinnt.
     */
     const c = cleric({
-      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 2] } },
+      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 2], favorites: [] } },
       trackers: [
         {
           id: "t1",
@@ -253,7 +254,7 @@ describe.skipIf(!packsAvailable)("Rast", () => {
   it("Eine kurze Pause ohne Zähler hat nichts zu tun, auch bei verbrauchten Plätzen", () => {
     // Wichtig für die Oberfläche: sonst bietet sie eine Pause an, die nichts tut.
     const c = cleric({
-      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 3] } },
+      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 3], favorites: [] } },
     });
     const plan = planRest(c, deriveSheet(c, compendium), "short");
     expect(plan.nothingToDo).toBe(true);
@@ -263,14 +264,14 @@ describe.skipIf(!packsAvailable)("Rast", () => {
 
   it("Ohne Angabe ist es die Nachtruhe", () => {
     const c = cleric({
-      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [1] } },
+      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [1], favorites: [] } },
     });
     expect(planRest(c, deriveSheet(c, compendium)).scope).toBe("full");
   });
 
   it("Zurücknehmen stellt genau den Stand von vorher wieder her", () => {
     const c = cleric({
-      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 2, 1] } },
+      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 2, 1], favorites: [] } },
       trackers: [
         { id: "t1", name: "Untote vertreiben", kind: "counter", value: 1, suggestedFrom: "turn-undead", maxManual: false },
       ],
@@ -293,7 +294,7 @@ describe.skipIf(!packsAvailable)("Rast", () => {
       deshalb hält die Momentaufnahme nur die berührten Felder.
     */
     const c = cleric({
-      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 2] } },
+      spellState: { "srd:class:cleric": { known: [], prepared: [], usedSlots: [0, 2], favorites: [] } },
     });
     const plan = planRest(c, deriveSheet(c, compendium));
     const undo = snapshotForRest(c, plan);

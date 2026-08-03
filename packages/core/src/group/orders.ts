@@ -223,6 +223,12 @@ function mergeOrderIntoLocal(fromOrder: Character, local: Character): Character 
       known: fromState.known,
       prepared: mine?.prepared ?? fromState.prepared,
       usedSlots: mine?.usedSlots ?? fromState.usedSlots,
+      /*
+        Favoriten gehören dem SPIELER, nicht dem Auftrag: welche Zauber jemand gern
+        benutzt, ist keine Aufbau-Entscheidung des Spielleiters. Sie stehen deshalb auf
+        derselben Seite wie „vorbereitet" und die verbrauchten Plätze.
+      */
+      favorites: mine?.favorites ?? fromState.favorites ?? [],
     };
   }
 

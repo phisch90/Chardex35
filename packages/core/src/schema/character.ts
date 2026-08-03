@@ -3,7 +3,14 @@ import { abilitySchema, bonusTypeSchema, statPathSchema } from "./common.js";
 import { effectSchema, entitySchema } from "./entities.js";
 import { campaignColorSchema } from "./campaign.js";
 
-export const CURRENT_SCHEMA_VERSION = 1;
+/**
+ * Fassung des gespeicherten Charakter-Formats.
+ *
+ * 1 → 2: die vorbereiteten Grad-0-Zauber werden entfernt (Martins Hausregel — auf Grad 0
+ * wird nicht mehr vorbereitet). Die Wanderung selbst steht in `apps/web/src/db/repo.ts`,
+ * weil nur die App gespeicherte Zeilen kennt; hier steht nur, WOHIN gewandert wird.
+ */
+export const CURRENT_SCHEMA_VERSION = 2;
 export const CURRENT_EXPORT_FORMAT_VERSION = 1;
 
 /**
@@ -267,6 +274,19 @@ export const characterSchema = z.object({
          * Exporte immer importierbar bleiben.
          */
         usedSlots: z.array(z.preprocess((v) => v ?? 0, z.number().int())).default([]),
+        /**
+         * Favoriten — die Zauber, die er wirklich benutzt.
+         *
+         * Sein Wort: „sollte man sauber mit einem Sternchen versehen können, dass sie
+         * quasi als Favoriten markiert sind und sichtbar sind […] stehen dann in den
+         * Zauberstufen ganz oben, sodass man sie schnell wiederfindet."
+         *
+         * Eine EINGABE (eine Vorliebe kann die App nicht ableiten) und deshalb hier am
+         * Charakter. Sie liegt je Klasse, damit ein Fighter/Cleric nicht die Vorlieben
+         * seiner anderen Klasse mitschleppt, und sie hat NICHTS mit „vorbereitet" zu tun:
+         * ein Favorit ist nicht gewirkt und verbraucht keinen Platz.
+         */
+        favorites: z.array(z.string()).default([]),
       }),
     )
     .default({}),

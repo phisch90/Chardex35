@@ -24,7 +24,41 @@ export function SpellsTab(props: TabProps) {
 }
 
 function emptySpellState(): NonNullable<Character["spellState"][string]> {
-  return { known: [], prepared: [], usedSlots: [] };
+  return { known: [], prepared: [], usedSlots: [], favorites: [] };
+}
+
+/**
+ * Welche Zaubergrade zugeklappt sind — sein Wunsch: „Ansonsten kann man die
+ * verschiedenen Zauberstufen auch einklappen, sodass man eine bessere Übersicht
+ * bekommt."
+ *
+ * Das ist eine ANSICHTS-Vorliebe und kein Zustand der Figur: nichts davon gehört an den
+ * Charakter, sonst reist es über den Abgleich zu den anderen Geräten und läge im Export.
+ * Es liegt im `sessionStorage` und je Klasse — genau wie der gemerkte Reiter (siehe
+ * `rememberedTab` im Bogen). Der Grund ist derselbe: wer aus der Beschreibung eines
+ * Zaubers zurückkommt, will seinen Stand wiederfinden, und nach dem Neustart der App
+ * will er alles sehen.
+ */
+const FOLD_MEMORY = "codex35.spells.folded.";
+
+function readFolded(key: string): Set<number> {
+  try {
+    const raw = sessionStorage.getItem(FOLD_MEMORY + key);
+    if (raw === null) return new Set();
+    const parsed: unknown = JSON.parse(raw);
+    return new Set(Array.isArray(parsed) ? parsed.filter((n) => typeof n === "number") : []);
+  } catch {
+    // Privater Modus kann sessionStorage sperren — dann eben ohne Gedächtnis.
+    return new Set();
+  }
+}
+
+function writeFolded(key: string, levels: Set<number>): void {
+  try {
+    sessionStorage.setItem(FOLD_MEMORY + key, JSON.stringify([...levels]));
+  } catch {
+    // s.o.
+  }
 }
 
 /** „Enchantment (V, S, DF)" — Schule und Komponenten wie auf einer Zauberkarte. */
@@ -45,6 +79,15 @@ function CasterBlock({
   const compendium = useCompendium();
   const [query, setQuery] = useState("");
   const [addLevel, setAddLevel] = useState<number | null>(null);
+  const foldKey = `${character.id}.${block.classId}`;
+  const [folded, setFolded] = useState<Set<number>>(() => readFolded(foldKey));
+  const toggleFold = (level: number) => {
+    const next = new Set(folded);
+    if (next.has(level)) next.delete(level);
+    else next.add(level);
+    setFolded(next);
+    writeFolded(foldKey, next);
+  };
 
   /*
     `block` als Ganzes ist die richtige Abhängigkeit: der abgeleitete Bogen hängt
@@ -58,6 +101,12 @@ function CasterBlock({
   );
   const state = character.spellState[block.classId] ?? emptySpellState();
   const knownSet = new Set(state.known);
+  /*
+    Favoriten. `?? []` statt Vertrauen aufs Schema: gespeicherte Bögen sind nie auf dem
+    Stand des Schemas — das ist die erste Fehlerfamilie dieses Projekts, und sie hat hier
+    schon einmal zugeschlagen (die Domänen eines Klerikers, der vor ihnen angelegt wurde).
+  */
+  const favoriteSet = new Set(state.favorites ?? []);
   const isPrepared = block.model === "prepared";
   // Nur Magier (und Assassine) führen ein Zauberbuch — Kleriker, Druiden,
   // Paladine und Waldläufer kennen ihre gesamte Klassenliste (3.5-Regeln).
@@ -134,11 +183,22 @@ function CasterBlock({
    */
   const repertoireAt = (level: number) => {
     const q = query.trim().toLowerCase();
-    return entries.filter((e) => {
+    const list = entries.filter((e) => {
       if (e.level !== level || e.spell === null) return false;
       if (usesSpellbook && !knownSet.has(e.spellId)) return false;
       return !q || e.spell.name.toLowerCase().includes(q);
     });
+    /*
+      Favoriten nach oben — sein Wort: „mit Sternchen stehen dann in den Zauberstufen
+      ganz oben, sodass man sie schnell wiederfindet."
+
+      Nur die Reihenfolge INNERHALB des Grads dreht sich, und stabil: unter den Favoriten
+      und unter dem Rest bleibt die alphabetische Ordnung, die die Liste vorher hatte.
+      Zwei Sortierungen übereinander wären sonst eine Liste, die bei jedem Stern springt.
+    */
+    return [...list].sort(
+      (a, b) => (favoriteSet.has(b.spellId) ? 1 : 0) - (favoriteSet.has(a.spellId) ? 1 : 0),
+    );
   };
 
   /** Nur für Zauberbuch-Klassen: was noch nicht im Buch steht. */
@@ -162,6 +222,20 @@ function CasterBlock({
     mutate((s) => {
       if (s.known.includes(spellId)) s.known = s.known.filter((id) => id !== spellId);
       else if (canLearnAt(level)) s.known.push(spellId);
+    });
+
+  /*
+    Der Stern. Er hängt an KEINER Grenze: ein Favorit kostet keinen Platz und ist nichts
+    vorbereitet — man darf jeden Zauber markieren, auch einen, den man heute nicht
+    vorbereitet hat. Deshalb steht er auch außerhalb des Bearbeiten-Modus zur Verfügung:
+    am Tisch merkt man sich seine Lieblinge, nicht beim Aufbauen des Bogens.
+  */
+  const toggleFavorite = (spellId: string) =>
+    mutate((s) => {
+      const list = s.favorites ?? [];
+      s.favorites = list.includes(spellId)
+        ? list.filter((id) => id !== spellId)
+        : [...list, spellId];
     });
 
   return (
@@ -261,13 +335,36 @@ function CasterBlock({
         const used = state.usedSlots[level] ?? 0;
         const repertoire = repertoireAt(level);
         const missing = usesSpellbook ? missingAt(level) : [];
+        const isFolded = folded.has(level);
+        const favCount = repertoire.filter((e) => favoriteSet.has(e.spellId)).length;
         return (
           <section key={level} className="mt-4">
             {/* Grad-Kopf mit Slot-Pips, Verbrauch und SG — wie in Fight Club. */}
             <div className="flex items-center gap-2 border-b border-slate-700 pb-1">
-              <span className="text-xs font-bold uppercase tracking-wide text-amber-400">
+              {/*
+                Der Grad-Name ist der Auf-/Zuklapper. Nur er, nicht die ganze Kopfzeile:
+                dort sitzen die − und + für die verbrauchten Plätze, und ein Tap daneben
+                darf nicht die halbe Liste zuklappen. Die Zahl der Favoriten steht am
+                zugeklappten Grad — sonst wäre nicht zu sehen, dass sich Lohnendes
+                darunter versteckt.
+              */}
+              <button
+                type="button"
+                onClick={() => toggleFold(level)}
+                aria-expanded={!isFolded}
+                className="flex shrink-0 items-center gap-1 text-xs font-bold uppercase tracking-wide text-amber-400"
+              >
+                <span aria-hidden="true" className="text-[10px]">
+                  {isFolded ? "▸" : "▾"}
+                </span>
                 {S.spells.level} {level}
-              </span>
+                {isFolded && favCount > 0 && (
+                  <span className="font-normal normal-case text-amber-300">
+                    {" "}
+                    ★{favCount}
+                  </span>
+                )}
+              </button>
               <span className="flex-1 truncate font-mono text-[11px] text-slate-400">
                 {/*
                   Der Domänenplatz ist der LETZTE Punkt der Reihe und trägt eine
@@ -313,13 +410,26 @@ function CasterBlock({
               </GhostButton>
             </div>
 
+            {isFolded ? (
+              <p className="py-2 text-[11px] text-slate-500">
+                {S.spells.foldedHint(repertoire.length)}
+              </p>
+            ) : (
             <ul className="divide-y divide-slate-800">
               {repertoire.map((entry) => {
                 const count = isPrepared
                   ? state.prepared.filter((p) => p.spellId === entry.spellId && p.slotLevel === level)
                       .length
                   : 0;
-                const active = isPrepared ? count > 0 : knownSet.has(entry.spellId);
+                /*
+                  Auf Grad 0 gilt `count` nichts mehr — dort wird nicht vorbereitet. Auf
+                  Hikes Bogen standen die alten Einträge noch als „Vorbereitet" und als
+                  „×2" da: Reste einer Regel, die es nicht mehr gibt. Weggeräumt wird
+                  auch die Daten-Seite, und zwar im Schreibweg (`db/repo.ts`).
+                */
+                const active = isPrepared
+                  ? level > 0 && count > 0
+                  : knownSet.has(entry.spellId);
                 /*
                   Grad 0 ohne Vorbereitung — Martins Regel: „müssen nicht vorbereitet
                   werden, allgemein lockere Handhabung, gilt für alle." Die PLÄTZE
@@ -349,6 +459,28 @@ function CasterBlock({
                   */
                   <li key={entry.spellId} className="py-1.5">
                     <div className="flex items-baseline gap-2">
+                      {/*
+                        Der Stern steht VOR dem Namen: er ist eine Marke, kein Handgriff.
+                        Beim Durchblättern erkennt man ihn an der Kante, ohne die Zeile zu
+                        lesen — und weil er zugleich der Knopf ist, kostet das Markieren
+                        keinen zweiten Tap woanders.
+                      */}
+                      <button
+                        type="button"
+                        onClick={() => toggleFavorite(entry.spellId)}
+                        title={
+                          favoriteSet.has(entry.spellId) ? S.spells.unfavorite : S.spells.favorite
+                        }
+                        aria-label={
+                          favoriteSet.has(entry.spellId) ? S.spells.unfavorite : S.spells.favorite
+                        }
+                        aria-pressed={favoriteSet.has(entry.spellId)}
+                        className={`-my-1 shrink-0 px-1 py-1 text-sm leading-none ${
+                          favoriteSet.has(entry.spellId) ? "text-amber-300" : "text-slate-600"
+                        }`}
+                      >
+                        {favoriteSet.has(entry.spellId) ? "★" : "☆"}
+                      </button>
                       <Link
                         to="/kompendium/$kind/$entityId"
                         params={{ kind: "spell", entityId: entry.spellId }}
@@ -440,6 +572,7 @@ function CasterBlock({
                 </li>
               )}
             </ul>
+            )}
 
             {/* Zauberbuch-Klassen: der Rest der Klassenliste, aufklappbar. */}
             {usesSpellbook && (
