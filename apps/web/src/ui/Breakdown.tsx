@@ -1,6 +1,6 @@
 import type { StatValue } from "@codex35/core";
 import { S } from "../strings.js";
-import { BottomSheet, fmtMod } from "./bits.js";
+import { BottomSheet, d20Roll, fmtMod } from "./bits.js";
 
 /**
  * DAS Vertrauens-Feature: jeder abgeleitete Wert zeigt auf Tap seine
@@ -60,8 +60,10 @@ export function BreakdownSheet(props: {
               onClick={props.onRoll}
               className="mt-3 w-full rounded-lg bg-amber-600 py-2 font-semibold text-white hover:bg-amber-500"
             >
-              🎲 {S.actions.roll} (1d20{value.total >= 0 ? "+" : ""}
-              {value.total})
+              {/* Dieselbe Zahl wie der Wurf selbst — siehe `d20Roll`: ein krummer
+                  Gesamtwert (halber Rang) wird abgerundet, statt einen Ausdruck zu
+                  zeigen, den der Würfelparser nicht lesen kann. */}
+              🎲 {S.actions.roll} ({d20Roll(value.total)})
             </button>
           )}
         </>

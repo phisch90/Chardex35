@@ -12,6 +12,7 @@ import {
   openBuildWork,
   planLevelUpRefill,
   skillPointCost,
+  stepRank,
   type Ability,
   type Character,
 } from "@codex35/core";
@@ -359,10 +360,14 @@ export function LevelUpPage() {
             const current = ranks?.[skill.key] ?? 0;
             const max = maxRanks(newTotal, isClass);
             const isSubtypeAnchor = skill.subtyped && skill.subtype === undefined;
-            // 3.5: ganze Ränge. Klassenfremd kostet ein Rang 2 Punkte (die
-            // Engine rechnet in derive.ts mit derselben Basis). Halbe Ränge für
-            // den halben Preis waren 3.0 und sind hier bewusst weg.
-            const step = 1;
+            /*
+              3.5: ganze Ränge. Klassenfremd kostet ein Rang 2 Punkte (die Engine rechnet
+              in derive.ts mit derselben Basis). Halbe Ränge für den halben Preis waren 3.0.
+
+              Die Schrittweite kommt aus `stepRank` im Kern und nicht mehr als `step = 1`
+              von hier: liegt auf dem Bogen schon ein halber Rang (Fight-Club-Import), führt
+              der Knopf auf eine ganze Zahl statt von 2,5 auf 3,5 weiterzuzählen.
+            */
             const cost = skillPointCost(isClass);
             const setSkill = (value: number) => {
               const next = { ...(ranks ?? {}) };
@@ -395,13 +400,13 @@ export function LevelUpPage() {
                     <>
                       <GhostButton
                         disabled={current <= (character.skillRanks[skill.key] ?? 0)}
-                        onClick={() => setSkill(current - step)}
+                        onClick={() => setSkill(stepRank(current, -1))}
                       >
                         −
                       </GhostButton>
                       <GhostButton
                         disabled={current >= max || skillLeft < cost}
-                        onClick={() => setSkill(current + step)}
+                        onClick={() => setSkill(stepRank(current, 1))}
                       >
                         +
                       </GhostButton>

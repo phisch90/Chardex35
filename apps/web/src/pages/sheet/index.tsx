@@ -8,7 +8,7 @@ import { useAppSettings, useCharacter, useCompendium, useSheet } from "../../lib
 import { useDiceStore } from "../../lib/diceStore.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
-import { Chip, GhostButton, OpenDot, fmtMod } from "../../ui/bits.js";
+import { Chip, GhostButton, OpenDot, d20Roll, fmtMod } from "../../ui/bits.js";
 import { SwipeTabs } from "../../ui/SwipeTabs.js";
 import { OrderBanner } from "../../group/OrderBanner.js";
 import { IdentityCard } from "./Identity.js";
@@ -466,7 +466,7 @@ export function CharacterSheetPage() {
           diceEnabled && breakdown?.rollable
             ? () => {
                 const mod = breakdown.value.total;
-                roll(`1d20${mod >= 0 ? "+" : ""}${mod}`, `${character.name}: ${breakdown.title}`);
+                roll(d20Roll(mod), `${character.name}: ${breakdown.title}`);
                 setBreakdown(null);
               }
             : undefined

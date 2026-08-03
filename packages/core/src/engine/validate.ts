@@ -5,6 +5,17 @@ import { featEligibility } from "./prereqs.js";
 import type { DerivedSheet } from "./types.js";
 
 /**
+ * Eine Zahl für einen deutschen Satz: „2,5" statt „2.5".
+ *
+ * Aufgefallen beim Aufräumen der halben Ränge: die Meldung „Spot: 2.5 Ränge übersteigen
+ * das Maximum von 2" stand mit englischem Dezimalpunkt in einem deutschen Satz. Ganze
+ * Zahlen bleiben unberührt — es kommt kein „,0" dazu.
+ */
+function de(value: number): string {
+  return String(value).replace(".", ",");
+}
+
+/**
  * Stufe 7 — validate: WARNUNGEN, nie Blocker. Der DM hat Recht (Homebrew-first);
  * jede Warnung mit `muteKey` ist am Bogen abstellbar („passt so").
  *
@@ -32,7 +43,32 @@ export function validate(
       issues.push({
         severity: "warning",
         code: "max-ranks",
-        message: `${skill.name}: ${skill.ranks} Ränge übersteigen das Maximum von ${skill.maxRanks}${skill.isClassSkill ? "" : " (klassenfremd)"}.`,
+        message: `${skill.name}: ${de(skill.ranks)} Ränge übersteigen das Maximum von ${skill.maxRanks}${skill.isClassSkill ? "" : " (klassenfremd)"}.`,
+        ref: skill.skillId,
+        tab: "skills",
+      });
+    }
+  }
+
+  /*
+    Halbe Ränge. Sein Befund: „Bei Hike habe ich grade wieder in 0.5er Schritten stellen
+    können. Das sollte doch raus. 2 Skillpunkte = 1 Rang bei denen."
+
+    Die ±-Knöpfe können das jetzt nicht mehr (`stepRank`), aber GESPEICHERT liegen halbe
+    Ränge weiter da: aus einem Fight-Club-Import (dort steht „Hide (0.5)" im Format) oder
+    von einem Klick vor dieser Runde. Und sie wirken still — ein halber Rang geht als +0,5
+    in den Gesamtwert und kostet klassenfremd genau einen Punkt.
+
+    Nicht automatisch runden: das würde Zahlen auf einem bestehenden Bogen verschieben,
+    ohne dass er es angesagt bekommt. Stattdessen gesagt, WAS dasteht und was ein Tipp
+    daraus macht — der ±-Knopf führt von 2,5 auf 2 bzw. 3.
+  */
+  for (const skill of sheet.skills) {
+    if (!Number.isInteger(skill.ranks)) {
+      issues.push({
+        severity: "warning",
+        code: "half-rank",
+        message: `${skill.name}: ${de(skill.ranks)} Ränge. Halbe Ränge gibt es in 3.5 nicht — klassenfremd ist nicht der Rang halb, sondern der Preis doppelt (2 Punkte je Rang). Ein Tipp auf − macht ${Math.floor(skill.ranks)} daraus, einer auf + ${Math.ceil(skill.ranks)}.`,
         ref: skill.skillId,
         tab: "skills",
       });
@@ -47,7 +83,7 @@ export function validate(
       issues.push({
         severity: "warning",
         code: "skill-needs-subtype",
-        message: `${skill.name}: ${skill.ranks} Ränge liegen auf der Grundfertigkeit. Leg ein Teilgebiet an (z.B. „${skill.name} (arcana)") und trag die Ränge dort ein.`,
+        message: `${skill.name}: ${de(skill.ranks)} Ränge liegen auf der Grundfertigkeit. Leg ein Teilgebiet an (z.B. „${skill.name} (arcana)") und trag die Ränge dort ein.`,
         ref: skill.skillId,
         tab: "skills",
       });

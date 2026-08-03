@@ -18,6 +18,7 @@ import {
   starterKit,
   weaponSuggestions,
   skillPointCost,
+  stepRank,
   suggestTrackers,
   type Ability,
   type AbilityBlock,
@@ -972,7 +973,9 @@ function SkillStep(props: {
           const ranks = draft.skillRanks[skill.key] ?? 0;
           const max = maxRanks(1, isClass);
           // 3.5: ganze Ränge, klassenfremd 2 Punkte je Rang (keine halben
-          // Ränge zum halben Preis — das war 3.0).
+          // Ränge zum halben Preis — das war 3.0). Die Schrittweite kommt aus
+          // `stepRank` im Kern, damit dieselbe Regel nicht in drei Ansichten
+          // dreimal dasteht und in einer davon anders lautet.
           const cost = skillPointCost(isClass);
           const isSubtypeAnchor = skill.subtyped && skill.subtype === undefined;
           return (
@@ -997,14 +1000,14 @@ function SkillStep(props: {
                 {!isSubtypeAnchor && (
                   <>
                     <GhostButton
-                      onClick={() => setRanks(skill.key, ranks - 1)}
+                      onClick={() => setRanks(skill.key, stepRank(ranks, -1))}
                       disabled={ranks <= 0}
                     >
                       −
                     </GhostButton>
                     <span className="w-8 text-center font-mono">{ranks}</span>
                     <GhostButton
-                      onClick={() => setRanks(skill.key, ranks + 1)}
+                      onClick={() => setRanks(skill.key, stepRank(ranks, 1))}
                       disabled={ranks >= max || left < cost}
                     >
                       +

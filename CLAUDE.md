@@ -531,6 +531,51 @@ aufgeschrieben zu werden, weil sie alle dieselbe Frage beantworten: **wo gehört
   Liste) — die erste Fehlerfamilie, diesmal von vorn bedacht. Der Test in
   `db/migrate.test.ts` prüft beide Richtungen: Grad 0 weg, Grad 1 und höher unangetastet.
 
+## Halbe Fertigkeitsränge — und warum sie zweimal weg mussten
+
+Sein Befund: „Bei Hike habe ich grade wieder in 0.5er Schritten stellen können. Das sollte
+doch raus. 2 Skillpunkte = 1 Rang bei denen." Er hat recht, und die Regel stand längst
+richtig da — nur nicht überall.
+
+**Die vergessene dritte Stelle.** Der Commit „Ganze Fertigkeitsränge (3.5)" hat
+`CharacterWizard.tsx`, `LevelUp.tsx`, `tabs-more.tsx` und `tables.ts` angefasst —
+`tabs-core.tsx` stand NICHT in seiner Dateiliste. Dort lebte `skill.isClassSkill ? 1 : 0.5`
+weiter, also genau am Bogen, an dem er am Tisch tippt. Zwei Ansichten sagten „ganze Ränge",
+die dritte widersprach. Lehre, und sie ist die Verwandte der zwölften Falle:
+**eine Regel, die in DREI Ansichten steht, steht in keiner.** Die Schrittweite ist deshalb
+jetzt `stepRank` im Kern, mit Test — und alle drei holen sie von dort. Klassenfremd ist
+nicht der RANG halb, sondern der PREIS doppelt (`skillPointCost`).
+
+**Ein halber Rang stirbt nicht durch einen besseren Knopf.** Gespeichert liegen sie weiter
+da: aus einem Fight-Club-Import (das Format schreibt „Hide (0.5)", und der Parser liest
+Dezimalstellen ausdrücklich) oder von einem Klick vor dieser Runde. Automatisch runden wäre
+eine Zahl auf einem bestehenden Bogen — also gewarnt statt gerundet (`half-rank` in
+`validate.ts`), und der ±-Knopf ist der Ausweg: `stepRank` führt von 2,5 auf 2 bzw. 3. Der
+Import bleibt ehrlich und liest, was in der Datei steht; die Warnung sagt es danach.
+
+**Und der Fund daneben, wieder „etwas weiß es, und etwas anderes kann es nicht":** ein
+halber Rang macht den GESAMTWERT krumm (2,5 + DEX 2 = 4,5). Daraus baute die Anzeige
+`1d20+4.5`, `parseDice` kennt keine Dezimalstellen und gibt `null` zurück, und
+`diceStore.roll` verschluckte das mit einem stillen `return null`. **Der Würfelknopf an
+dieser Zeile tat gar nichts** — ohne ein Wort dazu. Alle vier Wurfstellen gehen jetzt durch
+`d20Roll` (abgerundet wie überall in 3.5), und der Test prüft nicht den Text, sondern die
+STRECKE: was `d20Roll` baut, muss `parseDice` lesen können. Ein Test auf die Zeichenkette
+allein hätte genau diesen Fehler durchgelassen.
+
+Zwei Testfallen aus derselben Runde, beide in MEINEM Test und nicht in der App:
+
+- **Die Warnung ist selbst ein `li`.** Sobald „Spot: 2,5 Ränge…" dasteht, trifft
+  `page.locator("li").filter({hasText:/spot/i}).first()` den HINWEIS und nicht die Zeile
+  mit den Knöpfen. Eingeengt wird auf den Kasten, der einen Knopf TRÄGT — und die
+  Hilfsfunktion wirft, statt still auf den falschen zu zeigen.
+- **Ein regulärer Ausdruck über den ganzen Bogen trifft den eigenen Text.** Die Prüfung
+  „keine krumme Zahl im Wurf" (`/\d\.5/`) schlug an „Halbe Ränge gibt es in **3.5** nicht"
+  an — meiner eigenen Warnung. Gemessen wird im Würfelblatt, nicht im Body.
+
+Nebenbei mitgeradegerückt: die Meldungen schrieben „2.5 Ränge" mit englischem Dezimalpunkt
+in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`de()` in
+`validate.ts`); ganze Zahlen bleiben unberührt.
+
 ## Noch offen
 
 - **Die volle Attacke ab GAB +6** — der Bogen zeigt die Reihe („+9/+4") längst
