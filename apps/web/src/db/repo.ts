@@ -14,7 +14,49 @@ import { db } from "./db.js";
  * Migrations-Registry ab Tag 0: pure Funktionen je Ziel-schemaVersion.
  * Läuft lazy beim Laden und eager beim Import. v1 ist leer — aber verkabelt.
  */
-const characterMigrations: Record<number, (raw: Record<string, unknown>) => Record<string, unknown>> = {};
+/**
+ * Wanderungen für gespeicherte Charaktere. Schlüssel = die Fassung, die dabei ENTSTEHT.
+ *
+ * **2 — die vorbereiteten Grad-0-Zauber wegräumen.** Seit Martins Hausregel („Grad-0-Zauber
+ * müssen nicht vorbereitet werden") sind sie Reste einer Regel, die es nicht mehr gibt: auf
+ * Hikes Bogen standen sie weiter als „Vorbereitet" und als „×2" da. Sein Auftrag: „solltest
+ * Du das vorbereitet bei den Level null Zaubern löschen bei dem Charakter Hike."
+ *
+ * Es ist LÖSCHEN, deshalb hier und nicht nebenbei in der Anzeige: eine Wanderung läuft
+ * genau einmal je Bogen, sie ist an der Fassungsnummer ablesbar, und sie fasst nur diese
+ * eine Sorte Eintrag an. Was verloren geht, ist nichts, was noch etwas bedeutet — die
+ * Plätze auf Grad 0 zählt der Bogen unverändert weiter, und welcher Zauber es wird,
+ * entscheidet er beim Wirken.
+ */
+const characterMigrations: Record<number, (raw: Record<string, unknown>) => Record<string, unknown>> = {
+  2: (raw) => {
+    const spellState = raw.spellState;
+    if (typeof spellState !== "object" || spellState === null) return raw;
+    const next: Record<string, unknown> = {};
+    for (const [classId, value] of Object.entries(spellState as Record<string, unknown>)) {
+      if (typeof value !== "object" || value === null) {
+        next[classId] = value;
+        continue;
+      }
+      const state = value as Record<string, unknown>;
+      const prepared = state.prepared;
+      if (!Array.isArray(prepared)) {
+        next[classId] = state;
+        continue;
+      }
+      next[classId] = {
+        ...state,
+        prepared: prepared.filter(
+          (p) =>
+            typeof p !== "object" ||
+            p === null ||
+            (p as Record<string, unknown>).slotLevel !== 0,
+        ),
+      };
+    }
+    return { ...raw, spellState: next };
+  },
+};
 const entityMigrations: Record<number, (raw: Record<string, unknown>) => Record<string, unknown>> = {};
 
 function runMigrations(

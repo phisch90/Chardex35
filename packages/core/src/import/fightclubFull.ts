@@ -525,7 +525,9 @@ export function applyFullExtras(
     .find((classId) => compendium.get(classId)?.kind === "class" && hasSpellcasting(compendium.get(classId)));
   if (full.prepared.length > 0 && casterClassId !== undefined) {
     const spellIndex = buildSpellIndex(compendium);
-    const state = character.spellState[casterClassId] ?? { known: [], prepared: [], usedSlots: [] };
+    const state =
+      character.spellState[casterClassId] ??
+      { known: [], prepared: [], usedSlots: [], favorites: [] };
     const missing: string[] = [];
     for (const entry of full.prepared) {
       const spellId = spellIndex.get(normalizeName(entry.name));

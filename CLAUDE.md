@@ -228,6 +228,35 @@ genau dort, wo der Punkt sitzt. Im Bild sah der Ausrüstungs-Reiter deshalb aus,
 trüge er einen — er tut es nicht (auf den Ausrüstungs-Reiter zeigt gar keine Warnung).
 Wer eine Marke an einem Symbol prüft, prüft sie im DOM und nicht am Bild.
 
+Dreizehnte Falle, und sie ist die BÖSE Verwandte der ersten Fehlerfamilie: **der Router
+merkt sich `window.scrollY`, und diese App scrollt nicht das Fenster.** Sein Einwand war
+„springt der immer an Seitenanfang. Das ist blöd." Die naheliegende Antwort ist ein
+`scrollRestoration: true` am Router — eine Zeile, die nichts tut: gescrollt wird das
+`main` mit `overflow-y-auto` in `ui/Layout.tsx` (Kopf und Reiterleiste sollen stehen
+bleiben), `window.scrollY` ist immer 0. Gemerkt hätte sich der Router also die 0, und
+die hätte er auch brav wiederhergestellt. Gefunden hat es nur der Lauf im gebauten
+Bogen, weil er die ECHTE Zahl gemessen hat — hätte er `window.scrollY` geprüft, hätte er
+0 gegen 0 verglichen und einen kaputten Zurück-Weg für grün gehalten. **Wer eine
+Scroll-Höhe prüft, muss den Kasten messen, der wirklich scrollt.**
+
+Und die zweite Hälfte davon, die einzeln genauso wirkungslos wäre: **beim Zurückkommen
+ist die Liste noch nicht da.** Der Bogen holt seinen Charakter aus der Datenbank; im
+ersten Bild ist der Kasten leer und damit 0 Pixel hoch, ein einmaliges `scrollTop = 900`
+verpufft dort. `data-scroll-restoration-id` scheitert an genau dem (der Router setzt zu
+früh) — deshalb setzt `lib/scrollMemory.ts` die Höhe über einige Bilder NACH, bis sie
+sitzt, und hört sofort auf, sobald er selbst anfasst (Finger, Rad, Taste). Eine App, die
+gegen den Daumen scrollt, ist schlimmer als eine, die die Höhe vergisst.
+
+Und die zwölfte Falle noch einmal, diesmal von der anderen Seite: **wer per `.last()`
+einen Kasten ERRÄT, prüft irgendwann den falschen.** `page.locator("div").filter({hasText:
+/^grad 0/i}).last()` traf den Grad-0-Block, solange der Kopf ein `div` war; seit er ein
+Knopf ist, griff die Auswahl über den Kasten hinaus und meldete das „Vorbereiten" von
+GRAD 1 als Fehler von Grad 0 — 17 von 18, und der Fehler zeigte auf die App, die recht
+hatte. Jeder Zaubergrad IST ein `section`: dort wird gezählt, und gezählt werden KNÖPFE,
+nicht Textstellen („vorbereitet" steht auch im Blockkopf „Cleric — vorbereitet" und im
+Erklärtext). Dazu gehört die Gegenprobe: Grad 0 hat 0 Vorbereiten-Knöpfe, Grad 1 hat 31 —
+sonst hätte ich zu viel entfernt und es nicht gemerkt.
+
 ## Beantwortete Entscheidungen (nicht neu fragen)
 
 - **Geräte:** iPhone UND iPad, beide. Deshalb war der Abgleich-Fehler dringend — er
@@ -478,16 +507,38 @@ verspricht und nichts tut, ist schlimmer als kein Schalter. Alle drei sind Tisch
 also stehen sie als Fragen 9.1–9.3 in `FRAGEN-AN-DEN-DM.md` — jede mit einer fertigen
 Hälfte dahinter.
 
+## Zauber-Reiter: was wem gehört
+
+Seine vier Punkte in einer Runde — Höhe halten, Sternchen, Grade einklappen, und die
+stehengebliebenen Grad-0-Vorbereitungen löschen. Drei Entscheidungen daran sind es wert,
+aufgeschrieben zu werden, weil sie alle dieselbe Frage beantworten: **wo gehört das hin?**
+
+- **Der Favorit gehört dem SPIELER.** Er steht als `favorites` im `spellState` am
+  Charakter (nicht im Speicher der Seite: er soll das Gerät wechseln und ein Neuladen
+  überstehen) — und in `group/orders.ts` gewinnt beim Abgleich die Fassung des SPIELERS,
+  nicht der Auftrag des Spielleiters. Ein Stern ist kein Aufbau, sondern ein Handgriff am
+  Tisch. Die Reihenfolge daraus ist eine FOLGE und wird nie gespeichert: `repertoireAt`
+  sortiert stabil, Favoriten zuerst.
+- **Der zugeklappte Grad gehört dem GERÄT.** Er liegt in `sessionStorage`
+  (`codex35.spells.folded.<charId>.<classId>`) und nicht am Charakter: dass er den Grad 3
+  auf dem iPhone zugeklappt hat, ist keine Eigenschaft der Figur. Dasselbe gilt für die
+  Scroll-Höhe in `lib/scrollMemory.ts`.
+- **Löschen bekommt eine Wanderung mit Nummer, nicht einen Handgriff.** Sein Auftrag war
+  „das vorbereitet bei den Level null Zaubern löschen bei dem Charakter Hike" — gebaut als
+  Wanderung 2 in `db/repo.ts` (`characterMigrations`), damit sie je Bogen genau EINMAL
+  läuft und am `schemaVersion` ablesbar ist. Sie arbeitet auf der ROHEN Zeile und muss
+  deshalb mit allem rechnen, was dort liegen kann (kein `spellState`, `prepared` keine
+  Liste) — die erste Fehlerfamilie, diesmal von vorn bedacht. Der Test in
+  `db/migrate.test.ts` prüft beide Richtungen: Grad 0 weg, Grad 1 und höher unangetastet.
+
 ## Noch offen
 
-- **Halber Stärkeschaden in der zweiten Hand** (Dolch 1d4+1 statt 1d4+2) und die
-  Rundung bei negativem Stärkemodifikator im ×1,5-Pfad — beides verschiebt Zahlen,
-  beides braucht sein Wort. Nachgelesen für die Fragenliste, damit dort keine Behauptung
-  steht: die zweite Hand bekommt heute den VOLLEN Bonus, und `Math.floor(strMod * 1.5)`
-  macht aus −1 zweihändig eine **−2** (`engine/derive.ts:597`). Beim iterativen Angriff
-  war meine Annahme falsch: der Bogen zeigt die Reihe („+9/+4") längst
-  (`iterativeAttacks`, `derive.ts:563`) — die Frage ist nicht, ob sie dazukommt, sondern
-  ob sie wegkann.
+- **Die volle Attacke ab GAB +6** — der Bogen zeigt die Reihe („+9/+4") längst
+  (`iterativeAttacks`, `derive.ts:563`), die Frage ist nicht, ob sie dazukommt, sondern ob
+  sie wegkann. Liegt bei Martin (Teil 2 in `FRAGEN-AN-DEN-DM.md`), bis dahin NICHT
+  anfassen: es würde jeden Bogen ändern. Der halbe Stärkeschaden in der zweiten Hand und
+  die Rundung im ×1,5-Pfad standen bis vor kurzem hier — beides ist beantwortet und gebaut
+  (Martins Regeln 4 und 5).
 - **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" fehlt noch.
   Eigene Gegenstände mit echten Rüstungs- und Waffenwerten sind gebaut (Editor im
   Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in

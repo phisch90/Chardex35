@@ -105,6 +105,13 @@ const routeTree = rootRoute.addChildren([
 // das das Deployment aus $GITHUB_REPOSITORY setzt: eine Umbenennung des
 // Repos wirkt damit von allein, ohne Codeänderung.
 const basepath = import.meta.env.BASE_URL.replace(/\/$/, "") || "/";
+/*
+  KEIN `scrollRestoration` am Router. Es sieht nach der richtigen Zeile aus und wäre eine,
+  die nichts tut: der Router merkt sich `window.scrollY`, und diese App scrollt nicht das
+  Fenster, sondern das `main` in `ui/Layout.tsx`. Die Höhe merkt deshalb
+  `lib/scrollMemory.ts` — dort steht die ganze Begründung, samt der zweiten Hälfte
+  (beim Zurückkommen ist die Liste noch nicht da).
+*/
 const router = createRouter({ routeTree, basepath });
 
 declare module "@tanstack/react-router" {

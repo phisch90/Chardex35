@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { S } from "../strings.js";
 import { ensureSeeded, requestPersistentStorage } from "../db/seed.js";
 import { useAppSettings } from "../lib/hooks.js";
+import { useScrollMemory } from "../lib/scrollMemory.js";
 import { DiceResultSheet } from "./DiceSheet.js";
 import { SyncGate } from "../sync/SyncGate.js";
 import { SyncBadge } from "./SyncBadge.js";
@@ -18,6 +19,14 @@ const NAV = [
 export function Layout() {
   const [seedMessage, setSeedMessage] = useState<string | null>(S.misc.seedRunning);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const searchStr = useRouterState({ select: (state) => state.location.searchStr });
+  /*
+    Die Höhe je Adresse. Der Kasten, der scrollt, ist das `main` darunter — nicht das
+    Fenster; siehe `lib/scrollMemory.ts`, dort steht auch, warum der Schalter des Routers
+    hier nichts ausrichten konnte.
+  */
+  const mainRef = useRef<HTMLElement | null>(null);
+  useScrollMemory(mainRef, pathname + searchStr);
   const { diceEnabled } = useAppSettings();
   // Würfeln abgeschaltet → der Reiter verschwindet ganz aus der Navigation.
   const visibleNav = NAV.filter((item) => diceEnabled || item.to !== "/wuerfel");
@@ -61,7 +70,10 @@ export function Layout() {
         als Web-App auf dem iPhone rund 90px. Die unterste Karte war also
         angeschnitten. Jetzt dieselbe Rechnung wie die Leiste, plus 8px Luft.
       */}
-      <main className="flex-1 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-4">
+      <main
+        ref={mainRef}
+        className="flex-1 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-4"
+      >
         {seedMessage && (
           <div className="bg-amber-900/40 px-4 py-2 text-center text-xs text-amber-200">
             {seedMessage}
