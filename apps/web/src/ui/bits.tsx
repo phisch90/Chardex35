@@ -41,6 +41,25 @@ export function fmtMod(value: number): string {
 }
 
 /**
+ * Der Würfelausdruck zu einem Modifikator — mit GANZER Zahl.
+ *
+ * Gefunden beim Aufräumen der halben Fertigkeitsränge, und es ist die Fehlerfamilie
+ * „etwas weiß es, und etwas anderes kann es nicht" in Reinform: liegt am Bogen ein halber
+ * Rang, ist der Gesamtwert selbst krumm (2,5 Ränge + DEX 2 = 4,5). Daraus baute die
+ * Anzeige „1d20+4.5" — `parseDice` kennt keine Dezimalstellen und gibt `null` zurück, und
+ * `diceStore.roll` macht daraus ein stilles `return null`. Der Würfelknopf an dieser Zeile
+ * tat also GAR NICHTS, ohne ein Wort dazu.
+ *
+ * Abgerundet wie überall in 3.5 (aus 4,5 wird 4, aus −1,5 wird −2). Dass der Wert
+ * überhaupt krumm ist, sagt die Warnung „half-rank" am Fertigkeits-Reiter — hier wird
+ * nichts vertuscht, hier wird nur gewürfelt.
+ */
+export function d20Roll(modifier: number): string {
+  const whole = Math.floor(modifier);
+  return `1d20${whole >= 0 ? "+" : ""}${whole}`;
+}
+
+/**
  * Antippbarer Wert — das zentrale Interaktionsmuster des Bogens:
  * kurzer Tap öffnet den Breakdown, „Würfeln"-Knopf daneben rollt 1d20+X.
  * `sub` erlaubt eine kleine Zweitangabe (z.B. der Attributswert neben dem Mod).

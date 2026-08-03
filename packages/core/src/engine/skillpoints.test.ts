@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_HOUSE_RULES, characterSchema, type Character } from "../schema/character.js";
 import { entitySchema, resolveCompendium, type Entity } from "../schema/entities.js";
 import { deriveSheet } from "./index.js";
-import { maxRanks, skillPointCost } from "./tables.js";
+import { maxRanks, skillPointCost, stepRank } from "./tables.js";
 
 /**
  * Die 3.5-Regel für Fertigkeitspunkte, festgenagelt:
@@ -41,6 +41,45 @@ describe("skillPointCost", () => {
   it(`kostet klassenfremd das Doppelte`, () => {
     expect(skillPointCost(true)).toBe(1);
     expect(skillPointCost(false)).toBe(2);
+  });
+});
+
+/**
+ * Die Schrittweite am ±-Knopf.
+ *
+ * Sein Befund: „Bei Hike habe ich grade wieder in 0.5er Schritten stellen können. Das
+ * sollte doch raus. 2 Skillpunkte = 1 Rang bei denen." Die Regel stand vorher nur in der
+ * Oberfläche, und zwar dreimal — in einer der drei Ansichten lautete sie anders
+ * (`isClassSkill ? 1 : 0.5`). Deshalb steht sie jetzt hier: eine Regel ohne Test ist eine
+ * Regel, die beim nächsten Umbau zurückkommt.
+ */
+describe("stepRank", () => {
+  it(`geht in GANZEN Rängen, auch klassenfremd`, () => {
+    expect(stepRank(0, 1)).toBe(1);
+    expect(stepRank(1, 1)).toBe(2);
+    expect(stepRank(3, -1)).toBe(2);
+    expect(stepRank(1, -1)).toBe(0);
+  });
+
+  it(`räumt einen schon gespeicherten halben Rang auf — in beide Richtungen`, () => {
+    // Aus einem Fight-Club-Import („Hide (0.5)") oder von einem Klick vor dieser Runde.
+    expect(stepRank(2.5, -1)).toBe(2);
+    expect(stepRank(2.5, 1)).toBe(3);
+    expect(stepRank(0.5, -1)).toBe(0);
+    expect(stepRank(0.5, 1)).toBe(1);
+  });
+
+  it(`geht nie unter 0`, () => {
+    expect(stepRank(0, -1)).toBe(0);
+    expect(stepRank(0.5, -1)).toBe(0);
+  });
+
+  it(`liefert immer eine ganze Zahl — für jeden Anfangswert`, () => {
+    for (const start of [0, 0.5, 1, 1.5, 2, 2.5, 7, 7.5, 11.5]) {
+      for (const dir of [1, -1] as const) {
+        expect(Number.isInteger(stepRank(start, dir))).toBe(true);
+      }
+    }
   });
 });
 
@@ -117,5 +156,33 @@ describe.skipIf(!packsAvailable)("Verbrauch von Fertigkeitspunkten", () => {
     for (const skill of sheet.skills) {
       expect(Number.isInteger(skill.maxRanks)).toBe(true);
     }
+  });
+
+  /*
+    Ein halber Rang, der schon gespeichert ist, wirkt STILL: +0,5 im Gesamtwert und ein
+    Punkt weg. Die Knöpfe können ihn nicht mehr erzeugen — aber die App muss sagen, dass
+    er dasteht, statt ihn heimlich mitzurechnen oder heimlich zu runden.
+  */
+  it(`meldet einen halben Rang, der schon im Bogen liegt`, () => {
+    const sheet = derive(fighter({ "srd:skill:climb": 2.5 }));
+    const issue = sheet.issues.find((i) => i.code === "half-rank");
+    expect(issue).toBeDefined();
+    expect(issue?.message).toContain("Climb");
+    expect(issue?.tab).toBe("skills");
+    // Die Meldung nennt beide Auswege, damit der Knopf danach keine Überraschung ist.
+    expect(issue?.message).toContain("2");
+    expect(issue?.message).toContain("3");
+  });
+
+  it(`schweigt bei ganzen Rängen`, () => {
+    const sheet = derive(fighter({ "srd:skill:climb": 3, "srd:skill:spot": 2 }));
+    expect(sheet.issues.some((i) => i.code === "half-rank")).toBe(false);
+  });
+
+  it(`rechnet den halben Rang weiter mit — warnen, nicht sperren`, () => {
+    // Der DM hat Recht, nicht die App: der gespeicherte Wert gilt und wird gemeldet.
+    const sheet = derive(fighter({ "srd:skill:climb": 2.5 }));
+    expect(sheet.skills.find((s) => s.name === "Climb")?.ranks).toBe(2.5);
+    expect(sheet.skillPoints.spent).toBe(2.5);
   });
 });

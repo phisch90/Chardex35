@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { ABILITIES } from "@codex35/core";
+import { ABILITIES, stepRank } from "@codex35/core";
 import { Link } from "@tanstack/react-router";
 import { S } from "../../strings.js";
-import { Card, Chip, GhostButton, SectionTitle, StatButton, fmtMod } from "../../ui/bits.js";
+import { Card, Chip, GhostButton, SectionTitle, StatButton, d20Roll, fmtMod } from "../../ui/bits.js";
 import { useDiceStore } from "../../lib/diceStore.js";
 import { useAppSettings, useCompendium, useHouseRules } from "../../lib/hooks.js";
 import { SubtypePicker } from "../../ui/SubtypePicker.js";
@@ -276,7 +276,7 @@ export function CombatTab(props: TabProps) {
                     <GhostButton
                       onClick={() => {
                         const mod = attack.bonuses[0] ?? 0;
-                        roll(`1d20${mod >= 0 ? "+" : ""}${mod}`, attack.label);
+                        roll(d20Roll(mod), attack.label);
                       }}
                     >
                       🎲
@@ -421,11 +421,18 @@ export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: T
                   )}
                   {!isSubtypeAnchor && (
                     <>
+                      {/*
+                        GANZE Ränge, in beide Richtungen — hier stand als einzige der drei
+                        Stellen noch `isClassSkill ? 1 : 0.5`. Klassenfremd ist nicht der
+                        RANG halb, sondern der PREIS doppelt: 2 Punkte je Rang
+                        (`skillPointCost`, die Engine rechnet in `derive.ts` genauso).
+                        Die Schrittweite steht in `stepRank` im Kern, damit die Regel nicht
+                        wieder in einer Ansicht überlebt und in der nächsten fehlt.
+                      */}
                       <GhostButton
                         onClick={() =>
                           save((c) => {
-                            const current = c.skillRanks[skill.key] ?? 0;
-                            const next = current - (skill.isClassSkill ? 1 : 0.5);
+                            const next = stepRank(c.skillRanks[skill.key] ?? 0, -1);
                             if (next <= 0) delete c.skillRanks[skill.key];
                             else c.skillRanks[skill.key] = next;
                           })
@@ -436,8 +443,7 @@ export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: T
                       <GhostButton
                         onClick={() =>
                           save((c) => {
-                            const current = c.skillRanks[skill.key] ?? 0;
-                            c.skillRanks[skill.key] = current + (skill.isClassSkill ? 1 : 0.5);
+                            c.skillRanks[skill.key] = stepRank(c.skillRanks[skill.key] ?? 0, 1);
                           })
                         }
                       >
@@ -451,10 +457,7 @@ export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: T
                   <GhostButton
                     disabled={!skill.usable}
                     onClick={() =>
-                      roll(
-                        `1d20${skill.total.total >= 0 ? "+" : ""}${skill.total.total}`,
-                        `${character.name}: ${skill.name}`,
-                      )
+                      roll(d20Roll(skill.total.total), `${character.name}: ${skill.name}`)
                     }
                   >
                     🎲

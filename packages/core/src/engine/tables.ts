@@ -120,6 +120,28 @@ export function skillPointCost(isClassSkill: boolean): number {
   return isClassSkill ? 1 : 2;
 }
 
+/**
+ * Ein Schritt am ±-Knopf — GANZE Ränge, in jeder Richtung und in jeder Ansicht.
+ *
+ * Sein Befund: „Bei Hike habe ich grade wieder in 0.5er Schritten stellen können. Das
+ * sollte doch raus. 2 Skillpunkte = 1 Rang bei denen." Genau so ist es: klassenfremd
+ * kostet ein Rang 2 Punkte (`skillPointCost`) — halbe Ränge zum halben Preis waren 3.0.
+ *
+ * Die Regel stand bisher nur in der Oberfläche, und zwar dreimal: Assistent und
+ * Stufenaufstieg rechneten längst in ganzen Rängen, der Bogen selbst nicht
+ * (`skill.isClassSkill ? 1 : 0.5`). Deshalb steht sie jetzt HIER, an einer Stelle, mit
+ * Test — eine Regel, die nur in einer Ansicht lebt, kommt in der nächsten wieder.
+ *
+ * Und das Aufräumen ist eingebaut: liegt schon ein halber Rang im Bogen (aus einem
+ * Fight-Club-Import oder von einem Klick vor dieser Runde), führt jeder der beiden
+ * Knöpfe auf eine ganze Zahl — 2,5 wird mit „−" zu 2 und mit „+" zu 3. Die App fasst
+ * dabei von sich aus keine Zahl an: es bewegt sich nur, was er antippt.
+ */
+export function stepRank(current: number, direction: 1 | -1): number {
+  const next = direction === 1 ? Math.floor(current + 1) : Math.ceil(current - 1);
+  return Math.max(0, next);
+}
+
 /** Durchschnittlicher TW-Wurf (abgerundet), z.B. W8 → 4. */
 export function averageHitDie(die: number): number {
   return Math.floor((die + 1) / 2);
