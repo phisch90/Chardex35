@@ -23,19 +23,22 @@ import { campaignLook } from "./campaignColors.js";
  * Alles, was man mit einem Charakter TUN kann, an einer Stelle — und das
  * Löschen bewusst weit weg vom Daumen.
  *
- * Der Weg zum Löschen ist absichtlich lang: Sheet öffnen → Gefahrenzone
- * aufklappen → Löschen wählen → den Namen abtippen. Ein Fehlgriff kostet
- * sonst einen Bogen, den zwei Jahre Spielzeit gefüllt haben — und über den
- * Geräte-Abgleich wäre er auf dem iPad gleich mit weg.
- */
-/**
- * Der Bestätigungscode fürs Löschen.
+ * Der Weg zum Löschen ist absichtlich lang, aber es wird nichts mehr GETIPPT:
+ * Sheet öffnen → Gefahrenzone aufklappen → „Charakter löschen …" → den Knopf mit
+ * dem Namen darauf. Ein Fehlgriff kostet sonst einen Bogen, den zwei Jahre
+ * Spielzeit gefüllt haben — und über den Geräte-Abgleich wäre er auf dem iPad
+ * gleich mit weg.
  *
- * Eine Stelle, weil er im Hinweis, im Platzhalter, in der Vorlese-Beschriftung UND
- * im Vergleich vorkommt. Vier Kopien laufen irgendwann auseinander, und dann steht
- * im Text eine Zahl, die der Knopf nicht annimmt.
+ * Die Geschichte der Abfrage in zwei Sätzen, weil sie sonst wieder wächst: erst
+ * musste man den NAMEN abtippen („finde ich übertrieben"), dann einen festen Code
+ * „1337", jetzt gar nichts mehr — sein Wort: „Schmeiß bitte das 1337 Passwort raus.
+ * Brauchen kein Passwort."
+ *
+ * Was vom Schutz bleibt, ist genau der Teil, der den FALSCHEN Bogen verhindert: der
+ * Name steht groß und rot über der Abfrage UND auf dem Knopf selbst. Wer blind
+ * zweimal tippt, liest im letzten Moment noch, wen es trifft. Ein Code hätte das
+ * nicht geleistet — „1337" tippt man beim dritten Mal ohne hinzusehen.
  */
-const DELETE_CODE = "1337";
 
 export function CharacterActionsSheet(props: {
   character: Character;
@@ -60,7 +63,6 @@ export function CharacterActionsSheet(props: {
   const houseRules = useHouseRules();
   const [dangerOpen, setDangerOpen] = useState(false);
   const [deleteArmed, setDeleteArmed] = useState(false);
-  const [typed, setTyped] = useState("");
   const [note, setNote] = useState<string | null>(null);
   /*
     Die Rast hat drei Zustände, und das ist der ganze Punkt: „zu" → „gefragt, mit
@@ -83,7 +85,6 @@ export function CharacterActionsSheet(props: {
     setDangerOpen(false);
     setDeleteArmed(false);
     setCampaignOpen(false);
-    setTyped("");
     setNote(null);
     props.onClose();
   };
@@ -116,19 +117,6 @@ export function CharacterActionsSheet(props: {
     close();
     props.onDeleted?.();
   };
-
-  /*
-    Bestätigt wird mit einem festen Code, nicht mit dem Namen — Philipps
-    Entscheidung: „Das Name abtippen zum löschen finde ich übertrieben."
-
-    Was dabei verloren geht, ist nicht der Schutz vor dem Löschen an sich (die
-    Gefahrenzone und der zweite Schritt bleiben), sondern der Schutz davor, den
-    FALSCHEN Bogen zu löschen: einen Namen kann man nur abtippen, wenn man ihn
-    gelesen hat, „1337" tippt man beim dritten Mal blind. Deshalb steht der Name
-    jetzt groß und rot über der Abfrage — gesehen werden muss er weiterhin, nur
-    nicht mehr getippt.
-  */
-  const codeMatches = typed.trim() === DELETE_CODE;
 
   /*
     Ausgeführt wird GENAU der Plan, der in der Rückfrage stand — nicht ein neu
@@ -332,36 +320,27 @@ export function CharacterActionsSheet(props: {
                   <p className="text-sm text-slate-300">
                     Wirklich <strong className="text-red-300">{character.name}</strong> löschen?
                   </p>
-                  <p className="text-xs text-slate-400">
-                    Tippe <strong>{DELETE_CODE}</strong> zum Bestätigen.
-                  </p>
-                  <input
-                    value={typed}
-                    onChange={(e) => setTyped(e.target.value)}
-                    autoComplete="off"
-                    spellCheck={false}
-                    /* Ziffernblock direkt auf dem Handy — der Code ist eine Zahl. */
-                    inputMode="numeric"
-                    placeholder={DELETE_CODE}
-                    aria-label={`${DELETE_CODE} tippen, um ${character.name} zu löschen`}
-                    className="w-full rounded-lg border border-red-800 bg-slate-950 px-3 py-2 text-sm"
-                  />
+                  {/*
+                    Abbrechen steht ZUERST — und damit dort, wo eben noch
+                    „Charakter löschen …" stand. Ohne Eingabefeld dazwischen liegen die
+                    beiden Schritte sonst übereinander, und der zweite Tipp eines
+                    Doppeltipps würde sofort löschen. Der rote Knopf wandert damit an
+                    die Stelle, an die man nicht ohne Absicht kommt.
+                  */}
                   <div className="flex flex-wrap gap-2">
+                    <GhostButton onClick={() => setDeleteArmed(false)}>Abbrechen</GhostButton>
+                    {/*
+                      Der Name STEHT auf dem Knopf. Getippt wird nichts mehr (sein Wort:
+                      „Brauchen kein Passwort") — was der Code geleistet hat, war nie der
+                      Schutz vor dem Löschen, sondern der davor, den falschen Bogen zu
+                      erwischen. Das kann der Knopf selbst tragen.
+                    */}
                     <button
                       onClick={() => void doDelete()}
-                      disabled={!codeMatches}
-                      className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white enabled:hover:bg-red-600 disabled:opacity-40"
+                      className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
                     >
-                      Endgültig löschen
+                      {character.name} endgültig löschen
                     </button>
-                    <GhostButton
-                      onClick={() => {
-                        setDeleteArmed(false);
-                        setTyped("");
-                      }}
-                    >
-                      Abbrechen
-                    </GhostButton>
                   </div>
                 </>
               )}

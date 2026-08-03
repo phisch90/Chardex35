@@ -365,6 +365,20 @@ Dazu zwei kleinere Fallen aus derselben Runde:
   im Schlüssel.
 - **Ein Schalter ohne Rückweg ist Löschen.** Abgestellte Hinweise werden nur MARKIERT,
   nicht entfernt, und stehen gedämpft unter „1 Hinweis ist abgestellt — wieder zeigen".
+- **Einen Bogen löschen: nichts wird getippt.** Die Abfrage hat drei Fassungen gehabt und
+  ist jedes Mal kürzer geworden: den NAMEN abtippen („finde ich übertrieben"), dann der
+  feste Code „1337", jetzt gar nichts — wörtlich: „Schmeiß bitte das 1337 Passwort raus.
+  Brauchen kein Passwort." Der Weg bleibt dreistufig (Gefahrenzone → „Charakter löschen …"
+  → roter Knopf), weil das die Hürden sind, die ihn nie gestört haben.
+  **Und der Rest des Schutzes wandert in den Knopf:** dort steht jetzt „Löschprobe
+  endgültig löschen" mit dem Namen darin. Was der Code geleistet hat, war nie der Schutz
+  vor dem Löschen, sondern der davor, den FALSCHEN Bogen zu erwischen — und den kann die
+  Beschriftung tragen, ohne dass jemand tippt.
+  Dazu eine Anordnungs-Entscheidung, die ohne das Eingabefeld erst nötig wurde:
+  **„Abbrechen" steht VOR dem roten Knopf.** Vorher lag das Feld dazwischen; ohne es
+  würden die zwei Stufen genau übereinander liegen, und der zweite Tipp eines Doppeltipps
+  träfe sofort „löschen". Der Test prüft die Reihenfolge im DOM, nicht bloß, dass beide da
+  sind.
 
 - **Eigene Gegenstandstypen löschen: ja.** Sein Wort dazu ist da. Gebaut wie die
   Talentwahl — **gesperrt mit Notausgang**: die App nennt die betroffenen Bögen
