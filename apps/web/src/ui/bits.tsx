@@ -19,9 +19,22 @@ export function Card(props: {
   /** Polster, statt `p-3`. */
   padding?: string | undefined;
 }) {
+  /*
+    `karte` ist kein Tailwind, sondern der GRIFF, an dem ein Papier den Kasten anfassen
+    darf (`styles.css`, Abschnitt D): der kopierte Bogen nimmt den Schatten weg und rahmt
+    dünn, die Kladde unterstreicht.
+
+    Warum überhaupt ein Griff: bis dahin konnte ein Material nur Farben tauschen, und
+    genau das war sein Einwand — „ich sehe grad, dass ja nur die Kontrastfarben ändern".
+    Schatten und Rahmenstärke stehen in Hilfsklassen, und eine CSS-Variable gibt es dafür
+    nicht. Ein Griff je Bauteil ist die kleinste Antwort darauf.
+
+    Was das Papier an diesem Griff NICHT ändern darf: Farbe und Ecken. Die Farbe gehört
+    der Kampagne (`tone`), die Ecken gehören der Klasse.
+  */
   return (
     <div
-      className={`rounded-xl border shadow-sm ${props.tone ?? "border-slate-700/60 bg-slate-900/70"} ${props.padding ?? "p-3"} ${props.className ?? ""}`}
+      className={`karte rounded-xl border shadow-sm ${props.tone ?? "border-slate-700/60 bg-slate-900/70"} ${props.padding ?? "p-3"} ${props.className ?? ""}`}
     >
       {props.children}
     </div>
@@ -45,7 +58,7 @@ export function Card(props: {
  */
 export function SectionTitle(props: { children: ReactNode }) {
   return (
-    <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-trim-400">
+    <h2 className="abschnitt mb-2 text-xs font-semibold uppercase tracking-widest text-trim-400">
       {props.children}
     </h2>
   );

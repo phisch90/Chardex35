@@ -6,7 +6,7 @@ import { S } from "../strings.js";
 import { db } from "../db/db.js";
 import { SettingsRepo } from "../db/repo.js";
 import { AppSettingsRepo, MATERIALS } from "../db/appSettings.js";
-import { MATERIAL_HINTS, MATERIAL_LABELS } from "../ui/materials.js";
+import { LIGHT_MATERIALS, MATERIAL_HINTS, MATERIAL_LABELS } from "../ui/materials.js";
 import { useAppSettings, useHouseRules } from "../lib/hooks.js";
 import { buildExport, downloadExport, importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton, PrimaryButton, SectionTitle } from "../ui/bits.js";
@@ -22,6 +22,15 @@ const oglText = Object.values(
     eager: true,
   }) as Record<string, string>,
 )[0];
+
+/*
+  Die zwei Reihen der Papier-Auswahl. Abgeleitet aus `MATERIALS` und `LIGHT_MATERIALS`,
+  nicht abgeschrieben: wer ein Papier dazunimmt, trägt es an EINER Stelle ein und es
+  erscheint hier von allein in der richtigen Reihe. Eine zweite Liste hier wäre die Sorte
+  Kopie, die genau einmal vergessen wird.
+*/
+const LIGHT_KEYS = MATERIALS.filter((key) => LIGHT_MATERIALS.includes(key));
+const DARK_KEYS = MATERIALS.filter((key) => !LIGHT_MATERIALS.includes(key));
 
 export function SettingsPage() {
   const houseRules = useHouseRules();
@@ -93,35 +102,51 @@ export function SettingsPage() {
 
       {/*
         Das Aussehen steht VOR den Funktionen: es ist das Erste, was er hier sucht, seit es
-        eine Wahl gibt. Zwei Möglichkeiten, deshalb zwei Knöpfe und keine Liste — bei zwei
-        Werten ist ein Auswahlfeld mehr Bedienung als Auskunft.
+        eine Wahl gibt.
+
+        Vier Papiere in ZWEI Reihen, getrennt nach dunkel und hell — und das ist mehr als
+        Ordnung: der Sprung von dunkel auf hell ist der größte, den die App macht, und wer
+        ihn versehentlich tut, hält es für einen Fehler. Bei vier Knöpfen nebeneinander
+        wäre jeder 25% breit und der Hinweistext darunter zweizeilig umgebrochen; zwei
+        Reihen à zwei lassen den Hinweis lesbar.
       */}
       <Card>
         <SectionTitle>Aussehen</SectionTitle>
-        <div className="flex flex-wrap gap-2">
-          {MATERIALS.map((key) => {
-            const active = appSettings.material === key;
-            return (
-              <button
-                key={key}
-                onClick={() => void AppSettingsRepo.set({ ...appSettings, material: key })}
-                aria-pressed={active}
-                className={`flex-1 rounded-lg border px-3 py-2 text-left text-sm ${
-                  active
-                    ? "border-amber-600 bg-amber-950/40 text-amber-200"
-                    : "border-slate-700 text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <span className="block font-medium">{MATERIAL_LABELS[key]}</span>
-                <span className="block text-[11px] text-slate-500">{MATERIAL_HINTS[key]}</span>
-              </button>
-            );
-          })}
-        </div>
+        {(
+          [
+            { titel: "Dunkel — für den Tisch am Abend", keys: DARK_KEYS },
+            { titel: "Hell — wie ein gedruckter Bogen", keys: LIGHT_KEYS },
+          ] as const
+        ).map((gruppe) => (
+          <div key={gruppe.titel} className="mb-3 last:mb-0">
+            <p className="mb-1 text-[11px] font-medium text-slate-400">{gruppe.titel}</p>
+            <div className="flex flex-wrap gap-2">
+              {gruppe.keys.map((key) => {
+                const active = appSettings.material === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => void AppSettingsRepo.set({ ...appSettings, material: key })}
+                    aria-pressed={active}
+                    className={`min-w-[8rem] flex-1 rounded-lg border px-3 py-2 text-left text-sm ${
+                      active
+                        ? "border-amber-600 bg-amber-950/40 text-amber-200"
+                        : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                    }`}
+                  >
+                    <span className="block font-medium">{MATERIAL_LABELS[key]}</span>
+                    <span className="block text-[11px] text-slate-500">{MATERIAL_HINTS[key]}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
         <p className="mt-2 text-[11px] leading-snug text-slate-500">
-          Die Farbe im Bogen kommt von der Klasse — der Druide ist grün, der Paladin
-          königsblau. Am einzelnen Bogen lässt sie sich im ⋯-Menü überschreiben. Die
-          Warnfarbe bleibt in jedem Aussehen dieselbe.
+          Das Papier bestimmt Untergrund, Schrift, Linien und Kästen. Die FARBE im Bogen
+          kommt weiter von der Klasse — der Druide ist grün, der Paladin königsblau; am
+          einzelnen Bogen lässt sie sich im ⋯-Menü überschreiben. Die Warnfarbe behält in
+          jedem Papier ihren Ton und wird nur so hell oder dunkel, wie der Grund es braucht.
         </p>
       </Card>
 
