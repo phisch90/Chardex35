@@ -7,13 +7,18 @@ import { db } from "./db.js";
 /**
  * Das Material: Untergrund, Karten, Linien, Schrift.
  *
- * „codex" ist das heutige kalte Blaugrau, „nachtbogen" das dunkle Papier. Die zwei hellen
- * Papiere (kopierter Bogen, Kladde) sind angenommen, aber noch nicht gebaut — sie kommen
- * je eine Runde, damit er jedes einzeln am Tisch ansehen kann. Bis dahin steht hier
- * absichtlich kein Schlüssel dafür: eine Auswahl, die nichts ändert, ist schlimmer als
- * keine Auswahl.
+ * Vier Papiere, alle vier abgenommen:
+ *
+ *   codex           das kalte Blaugrau vom Anfang
+ *   nachtbogen      dunkles Papier, Tabak und Leder
+ *   kopierterBogen  hell und kühl, wie eine Fotokopie des echten Bogens
+ *   kladde          cremefarbenes Schulheft, blauschwarze Tinte
+ *
+ * Die zwei hellen standen hier lange NICHT, weil sie noch nicht gebaut waren — eine
+ * Auswahl, die nichts ändert, ist schlimmer als keine Auswahl. Jetzt ändern sie etwas:
+ * Papierfarbe, Schrift, Linien und Kästen (`styles.css`, Abschnitt D).
  */
-export const MATERIALS = ["codex", "nachtbogen"] as const;
+export const MATERIALS = ["codex", "nachtbogen", "kopierterBogen", "kladde"] as const;
 export type Material = (typeof MATERIALS)[number];
 
 export interface AppSettings {

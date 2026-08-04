@@ -1,9 +1,11 @@
 @import "tailwindcss";
 
 /*
- * Chardex35 ist bewusst DUNKEL — fürs Licht am Spieltisch und weil alle
- * Komponenten darauf abgestimmt sind. Ein System-Hellmodus würde sonst zu
- * unlesbaren Hybrid-Darstellungen führen (helle Fläche, dunkle Karten).
+ * Chardex35 startet DUNKEL — fürs Licht am Spieltisch. Ein SYSTEM-Hellmodus ist
+ * weiter abgeschaltet: der würde helle Flächen unter dunkle Karten legen, und
+ * niemand hätte es entschieden. Die zwei hellen PAPIERE unten sind das Gegenteil
+ * davon — dort ist alles hell, weil es so gewählt wurde, und sie setzen
+ * `color-scheme` selbst auf `light`.
  */
 :root {
   color-scheme: dark;
@@ -93,23 +95,69 @@ button,
    B) Die Klassenfarbe: EINE Rampe, ein Farbton je Klasse.
    --------------------------------------------------------------------------
    Die Stufen sind die von `amber` (Helligkeit und Sättigung 1:1 abgelesen aus
-   dem gebauten Stylesheet), variabel sind nur der Farbton `--ac-h` und ein
-   Sättigungs-Faktor `--ac-s`. Damit ist eine Klasse EINE Zeile — und keine
-   Klasse kann versehentlich einen anderen Kontrast haben als die anderen.
+   dem gebauten Stylesheet), variabel sind der Farbton `--ac-h`, ein
+   Sättigungs-Faktor `--ac-s` — und, seit es helle Papiere gibt, die Helligkeit
+   je Stufe. Damit ist eine Klasse EINE Zeile, und keine Klasse kann
+   versehentlich einen anderen Kontrast haben als die anderen.
 
    `--ac-s` ist nicht Kosmetik: der Kämpfer soll fast grau sein (Stahl), der
    Hexenmeister satt (Funke). Ohne den Faktor wären alle elf gleich laut. */
-[data-accent] {
-  --color-amber-100: oklch(96.2% calc(0.059 * var(--ac-s)) var(--ac-h));
-  --color-amber-200: oklch(92.4% calc(0.12 * var(--ac-s)) var(--ac-h));
-  --color-amber-300: oklch(87.9% calc(0.169 * var(--ac-s)) var(--ac-h));
-  --color-amber-400: oklch(82.8% calc(0.189 * var(--ac-s)) var(--ac-h));
-  --color-amber-500: oklch(76.9% calc(0.188 * var(--ac-s)) var(--ac-h));
-  --color-amber-600: oklch(66.6% calc(0.179 * var(--ac-s)) var(--ac-h));
-  --color-amber-700: oklch(55.5% calc(0.163 * var(--ac-s)) var(--ac-h));
-  --color-amber-800: oklch(47.3% calc(0.137 * var(--ac-s)) var(--ac-h));
-  --color-amber-900: oklch(41.4% calc(0.112 * var(--ac-s)) var(--ac-h));
-  --color-amber-950: oklch(27.9% calc(0.077 * var(--ac-s)) var(--ac-h));
+/*
+  Die Rampe steht jetzt bei `:root` und nicht mehr hinter `[data-accent]` — sie ist
+  IMMER gerechnet, auch wenn kein Bogen offen ist. Der Grund ist das helle Papier: dort
+  muss die Bedienfarbe dunkel sein, sonst steht Gold auf Creme. Solange die Rampe nur
+  mit offenem Bogen existierte, wäre die Startseite auf hellem Papier bei Tailwinds
+  echtem Amber geblieben — hellgelbe Schrift auf weißem Grund.
+
+  Und die Zerlegung in DREI Sorten Variablen ist der ganze Trick dieser Runde:
+
+    --ac-h / --ac-s          der Farbton und die Sättigung → setzt die KLASSE
+    --ac-l… / --ac-c…        Helligkeit und Buntheit je Stufe → setzt das MATERIAL
+    (die Rampe selbst)       steht genau EINMAL hier
+
+  Damit können sich die zwei Regler weiter nicht in die Quere kommen: die Klasse sagt
+  WELCHE Farbe, das Papier sagt WIE HELL. Ein helles Papier faltet die Rampe (siehe
+  weiter unten), ohne eine einzige Klassenzeile anzufassen.
+
+  Die Standardwerte sind Tailwinds `amber`, abgelesen aus dem gebauten Stylesheet. Nur
+  der Farbton ist zu EINEM zusammengezogen (84.4 statt je Stufe leicht anders) — das
+  war schon vorher so, seit die Klassenfarben eine Rampe teilen.
+*/
+:root {
+  --ac-h: 84.4;
+  --ac-s: 1;
+
+  --ac-l100: 96.2%; --ac-c100: 0.059;
+  --ac-l200: 92.4%; --ac-c200: 0.12;
+  --ac-l300: 87.9%; --ac-c300: 0.169;
+  --ac-l400: 82.8%; --ac-c400: 0.189;
+  --ac-l500: 76.9%; --ac-c500: 0.188;
+  --ac-l600: 66.6%; --ac-c600: 0.179;
+  --ac-l700: 55.5%; --ac-c700: 0.163;
+  --ac-l800: 47.3%; --ac-c800: 0.137;
+  --ac-l900: 41.4%; --ac-c900: 0.112;
+  --ac-l950: 27.9%; --ac-c950: 0.077;
+
+  /*
+    Wie weit die Zierfarbe je Papier verschoben wird. Die KLASSE setzt `--ac2-l`
+    (Paladin-Gold ist heller als Barbaren-Ruß), das PAPIER schiebt den ganzen Satz —
+    auf hellem Papier um −32%, sonst um nichts. Eine Verschiebung statt eines zweiten
+    Wertes, damit es nicht zwei Wahrheiten für dieselbe Farbe gibt.
+  */
+  --ac2-lshift: 0%;
+}
+
+:root {
+  --color-amber-100: oklch(var(--ac-l100) calc(var(--ac-c100) * var(--ac-s)) var(--ac-h));
+  --color-amber-200: oklch(var(--ac-l200) calc(var(--ac-c200) * var(--ac-s)) var(--ac-h));
+  --color-amber-300: oklch(var(--ac-l300) calc(var(--ac-c300) * var(--ac-s)) var(--ac-h));
+  --color-amber-400: oklch(var(--ac-l400) calc(var(--ac-c400) * var(--ac-s)) var(--ac-h));
+  --color-amber-500: oklch(var(--ac-l500) calc(var(--ac-c500) * var(--ac-s)) var(--ac-h));
+  --color-amber-600: oklch(var(--ac-l600) calc(var(--ac-c600) * var(--ac-s)) var(--ac-h));
+  --color-amber-700: oklch(var(--ac-l700) calc(var(--ac-c700) * var(--ac-s)) var(--ac-h));
+  --color-amber-800: oklch(var(--ac-l800) calc(var(--ac-c800) * var(--ac-s)) var(--ac-h));
+  --color-amber-900: oklch(var(--ac-l900) calc(var(--ac-c900) * var(--ac-s)) var(--ac-h));
+  --color-amber-950: oklch(var(--ac-l950) calc(var(--ac-c950) * var(--ac-s)) var(--ac-h));
 }
 
 /*
@@ -171,10 +219,10 @@ button,
     Buntheit einer ZIERfarbe liegt zwischen 0,01 und 0,07; alles darüber ist keine Zier,
     sondern ein Warnschild.
   */
-  --color-trim-200: oklch(calc(var(--ac2-l) + 14%) calc(0.045 * var(--ac2-s)) var(--ac2-h));
-  --color-trim-300: oklch(calc(var(--ac2-l) + 7%) calc(0.075 * var(--ac2-s)) var(--ac2-h));
-  --color-trim-400: oklch(var(--ac2-l) calc(0.11 * var(--ac2-s)) var(--ac2-h));
-  --color-trim-500: oklch(calc(var(--ac2-l) - 9%) calc(0.11 * var(--ac2-s)) var(--ac2-h));
+  --color-trim-200: oklch(calc(var(--ac2-l) + var(--ac2-lshift) + 14%) calc(0.045 * var(--ac2-s)) var(--ac2-h));
+  --color-trim-300: oklch(calc(var(--ac2-l) + var(--ac2-lshift) + 7%) calc(0.075 * var(--ac2-s)) var(--ac2-h));
+  --color-trim-400: oklch(calc(var(--ac2-l) + var(--ac2-lshift)) calc(0.11 * var(--ac2-s)) var(--ac2-h));
+  --color-trim-500: oklch(calc(var(--ac2-l) + var(--ac2-lshift) - 9%) calc(0.11 * var(--ac2-s)) var(--ac2-h));
 }
 
 /*
@@ -274,4 +322,288 @@ button,
   --ac2-h: 258; --ac2-s: 0.1; --ac2-l: 84%;
   --radius-lg: 0.2rem; --radius-xl: 0.3rem; --radius-2xl: 0.4rem;
   --tracking-widest: 0.2em;
+}
+
+/* ==========================================================================
+   D) DIE ZWEI HELLEN PAPIERE — „ein Design, was an pen and paper erinnert"
+   ==========================================================================
+
+   Sein Einwand war richtig: bis hierher tauscht ein Material nur die Farbrampe
+   aus. Ein Papier, das man als anderes Papier ERKENNT, muss drei Dinge mehr
+   ändern — und genau die drei besitzt es ab jetzt:
+
+     1. die SCHRIFT   (`--font-sans`; Tailwind liest sie für den ganzen Bogen)
+     2. die LINIEN    (Trennlinien und die Regel unter einer Überschrift)
+     3. die KÄSTEN    (Schatten und Rahmenstärke einer Karte)
+
+   Ecken und Laufweite bleiben bei der KLASSE. Das ist die Grenze, die verhindert,
+   dass es wieder 4 × 11 = 44 Entwürfe werden: ein Paladin auf der Kladde ist
+   „Kladde mit Königsblau", kein 45. Design.
+
+   ---
+
+   DIE FALTUNG. Ein helles Papier kann die Rampe nicht einfach umdrehen. Nachgezählt,
+   welche Stufe die App wofür benutzt:
+
+     slate    Text 50–600 · Rahmen 600–800 · Trennlinie 800 · Flächen 700–950
+     bunt     Text 50–400 · Knopf mit weißer Schrift 500–800 · getönte Fläche 900–950
+
+   Ein blindes Umdrehen macht deshalb aus `bg-red-600` (Löschknopf, weiße Schrift)
+   ein hellrotes Feld mit weißer Schrift. Also wird GEFALTET: die niedrigen Stufen
+   werden zu Tinte, die hohen zu Papier, und die Mitte (500–800) bleibt satt, weil
+   dort die Knöpfe sitzen. Die Rampe ist danach nicht mehr monoton — jede
+   VERWENDUNG ist aber richtig, und das ist, was zählt.
+
+   Und die Faltstellen sind nicht geraten: sie liegen genau dort, wo die App die
+   Rolle wechselt. `bg-amber-800` ist ein Knopf mit weißer Schrift (TP-Feld),
+   `bg-amber-950` eine getönte Fläche — deshalb faltet Bunt bei 800/900 und nicht,
+   wie zuerst gedacht, bei 700/800.
+   -------------------------------------------------------------------------- */
+
+/*
+  Was BEIDE hellen Papiere teilen: die Faltung der Bedeutungsfarben und der
+  Bedienfarbe. Ein neues helles Papier trägt sich hier in die Auswahlliste ein und
+  bringt danach nur noch seine eigene Papierfarbe, Schrift und Struktur mit.
+
+  WICHTIG, und es ist der Unterschied zur elften Falle: `rose` (Warnung), `red`
+  (Gefahr), `emerald` (in Ordnung), `violet` (Domänenplatz) und `sky` wechseln hier
+  ihre HELLIGKEIT, aber nicht ihren FARBTON. Verboten war, dass eine Warnfarbe je
+  KLASSE anders aussieht — dann bedeutet sie nichts mehr. Dass sie auf Papier dunkel
+  und auf Nachtpapier hell ist, ist das Gegenteil davon: derselbe Ton, lesbar auf
+  beiden Gründen. Ein dunkelrotes Schild auf Creme sagt dasselbe wie ein hellrotes
+  auf Schwarz.
+*/
+[data-material="kopierterBogen"],
+[data-material="kladde"] {
+  color-scheme: light;
+
+  /* Die Faltung, einmal in Zahlen. Jede Stufe steht genau hier. */
+  --fold-l50: 55%;  --fold-c50: 0.08;
+  --fold-l100: 52%; --fold-c100: 0.09;
+  --fold-l200: 48%; --fold-c200: 0.1;
+  --fold-l300: 44%; --fold-c300: 0.12;
+  --fold-l400: 40%; --fold-c400: 0.13;
+  --fold-l500: 52%; --fold-c500: 0.16;
+  --fold-l600: 47%; --fold-c600: 0.15;
+  --fold-l700: 41%; --fold-c700: 0.14;
+  --fold-l800: 37%; --fold-c800: 0.12;
+  --fold-l900: 89%; --fold-c900: 0.055;
+  --fold-l950: 93%; --fold-c950: 0.04;
+
+  /* Die Bedienfarbe folgt derselben Faltung — der Farbton bleibt der der Klasse. */
+  --ac-l50: var(--fold-l50);   --ac-c50: var(--fold-c50);
+  --ac-l100: var(--fold-l100); --ac-c100: var(--fold-c100);
+  --ac-l200: var(--fold-l200); --ac-c200: var(--fold-c200);
+  --ac-l300: var(--fold-l300); --ac-c300: var(--fold-c300);
+  --ac-l400: var(--fold-l400); --ac-c400: var(--fold-c400);
+  --ac-l500: var(--fold-l500); --ac-c500: var(--fold-c500);
+  --ac-l600: var(--fold-l600); --ac-c600: var(--fold-c600);
+  --ac-l700: var(--fold-l700); --ac-c700: var(--fold-c700);
+  --ac-l800: var(--fold-l800); --ac-c800: var(--fold-c800);
+  --ac-l900: var(--fold-l900); --ac-c900: var(--fold-c900);
+  --ac-l950: var(--fold-l950); --ac-c950: var(--fold-c950);
+
+  /* Die Zierfarbe der Klasse wird zu Tinte. Eine Verschiebung, kein zweiter Wert. */
+  --ac2-lshift: -32%;
+
+  /* Warnung — Rosé. Farbton 13, wie Tailwinds `rose`. */
+  --color-rose-100: oklch(var(--fold-l100) var(--fold-c100) 13);
+  --color-rose-200: oklch(var(--fold-l200) var(--fold-c200) 13);
+  --color-rose-300: oklch(var(--fold-l300) var(--fold-c300) 13);
+  --color-rose-400: oklch(var(--fold-l400) var(--fold-c400) 13);
+  --color-rose-500: oklch(var(--fold-l500) var(--fold-c500) 13);
+  --color-rose-600: oklch(var(--fold-l600) var(--fold-c600) 13);
+  --color-rose-700: oklch(var(--fold-l700) var(--fold-c700) 13);
+  --color-rose-800: oklch(var(--fold-l800) var(--fold-c800) 13);
+  --color-rose-900: oklch(var(--fold-l900) var(--fold-c900) 13);
+  --color-rose-950: oklch(var(--fold-l950) var(--fold-c950) 13);
+
+  /* Gefahr — Rot, Farbton 22. */
+  --color-red-100: oklch(var(--fold-l100) var(--fold-c100) 22);
+  --color-red-200: oklch(var(--fold-l200) var(--fold-c200) 22);
+  --color-red-300: oklch(var(--fold-l300) var(--fold-c300) 22);
+  --color-red-400: oklch(var(--fold-l400) var(--fold-c400) 22);
+  --color-red-500: oklch(var(--fold-l500) var(--fold-c500) 22);
+  --color-red-600: oklch(var(--fold-l600) var(--fold-c600) 22);
+  --color-red-700: oklch(var(--fold-l700) var(--fold-c700) 22);
+  --color-red-800: oklch(var(--fold-l800) var(--fold-c800) 22);
+  --color-red-900: oklch(var(--fold-l900) var(--fold-c900) 22);
+  --color-red-950: oklch(var(--fold-l950) var(--fold-c950) 22);
+
+  /* In Ordnung — Grün, Farbton 163. */
+  --color-emerald-100: oklch(var(--fold-l100) var(--fold-c100) 163);
+  --color-emerald-200: oklch(var(--fold-l200) var(--fold-c200) 163);
+  --color-emerald-300: oklch(var(--fold-l300) var(--fold-c300) 163);
+  --color-emerald-400: oklch(var(--fold-l400) var(--fold-c400) 163);
+  --color-emerald-500: oklch(var(--fold-l500) var(--fold-c500) 163);
+  --color-emerald-600: oklch(var(--fold-l600) var(--fold-c600) 163);
+  --color-emerald-700: oklch(var(--fold-l700) var(--fold-c700) 163);
+  --color-emerald-800: oklch(var(--fold-l800) var(--fold-c800) 163);
+  --color-emerald-900: oklch(var(--fold-l900) var(--fold-c900) 163);
+  --color-emerald-950: oklch(var(--fold-l950) var(--fold-c950) 163);
+
+  /* Domänenplatz — Violett, Farbton 293. */
+  --color-violet-100: oklch(var(--fold-l100) var(--fold-c100) 293);
+  --color-violet-200: oklch(var(--fold-l200) var(--fold-c200) 293);
+  --color-violet-300: oklch(var(--fold-l300) var(--fold-c300) 293);
+  --color-violet-400: oklch(var(--fold-l400) var(--fold-c400) 293);
+  --color-violet-500: oklch(var(--fold-l500) var(--fold-c500) 293);
+  --color-violet-600: oklch(var(--fold-l600) var(--fold-c600) 293);
+  --color-violet-700: oklch(var(--fold-l700) var(--fold-c700) 293);
+  --color-violet-800: oklch(var(--fold-l800) var(--fold-c800) 293);
+  --color-violet-900: oklch(var(--fold-l900) var(--fold-c900) 293);
+  --color-violet-950: oklch(var(--fold-l950) var(--fold-c950) 293);
+
+  /* Temporäre TP — Blau, Farbton 232. */
+  --color-sky-100: oklch(var(--fold-l100) var(--fold-c100) 232);
+  --color-sky-200: oklch(var(--fold-l200) var(--fold-c200) 232);
+  --color-sky-300: oklch(var(--fold-l300) var(--fold-c300) 232);
+  --color-sky-400: oklch(var(--fold-l400) var(--fold-c400) 232);
+  --color-sky-500: oklch(var(--fold-l500) var(--fold-c500) 232);
+  --color-sky-600: oklch(var(--fold-l600) var(--fold-c600) 232);
+  --color-sky-700: oklch(var(--fold-l700) var(--fold-c700) 232);
+  --color-sky-800: oklch(var(--fold-l800) var(--fold-c800) 232);
+  --color-sky-900: oklch(var(--fold-l900) var(--fold-c900) 232);
+  --color-sky-950: oklch(var(--fold-l950) var(--fold-c950) 232);
+}
+
+/*
+  Beide Papiere haben KEINEN Schatten an den Karten. Ein Schatten sagt „das liegt
+  über dem Untergrund" — auf Papier liegt nichts über dem Papier, dort ist etwas
+  darauf GEDRUCKT.
+
+  Was hier bewusst NICHT steht: `background-color` und `border-color`. Die kommen
+  aus den Hilfsklassen, und `Card` gibt über `tone` die Kampagnenfarbe mit. Ein
+  `background` an dieser Stelle hätte (0,2,0) und damit die Kampagnenfarbe der
+  Startseite überschrieben — dieselbe Falle wie damals, nur von der anderen Seite:
+  hier gewinnt die spätere Regel zu VIEL.
+*/
+[data-material="kopierterBogen"] .karte,
+[data-material="kladde"] .karte {
+  box-shadow: none;
+}
+
+/* --------------------------------------------------------------------------
+   D1) „Kopierter Bogen" — die Fotokopie des echten Charakterbogens.
+   --------------------------------------------------------------------------
+   Kühles Neutralgrau, Toner-Schwarz, harte dünne Linien, kein Schmuck. Die
+   Papierstufe (950) ist DUNKLER als die Kartenstufe (900): eine Karte ist hier
+   das weiße Formularfeld auf dem angegrauten Kopierpapier. Das ist der Punkt, an
+   dem die Faltung ihren Nutzen zeigt — im Dunkeln war es genau umgekehrt. */
+[data-material="kopierterBogen"] {
+  --color-slate-50: oklch(20% 0.004 250);
+  --color-slate-100: oklch(24% 0.004 250);
+  --color-slate-200: oklch(28% 0.004 250);
+  --color-slate-300: oklch(33% 0.005 250);
+  --color-slate-400: oklch(40% 0.005 250);
+  --color-slate-500: oklch(48% 0.006 250);
+  --color-slate-600: oklch(64% 0.006 250);
+  /*
+    Die Linienstufe. Beim Ansehen zu blass gewesen (78%): eine Fotokopie hat HARTE
+    Linien, keine hellgrauen Andeutungen. Genau deshalb ist bei einem Aussehen das Bild
+    der Test und nicht die Zahl — 78% waren rechnerisch in Ordnung und sahen trotzdem
+    nach nichts aus.
+  */
+  --color-slate-700: oklch(68% 0.006 250);
+  --color-slate-800: oklch(85% 0.005 250);
+  /* Das Formularfeld ist WEISS, das Blatt darunter angegraut — sonst hebt sich die
+     Karte nicht ab. Ebenfalls beim Ansehen nachgezogen: 96% Papier gegen 99,5% Karte
+     war zu wenig Unterschied, um als Feld zu lesen. */
+  --color-slate-900: oklch(100% 0 250);
+  --color-slate-950: oklch(93% 0.003 250);
+
+  /*
+    Serifen, und ausdrücklich NICHTS zum Nachladen: was hier steht, liegt auf dem
+    Gerät schon drauf. Auf dem iPhone und iPad greift `ui-serif` und liefert eine
+    echte Druckschrift. Ein Papier, das erst ein Megabyte holen muss, ist am
+    Spieltisch kein Papier.
+
+    Die Zahlen bleiben unberührt: sie stehen an ihren Stellen in `font-mono`, und
+    eine Wertespalte gehört in eine Schrift mit gleich breiten Ziffern.
+  */
+  --font-sans: ui-serif, Cambria, "Times New Roman", Times, Georgia, serif;
+}
+
+/* Der Kopierer-Untergrund: ein feiner Sprenkel und ein ungleichmäßiger Zug quer
+   über das Blatt. Zwei getönte Gradienten und ein Streifen — kein Bild, kein
+   Filter, damit es auf einem Handy mit halbleerem Akku noch flüssig scrollt. */
+[data-material="kopierterBogen"] body {
+  background-image:
+    radial-gradient(circle at 30% 40%, oklch(0% 0 0 / 0.045) 0 0.5px, transparent 0.6px),
+    radial-gradient(circle at 75% 15%, oklch(0% 0 0 / 0.035) 0 0.5px, transparent 0.6px),
+    linear-gradient(100deg, oklch(0% 0 0 / 0.03) 0%, transparent 22%, transparent 78%, oklch(0% 0 0 / 0.04) 100%);
+  background-size: 6px 6px, 9px 11px, 100% 100%;
+  background-attachment: fixed;
+}
+
+/* Eine Überschrift auf einem Formular hat eine Linie unter sich. Genau das
+   unterscheidet einen gedruckten Bogen von einer App mit grauer Kleinschrift. */
+[data-material="kopierterBogen"] .abschnitt {
+  border-bottom: 1px solid var(--color-slate-700);
+  padding-bottom: 0.15rem;
+}
+
+/* Die Kästen: ein Formularfeld hat einen Rahmen und keine Erhebung. */
+[data-material="kopierterBogen"] .karte {
+  border-width: 1px;
+}
+
+/* --------------------------------------------------------------------------
+   D2) „Kladde" — das Schulheft.
+   --------------------------------------------------------------------------
+   Cremefarbenes Papier, und die Tinte ist BLAUSCHWARZ statt neutral: eine Kladde
+   wird mit dem Füller geschrieben, nicht kopiert. Deshalb tragen die dunklen
+   Stufen einen anderen Farbton (265) als die hellen (88–95) — dass eine Rampe
+   oben warm und unten kühl sein darf, ist der zweite Nutzen der Faltung. */
+[data-material="kladde"] {
+  --color-slate-50: oklch(19% 0.022 265);
+  --color-slate-100: oklch(23% 0.022 265);
+  --color-slate-200: oklch(27% 0.02 265);
+  --color-slate-300: oklch(32% 0.018 265);
+  --color-slate-400: oklch(39% 0.016 262);
+  --color-slate-500: oklch(47% 0.014 260);
+  --color-slate-600: oklch(65% 0.012 258);
+  /* Der Unterstrich eines Kastens — beim Ansehen von 77% auf 72% nachgezogen, damit man
+     ihn als Strich erkennt und nicht als Andeutung. */
+  --color-slate-700: oklch(72% 0.014 95);
+  --color-slate-800: oklch(86% 0.016 92);
+  --color-slate-900: oklch(99% 0.008 90);
+  --color-slate-950: oklch(94.5% 0.018 88);
+
+  /* Runder und wärmer als der kopierte Bogen — Palatino vor Georgia. Auch das
+     liegt auf dem Gerät; geladen wird nichts. */
+  --font-sans: ui-serif, Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+}
+
+/* Die Linien der Kladde. Blass, weil der Text NICHT auf ihnen sitzt (die Zeilenhöhen
+   der App sind verschieden) — sie sind Papier und keine Lineatur zum Schreiben. Die
+   erste Fassung war mit 0,1 aber so blass, dass auf dem Bild überhaupt keine Linien zu
+   sehen waren: ein Papier, das man nicht erkennt, ist kein Papier. Jetzt 0,22 —
+   sichtbar, und weit davon entfernt, durch die Buchstaben zu laufen. */
+[data-material="kladde"] body {
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 27px,
+      oklch(55% 0.06 260 / 0.22) 27px 28px
+    ),
+    radial-gradient(80% 55% at 50% 0%, oklch(80% 0.05 85 / 0.5), transparent 72%),
+    radial-gradient(60% 40% at 90% 100%, oklch(70% 0.04 60 / 0.18), transparent 70%);
+  background-attachment: fixed;
+}
+
+/* Überschriften in der Kladde sind geschrieben, nicht gesetzt: kursiv und in
+   Groß- und Kleinschreibung. Die Laufweite bleibt bei der KLASSE — deshalb steht
+   hier kein `letter-spacing`. */
+[data-material="kladde"] .abschnitt {
+  text-transform: none;
+  font-style: italic;
+  font-size: 0.8125rem;
+}
+
+/* Ein Kasten in der Kladde ist unterstrichen, nicht umrahmt: dünn oben und an den
+   Seiten, kräftiger unten — wie ein Strich unter einer Notiz. */
+[data-material="kladde"] .karte {
+  border-width: 1px;
+  border-bottom-width: 2px;
 }

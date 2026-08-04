@@ -565,9 +565,9 @@ Papiere × elf Klassen wären 33 Entwürfe, und so gebaut wäre es nach dem zwei
 kaputt**, weil jede neue Karte 33-mal stimmen müsste. Es sind deshalb zwei Regler, die sich
 nicht kennen:
 
-- **`data-material`** am `<html>` — Papier, Karten, Linien, Text. Vier Werte, er wählt einen
-  in den Einstellungen. Gebaut ist zuerst der **Nachtbogen** (seine Wahl: „der kleinste
-  Umbau"), die zwei hellen Papiere folgen je eine Runde.
+- **`data-material`** am `<html>` — Papier, Karten, Linien, Schrift. Vier Werte, alle vier
+  gebaut: Codex, Nachtbogen, Kopierter Bogen, Kladde. Was ein Papier darf, steht im eigenen
+  Abschnitt „Die zwei hellen Papiere" weiter unten.
 - **`data-accent`** am `<html>`, aber nur **solange ein Bogen offen ist** — genau die Farbe,
   die heute Amber ist. Draußen färbt die Kampagne, drinnen die Klasse: außen sieht man, zu
   welcher Gruppe eine Figur zählt, innen, wer sie ist.
@@ -593,6 +593,122 @@ Drei Entscheidungen daran sind es wert, aufgeschrieben zu werden:
   mit den meisten Stufen aus (bei Gleichstand die zuletzt gestiegene) — gefragt und
   entschieden, Hike wird damit Kleriker und nicht Kämpfer. Gespeichert wird nur, was er von
   Hand überschreibt (`character.accent`), und auch das als Schlüssel, nicht als Farbwert.
+
+### Runde 3: die zwei hellen Papiere — und was ein Material überhaupt darf
+
+Sein Einwand nach Runde 2, wörtlich: **„Ich sehe grad, dass ja nur die Kontrastfarben ändern.
+Ich wollte ganze eigene Designs. Und auch das pen and paper design."** Er hatte in beiden
+Punkten recht: der Nachtbogen tauschte die Farbrampe aus und legte drei weiche Flecken auf den
+Untergrund — Schrift, Linien, Kästen und Dichte blieben, wie sie waren. Und die zwei hellen
+Papiere, also das eigentliche „pen and paper", standen seit der Abnahme als offener Punkt da.
+
+**Gefragt und entschieden** (Geschmack, deshalb gefragt): ein Papier darf **Schrift, Linien
+und Kästen** ändern · **beide** hellen Papiere in einer Runde · **Serifen überall**, nicht nur
+in den Überschriften.
+
+**Selbst entschieden**, weil es Programmierentscheidungen sind:
+
+- **Das PAPIER besitzt Schrift und Struktur, die KLASSE besitzt Farbe, Ecken und Laufweite.**
+  Ohne diese Grenze wären es 4 × 11 = 44 Entwürfe. Ein Paladin auf der Kladde ist damit
+  „Kladde mit Königsblau" und kein 45. Design.
+- **Keine geladene Schrift.** Nur was auf dem Gerät liegt (`ui-serif`, dann Cambria/Times bzw.
+  Palatino/Georgia). Ein Papier, das erst ein Megabyte holt, ist offline kein Papier — und
+  damit sehen die zwei hellen trotzdem verschieden aus: der kopierte Bogen bekommt eine
+  Druckschrift, die Kladde eine runde.
+
+#### Die FALTUNG — der Kern dieser Runde
+
+Ein helles Papier kann die Rampe nicht einfach umdrehen. Nachgezählt, was die App wirklich
+benutzt (nicht geschätzt — `grep` über alle Hilfsklassen):
+
+| Rampe | Text | Rahmen | Knopf mit weißer Schrift | getönte Fläche |
+|---|---|---|---|---|
+| `slate` | 50–600 | 600–800 | — | 700–950 |
+| bunt | 50–400 | 500–800 | **500–800** | 900–950 |
+
+Ein blindes Umdrehen macht deshalb aus `bg-red-600` (Löschknopf) ein hellrotes Feld mit weißer
+Schrift. Also wird **gefaltet**: die niedrigen Stufen werden Tinte, die hohen werden Papier,
+und die Mitte bleibt satt, weil dort die Knöpfe sitzen. Danach ist die Rampe nicht mehr
+monoton — jede VERWENDUNG ist aber richtig, und das ist, was zählt.
+
+**Und die Faltstellen sind nicht geraten.** Sie liegen dort, wo die App die Rolle wechselt.
+Zuerst hatte ich bei 700/800 gefaltet; `bg-amber-800` und `bg-red-800` sind aber die Knöpfe im
+TP-Feld und tragen weiße Schrift — bei 800 als heller Ton wären sie leer geworden. Die
+Buntrampen falten deshalb bei **800/900**, `slate` bei **600/700**.
+
+Der zweite Nutzen der Faltung, und er war nicht geplant: **eine Rampe darf oben warm und unten
+kühl sein.** Die Kladde hat deshalb cremefarbenes Papier (Farbton 88–95) und BLAUSCHWARZE
+Tinte (265) — ein Füller, kein Kopierer.
+
+#### Was dafür umgebaut werden musste
+
+- **Die Bedienfarbe steht jetzt bei `:root` und nicht mehr hinter `[data-accent]`.** Sie ist
+  immer gerechnet, auch ohne offenen Bogen. Sonst wäre die Startseite auf hellem Papier bei
+  Tailwinds echtem Amber geblieben: hellgelbe Schrift auf Weiß. Dieselbe Falle wie immer —
+  eine Regel, die nur in EINEM Zustand greift, fehlt in allen anderen.
+- **Drei Sorten Variablen statt einer.** `--ac-h`/`--ac-s` (Farbton, Sättigung) setzt die
+  KLASSE, `--ac-l…`/`--ac-c…` (Helligkeit, Buntheit je Stufe) setzt das MATERIAL, die Rampe
+  selbst steht genau einmal. Damit können sich die zwei Regler weiter nicht in die Quere
+  kommen, obwohl das Papier jetzt in die Farbe hineinredet.
+- **Die Zierfarbe bekommt eine VERSCHIEBUNG (`--ac2-lshift`), keinen zweiten Wert.** Die
+  Klasse sagt weiter, wie hell ihr Gold ist; das Papier schiebt den ganzen Satz um −32%. Ein
+  zweiter Wert wären zwei Wahrheiten für dieselbe Farbe.
+- **Zwei GRIFFE im Quelltext**: `karte` an `Card`, `abschnitt` an `SectionTitle`. Schatten und
+  Rahmenstärke stehen in Hilfsklassen, und eine CSS-Variable gibt es dafür nicht — ohne einen
+  Griff je Bauteil kann ein Material nur Farben tauschen, und genau das war sein Einwand.
+  **Was ein Papier am Griff NICHT anfassen darf: Farbe und Ecken.** Eine `background`-Regel
+  dort hätte (0,2,0) und die Kampagnenfarbe der Startseite überschrieben — die dritte
+  Anzeige-Falle, diesmal von der anderen Seite: die spätere Regel gewinnt zu VIEL. Der Test
+  in `ui/materials.test.ts` verbietet Farbe und Radius am Griff hart.
+
+#### Die Bedeutungsfarben — und warum das kein Widerspruch zur elften Falle ist
+
+`rose`, `red`, `emerald`, `violet` und `sky` falten mit. Verboten war, dass eine Warnfarbe je
+**KLASSE** anders aussieht: dann bedeutet sie nichts mehr. Dass sie auf Papier dunkel und auf
+Nachtpapier hell ist, ist das Gegenteil davon — derselbe Ton, lesbar auf beidem. Der Lauf im
+gebauten Bogen prüft es in allen vier Papieren: die Warnung muss rot BLEIBEN (R deutlich über
+G und B) und lesbar sein.
+
+#### Was das Ansehen gefunden hat, und die Zahlen nicht
+
+Drei Sachen waren rechnerisch in Ordnung und sahen trotzdem nach nichts aus:
+
+- **Die Linien der Kladde bei 0,1 Deckkraft waren auf dem Bild unsichtbar.** Ein Papier, das
+  man nicht erkennt, ist kein Papier — jetzt 0,22.
+- **Der kopierte Bogen war zu clean.** 96% Papier gegen 99,5% Karte ist zu wenig Unterschied,
+  um als Formularfeld zu lesen: jetzt 93% Blatt gegen reines Weiß.
+- **Die Linienstufe war mit 78% zu blass.** Eine Fotokopie hat harte Linien; jetzt 68%.
+
+Lehre, dieselbe wie bei den Zeichen: **bei einem Aussehen ist das Bild der Test, nicht die
+Zahl.**
+
+#### Und der Nebenbefund, der eine echte Verbesserung ist
+
+Die häufigste Farbe der App ist `text-slate-500` (171 Fundstellen, sie trägt die
+Kleinschrift), und sie ist in Codex mit **3,9** die schwächste Stelle der ganzen Oberfläche.
+Auf den zwei hellen Papieren liegt dieselbe Schrift bei **6,2** bzw. **6,4** — deutlich besser
+lesbar als das, was er heute benutzt. Nachgemessen, nicht behauptet.
+
+#### Testfallen aus dieser Runde, alle in MEINEM Lauf
+
+- **Eine halbdurchsichtige Fläche muss über dem gerechnet werden, was WIRKLICH darunter
+  liegt.** Meine erste Messung legte `bg-slate-800/60` über Schwarz und bekam für Kopierpapier
+  ein mittleres Grau (177 statt 240) — Kontrast 3,07 statt 6,2. Der Test zeigte auf die App,
+  die recht hatte. Jetzt wird die ganze Kette der Hintergründe gesammelt und von hinten nach
+  vorne übereinandergerechnet, genau wie der Browser zeichnet.
+- **Ein Klassenname mit Schrägstrich ist EIN Klassenname.** `.border-rose-800` trifft
+  `border-rose-800/70` nicht; dafür braucht es `[class*=…]`.
+- **Eine Schwelle darf nicht die Dunkelheit messen.** Zuerst forderte ich „jedes Papier so gut
+  wie Codex". Codex ist weiße Schrift auf Fastschwarz und kommt auf 18,4 — das kann kein
+  helles Papier erreichen und muss es nicht; 14,7 auf Kopierpapier ist ausgezeichnet. Jetzt
+  eine Schwelle je ROLLE, und gegen Codex verglichen wird nur die Kleinschrift, weil sie die
+  schwächste Stelle ist.
+- **Nicht das erste Vorkommen nehmen.** Die gemeinsame Faltung endet mit
+  `[data-material="kladde"] {`; ein `indexOf` traf deshalb den falschen Block und meldete eine
+  fehlende Schrift, die längst dastand. Dieselbe Sorte Fehler wie ein geratenes `.last()`.
+- **`tsc` fängt, was `vitest` nicht fängt.** Der neue Test lief grün und `tsc` meldete
+  `string | undefined` (`noUncheckedIndexedAccess`) — genau der Grund, warum beide immer
+  laufen.
 
 ### Runde 2: die zweite Farbe und der Charakter je Klasse
 
@@ -805,14 +921,9 @@ in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`d
   anfassen: es würde jeden Bogen ändern. Der halbe Stärkeschaden in der zweiten Hand und
   die Rundung im ×1,5-Pfad standen bis vor kurzem hier — beides ist beantwortet und gebaut
   (Martins Regeln 4 und 5).
-- **Die zwei hellen Papiere** (kopierter Bogen, Kladde) sind abgenommen, aber noch nicht
-  gebaut — je eine Runde, damit er jedes einzeln am Tisch ansehen kann. Sie sind deutlich
-  mehr Arbeit als der Nachtbogen: dort wechselt nur der Farbton, hier kippt die Helligkeit,
-  und `color-scheme: dark` sowie jede halbdurchsichtige Fläche müssen mit.
-- **Der Nachtbogen ist fast fertig „Papier".** Material, Klassenfarbe, Zierfarbe, Ecken,
-  Laufweite und jetzt auch die Zeichen stehen (siehe eigener Abschnitt unten) — offen sind nur
-  noch die zweiten Farben je Klasse (Paladin-Gold, Barden-Koralle), die heute noch nicht in der
-  einen Rampe stecken.
+- **Die zweiten Farben je Klasse in der einen Rampe.** Paladin-Gold und Barden-Koralle
+  stehen als `--ac2-*` und färben die Abschnitts-Überschriften; in der BEDIENfarbe (die eine
+  Rampe) stecken sie noch nicht. Das ist der Rest, der am Aussehen offen ist.
 - **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" fehlt noch.
   Eigene Gegenstände mit echten Rüstungs- und Waffenwerten sind gebaut (Editor im
   Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in
