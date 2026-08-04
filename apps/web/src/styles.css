@@ -150,12 +150,20 @@ button,
     Wie der Anstrich aussieht — die Helligkeit und die Kraft gehören dem PAPIER, der
     Farbton der Klasse. Auf dunklem Papier ein heller Hauch, damit man ihn sieht.
   */
+  /*
+    Die Kraft des Anstrichs. Stand bei 0,22 und war ihm zu wenig — wörtlich: „die Farben
+    sind alle zu blass und dezent. Dann mach doch lieber was farbigeres." Jetzt fast das
+    Doppelte. Was dabei NICHT verhandelbar ist, prüft der Lauf im gebauten Bogen: die
+    Kleinschrift muss so lesbar bleiben wie vorher.
+  */
   --wash-l: 72%;
-  --wash-c: 0.19;
-  --wash-a: 0.22;
-  /* Wie kräftig eine KARTE den Klassenton trägt. Deutlich schwächer als der Anstrich:
-     hier steht Text darauf. */
-  --karte-a: 0.13;
+  --wash-c: 0.2;
+  --wash-a: 0.42;
+  /* Wie kräftig eine KARTE den Klassenton trägt. Schwächer als der Anstrich, weil hier
+     Text darauf steht — aber nicht mehr nur geahnt. */
+  --karte-a: 0.3;
+  /* Wie satt der RAHMEN einer Karte ist. 1 = die volle Klassenfarbe. */
+  --rahmen-a: 0.85;
 }
 
 :root {
@@ -506,10 +514,12 @@ button,
 
   /* Der Anstrich kippt mit: ein heller Hauch auf Creme wäre unsichtbar. */
   --wash-l: 55%;
-  --wash-c: 0.16;
-  --wash-a: 0.2;
-  /* Auf Papier fällt eine getönte Fläche stärker auf — also zurückhaltender. */
-  --karte-a: 0.07;
+  --wash-c: 0.17;
+  --wash-a: 0.32;
+  /* Auf Papier fällt eine getönte Fläche stärker auf — also zurückhaltender als im
+     Dunkeln, aber immer noch deutlich sichtbar. */
+  --karte-a: 0.16;
+  --rahmen-a: 0.9;
 
   /* Warnung — Rosé. Farbton 13, wie Tailwinds `rose`. */
   --color-rose-100: oklch(var(--fold-l100) var(--fold-c100) 13);
@@ -606,6 +616,49 @@ button,
   Der Farbton kommt von der Klasse, die Stärke vom Papier (`--karte-a`) — dieselbe
   Dreiteilung wie überall in dieser Datei.
 */
+/*
+  DER RAHMEN. Sein Auftrag: „Einen kräftigen Rahmen um alles."
+
+  Zwei Stellen, und beide bekommen die volle Klassenfarbe:
+
+    .karte  jeder Kasten am Bogen
+    .blatt  der Inhaltskasten selbst — damit der ganze Bogen wie ein eingefasstes
+            Blatt aussieht und nicht wie eine Liste von Kästen
+
+  `border-color` darf hier stehen, obwohl das Papier es an derselben Stelle NICHT darf.
+  Der Grund ist die Kampagnenfarbe: die färbt nur auf der STARTSEITE, und dort steht kein
+  `data-accent`. Innerhalb eines Bogens gibt es keine Kampagnenfarbe, die überschrieben
+  werden könnte — draußen färbt die Gruppe, drinnen die Klasse.
+
+  Die STÄRKE (2px) steht am Bauteil (`ui/bits.tsx`), nicht hier: sie gehört zum Kasten und
+  nicht zur Klasse, und das Papier darf sie weiter verändern.
+*/
+[data-accent] .karte {
+  border-color: oklch(
+    calc(var(--ac-l600) + var(--wash-shift, 0%))
+    calc(var(--ac-c600) * var(--ac-s))
+    var(--ac-h) / var(--rahmen-a)
+  );
+}
+
+[data-accent] .blatt {
+  border: 2px solid oklch(
+    calc(var(--ac-l700) + var(--wash-shift, 0%))
+    calc(var(--ac-c700) * var(--ac-s))
+    var(--ac-h) / calc(var(--rahmen-a) * 0.8)
+  );
+  border-radius: var(--radius-2xl);
+  /*
+    Der Rahmen braucht Luft, sonst klebt er am Bildschirmrand und ist am Handy nicht zu
+    sehen — genau so stand er zuerst da. `width: calc(100% - …)` zusammen mit
+    `margin: … auto` rückt ihn auf BEIDEN Seiten ein und lässt ihn auf dem iPad trotzdem
+    mittig stehen; ein reines `margin: 0.4rem` hätte die Zentrierung des `mx-auto`
+    zerstört, weil eine spätere Regel mit (0,2,0) auch das `auto` überschreibt.
+  */
+  width: calc(100% - 0.8rem);
+  margin: 0.4rem auto;
+}
+
 [data-accent] .karte {
   background-image: linear-gradient(
     to bottom,

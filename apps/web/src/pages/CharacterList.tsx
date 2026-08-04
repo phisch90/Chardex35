@@ -11,7 +11,8 @@ import {
   type Character,
 } from "@codex35/core";
 import { S } from "../strings.js";
-import { Icon, IconInline } from "../ui/icons.js";
+import { IconInline } from "../ui/icons.js";
+import { ClassMark } from "../ui/ClassMark.js";
 import { useCharacters, useCompendium, useHouseRules } from "../lib/hooks.js";
 import { CharacterRepo } from "../db/repo.js";
 import { importEnvelope, type ImportResult } from "../lib/transfer.js";
@@ -462,10 +463,22 @@ function CharacterRow(props: {
               className={`${tier.portrait} shrink-0 rounded-lg object-cover`}
             />
           ) : (
-            <div
-              className={`${tier.portrait} flex shrink-0 items-center justify-center rounded-lg bg-slate-800 text-slate-500`}
+<div
+              className={`${tier.portrait} flex shrink-0 items-center justify-center rounded-lg bg-slate-800 text-slate-400`}
             >
-              <Icon name="characters" size={tier.markPx} />
+              {/*
+                Ohne Porträt steht hier das KLASSENSYMBOL — beim Druiden ein Blatt, beim
+                Barbaren ein Schädel. Vorher war es für alle derselbe Schild, und damit
+                sahen zehn Karten gleich aus.
+
+                Die Farbe ist bewusst gedämpft und NICHT die Klassenfarbe: auf der
+                Startseite färbt die KAMPAGNE, und ein buntes Symbol je Karte würde mit der
+                Gruppenfarbe streiten. Das Symbol sagt die Klasse, die Farbe die Gruppe.
+
+                `fallback` fängt die Klassen ohne Thema (NPC, Prestige, selbstgebaut) —
+                dort steht wie bisher der Schild.
+              */}
+              <ClassMark character={character} size={tier.markPx} fallback="characters" />
             </div>
           )}
           <div className="min-w-0 flex-1">

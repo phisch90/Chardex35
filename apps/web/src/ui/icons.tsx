@@ -49,7 +49,23 @@ export type IconName =
   // Im Inhalt: Einlesen, Zauberbuch, Aufstieg
   | "import"
   | "spellbook"
-  | "levelUp";
+  | "levelUp"
+  /*
+    Die elf KLASSENZEICHEN. Ihre Namen sind genau die Schlüssel der Klassenthemen
+    (`ui/classAccents.ts`) — dieselbe Regel wie bei den Reitern: der Schlüssel IST der Name
+    des Zeichens, also braucht es keine Zuordnungstabelle, die man vergessen kann.
+  */
+  | "wild"
+  | "verspielt"
+  | "fromm"
+  | "natur"
+  | "stahl"
+  | "ruhe"
+  | "edel"
+  | "faehrte"
+  | "schatten"
+  | "funke"
+  | "zeichen";
 
 /**
  * Die Formen. Jede in einem 24×24-Feld, jede als Striche — `d` für Linien, `dots` für die
@@ -202,6 +218,171 @@ export const ICON_SHAPES: Record<IconName, { d: string[]; dots?: [number, number
   /* Stufenaufstieg — der Pfeil nach oben. */
   levelUp: {
     d: ["M12 20.5V5.2", "M6.8 10.4L12 5.2l5.2 5.2"],
+  },
+
+  /* ----------------------------------------------------------------------
+     Die elf KLASSENZEICHEN — für das Wasserzeichen am Bogen und für den
+     Porträt-Platzhalter auf der Startseite.
+     ----------------------------------------------------------------------
+     Sein Auftrag: „evtl. ein passendes Symbol welches wie ein Wasserzeichen an
+     manchen Stellen vorkommt."
+
+     Gezeichnet für ZWEI Größen: groß als Wasserzeichen (rund 120 px) und klein
+     als Platzhalter (30 px). Deshalb dieselbe Sparsamkeit wie bei den Reitern —
+     was bei 30 px zu Matsch wird, ist als Wasserzeichen auch nur Dekoration. */
+
+  /*
+    Barbar — der SCHÄDEL.
+
+    Fünf Anläufe, und jeder war auf dem Blatt etwas anderes als gemeint:
+
+      1. Stiel mit kleinem Blatt        → eine FAHNE (Mast mit Lappen)
+      2. Doppelaxt, kleine Blätter      → eine FLIEGE am Mast
+      3. Doppelaxt, große Blätter       → ein AUGE auf einem Stiel (die zwei Linsen
+                                          teilen Anfang und Ende und verschmelzen)
+      4. Einschneidig, großes Blatt     → wieder eine FAHNE
+
+    Der vierte Versuch hat es erklärt: **ein Stiel mit einer Fläche daran IST eine Fahne**,
+    ganz egal, wie das Blatt geschnitten ist. Eine Axt braucht Tiefe und einen Winkel, die
+    ein 24er-Strichfeld nicht hergibt.
+
+      5. Zwei Hörner                    → ein SPROSS — und damit auch noch dem Blatt des
+                                          Druiden zum Verwechseln ähnlich
+
+    Ein Schädel kann nichts davon sein: die runde Kalotte, zwei Augen und drei Zähne
+    lesen bei 30 px genauso wie bei 110. Für „wild" sagt er außerdem mehr als ein
+    Werkzeug — die Klasse ist nicht durch ihre Waffe definiert.
+
+    Lehre, und sie hat mich fünf Fassungen gekostet: **wenn drei Anläufe dasselbe
+    Missverständnis erzeugen, liegt es am MOTIV und nicht an der Ausführung.** Ein Stiel
+    mit einer Fläche daran IST eine Fahne, ganz egal, wie das Blatt geschnitten ist.
+  */
+  wild: {
+    d: [
+      "M12 3.2c-4.3 0-7.4 2.9-7.4 7 0 2.5 1.2 4.7 3.1 6v4.4h8.6v-4.4c1.9-1.3 3.1-3.5 3.1-6 0-4.1-3.1-7-7.4-7z",
+      "M9.6 16.6v4",
+      "M12 16.6v4.6",
+      "M14.4 16.6v4",
+    ],
+    dots: [
+      [9.3, 10.2, 1.7],
+      [14.7, 10.2, 1.7],
+    ],
+  },
+
+  /* Barde — die Laute: runder Korpus, langer Hals, zwei Saiten. */
+  verspielt: {
+    d: [
+      "M10.6 13.4a4.1 4.1 0 1 0 5.1 5.1 4.1 4.1 0 0 0-5.1-5.1z",
+      "M14.4 13.1L19.6 5",
+      "M18.3 3.6l2.3 2.3",
+      "M12.4 15.4l3.4 3.4",
+    ],
+  },
+
+  /* Kleriker — die Sonne: Scheibe und Strahlen. Ein heiliges Zeichen, kein Kreuz. */
+  fromm: {
+    d: [
+      "M12 7.6a4.4 4.4 0 1 0 0 8.8 4.4 4.4 0 0 0 0-8.8z",
+      "M12 2.4v2.6",
+      "M12 19v2.6",
+      "M2.4 12h2.6",
+      "M19 12h2.6",
+      "M5.2 5.2l1.9 1.9",
+      "M16.9 16.9l1.9 1.9",
+      "M18.8 5.2l-1.9 1.9",
+      "M7.1 16.9l-1.9 1.9",
+    ],
+  },
+
+  /*
+    Druide — das Blatt: Umriss, Mittelrippe, vier Adern.
+
+    Erste Fassung war eine schmale Sichel mit einer Rippe darin — und las sich als FEDER,
+    nicht als Blatt. Was ein Blatt ausmacht, sind die ADERN, die von der Rippe abgehen;
+    eine Feder hat sie nicht.
+  */
+  natur: {
+    d: [
+      "M12 3.4c3.8 3.2 5.7 6.3 5.7 9.1 0 3.4-2.4 6.3-5.7 8.5-3.3-2.2-5.7-5.1-5.7-8.5 0-2.8 1.9-5.9 5.7-9.1z",
+      "M12 7.2v12.6",
+      "M12 11.6l3.4-2.7",
+      "M12 11.6L8.6 8.9",
+      "M12 15.8l3-2.5",
+      "M12 15.8l-3-2.5",
+    ],
+  },
+
+  /* Kämpfer — der Schild mit Querband. Gerade Linien, nichts Verspieltes. */
+  stahl: {
+    d: [
+      "M12 2.8l8 3.2v6.4c0 4.7-3.2 8.4-8 9.8-4.8-1.4-8-5.1-8-9.8V6z",
+      "M4.4 11.4h15.2",
+    ],
+  },
+
+  /* Mönch — die Lotusblüte: drei Blätter, ruhig und offen. */
+  ruhe: {
+    d: [
+      "M12 4.2c2 2.4 3 4.8 3 7.2s-1 4.8-3 7.2c-2-2.4-3-4.8-3-7.2s1-4.8 3-7.2z",
+      "M9.6 9.4C7 9.4 5 10.6 3.6 13c1.4 2.4 3.6 3.9 6.6 4.4",
+      "M14.4 9.4c2.6 0 4.6 1.2 6 3.6-1.4 2.4-3.6 3.9-6.6 4.4",
+      "M4 20.2h16",
+    ],
+  },
+
+  /* Paladin — der Schild mit heraldischem Kreuz. Das Edelste der elf. */
+  edel: {
+    d: [
+      "M12 2.8l8 3.2v6.4c0 4.7-3.2 8.4-8 9.8-4.8-1.4-8-5.1-8-9.8V6z",
+      "M12 7v10",
+      "M7.6 11h8.8",
+    ],
+  },
+
+  /* Waldläufer — Bogen und Pfeil. Die Fährte, nicht der Kampf. */
+  faehrte: {
+    d: [
+      "M6.6 3.4c5.6 1.6 9.6 5.6 11.2 11.2",
+      "M6.6 3.4C4.8 9.6 8.2 15.8 14.4 17.6",
+      "M4 20l14.6-14.6",
+      "M14.6 5.4h4v4",
+    ],
+  },
+
+  /*
+    Schurke — die Maske: ein Band über den Augen, unten in zwei Spitzen auslaufend.
+
+    Erste Fassung hatte einen Stiel unter der Maske und enge Augen — das las sich als
+    Käfergesicht. Der Stiel ist weg, die Augen stehen weiter, und die Unterkante läuft
+    in der Mitte zusammen: so sitzt sie auf einem Gesicht.
+  */
+  schatten: {
+    d: [
+      "M3.4 8.8c2.7-1.3 5.6-2 8.6-2s5.9.7 8.6 2v2.4c0 3.1-2.5 5.6-5.6 5.6-1.4 0-2.4-.7-3-1.9-.6 1.2-1.6 1.9-3 1.9-3.1 0-5.6-2.5-5.6-5.6z",
+    ],
+    dots: [
+      [7.6, 11, 1.5],
+      [16.4, 11, 1.5],
+    ],
+  },
+
+  /* Hexenmeister — die Flamme. Angeboren, nicht gelernt. */
+  funke: {
+    d: [
+      "M12 2.4c4.4 4.2 6.6 7.7 6.6 10.6a6.6 6.6 0 0 1-13.2 0c0-2.9 2.2-6.4 6.6-10.6z",
+      "M12 11.4c1.8 1.9 2.7 3.4 2.7 4.6a2.7 2.7 0 0 1-5.4 0c0-1.2.9-2.7 2.7-4.6z",
+    ],
+  },
+
+  /* Magier — der Spitzhut. Man erkennt ihn sofort, und das ist bei einem
+     Wasserzeichen die ganze Aufgabe. */
+  zeichen: {
+    d: [
+      "M12 2.6l4.6 12.2h-9.2z",
+      "M4 16.2c2.4-1 5-1.4 8-1.4s5.6.4 8 1.4l-1.2 3.6c-2.2-.8-4.5-1.2-6.8-1.2s-4.6.4-6.8 1.2z",
+      "M9.4 9.6h5.2",
+    ],
   },
 };
 

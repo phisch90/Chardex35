@@ -103,7 +103,13 @@ export function Layout() {
             {seedMessage}
           </div>
         )}
-        <div className="mx-auto max-w-3xl p-3 sm:p-4">
+        {/*
+          `blatt` ist der zweite Griff für die Klassenfarbe: bei offenem Bogen bekommt
+          dieser Kasten einen Rahmen in der Klassenfarbe, so dass der ganze Bogen wie ein
+          eingefasstes Blatt aussieht („einen kräftigen Rahmen um alles"). Außerhalb eines
+          Bogens greift keine Regel darauf zu — die Startseite bleibt ohne Rahmen.
+        */}
+        <div className="blatt mx-auto max-w-3xl p-3 sm:p-4">
           <Outlet />
         </div>
       </main>

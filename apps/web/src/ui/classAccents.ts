@@ -1,3 +1,5 @@
+import { accentClassIdOf, type Character } from "@codex35/core";
+
 /**
  * Welche Klasse trägt welche Farbe — und wie die Farbe heißt.
  *
@@ -91,6 +93,20 @@ export const CLASS_ACCENTS: Record<string, AccentKey> = {
 export function accentOfClass(classId: string | undefined): AccentKey | undefined {
   if (classId === undefined) return undefined;
   return CLASS_ACCENTS[classId];
+}
+
+/**
+ * Das Thema DIESES Charakters — seine Wahl am Bogen, sonst die Klasse mit den meisten
+ * Stufen, sonst `undefined` („diese Klasse kenne ich nicht").
+ *
+ * Stand vorher zweimal ausgeschrieben: im Effekt am Bogen und beim Porträt-Platzhalter der
+ * Startseite. Zwei Stellen mit derselben Rangfolge sind zwei Gelegenheiten, sie
+ * auseinanderlaufen zu lassen — und dann trägt der Bogen eine andere Farbe als sein
+ * eigenes Symbol auf der Startseite.
+ */
+export function accentKeyOf(character: Character): AccentKey | undefined {
+  if (isAccentKey(character.accent)) return character.accent;
+  return accentOfClass(accentClassIdOf(character));
 }
 
 /** Ist der gespeicherte Wert ein Thema, das es gibt? */
