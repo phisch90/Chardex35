@@ -31,10 +31,20 @@ export function Card(props: {
 
     Was das Papier an diesem Griff NICHT ändern darf: Farbe und Ecken. Die Farbe gehört
     der Kampagne (`tone`), die Ecken gehören der Klasse.
+
+    `border-2` statt `border` ist sein Auftrag: „Einen kräftigen Rahmen um alles." Ein
+    Pixel Rahmen verschwindet auf einem Handy mit dreifacher Auflösung fast; zwei sind der
+    Unterschied zwischen einem angedeuteten und einem gezogenen Strich. Die FARBE des
+    Rahmens kommt bei offenem Bogen von der Klasse (`styles.css`, Abschnitt C2).
+
+    `relative` verschiebt nichts und hat trotzdem einen Grund: das Wasserzeichen am Bogen
+    ist absolut gesetzt und steht VOR den Karten im Quelltext. Ohne `relative` an der Karte
+    würde es darüber gezeichnet. Der naheliegende Weg — `isolate` am Bogen plus `-z-10` am
+    Zeichen — hat dafür jeden Dialog des Bogens unter die Hauptnavigation gelegt.
   */
   return (
     <div
-      className={`karte rounded-xl border shadow-sm ${props.tone ?? "border-slate-700/60 bg-slate-900/70"} ${props.padding ?? "p-3"} ${props.className ?? ""}`}
+      className={`karte relative rounded-xl border-2 shadow-sm ${props.tone ?? "border-slate-700/60 bg-slate-900/70"} ${props.padding ?? "p-3"} ${props.className ?? ""}`}
     >
       {props.children}
     </div>

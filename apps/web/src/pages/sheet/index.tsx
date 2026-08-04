@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import type { Character, DerivedSheet, StatValue } from "@codex35/core";
 import {
-  accentClassIdOf,
   applyHpChange,
   displayName,
   readOrderMarker,
@@ -22,8 +21,9 @@ import { IdentityCard } from "./Identity.js";
 import { ShareCharacterButton } from "../../ui/ShareCharacter.js";
 import { CharacterActionsSheet } from "../../ui/CharacterActions.js";
 import { IssueCard } from "../../ui/IssueCard.js";
-import { accentOfClass, isAccentKey } from "../../ui/classAccents.js";
+import { accentKeyOf } from "../../ui/classAccents.js";
 import { Icon, IconInline, type IconName } from "../../ui/icons.js";
+import { ClassMark } from "../../ui/ClassMark.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
 import { FeatsTab, InventoryTab, NotesTab } from "./tabs-more.js";
 import { SpellsTab } from "./SpellsTab.js";
@@ -136,8 +136,9 @@ export function CharacterSheetPage() {
     */
     if (character) rememberSheet(character.id);
     const root = document.documentElement;
-    const own = character?.accent;
-    const key = isAccentKey(own) ? own : accentOfClass(character ? accentClassIdOf(character) : undefined);
+    // Die Rangfolge (eigene Wahl vor Klasse) steht in `accentKeyOf` — EINMAL, weil sie
+    // auch der Porträt-Platzhalter der Startseite braucht.
+    const key = character === undefined || character === null ? undefined : accentKeyOf(character);
     if (key === undefined) root.removeAttribute("data-accent");
     else root.setAttribute("data-accent", key);
     return () => root.removeAttribute("data-accent");
@@ -217,7 +218,36 @@ export function CharacterSheetPage() {
 
   return (
     // Extra Platz unten, damit die mobile Reiter-Leiste nichts überdeckt.
-    <div className="space-y-3 pb-14 md:pb-0">
+    <div className="relative space-y-3 pb-14 md:pb-0">
+      {/*
+        Das WASSERZEICHEN — sein Auftrag: „evtl. ein passendes Symbol welches wie ein
+        Wasserzeichen an manchen Stellen vorkommt."
+
+        Es liegt hinter dem GANZEN Bogen und nicht im Kopf. Zuerst stand es dort, und das
+        ging zweimal schief: bei 132 px saß es mitten unter dem Teilen- und dem ⋯-Knopf,
+        und weiter hinausgeschoben schnitt der nur 60 px hohe Kopf davon einen waagerechten
+        Streifen heraus — vom Schädel des Barbaren blieben die Zähne übrig. Ein
+        Wasserzeichen braucht HÖHE, und die hat erst der Bogen selbst.
+
+        Und die FALLE, die mich hier eine Teststrecke gekostet hat: zuerst stand am
+        Wurzelkasten `isolate` und am Zeichen `-z-10`, damit es unter den Karten liegt. Ein
+        `isolation: isolate` macht aber einen neuen STAPELKONTEXT — und damit galt das
+        `z-50` der Blätter des Bogens (⋯-Menü, Würfelblatt, TP-Feld) nur noch INNERHALB
+        dieses Kastens. Gegen die Hauptnavigation (`z-40`, aber im Wurzelkontext) verloren
+        sie, und die Lösch-Strecke lief in einen Timeout, weil die untere Leiste den Klick
+        abfing. Ein Dialog, der hinter der Navigation liegt, ist kein Dialog.
+
+        Ohne `isolate` regelt die Zeichenreihenfolge das von allein: das Zeichen steht als
+        erstes Kind, und alles, was DANACH kommt und `relative` trägt, zeichnet darüber.
+        Deshalb hat `Card` ein `relative` bekommen — eine Klasse, die nichts verschiebt.
+
+        `pointer-events-none` bleibt: sonst fängt das Zeichen Taps ab, die dem Bogen gehören.
+      */}
+      <ClassMark
+        character={character}
+        size={220}
+        className="pointer-events-none absolute -right-6 top-6 text-amber-400/15"
+      />
       {/*
         Eine Arbeitskopie für einen fremden Bogen muss sich genauso verraten wie
         ein Entwurf — sonst trägt man eine Stufe ein und hält es für den eigenen
@@ -269,8 +299,8 @@ export function CharacterSheetPage() {
         </div>
       )}
 
-      <header className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
+      <header className="relative flex items-start gap-3">
+        <div className="relative min-w-0 flex-1">
           {/* Ohne Porträt steht der Kopf hier; mit Porträt liegt er im Bild. */}
           {!character.portrait && (
             <>
@@ -371,7 +401,7 @@ export function CharacterSheetPage() {
       </header>
 
       {/* Auf Desktop bleiben die Reiter oben; mobil sitzen sie unten am Daumen. */}
-      <div className="hidden flex-wrap gap-1 md:flex">
+      <div className="relative hidden flex-wrap gap-1 md:flex">
         {tabs.map((key) => (
           <Chip key={key} active={active === key} onClick={() => goTab(key)}>
             {/*

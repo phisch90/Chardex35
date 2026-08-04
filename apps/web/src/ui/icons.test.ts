@@ -23,6 +23,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { ICON_NAMES, ICON_SHAPES, type IconName } from "./icons.js";
+import { ACCENT_KEYS } from "./classAccents.js";
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -38,9 +39,24 @@ const PATH_OK = /^[MmLlHhVvCcSsQqTtAaZz0-9 ,.\-]+$/;
 
 describe("Zeichen-Formen", () => {
   it("kennt jedes Zeichen, das die Oberfläche benutzt", () => {
-    // Die sieben Reiter, die vier Hauptwege, das ⋯-Blatt, drei im Inhalt.
-    expect(ICON_NAMES.length).toBe(21);
+    // Die sieben Reiter, die vier Hauptwege, das ⋯-Blatt, drei im Inhalt, elf Klassen.
+    expect(ICON_NAMES.length).toBe(32);
     expect(new Set(ICON_NAMES).size).toBe(ICON_NAMES.length);
+  });
+
+  it("jede Klasse hat ihr Symbol, und es heißt wie ihr Thema", () => {
+    /*
+      Das ist die wichtigste Prüfung an den Klassenzeichen: ihre Namen sind GENAU die
+      Schlüssel der Themen. Dadurch braucht `ClassMark` keine Zuordnungstabelle — und wer
+      eine Klasse dazunimmt, kann das Symbol nicht vergessen, weil der Typ es verlangt.
+
+      Umgekehrt geprüft: kein Thema ohne Symbol UND kein verwaistes Symbol.
+    */
+    for (const key of ACCENT_KEYS) {
+      expect(ICON_NAMES, key).toContain(key);
+      expect(ICON_SHAPES[key].d.length, key).toBeGreaterThan(0);
+    }
+    expect(ACCENT_KEYS.length).toBe(11);
   });
 
   it("jedes Zeichen hat mindestens einen Pfad", () => {

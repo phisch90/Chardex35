@@ -116,13 +116,25 @@ describe("Die Griffe, an denen ein Papier anfassen darf", () => {
   */
   it("stehen im Bauteil", () => {
     const bits = readFileSync(join(SRC, "ui/bits.tsx"), "utf8");
-    expect(bits).toContain('className={`karte rounded-xl');
+    expect(bits).toContain('className={`karte relative rounded-xl');
     expect(bits).toContain('className="abschnitt ');
   });
 
   it("werden vom Stylesheet benutzt", () => {
     expect(CSS).toMatch(/\[data-material="[a-zA-Z]+"\] \.karte/);
     expect(CSS).toMatch(/\[data-material="[a-zA-Z]+"\] \.abschnitt/);
+  });
+
+  it("der Rahmen ist kräftig — zwei Pixel, nicht einer", () => {
+    /*
+      Sein Auftrag: „Einen kräftigen Rahmen um alles." Ein Pixel verschwindet auf einem
+      Handy mit dreifacher Auflösung fast; das hier hält die zwei fest, damit sie nicht bei
+      der nächsten Aufräumrunde als „unnötig" wieder auf einen fallen.
+    */
+    const bits = readFileSync(join(SRC, "ui/bits.tsx"), "utf8");
+    expect(bits).toContain("border-2");
+    expect(CSS).toMatch(/\[data-accent\] \.karte \{\s*border-color:/);
+    expect(CSS).toMatch(/\[data-accent\] \.blatt \{/);
   });
 
   it("das Papier fasst an einem Griff weder Farbe noch Ecken an", () => {

@@ -594,6 +594,87 @@ Drei Entscheidungen daran sind es wert, aufgeschrieben zu werden:
   entschieden, Hike wird damit Kleriker und nicht Kämpfer. Gespeichert wird nur, was er von
   Hand überschreibt (`character.accent`), und auch das als Schlüssel, nicht als Farbwert.
 
+### Runde 5: kräftig statt dezent — Rahmen, Wasserzeichen, elf Klassensymbole
+
+Sein Urteil nach Runde 4, wörtlich: **„Sorry aber die Farben sind alle zu blass und dezent.
+Dann mach doch lieber was farbigeres. Einen kräftigen Rahmen um alles. Und evtl. ein
+passendes Symbol welches wie ein Wasserzeichen an manchen Stellen vorkommt."**
+
+Zum dritten Mal „zu wenig" — und dreimal ist es keine Geschmacksfrage mehr, sondern ein
+Befund über mich: ich habe jede Runde die vorsichtigere Hälfte gewählt. Diesmal ohne
+Rückfrage kräftig, weil die Richtung nach drei Anläufen eindeutig ist.
+
+**Was farbiger wurde**, in Zahlen: der Anstrich von `--wash-a: 0.22` auf **0.42**, die
+Tönung der Karten von `0.13` auf **0.30**. Der Kontrast der Kleinschrift bleibt dabei
+unverändert (3,91 / 5,37 / 6,18 / 6,40) — das ist die Grenze, die nicht verhandelbar war,
+und der Lauf im gebauten Bogen prüft sie in allen vier Papieren.
+
+**Der Rahmen** steht an zwei Stellen: `border-2` an jeder Karte (im Bauteil, weil die
+Stärke zum Kasten gehört) und die FARBE aus der Klasse (`[data-accent] .karte`). Dazu ein
+neuer Griff `blatt` am Inhaltskasten — der ganze Bogen ist damit ein eingefasstes Blatt und
+keine Liste von Kästen. Der Rahmen braucht dafür Luft: `width: calc(100% - 0.8rem)` mit
+`margin: … auto` rückt ihn beidseitig ein und lässt ihn auf dem iPad mittig; ein reines
+`margin` hätte das `auto` des `mx-auto` überschrieben und die Zentrierung zerstört.
+
+**Warum die Klasse hier `border-color` setzen darf, das Papier aber nicht:** die
+Kampagnenfarbe färbt nur auf der STARTSEITE, und dort steht kein `data-accent`. Innerhalb
+eines Bogens gibt es keine Kampagnenfarbe, die überschrieben werden könnte.
+
+#### Die elf Klassensymbole
+
+`ui/icons.tsx` hat elf Formen dazubekommen, und ihre Namen sind GENAU die Schlüssel der
+Themen (`wild`, `natur`, `edel`, …) — dieselbe Regel wie bei den Reitern: der Schlüssel ist
+der Name, also braucht `ClassMark` keine Zuordnungstabelle, und der Test prüft beide
+Richtungen (kein Thema ohne Symbol, kein verwaistes Symbol).
+
+Sie erscheinen an zwei Stellen:
+
+- **Als Wasserzeichen** hinter dem Bogen, 220 px, in der Klassenfarbe bei 15% Deckkraft.
+- **Als Porträt-Platzhalter** auf der Startseite. Dort bewusst GEDÄMPFT und nicht in der
+  Klassenfarbe: draußen färbt die Kampagne, und ein buntes Symbol je Karte würde mit der
+  Gruppenfarbe streiten. Das Symbol sagt die Klasse, die Farbe die Gruppe.
+
+**Der Barbar hat fünf Anläufe gebraucht**, und die Lehre daraus ist die wichtigste dieser
+Runde:
+
+| Fassung | sah aus wie |
+|---|---|
+| Stiel mit kleinem Blatt | eine Fahne |
+| Doppelaxt, kleine Blätter | eine Fliege am Mast |
+| Doppelaxt, große Blätter | ein Auge auf einem Stiel |
+| einschneidig, großes Blatt | wieder eine Fahne |
+| zwei Hörner | ein Spross — und dem Druidenblatt zum Verwechseln ähnlich |
+
+Erst der Schädel las sich als Schädel. **Wenn drei Anläufe dasselbe Missverständnis
+erzeugen, liegt es am MOTIV und nicht an der Ausführung** — ein Stiel mit einer Fläche
+daran IST eine Fahne, ganz egal, wie man das Blatt schneidet. Nebenbei mussten auch das
+Druidenblatt (las sich als Feder — es fehlten die ADERN) und die Schurkenmaske (ein Stiel
+darunter machte sie zum Käfergesicht) neu gezeichnet werden. Gefunden hat das jedes Mal ein
+Blatt mit allen elf in 30/56/110 px, nicht der Test.
+
+#### Die Falle dieser Runde: `isolation: isolate` sperrt jeden Dialog ein
+
+Das Wasserzeichen soll UNTER den Karten liegen. Der naheliegende Weg war `isolate` am
+Wurzelkasten des Bogens plus `-z-10` am Zeichen — und das hat **jedes Blatt des Bogens
+hinter die Hauptnavigation gelegt**: `isolation: isolate` macht einen neuen Stapelkontext,
+und damit galt das `z-50` von ⋯-Menü, Würfelblatt und TP-Feld nur noch INNERHALB dieses
+Kastens. Gegen die untere Leiste (`z-40`, aber im Wurzelkontext) verloren sie.
+
+Gemeldet hat es die Lösch-Strecke mit einem Timeout auf „Gefahrenzone" — ein Dialog, den
+man nicht anklicken kann. **Ein Stapelkontext an einer Seitenwurzel wirkt auf alles darin,
+auch auf das, was gar nichts mit der Änderung zu tun hat.** Ohne `isolate` regelt die
+Zeichenreihenfolge dasselbe: das Zeichen steht als erstes Kind, und alles danach mit
+`relative` zeichnet darüber — deshalb hat `Card` ein `relative` bekommen, eine Klasse, die
+nichts verschiebt.
+
+#### Und der Fund, der kein Fund war
+
+Auf dem Bild der Startseite hatte genau eine von vier Karten einen goldenen Rahmen. Nach
+dem Nachmessen: es war der **Hover**-Zustand (`hover:border-amber-600/50`), weil der Zeiger
+nach dem letzten Klick auf der Karte stehenblieb. Beide gemessenen Karten hatten denselben
+grauen Rahmen. Lehre, und sie gehört zur Sechsten: **wer ein Bild prüft, prüft auch den
+Zeiger** — ein Aufnahmegerät hat immer eine Maus, sein iPhone nicht.
+
 ### Runde 3: die zwei hellen Papiere — und was ein Material überhaupt darf
 
 Sein Einwand nach Runde 2, wörtlich: **„Ich sehe grad, dass ja nur die Kontrastfarben ändern.
