@@ -52,8 +52,14 @@ export interface CardTier {
   key: CardTierKey;
   /** Porträt bzw. Platzhalter — quadratisch. */
   portrait: string;
-  /** Schriftgröße des Platzhalter-Symbols im Porträt. */
-  emoji: string;
+  /**
+   * Kantenlänge des Platzhalter-Zeichens im Porträt, in Pixeln.
+   *
+   * Stand hier als Schriftgrößen-Klasse (`text-3xl`), solange der Platzhalter ein 🛡️ war.
+   * Seit es ein gezeichnetes Zeichen ist, ist die Größe eine Zahl und keine Schriftgröße
+   * mehr — und damit auch nachmessbar.
+   */
+  markPx: number;
   /** Polster der Karte. */
   padding: string;
   /** Der Charaktername. */
@@ -102,7 +108,7 @@ export const CARD_TIERS: readonly CardTier[] = [
     */
     key: "xl",
     portrait: "h-20 w-20",
-    emoji: "text-3xl",
+    markPx: 30,
     padding: "p-5",
     name: "text-xl",
     sub: "text-sm",
@@ -113,7 +119,7 @@ export const CARD_TIERS: readonly CardTier[] = [
   {
     key: "gross",
     portrait: "h-20 w-20",
-    emoji: "text-3xl",
+    markPx: 30,
     padding: "p-3",
     name: "text-lg",
     sub: "text-sm",
@@ -125,7 +131,7 @@ export const CARD_TIERS: readonly CardTier[] = [
   {
     key: "mittel",
     portrait: "h-12 w-12",
-    emoji: "text-xl",
+    markPx: 22,
     padding: "p-3",
     name: "text-base",
     sub: "text-sm",
@@ -137,7 +143,7 @@ export const CARD_TIERS: readonly CardTier[] = [
   {
     key: "kompakt",
     portrait: "h-10 w-10",
-    emoji: "text-base",
+    markPx: 17,
     padding: "p-2",
     name: "text-sm",
     sub: "text-[11px]",

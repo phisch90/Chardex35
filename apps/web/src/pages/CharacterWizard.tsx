@@ -31,6 +31,7 @@ import {
   type SpellcastingBlock,
 } from "@codex35/core";
 import { S } from "../strings.js";
+import { IconInline } from "../ui/icons.js";
 import { CharacterRepo } from "../db/repo.js";
 import { useAllEntities, useCompendium, useHouseRules } from "../lib/hooks.js";
 import {
@@ -579,6 +580,7 @@ export function CharacterWizardPage() {
                 });
               }}
             >
+              <IconInline name="dice" size={14} />
               {S.wizard.rollAll}
             </Chip>
           </div>

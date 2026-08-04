@@ -638,6 +638,73 @@ Zwei Fallen aus dieser Runde:
   hilft offenbar nicht, es aufzuschreiben: **in Teststrecken gar keine `„…"` verwenden**, auch
   nicht in Beschriftungen.
 
+## Eigene Zeichen statt Emoji
+
+Sein Auftrag: „Kannst du die Emojis durch eigene icons ersetzen? Kannst du die bei Figma
+erstellen?" Beides ja — und der Grund für das Erste ist mehr als Geschmack: **bei einem Emoji
+bestimmt die Schriftart des Geräts die Farbe, nicht die App.** Genau daran ist die elfte Falle
+gescheitert (gelber Punkt auf gelben Funken). 21 Zeichen liegen jetzt als Striche in
+`ui/icons.tsx`, alle 24×24, Strichbreite 1,6, `currentColor`.
+
+Vier Entscheidungen daran sind eine Notiz wert:
+
+- **Der Schlüssel des Reiters IST der Name des Zeichens.** Deshalb steht am Bogen keine
+  Zuordnungstabelle mehr, sondern `Record<TabKey, IconName>` — der Typ verlangt, dass wer einen
+  achten Reiter dazunimmt, ein Zeichen dazuzeichnet.
+- **Ein Zeichen gehört in die ANSICHT, nicht in den Text.** Zwei Emoji standen in `strings.ts`
+  (`rollAll`, `levelUp.ready`). Dort kann ein Zeichen seine Farbe nicht vom Knopf nehmen, und
+  in einem Export steht ein Bildchen mitten im Satz. Beide sind jetzt reiner Text, das Zeichen
+  steht daneben. Der Test verbietet Emoji in `strings.ts` hart.
+- **Die typografischen Zeichen bleiben** (✓ ✕ ★ ☆ ✧ ⚠ ⟳ ✎ − ＋). Sie sind einfarbig und nehmen
+  `currentColor` — sie waren nie das Problem. Wer sie mitersetzt, fasst 40 Stellen an und
+  gewinnt nichts.
+- **Ab `md` tragen die Reiter jetzt auch ein Zeichen.** Unten am Handy stand ein Emoji, oben in
+  der Chip-Reihe nur Text — dieselben sieben Reiter sahen auf dem iPad also anders aus als auf
+  dem iPhone. Seit die Zeichen aus dem Quelltext kommen, kostet die Angleichung nichts.
+
+**Und die Gegenprobe, die den Ring rettet:** die Warnung liegt am Handy AUF dem Zeichen. Die
+Farbe dahinter ist jetzt unsere — aber es ist die KLASSENFARBE, und die wechselt je Bogen. Ein
+fester Kontrast wäre also weiter geraten; der `ring` in `OpenDot` bleibt deshalb.
+
+**Drei Zeichen mussten neu gezeichnet werden, und gefunden hat das nur das Hinsehen.** Ein
+Blatt mit allen 21 in 14/19/30 px (`scratchpad/icons-blatt.png`, gerendert aus `ICON_SHAPES`)
+zeigte: `combat` war ein **Kreuz** (†), `inventory` ein **Vorhängeschloss**, `spellbook` eine
+**Tür**. Kein Test hätte das gemeldet — `pnpm test` prüft, dass ein Pfad gültig ist, nicht was
+er zeigt. Behoben: die Klinge ist jetzt eine Umrissform (bei 14 px läuft sie zu einem breiten
+Strich zusammen, und der breite Strich gegen die dünne Parierstange ist genau das, was ein
+Kreuz nicht hat) · der Bügel oben ist weg, statt ihm eine Deckelnaht · das Buch hat ein
+Lesebändchen mit Kerbe. Lehre: **bei einem Zeichen ist das Blatt der Test.**
+
+**Was der Test trotzdem kann**, und das ist die andere Hälfte: er prüft JEDEN Pfad (fängt mit
+`M` an, nur erlaubte Zeichen, alle Zahlen im 24er-Feld — ein verrutschtes Komma malt nämlich
+gar nichts, und der Browser schweigt dazu), und er liest die Quelltexte auf Emoji. Die
+Quelltext-Prüfung ist Absicht: der Lauf im gebauten Bogen sieht nur, was gerade gerendert IST
+— ein Emoji in einem Zweig, den er nicht aufschlägt, findet er nie.
+
+**Figma: die Datei steht, gefüllt ist sie nicht.** `Chardex35 — Zeichen` ist angelegt
+(`u4HQAuJgzTjqzJBQEfC6YJ`), aber jeder SCHREIBENDE Figma-Aufruf braucht in dieser Umgebung
+seine Zustimmung, und die kann von hier niemand geben — drei Versuche, kurz und lang, alle mit
+„requires approval". Die 21 Formen sind deshalb als eine SVG-Datei mit 21 benannten Gruppen
+herausgegeben; die zieht er in Figma hinein und hat 21 benannte Ebenen. **Und die Richtung
+bleibt so:** die WAHRHEIT ist `ICON_SHAPES` im Quelltext, weil das ausgeliefert wird — Figma
+ist die Ansicht davon, nicht die Quelle. Eine SVG-Datei im Repo wäre eine zweite Wahrheit für
+dieselben Formen, deshalb liegt sie dort nicht.
+
+**Und die Anführungszeichen zum FÜNFTEN Mal, diesmal an einer neuen Stelle.** `„…"` in einer
+Zeichenkette hat den Figma-Sandkasten mit „SyntaxError: unexpected character" abgewiesen —
+Umlaute gehen, die deutschen Anführungszeichen nicht. Die Regel gilt damit über die
+Teststrecken hinaus: **in erzeugtem Code überhaupt keine `„…"`.**
+
+Zwei Testfallen aus dieser Runde, beide in MEINEM Lauf und nicht in der App:
+
+- **`:visible` ist keine Kosmetik.** Der Weiter-Balken des Assistenten steht zweimal im DOM
+  (einer für schmal, einer ab `md`), und der unsichtbare stand vorn. Dasselbe bei der unteren
+  Reiterleiste, die ab `md` weiter im DOM steht (nur `md:hidden`). Ein Klick darauf läuft in
+  einen Timeout — und der sieht hinterher aus wie ein Fehler der App.
+- **Die Seitenleiste ist bei 390px 0×0 groß.** Die Prüfung „jedes Zeichen ist quadratisch und
+  zwischen 12 und 24 px" schlug an ihr fehl, obwohl die App recht hatte. Wer eine Größe misst,
+  misst das, was in DIESER Breite wirklich da ist.
+
 ## Abgleich nur beim Start — und die Kosten, die mit weggefallen sind
 
 Sein Auftrag, wörtlich: „Abgleich bitte nur nach dem Start der App. Mitten drin ist Quatsch
@@ -742,10 +809,10 @@ in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`d
   gebaut — je eine Runde, damit er jedes einzeln am Tisch ansehen kann. Sie sind deutlich
   mehr Arbeit als der Nachtbogen: dort wechselt nur der Farbton, hier kippt die Helligkeit,
   und `color-scheme: dark` sowie jede halbdurchsichtige Fläche müssen mit.
-- **Der Nachtbogen ist noch nicht fertig „Papier".** Material, Klassenfarbe, Zierfarbe, Ecken
-  und Laufweite stehen — aber die Reiter tragen weiter bunte Emoji (📊 ⚔️ ✨), im Entwurf waren
-  es gedruckte Buchstaben. Das ist die nächste Runde am Nachtbogen; sie fasst die Reiterleiste
-  an, und die will er einzeln sehen.
+- **Der Nachtbogen ist fast fertig „Papier".** Material, Klassenfarbe, Zierfarbe, Ecken,
+  Laufweite und jetzt auch die Zeichen stehen (siehe eigener Abschnitt unten) — offen sind nur
+  noch die zweiten Farben je Klasse (Paladin-Gold, Barden-Koralle), die heute noch nicht in der
+  einen Rampe stecken.
 - **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" fehlt noch.
   Eigene Gegenstände mit echten Rüstungs- und Waffenwerten sind gebaut (Editor im
   Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Character } from "@codex35/core";
 import { buildCharacterExport, shareOrDownload } from "../lib/transfer.js";
 import { useAllEntities, useHouseRules } from "../lib/hooks.js";
+import { Icon } from "./icons.js";
 
 /**
  * Einen Bogen ohne jede Einrichtung auf ein anderes Gerät bringen: teilen
@@ -67,7 +68,7 @@ export function ShareCharacterButton(props: {
             : "rounded-lg border border-slate-600 px-3 py-1.5 text-sm text-slate-200 enabled:hover:bg-slate-800 disabled:opacity-40"
         }
       >
-        📤
+        <Icon name="share" size={18} />
       </button>
       {note !== null && (
         <p

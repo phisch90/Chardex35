@@ -268,7 +268,13 @@ export const S = {
      */
     abilityResult: (total: number, mod: string) => `ergibt ${total} (${mod})`,
     standardArray: "Standardreihe (15/14/13/12/10/8)",
-    rollAll: "🎲 Alle würfeln (4W6, niedrigster fällt)",
+    /*
+      Ohne Würfel-Emoji: das Zeichen steht als gezeichneter W20 daneben (`ui/icons.tsx`).
+      Ein Zeichen gehört in die Ansicht und nicht in den Text — sonst kann es seine Farbe
+      nicht vom Knopf nehmen, und in einer Meldung oder einem Export steht plötzlich ein
+      Bildchen mitten im Satz.
+    */
+    rollAll: "Alle würfeln (4W6, niedrigster fällt)",
     /** NPC-Klassen sind kein Spielerfutter — aber erreichbar, für Gefolge und NSCs. */
     showNpcClasses: "auch NPC-Klassen",
   },
@@ -1183,7 +1189,8 @@ export const S = {
     trackerLine: (name: string, from: number, to: number) =>
       `${name}: ${from} → ${to} (Stufenaufstieg)`,
     title: "Stufenaufstieg",
-    ready: "⬆ Bereit zum Aufstieg!",
+    /** Ohne Pfeil-Zeichen — der steht daneben als gezeichnetes Zeichen, siehe `rollAll`. */
+    ready: "Bereit zum Aufstieg!",
     chooseClass: "Klasse für die neue Stufe",
     /*
       Kein „TP-Wurf" mehr: an seinem Tisch wird nicht gewürfelt (Martin: „volle Hit Die

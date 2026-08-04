@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ABILITIES, stepRank } from "@codex35/core";
 import { Link } from "@tanstack/react-router";
 import { S } from "../../strings.js";
+import { Icon, IconInline } from "../../ui/icons.js";
 import { Card, Chip, GhostButton, SectionTitle, StatButton, d20Roll, fmtMod } from "../../ui/bits.js";
 import { useDiceStore } from "../../lib/diceStore.js";
 import { useAppSettings, useCompendium, useHouseRules } from "../../lib/hooks.js";
@@ -92,7 +93,7 @@ export function StatsTab(props: TabProps) {
             params={{ charId: character.id }}
             className="ml-auto rounded-lg border border-slate-600 px-3 py-1.5 text-sm hover:bg-slate-800"
           >
-            ⬆ {S.actions.levelUp}
+            <IconInline name="levelUp" /> {S.actions.levelUp}
           </Link>
         </div>
       </Card>
@@ -279,13 +280,13 @@ export function CombatTab(props: TabProps) {
                         roll(d20Roll(mod), attack.label);
                       }}
                     >
-                      🎲
+                      <Icon name="dice" size={17} />
                     </GhostButton>
                     {attack.damageText !== "—" && (
                       <GhostButton
                         onClick={() => roll(attack.damageText, `${attack.label} — ${S.sheet.damage2}`)}
                       >
-                        ⚔️
+                        <Icon name="combat" size={17} />
                       </GhostButton>
                     )}
                   </>
@@ -460,7 +461,7 @@ export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: T
                       roll(d20Roll(skill.total.total), `${character.name}: ${skill.name}`)
                     }
                   >
-                    🎲
+                    <Icon name="dice" size={17} />
                   </GhostButton>
                 )
               )}

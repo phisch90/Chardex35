@@ -22,6 +22,7 @@ import { ShareCharacterButton } from "../../ui/ShareCharacter.js";
 import { CharacterActionsSheet } from "../../ui/CharacterActions.js";
 import { IssueCard } from "../../ui/IssueCard.js";
 import { accentOfClass, isAccentKey } from "../../ui/classAccents.js";
+import { Icon, IconInline, type IconName } from "../../ui/icons.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
 import { FeatsTab, InventoryTab, NotesTab } from "./tabs-more.js";
 import { SpellsTab } from "./SpellsTab.js";
@@ -49,14 +50,24 @@ export interface TabProps {
 
 type TabKey = keyof typeof S.sheet.tabs;
 
-const TAB_ICONS: Record<TabKey, string> = {
-  stats: "📊",
-  combat: "⚔️",
-  skills: "🎯",
-  spells: "✨",
-  inventory: "🎒",
-  feats: "⭐",
-  notes: "📝",
+/*
+  Eigene Zeichen statt Emoji (sein Auftrag). Der Schlüssel ist derselbe wie der Reiter, also
+  braucht es hier keine Zuordnungstabelle mehr — `IconName` deckt die sieben ab, und der
+  Typ hält das fest: wer einen Reiter dazunimmt, muss ein Zeichen dazuzeichnen.
+
+  Warum das mehr ist als Geschmack: ein Emoji trägt die Farbe seiner Schriftart, ein Strich
+  in `currentColor` trägt die des Reiters. Der aktive Reiter färbt sein Zeichen jetzt mit —
+  beim Druiden grün, beim Paladin königsblau — und der Warnpunkt liegt auf einer Fläche,
+  deren Farbe wir kennen (elfte Falle in CLAUDE.md).
+*/
+const TAB_ICONS: Record<TabKey, IconName> = {
+  stats: "stats",
+  combat: "combat",
+  skills: "skills",
+  spells: "spells",
+  inventory: "inventory",
+  feats: "feats",
+  notes: "notes",
 };
 
 /**
@@ -210,7 +221,9 @@ export function CharacterSheetPage() {
           und hält ihn für den echten Bogen. */}
       {character.draftOf !== undefined && (
         <div className="-mx-3 -mt-3 flex flex-wrap items-center gap-2 border-b border-amber-800/60 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
-          <span className="font-semibold">🧪 Entwurf</span>
+          <span className="font-semibold">
+            <IconInline name="draft" /> Entwurf
+          </span>
           <span className="text-amber-300/80">Änderungen hier berühren das Original nicht.</span>
           <Link
             to="/charaktere/$charId/vergleich"
@@ -273,6 +286,7 @@ export function CharacterSheetPage() {
               params={{ charId: character.id }}
               className="inline-block rounded-full bg-emerald-700/40 px-2 py-0.5 text-xs font-semibold text-emerald-300"
             >
+              <IconInline name="levelUp" size={13} />
               {S.levelUp.ready}
             </Link>
           )}
@@ -352,6 +366,14 @@ export function CharacterSheetPage() {
       <div className="hidden flex-wrap gap-1 md:flex">
         {tabs.map((key) => (
           <Chip key={key} active={active === key} onClick={() => goTab(key)}>
+            {/*
+              Dasselbe Zeichen wie unten am Handy, nur kleiner und vor dem ganzen Wort.
+              Hier stand vorher nichts: unten trugen die Reiter ein Emoji, oben nur Text —
+              und damit sahen dieselben sieben Reiter auf dem iPad anders aus als auf dem
+              iPhone. Seit die Zeichen aus dem Quelltext kommen, kostet die Angleichung
+              nichts.
+            */}
+            <IconInline name={TAB_ICONS[key]} size={14} />
             {S.sheet.tabs[key]}
             {/*
               Der Punkt. Seine Wahl: „Ein Punkt am betroffenen Reiter" — man sieht,
@@ -429,16 +451,18 @@ export function CharacterSheetPage() {
               ? { "aria-label": `${S.sheet.tabs[key]}: ${S.open.tabDot(issueTabs.get(key) ?? 0)}` }
               : {})}
           >
-            <span className="text-base leading-none">{TAB_ICONS[key]}</span>
+            <Icon name={TAB_ICONS[key]} size={19} />
             {/*
               Am Handy sitzt der Punkt AM SYMBOL und nicht hinter dem Wort: die
               Kurzform („Ausr.", „Fert.") füllt die Zelle schon aus, und ein Zeichen
               mehr würde umbrechen. `absolute`, damit die Zeile ihre Höhe behält —
               sonst rutschte die ganze Leiste, sobald ein Punkt auftaucht.
 
-              Genau hier war er zu leise: neben einem Symbol, dessen Farbe wir nicht
-              bestimmen. Der Ring in der Farbe der Leiste löst ihn vom Symbol, statt
-              auf einen Kontrast zu hoffen, den ✨ oder 🎯 vorgeben.
+              Genau hier war er zu leise: er saß auf einem Emoji, dessen Farbe die
+              Schriftart des Geräts bestimmte (ein gelber Punkt auf gelben Funken).
+              Das Zeichen ist jetzt ein Strich in unserer Farbe — der Ring bleibt
+              aber: der Strich trägt die KLASSENFARBE, und die wechselt je Bogen.
+              Ein fester Kontrast wäre also weiter nur geraten.
             */}
             {issueTabs.has(key) && <OpenDot className="absolute right-[22%] top-1" />}
             {S.sheet.tabsShort[key]}

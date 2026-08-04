@@ -7,6 +7,7 @@ import {
   type ImportResultPc,
 } from "@codex35/core";
 import { S } from "../strings.js";
+import { IconInline } from "../ui/icons.js";
 import { CharacterRepo, CompendiumRepo } from "../db/repo.js";
 import { useCompendium, useHouseRules } from "../lib/hooks.js";
 import { Card, GhostButton, PrimaryButton, SectionTitle, fmtMod } from "../ui/bits.js";
@@ -73,7 +74,7 @@ export function ImportPage() {
       <Card>
         <p className="mb-3 text-xs leading-relaxed text-slate-400">{S.import.hint}</p>
         <label className="inline-block cursor-pointer rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-500">
-          📂 {S.import.pick}
+          <IconInline name="import" /> {S.import.pick}
           <input
             type="file"
             accept=".xml,text/xml,application/xml"

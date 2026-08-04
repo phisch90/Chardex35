@@ -16,6 +16,7 @@ import {
   type StatPath,
 } from "@codex35/core";
 import { S } from "../../strings.js";
+import { Icon } from "../../ui/icons.js";
 import { toPortraitDataUrl } from "../../lib/image.js";
 import { FeatText } from "../../ui/FeatText.js";
 import { FeatPicker } from "../../ui/FeatPicker.js";
@@ -675,7 +676,7 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
                         });
                       }}
                     >
-                      ⚔
+                      <Icon name="combat" size={17} />
                     </GhostButton>
                   )}
                   {editMode && (

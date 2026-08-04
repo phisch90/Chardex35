@@ -19,6 +19,7 @@ import { useAllEntities, useHouseRules } from "../lib/hooks.js";
 import { BottomSheet, GhostButton } from "./bits.js";
 import { CampaignPicker } from "./CampaignPicker.js";
 import { AccentPicker } from "./AccentPicker.js";
+import { Icon, type IconName } from "./icons.js";
 import { accentOfClass, isAccentKey, ACCENT_LABELS } from "./classAccents.js";
 import { campaignLook } from "./campaignColors.js";
 
@@ -190,7 +191,7 @@ export function CharacterActionsSheet(props: {
         {props.sheet !== undefined && restDone === null && restPlan === null && (
           <>
             <ActionRow
-              icon="😴"
+              icon="rest"
               label={S.rest.action}
               hint={S.rest.hint}
               onClick={() => askRest("full")}
@@ -205,7 +206,7 @@ export function CharacterActionsSheet(props: {
               Stellen, die auseinanderlaufen können.
             */}
             <ActionRow
-              icon="☕"
+              icon="pause"
               label={S.rest.shortAction}
               hint={S.rest.shortHint}
               onClick={() => askRest("short")}
@@ -251,7 +252,7 @@ export function CharacterActionsSheet(props: {
           <ActionRow
             icon={
               character.campaign === undefined
-                ? "🏷️"
+                ? "campaign"
                 : /* Der Punkt in der Farbe der Kampagne: er sieht schon in der Zeile,
                      was eingetragen ist, ohne sie aufzuklappen. */
                   undefined
@@ -288,7 +289,7 @@ export function CharacterActionsSheet(props: {
           />
         ) : (
           <ActionRow
-            icon="🎨"
+            icon="accent"
             label="Farbthema"
             hint={
               isAccentKey(character.accent)
@@ -306,20 +307,20 @@ export function CharacterActionsSheet(props: {
 
         {!isDraft && (
           <ActionRow
-            icon="🧪"
+            icon="draft"
             label="Entwurf zum Ausprobieren"
             hint="Kopie, die weiß, wovon sie stammt — zum Vergleichen und späteren Übernehmen."
             onClick={() => void makeDraft()}
           />
         )}
         <ActionRow
-          icon="📄"
+          icon="copy"
           label="Eigenständige Kopie"
           hint="Neue Figur auf gleicher Grundlage, ohne Verbindung zum Original."
           onClick={() => void makeCopy()}
         />
         <ActionRow
-          icon="📤"
+          icon="share"
           label="Teilen / sichern"
           hint="Als JSON — AirDrop aufs iPad, in Dateien speichern, weitergeben."
           onClick={share}
@@ -457,7 +458,7 @@ function RestConfirm(props: { plan: RestPlan; onCancel: () => void; onConfirm: (
 }
 
 function ActionRow(props: {
-  icon?: string | undefined;
+  icon?: IconName | undefined;
   /**
    * Ein farbiger Punkt anstelle des Symbols — für die Kampagnenzeile, die ihre
    * eigene Farbe zeigt. Tailwind-Klasse, kein Farbwert: gebaut werden Klassen hier
@@ -476,7 +477,9 @@ function ActionRow(props: {
       className="flex w-full items-start gap-3 rounded-lg border border-slate-700 p-3 text-left enabled:hover:bg-slate-800 disabled:opacity-40"
     >
       {props.dot === undefined ? (
-        <span className="text-lg leading-none">{props.icon}</span>
+        <span className="mt-0.5 shrink-0 text-slate-300">
+          {props.icon === undefined ? null : <Icon name={props.icon} size={22} />}
+        </span>
       ) : (
         <span className={`mt-1 h-3.5 w-3.5 shrink-0 rounded-full ${props.dot}`} />
       )}
