@@ -143,6 +143,20 @@ export const characterSchema = z.object({
     .optional(),
 
   /**
+   * Das Farbthema DIESES Bogens — überschreibt die Klasse.
+   *
+   * Normalerweise ergibt sich die Farbe aus den Stufen (`accentClassIdOf`), ist also eine
+   * Folge und wird nicht gespeichert. Gesetzt wird dieses Feld nur, wenn er die Farbe am
+   * Bogen von Hand wählt: gefragt und entschieden — „automatisch aus der Klasse, aber je
+   * Bogen überschreibbar", wie bei der Kampagnenfarbe.
+   *
+   * Nur ein Schlüssel, kein Farbwert. Welche Schlüssel es gibt und wie sie aussehen, weiß
+   * die Oberfläche (`ui/classAccents.ts`, `styles.css`) — der Kern soll nichts über Farben
+   * wissen, und ein gespeicherter Bogen soll eine neue Farbrunde überleben.
+   */
+  accent: z.string().optional(),
+
+  /**
    * ENTWURF: ID des Charakters, aus dem dieser hier kopiert wurde. Gesetzt =
    * Probelauf („was ändert sich, wenn ich Stufe 8 als Kleriker nehme").
    *

@@ -553,6 +553,59 @@ aufgeschrieben zu werden, weil sie alle dieselbe Frage beantworten: **wo gehört
   Liste) — die erste Fehlerfamilie, diesmal von vorn bedacht. Der Test in
   `db/migrate.test.ts` prüft beide Richtungen: Grad 0 weg, Grad 1 und höher unangetastet.
 
+## Aussehen: zwei Regler, nicht 33 Entwürfe
+
+Sein Wunsch war „ein alternatives Design, was an pen and paper erinnert", dann drei Entwürfe
+zur Abnahme — **alle drei angenommen** —, und dazu: „für jede Klasse ein eigenes Farbkonzept,
+ein eigenes Thema. Also zum Druiden etwas Grünes … beim Barden vielleicht etwas Verspieltes,
+beim Paladin etwas sehr Edles … Beim Barbaren soll es 'n bisschen wilder anmuten."
+
+Dazu die Frage „gibt es ein Limit?" — und die Antwort ist der Kern dieser Runde: **drei
+Papiere × elf Klassen wären 33 Entwürfe, und so gebaut wäre es nach dem zweiten neuen Knopf
+kaputt**, weil jede neue Karte 33-mal stimmen müsste. Es sind deshalb zwei Regler, die sich
+nicht kennen:
+
+- **`data-material`** am `<html>` — Papier, Karten, Linien, Text. Vier Werte, er wählt einen
+  in den Einstellungen. Gebaut ist zuerst der **Nachtbogen** (seine Wahl: „der kleinste
+  Umbau"), die zwei hellen Papiere folgen je eine Runde.
+- **`data-accent`** am `<html>`, aber nur **solange ein Bogen offen ist** — genau die Farbe,
+  die heute Amber ist. Draußen färbt die Kampagne, drinnen die Klasse: außen sieht man, zu
+  welcher Gruppe eine Figur zählt, innen, wer sie ist.
+
+**Warum das billig ist, und es ist der ganze Trick:** Tailwind 4 legt jede Farbe als
+CSS-Variable ab (`--color-slate-900`), und jede Hilfsklasse LIEST sie. Ein Thema fasst
+deshalb keine einzige Komponente an — es definiert die Variablen neu, und die 168 Stellen mit
+`text-slate-500` wechseln mit. Nachgeprüft im gebauten Stylesheet, nicht vermutet.
+
+Drei Entscheidungen daran sind es wert, aufgeschrieben zu werden:
+
+- **Die Warnfarbe steht NICHT im Thema.** `styles.css` definiert nur `slate` (Material) und
+  `amber` (Bedienfarbe) um; `rose` (Warnung), `red` (Gefahr), `emerald` (in Ordnung) und
+  `violet` (Domänenplatz) bleiben unberührt. Das sind Bedeutungen, keine Dekoration — eine
+  Warnfarbe, die je Klasse wechselt, wäre genau der Fehler, den die elfte Falle beschreibt.
+  Der Lauf im gebauten Bogen misst das hart: dieselbe Marke, zwei Themen, identische Pixel.
+- **Eine Klasse ist EINE Zeile.** Die Rampe steht einmal (`[data-accent]`, Helligkeit und
+  Sättigung 1:1 von `amber` abgelesen), variabel sind nur Farbton `--ac-h` und ein
+  Sättigungs-Faktor `--ac-s`. Damit kann keine Klasse versehentlich einen anderen Kontrast
+  haben als die anderen — und der Kämpfer darf fast grau sein (Stahl), ohne dass jemand elf
+  Rampen pflegt.
+- **Die Farbe ist eine FOLGE, die Wahl eine Eingabe.** `accentClassIdOf` rechnet die Klasse
+  mit den meisten Stufen aus (bei Gleichstand die zuletzt gestiegene) — gefragt und
+  entschieden, Hike wird damit Kleriker und nicht Kämpfer. Gespeichert wird nur, was er von
+  Hand überschreibt (`character.accent`), und auch das als Schlüssel, nicht als Farbwert.
+
+Zwei Fallen aus dieser Runde:
+
+- **Farben messen heißt Pixel messen.** Die erste Fassung des Tests las
+  `getComputedStyle(...).backgroundColor` mit einem `rgb(...)`-Ausdruck und bekam immer
+  `null`: seit die Themen in `oklch()` stehen, gibt Chrome auch `oklch(...)` zurück. Der Test
+  zeigte damit auf die App, obwohl die Farbe längst da war. Jetzt geht der Wert durch eine
+  1×1-Zeichenfläche — was dort ankommt, ist das, was er sieht.
+- **Und die Anführungszeichen zum vierten Mal.** `check("… „Aussehen"", …)` — deutsche
+  Anführungszeichen in einer doppelt gequoteten Zeichenkette, dreimal in einer Datei. Es
+  hilft offenbar nicht, es aufzuschreiben: **in Teststrecken gar keine `„…"` verwenden**, auch
+  nicht in Beschriftungen.
+
 ## Abgleich nur beim Start — und die Kosten, die mit weggefallen sind
 
 Sein Auftrag, wörtlich: „Abgleich bitte nur nach dem Start der App. Mitten drin ist Quatsch
@@ -653,6 +706,15 @@ in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`d
   anfassen: es würde jeden Bogen ändern. Der halbe Stärkeschaden in der zweiten Hand und
   die Rundung im ×1,5-Pfad standen bis vor kurzem hier — beides ist beantwortet und gebaut
   (Martins Regeln 4 und 5).
+- **Die zwei hellen Papiere** (kopierter Bogen, Kladde) sind abgenommen, aber noch nicht
+  gebaut — je eine Runde, damit er jedes einzeln am Tisch ansehen kann. Sie sind deutlich
+  mehr Arbeit als der Nachtbogen: dort wechselt nur der Farbton, hier kippt die Helligkeit,
+  und `color-scheme: dark` sowie jede halbdurchsichtige Fläche müssen mit.
+- **Der Nachtbogen ist noch nicht fertig „Papier".** Material und Klassenfarbe stehen, aber
+  die Reiter tragen weiter bunte Emoji (📊 ⚔️ ✨) — im Entwurf waren es gedruckte Buchstaben.
+  Das ist die nächste Runde am Nachtbogen; sie fasst die Reiterleiste an, und die will er
+  einzeln sehen. Ebenso offen: die zweiten Farben je Klasse (Paladin-Gold, Barden-Koralle),
+  die heute noch nicht in der einen Rampe stecken.
 - **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" fehlt noch.
   Eigene Gegenstände mit echten Rüstungs- und Waffenwerten sind gebaut (Editor im
   Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in

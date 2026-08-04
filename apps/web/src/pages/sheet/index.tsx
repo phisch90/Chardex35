@@ -1,7 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import type { Character, DerivedSheet, StatValue } from "@codex35/core";
-import { applyHpChange, displayName, readOrderMarker, tabsWithIssues } from "@codex35/core";
+import {
+  accentClassIdOf,
+  applyHpChange,
+  displayName,
+  readOrderMarker,
+  tabsWithIssues,
+} from "@codex35/core";
 import { S } from "../../strings.js";
 import { CharacterRepo } from "../../db/repo.js";
 import { useAppSettings, useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
@@ -15,6 +21,7 @@ import { IdentityCard } from "./Identity.js";
 import { ShareCharacterButton } from "../../ui/ShareCharacter.js";
 import { CharacterActionsSheet } from "../../ui/CharacterActions.js";
 import { IssueCard } from "../../ui/IssueCard.js";
+import { accentOfClass, isAccentKey } from "../../ui/classAccents.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
 import { FeatsTab, InventoryTab, NotesTab } from "./tabs-more.js";
 import { SpellsTab } from "./SpellsTab.js";
@@ -94,6 +101,28 @@ export function CharacterSheetPage() {
   } | null>(null);
   const roll = useDiceStore((s) => s.roll);
   const { diceEnabled } = useAppSettings();
+
+  /*
+    Die Klassenfarbe ans <html>, solange DIESER Bogen offen ist — und beim Verlassen wieder
+    weg. Draußen färbt die Kampagne (Startseite), drinnen die Klasse: außen sieht man, zu
+    welcher Gruppe eine Figur zählt, innen, wer sie ist.
+
+    Der Hook steht VOR den drei frühen `return`s und rechnet selbst mit dem noch nicht
+    geladenen Charakter. Ein Hook hinter einer Bedingung ist kein Hook — genau daran ist der
+    Stufenaufstieg schon einmal mit „Minified React error #310" auf halb weiß gelaufen.
+
+    Vorrang: was am Bogen steht (`character.accent`, seine Wahl), sonst die Klasse mit den
+    meisten Stufen. Kennt die App die Klasse nicht (NPC, Prestige, selbstgebaut), bleibt
+    Amber stehen.
+  */
+  useEffect(() => {
+    const root = document.documentElement;
+    const own = character?.accent;
+    const key = isAccentKey(own) ? own : accentOfClass(character ? accentClassIdOf(character) : undefined);
+    if (key === undefined) root.removeAttribute("data-accent");
+    else root.setAttribute("data-accent", key);
+    return () => root.removeAttribute("data-accent");
+  }, [character]);
 
   if (character === undefined) return <p className="text-slate-400">{S.misc.loading}</p>;
   if (character === null) return <p className="text-slate-400">Charakter nicht gefunden.</p>;
