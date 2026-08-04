@@ -122,14 +122,156 @@ button,
   bleibt Amber stehen, und das ist die richtige Antwort auf „diese Klasse kenne
   ich nicht" — kein Raten, keine Behauptung.
 */
-[data-accent="wild"]      { --ac-h: 40;  --ac-s: 0.8;  } /* Barbar — Rost      */
-[data-accent="verspielt"] { --ac-h: 185; --ac-s: 0.55; } /* Barde — Türkis     */
-[data-accent="fromm"]     { --ac-h: 240; --ac-s: 0.35; } /* Kleriker — Silber  */
-[data-accent="natur"]     { --ac-h: 130; --ac-s: 0.65; } /* Druide — Moos      */
-[data-accent="stahl"]     { --ac-h: 245; --ac-s: 0.2;  } /* Kämpfer — Stahl    */
-[data-accent="ruhe"]      { --ac-h: 65;  --ac-s: 0.95; } /* Mönch — Safran     */
-[data-accent="edel"]      { --ac-h: 272; --ac-s: 0.6;  } /* Paladin — Königsb. */
-[data-accent="faehrte"]   { --ac-h: 120; --ac-s: 0.35; } /* Waldläufer — Oliv  */
-[data-accent="schatten"]  { --ac-h: 160; --ac-s: 0.4;  } /* Schurke — Grünspan */
-[data-accent="funke"]     { --ac-h: 330; --ac-s: 0.6;  } /* Hexenmeister       */
-[data-accent="zeichen"]   { --ac-h: 285; --ac-s: 0.5;  } /* Magier — Indigo    */
+/* --------------------------------------------------------------------------
+   C) Die ZWEITE Farbe und der Charakter je Klasse.
+   --------------------------------------------------------------------------
+   Ein Farbton allein macht keinen Paladin „edel" — das tut das Gold daneben.
+   In den Entwürfen stand deshalb bei jeder Klasse eine zweite Farbe (Paladin
+   Blattgold, Barde Koralle, Druide Rinde) und eine Eigenart (Barbar dicker und
+   schiefer, Mönch luftiger, Magier streng gerastert).
+
+   Beides folgt derselben Regel wie die Bedienfarbe: es sind VARIABLEN, keine
+   Komponenten. Drei Stück:
+
+     --ac2-h / --ac2-s   die Zierfarbe (Rampe `trim`, siehe `@theme` unten)
+     --radius-*          die Ecken — Tailwind liest sie, `rounded-lg` wird weich
+     --tracking-widest   die Laufweite der Überschriften
+
+   Die Zierfarbe hat einen JOB und ist keine Dekoration: sie färbt, was der Bogen
+   über sich SAGT (Abschnitts-Überschriften, der Name), während die Bedienfarbe
+   färbt, was man DRÜCKEN kann. Ohne diese Trennung wären es zwei Farben, die
+   dasselbe bedeuten — und dann bedeutet keine etwas.
+
+   Der Standardwert steht bei `:root`: ohne Klassenthema ist die Zierfarbe genau
+   das heutige `slate-400`. Wer keine Klasse hat, sieht also nichts Neues. */
+/*
+  Der Standardwert IST das heutige `slate-400` (oklch(70.4% 0.04 256.788)) — abgelesen,
+  nicht geschätzt. Ohne Klassenthema sieht deshalb keine Überschrift anders aus als
+  vorher, und das ist Absicht: das Codex-Aussehen hat er schon abgenommen.
+*/
+:root {
+  --ac2-h: 256.8;
+  --ac2-s: 0.36;
+  /* Helligkeit der Zierfarbe. Der Mönch hebt sie an (Tinte auf Reispapier
+     braucht Luft), der Barbar senkt sie (Ruß). */
+  --ac2-l: 70.4%;
+}
+
+@theme {
+  /*
+    Die Zierfarbe als echte Tailwind-Farbe, damit `text-trim-400` existiert. Sie zeigt auf
+    die Variablen darüber — Tailwind gibt den Ausdruck unverändert weiter, geprüft im
+    gebauten Stylesheet.
+
+    ACHTUNG bei der Sättigung, hier stand schon einmal ein Faktor 10 zu viel: aus
+    `0.11 * 0.62 * 10` wurde eine Buntheit von 0,68, und die liegt weit außerhalb dessen,
+    was ein Bildschirm darstellen kann — der Browser klemmt sie ab, und aus dem Blattgold
+    des Paladins wurde ein knallrotes `rgb(255,77,0)`. Der Test hat es MITGEMESSEN und
+    trotzdem durchgelassen, weil „Rot und Grün über Blau" auf Orange auch zutrifft. Die
+    Buntheit einer ZIERfarbe liegt zwischen 0,01 und 0,07; alles darüber ist keine Zier,
+    sondern ein Warnschild.
+  */
+  --color-trim-200: oklch(calc(var(--ac2-l) + 14%) calc(0.045 * var(--ac2-s)) var(--ac2-h));
+  --color-trim-300: oklch(calc(var(--ac2-l) + 7%) calc(0.075 * var(--ac2-s)) var(--ac2-h));
+  --color-trim-400: oklch(var(--ac2-l) calc(0.11 * var(--ac2-s)) var(--ac2-h));
+  --color-trim-500: oklch(calc(var(--ac2-l) - 9%) calc(0.11 * var(--ac2-s)) var(--ac2-h));
+}
+
+/*
+  Die elf Klassen. Eine Zeile pro Klasse, und in der Zeile steht ALLES, was die
+  Klasse ausmacht: Bedienfarbe (h/s), Zierfarbe (ac2), Ecken und Laufweite.
+  Wer eine Klasse ändern will, ändert genau eine Zeile — das war die Bedingung,
+  unter der elf Themen überhaupt tragbar sind.
+*/
+
+/* Barbar — Rost und Ruß. Kantig und gedrängt: nichts ist hier geschliffen. */
+[data-accent="wild"] {
+  --ac-h: 40;  --ac-s: 0.8;
+  --ac2-h: 40; --ac2-s: 0.55; --ac2-l: 58%;
+  --radius-lg: 0.2rem; --radius-xl: 0.25rem; --radius-2xl: 0.3rem;
+  --tracking-widest: 0.06em;
+}
+
+/* Barde — Türkis mit Koralle. Die zweite Farbe steht bewusst QUER zur ersten:
+   ein Harlekin trägt zwei Farben, nicht zwei Töne einer. */
+[data-accent="verspielt"] {
+  --ac-h: 185; --ac-s: 0.55;
+  --ac2-h: 32; --ac2-s: 0.6; --ac2-l: 74%;
+  --radius-lg: 0.75rem; --radius-xl: 1rem; --radius-2xl: 1.4rem;
+  --tracking-widest: 0.12em;
+}
+
+/* Kleriker — Silberblau mit Kerzengold. Schlicht, aufgeräumt, kein Schmuck. */
+[data-accent="fromm"] {
+  --ac-h: 240; --ac-s: 0.35;
+  --ac2-h: 88; --ac2-s: 0.42; --ac2-l: 76%;
+  --radius-lg: 0.4rem; --radius-xl: 0.6rem; --radius-2xl: 0.8rem;
+  --tracking-widest: 0.14em;
+}
+
+/* Druide — Moos mit Rinde. Weiche Ecken: gewachsen, nicht geschnitten. */
+[data-accent="natur"] {
+  --ac-h: 130; --ac-s: 0.65;
+  --ac2-h: 70; --ac2-s: 0.35; --ac2-l: 68%;
+  --radius-lg: 0.9rem; --radius-xl: 1.2rem; --radius-2xl: 1.6rem;
+  --tracking-widest: 0.1em;
+}
+
+/* Kämpfer — Stahl mit Messing. Gerade Linien, kaum Rundung. */
+[data-accent="stahl"] {
+  --ac-h: 245; --ac-s: 0.2;
+  --ac2-h: 85; --ac2-s: 0.3; --ac2-l: 70%;
+  --radius-lg: 0.25rem; --radius-xl: 0.35rem; --radius-2xl: 0.45rem;
+  --tracking-widest: 0.1em;
+}
+
+/* Mönch — Safran auf Tusche. Die luftigste Laufweite von allen: leer ist hier
+   eine Aussage, kein Platzmangel. */
+[data-accent="ruhe"] {
+  --ac-h: 65;  --ac-s: 0.95;
+  --ac2-h: 250; --ac2-s: 0.12; --ac2-l: 80%;
+  --radius-lg: 0.6rem; --radius-xl: 0.9rem; --radius-2xl: 1.2rem;
+  --tracking-widest: 0.22em;
+}
+
+/* Paladin — Königsblau mit Blattgold. Das Gold ist der Punkt: eine Klasse wird
+   nicht durch einen Farbton edel, sondern durch das, was daneben glänzt. */
+[data-accent="edel"] {
+  --ac-h: 272; --ac-s: 0.6;
+  --ac2-h: 92; --ac2-s: 0.62; --ac2-l: 78%;
+  --radius-lg: 0.35rem; --radius-xl: 0.5rem; --radius-2xl: 0.65rem;
+  --tracking-widest: 0.18em;
+}
+
+/* Waldläufer — Oliv mit Leder. Gedämpft, trocken, getragen. */
+[data-accent="faehrte"] {
+  --ac-h: 120; --ac-s: 0.35;
+  --ac2-h: 62; --ac2-s: 0.32; --ac2-l: 66%;
+  --radius-lg: 0.6rem; --radius-xl: 0.8rem; --radius-2xl: 1rem;
+  --tracking-widest: 0.1em;
+}
+
+/* Schurke — Kohle mit Grünspan. Enge Laufweite, wenig Aufhebens. */
+[data-accent="schatten"] {
+  --ac-h: 160; --ac-s: 0.4;
+  --ac2-h: 165; --ac2-s: 0.28; --ac2-l: 64%;
+  --radius-lg: 0.3rem; --radius-xl: 0.45rem; --radius-2xl: 0.6rem;
+  --tracking-widest: 0.08em;
+}
+
+/* Hexenmeister — Magenta mit Glut. Angeboren, nicht gelernt: wärmer und
+   unruhiger als der Magier. */
+[data-accent="funke"] {
+  --ac-h: 330; --ac-s: 0.6;
+  --ac2-h: 40; --ac2-s: 0.55; --ac2-l: 72%;
+  --radius-lg: 0.7rem; --radius-xl: 1rem; --radius-2xl: 1.3rem;
+  --tracking-widest: 0.12em;
+}
+
+/* Magier — Indigo mit Kreide. Streng gerastert, alles beschriftet. */
+[data-accent="zeichen"] {
+  --ac-h: 285; --ac-s: 0.5;
+  --ac2-h: 258; --ac2-s: 0.1; --ac2-l: 84%;
+  --radius-lg: 0.2rem; --radius-xl: 0.3rem; --radius-2xl: 0.4rem;
+  --tracking-widest: 0.2em;
+}

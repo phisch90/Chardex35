@@ -594,6 +594,38 @@ Drei Entscheidungen daran sind es wert, aufgeschrieben zu werden:
   entschieden, Hike wird damit Kleriker und nicht Kämpfer. Gespeichert wird nur, was er von
   Hand überschreibt (`character.accent`), und auch das als Schlüssel, nicht als Farbwert.
 
+### Runde 2: die zweite Farbe und der Charakter je Klasse
+
+Sein Auftrag danach: „Ich hab 2 Varianten bitte Bau jetzt die nächsten für die Klassen."
+Gebaut ist damit, was aus den Entwürfen noch fehlte — und alles nach derselben Regel wie
+Runde 1: **Variablen, keine Komponenten.** Drei Stück je Klasse, alle in EINER Zeile:
+
+- **`--ac2-h/-s/-l` — die Zierfarbe.** Sie hat einen JOB und ist keine Dekoration: sie färbt,
+  was der Bogen über SICH sagt (die Abschnitts-Überschriften), während die Bedienfarbe färbt,
+  was man DRÜCKEN kann. Ohne diese Trennung wären es zwei Farben mit derselben Bedeutung.
+  Technisch eine eigene Tailwind-Farbe (`--color-trim-*` im `@theme`), damit `text-trim-400`
+  überhaupt existiert — ein Farbwert ohne Hilfsklasse wäre unbenutzbar.
+- **`--radius-*` — die Ecken.** Tailwind liest den Radius aus einer Variablen, `rounded-lg`
+  wird also je Klasse weich oder kantig, ohne dass eine Karte angefasst wird. Der Druide ist
+  gewachsen (0,9rem), der Barbar geschlagen (0,2rem).
+- **`--tracking-widest` — die Laufweite der Überschriften.** Derselbe Trick. Der Mönch bekommt
+  Luft (0,22em), der Barbar drängt (0,06em).
+
+**Der Standardwert der Zierfarbe IST `slate-400`** — abgelesen (`oklch(70.4% 0.04 256.788)`),
+nicht geschätzt. Ohne Klassenthema sieht deshalb keine Überschrift anders aus als vorher; das
+Codex-Aussehen hat er schon abgenommen, und eine Runde, die das nachträglich verändert, hätte
+er nicht bestellt.
+
+**Und die Falle, die diese Runde wirklich gekostet hat: ein Faktor 10 zu viel.** Die Buntheit
+stand als `calc(0.11 * var(--ac2-s) * 10)` da — bei `--ac2-s: 0.62` also 0,68, weit außerhalb
+des darstellbaren Bereichs. Der Browser klemmt ab, und aus dem Blattgold des Paladins wurde
+ein knallrotes `rgb(255,77,0)`. Das Schlimme daran: **der Test hat die Zahl gemessen und
+trotzdem grün gemeldet**, weil „Rot und Grün über Blau" auf Orange genauso zutrifft wie auf
+Gold. Eine Prüfung, die eine Farbe nur nach der REIHENFOLGE der Kanäle beurteilt, hält jede
+ausgerissene Farbe für richtig. Jetzt prüft sie zusätzlich die BUNTHEIT (Abstand zwischen
+größtem und kleinstem Kanal): eine Zierfarbe liegt zwischen 18 und 110, alles darüber ist
+kein Schmuck mehr, sondern ein Warnschild. Gold `{199,183,133}`, Rinde `{168,149,127}`.
+
 Zwei Fallen aus dieser Runde:
 
 - **Farben messen heißt Pixel messen.** Die erste Fassung des Tests las
@@ -710,11 +742,10 @@ in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`d
   gebaut — je eine Runde, damit er jedes einzeln am Tisch ansehen kann. Sie sind deutlich
   mehr Arbeit als der Nachtbogen: dort wechselt nur der Farbton, hier kippt die Helligkeit,
   und `color-scheme: dark` sowie jede halbdurchsichtige Fläche müssen mit.
-- **Der Nachtbogen ist noch nicht fertig „Papier".** Material und Klassenfarbe stehen, aber
-  die Reiter tragen weiter bunte Emoji (📊 ⚔️ ✨) — im Entwurf waren es gedruckte Buchstaben.
-  Das ist die nächste Runde am Nachtbogen; sie fasst die Reiterleiste an, und die will er
-  einzeln sehen. Ebenso offen: die zweiten Farben je Klasse (Paladin-Gold, Barden-Koralle),
-  die heute noch nicht in der einen Rampe stecken.
+- **Der Nachtbogen ist noch nicht fertig „Papier".** Material, Klassenfarbe, Zierfarbe, Ecken
+  und Laufweite stehen — aber die Reiter tragen weiter bunte Emoji (📊 ⚔️ ✨), im Entwurf waren
+  es gedruckte Buchstaben. Das ist die nächste Runde am Nachtbogen; sie fasst die Reiterleiste
+  an, und die will er einzeln sehen.
 - **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" fehlt noch.
   Eigene Gegenstände mit echten Rüstungs- und Waffenwerten sind gebaut (Editor im
   Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in
