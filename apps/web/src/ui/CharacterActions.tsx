@@ -14,6 +14,7 @@ import {
 } from "@codex35/core";
 import { S } from "../strings.js";
 import { CharacterRepo } from "../db/repo.js";
+import { forgetSheet } from "../lib/lastSheet.js";
 import { buildCharacterExport, shareOrDownload } from "../lib/transfer.js";
 import { useAllEntities, useHouseRules } from "../lib/hooks.js";
 import { BottomSheet, GhostButton } from "./bits.js";
@@ -120,6 +121,9 @@ export function CharacterActionsSheet(props: {
 
   const doDelete = async () => {
     await CharacterRepo.remove(character);
+    // Sonst zeigte der Knopf „Zurück zu …" in den Einstellungen auf einen Bogen, den es
+    // nicht mehr gibt.
+    forgetSheet(character.id);
     close();
     props.onDeleted?.();
   };

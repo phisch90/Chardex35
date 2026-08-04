@@ -145,6 +145,17 @@ button,
     Wertes, damit es nicht zwei Wahrheiten für dieselbe Farbe gibt.
   */
   --ac2-lshift: 0%;
+
+  /*
+    Wie der Anstrich aussieht — die Helligkeit und die Kraft gehören dem PAPIER, der
+    Farbton der Klasse. Auf dunklem Papier ein heller Hauch, damit man ihn sieht.
+  */
+  --wash-l: 72%;
+  --wash-c: 0.19;
+  --wash-a: 0.22;
+  /* Wie kräftig eine KARTE den Klassenton trägt. Deutlich schwächer als der Anstrich:
+     hier steht Text darauf. */
+  --karte-a: 0.13;
 }
 
 :root {
@@ -232,9 +243,85 @@ button,
   unter der elf Themen überhaupt tragbar sind.
 */
 
+/* --------------------------------------------------------------------------
+   C2) DER ANSTRICH — die Klassenfarbe auf dem Papier, nicht nur an den Knöpfen.
+   --------------------------------------------------------------------------
+   Sein Einwand: „Können wir nicht einfach für alle Klassen Kontrastfarben festlegen?
+   Die dann den Stil der Bögen bestimmen? Ich sehe da grade kaum Unterschiede."
+
+   Zwei Ursachen, beide nachgemessen und beide meine:
+
+   1. Drei Paare lagen praktisch aufeinander — Kleriker 240 gegen Kämpfer 245 (fünf
+      Grad!), Waldläufer 120 gegen Druide 130, Paladin 272 gegen Magier 285. Dazu
+      Sättigungen von 0,20 bis 0,40, die grau lesen. Jetzt liegen alle eelf 32 Grad
+      auseinander, und keine ist unter 0,55.
+   2. Die Farbe hatte kaum FLÄCHE. Sie saß am aktiven Reiter, an den Hauptknöpfen und
+      an ein paar Chips — der Eindruck eines Bogens kommt aber vom Untergrund, und der
+      war in jeder Klasse derselbe.
+
+   Der Anstrich behebt das Zweite: ein weicher Zug der Klassenfarbe über das Papier,
+   oben stärker als unten. Er liegt am `#root` und NICHT am `body` — das Papier hat dort
+   schon seine Struktur, und eine Klassenregel am `body` hätte sie ersetzt statt ergänzt.
+   Zwei Ebenen, die sich nicht kennen: Papier unten, Klasse darüber.
+
+   Und dieselbe Dreiteilung wie bei der Rampe: die KLASSE gibt den Farbton (`--ac-h`),
+   das MATERIAL sagt, wie hell und wie kräftig (`--wash-…`). Auf dunklem Papier ist der
+   Anstrich hell, auf hellem dunkel — sonst sieht man ihn auf einem der beiden nicht.
+   -------------------------------------------------------------------------- */
+#root {
+  background-image: var(--anstrich, none);
+  /* Am Bildschirm festgemacht, weil nicht das Fenster scrollt, sondern das `main`
+     darin — ein mitscrollender Anstrich würde an der Naht abreißen. */
+  background-attachment: fixed;
+}
+
+/*
+  `--wash-shift` ist die ZWEITE Achse, und sie ist ein Befund und keine Verzierung.
+
+  Elf Farbtöne auf dem Kreis heißt 32 Grad Abstand — und das reicht bei BLAU nicht. Drei
+  Klassen sind blau (Kämpfer Stahl, Kleriker Silberblau, Paladin Königsblau), und im
+  gebauten Bogen gemessen lagen Kleriker und Kämpfer im Anstrich nur 12 Einheiten
+  auseinander, während zwei Grüne mit demselben Abstand deutlich verschieden aussahen. Das
+  Auge unterscheidet Blau schlechter als Grün.
+
+  Der erste Versuch war, den Kämpfer zu ENTSÄTTIGEN — das machte es schlimmer (der
+  Abstand fiel von 48 auf 28), weil weniger Buntheit ihn Richtung Grau und damit NÄHER an
+  das helle Blau des Klerikers schiebt. Die Lösung ist eine zweite Achse: benachbarte
+  Klassen unterscheiden sich zusätzlich in der Helligkeit. Bei den drei Blauen um je 18%.
+
+  Und der Anstrich ist ZWEIFARBIG: oben die Bedienfarbe, unten die ZIERfarbe der Klasse.
+  Das war der zweite Schritt, nachdem die Helligkeitsstufe allein noch nicht reichte
+  (Barde gegen Kämpfer kam auf 20 von 25 verlangten) — und es kostet nichts, weil die
+  zweite Farbe je Klasse längst dasteht und ausdrücklich QUER zur ersten gewählt ist:
+  Barden-Koralle gegen Kämpfer-Messing sind 53 Grad, wo die Bedienfarben nur 32 hergeben.
+  Nebenbei ist das Papier damit von oben nach unten leicht zweifarbig, wie ein Bogen, der
+  in zwei Tinten beschrieben wurde.
+*/
+[data-accent] {
+  --anstrich:
+    radial-gradient(
+      115% 55% at 50% 0%,
+      oklch(
+        calc(var(--wash-l) + var(--wash-shift, 0%))
+        calc(var(--wash-c) * var(--ac-s))
+        var(--ac-h) / var(--wash-a)
+      ),
+      transparent 72%
+    ),
+    radial-gradient(
+      85% 45% at 105% 100%,
+      oklch(
+        calc(var(--wash-l) + var(--wash-shift, 0%))
+        calc(var(--wash-c) * var(--ac2-s) * 1.2)
+        var(--ac2-h) / calc(var(--wash-a) * 0.8)
+      ),
+      transparent 70%
+    );
+}
+
 /* Barbar — Rost und Ruß. Kantig und gedrängt: nichts ist hier geschliffen. */
 [data-accent="wild"] {
-  --ac-h: 40;  --ac-s: 0.8;
+  --ac-h: 30;  --ac-s: 0.85;  --wash-shift: 0%;
   --ac2-h: 40; --ac2-s: 0.55; --ac2-l: 58%;
   --radius-lg: 0.2rem; --radius-xl: 0.25rem; --radius-2xl: 0.3rem;
   --tracking-widest: 0.06em;
@@ -243,7 +330,7 @@ button,
 /* Barde — Türkis mit Koralle. Die zweite Farbe steht bewusst QUER zur ersten:
    ein Harlekin trägt zwei Farben, nicht zwei Töne einer. */
 [data-accent="verspielt"] {
-  --ac-h: 185; --ac-s: 0.55;
+  --ac-h: 190; --ac-s: 0.7;  --wash-shift: 7%;
   --ac2-h: 32; --ac2-s: 0.6; --ac2-l: 74%;
   --radius-lg: 0.75rem; --radius-xl: 1rem; --radius-2xl: 1.4rem;
   --tracking-widest: 0.12em;
@@ -251,7 +338,7 @@ button,
 
 /* Kleriker — Silberblau mit Kerzengold. Schlicht, aufgeräumt, kein Schmuck. */
 [data-accent="fromm"] {
-  --ac-h: 240; --ac-s: 0.35;
+  --ac-h: 254; --ac-s: 0.65;  --wash-shift: 8%;
   --ac2-h: 88; --ac2-s: 0.42; --ac2-l: 76%;
   --radius-lg: 0.4rem; --radius-xl: 0.6rem; --radius-2xl: 0.8rem;
   --tracking-widest: 0.14em;
@@ -259,7 +346,7 @@ button,
 
 /* Druide — Moos mit Rinde. Weiche Ecken: gewachsen, nicht geschnitten. */
 [data-accent="natur"] {
-  --ac-h: 130; --ac-s: 0.65;
+  --ac-h: 126; --ac-s: 0.75;  --wash-shift: 6%;
   --ac2-h: 70; --ac2-s: 0.35; --ac2-l: 68%;
   --radius-lg: 0.9rem; --radius-xl: 1.2rem; --radius-2xl: 1.6rem;
   --tracking-widest: 0.1em;
@@ -267,7 +354,7 @@ button,
 
 /* Kämpfer — Stahl mit Messing. Gerade Linien, kaum Rundung. */
 [data-accent="stahl"] {
-  --ac-h: 245; --ac-s: 0.2;
+  --ac-h: 222; --ac-s: 0.58;  --wash-shift: -10%;
   --ac2-h: 85; --ac2-s: 0.3; --ac2-l: 70%;
   --radius-lg: 0.25rem; --radius-xl: 0.35rem; --radius-2xl: 0.45rem;
   --tracking-widest: 0.1em;
@@ -276,7 +363,7 @@ button,
 /* Mönch — Safran auf Tusche. Die luftigste Laufweite von allen: leer ist hier
    eine Aussage, kein Platzmangel. */
 [data-accent="ruhe"] {
-  --ac-h: 65;  --ac-s: 0.95;
+  --ac-h: 62;  --ac-s: 0.95;  --wash-shift: 6%;
   --ac2-h: 250; --ac2-s: 0.12; --ac2-l: 80%;
   --radius-lg: 0.6rem; --radius-xl: 0.9rem; --radius-2xl: 1.2rem;
   --tracking-widest: 0.22em;
@@ -285,40 +372,51 @@ button,
 /* Paladin — Königsblau mit Blattgold. Das Gold ist der Punkt: eine Klasse wird
    nicht durch einen Farbton edel, sondern durch das, was daneben glänzt. */
 [data-accent="edel"] {
-  --ac-h: 272; --ac-s: 0.6;
+  --ac-h: 286; --ac-s: 0.8;  --wash-shift: -10%;
   --ac2-h: 92; --ac2-s: 0.62; --ac2-l: 78%;
   --radius-lg: 0.35rem; --radius-xl: 0.5rem; --radius-2xl: 0.65rem;
   --tracking-widest: 0.18em;
 }
 
-/* Waldläufer — Oliv mit Leder. Gedämpft, trocken, getragen. */
+/* Waldläufer — Oliv mit Leder. Gedämpft, trocken, getragen.
+
+   Die Zierfarbe stand auf 62 und war damit fast die Rinde des Druiden (70) — und weil
+   beide Klassen grün sind, war das im gebauten Bogen das engste Kartenpaar. Echtes Leder
+   ist wärmer als Oliv; 48 trennt die zwei und heißt außerdem eher, was es sagt. */
 [data-accent="faehrte"] {
-  --ac-h: 120; --ac-s: 0.35;
-  --ac2-h: 62; --ac2-s: 0.32; --ac2-l: 66%;
+  --ac-h: 94; --ac-s: 0.6;  --wash-shift: -6%;
+  --ac2-h: 48; --ac2-s: 0.32; --ac2-l: 66%;
   --radius-lg: 0.6rem; --radius-xl: 0.8rem; --radius-2xl: 1rem;
   --tracking-widest: 0.1em;
 }
 
 /* Schurke — Kohle mit Grünspan. Enge Laufweite, wenig Aufhebens. */
 [data-accent="schatten"] {
-  --ac-h: 160; --ac-s: 0.4;
+  --ac-h: 158; --ac-s: 0.62;  --wash-shift: -6%;
   --ac2-h: 165; --ac2-s: 0.28; --ac2-l: 64%;
   --radius-lg: 0.3rem; --radius-xl: 0.45rem; --radius-2xl: 0.6rem;
   --tracking-widest: 0.08em;
 }
 
-/* Hexenmeister — Magenta mit Glut. Angeboren, nicht gelernt: wärmer und
-   unruhiger als der Magier. */
+/* Hexenmeister — Magenta mit weißglühender Glut. Angeboren, nicht gelernt: wärmer und
+   unruhiger als der Magier.
+
+   Die Zierfarbe stand auf 40 und damit genau auf dem Ruß des Barbaren — bei nur 40 Grad
+   Unterschied in der Hauptfarbe UND derselben Helligkeitsstufe war das das einzige Paar,
+   das im gebauten Bogen wirklich gleich aussah (22 von 25 verlangten). Durchgerechnet
+   sind alle anderen Zier-Ballungen harmlos: Kämpfer und Paladin teilen fast dasselbe
+   Messing, ihre Hauptfarben liegen aber 64 Grad und 18% Helligkeit auseinander. Eine
+   Zier-Kollision zählt nur zwischen Klassen, deren HAUPTfarben nah sind. */
 [data-accent="funke"] {
-  --ac-h: 330; --ac-s: 0.6;
-  --ac2-h: 40; --ac2-s: 0.55; --ac2-l: 72%;
+  --ac-h: 350; --ac-s: 0.8;  --wash-shift: 9%;
+  --ac2-h: 58; --ac2-s: 0.55; --ac2-l: 72%;
   --radius-lg: 0.7rem; --radius-xl: 1rem; --radius-2xl: 1.3rem;
   --tracking-widest: 0.12em;
 }
 
 /* Magier — Indigo mit Kreide. Streng gerastert, alles beschriftet. */
 [data-accent="zeichen"] {
-  --ac-h: 285; --ac-s: 0.5;
+  --ac-h: 318; --ac-s: 0.68;  --wash-shift: 8%;
   --ac2-h: 258; --ac2-s: 0.1; --ac2-l: 84%;
   --radius-lg: 0.2rem; --radius-xl: 0.3rem; --radius-2xl: 0.4rem;
   --tracking-widest: 0.2em;
@@ -406,6 +504,13 @@ button,
   /* Die Zierfarbe der Klasse wird zu Tinte. Eine Verschiebung, kein zweiter Wert. */
   --ac2-lshift: -32%;
 
+  /* Der Anstrich kippt mit: ein heller Hauch auf Creme wäre unsichtbar. */
+  --wash-l: 55%;
+  --wash-c: 0.16;
+  --wash-a: 0.2;
+  /* Auf Papier fällt eine getönte Fläche stärker auf — also zurückhaltender. */
+  --karte-a: 0.07;
+
   /* Warnung — Rosé. Farbton 13, wie Tailwinds `rose`. */
   --color-rose-100: oklch(var(--fold-l100) var(--fold-c100) 13);
   --color-rose-200: oklch(var(--fold-l200) var(--fold-c200) 13);
@@ -481,6 +586,40 @@ button,
 [data-material="kopierterBogen"] .karte,
 [data-material="kladde"] .karte {
   box-shadow: none;
+}
+
+/*
+  Und der Schritt, ohne den der Anstrich fast nichts bringt: die KARTEN tragen den Ton
+  mit.
+
+  Im gebauten Bogen angesehen und dann erst verstanden: der Anstrich liegt am `#root`,
+  die Karten liegen darüber und sind zu 70% deckend — sichtbar blieb die Klassenfarbe
+  also nur in den Lücken zwischen den Karten, und der Bogen las sich weiter grau. Genau
+  das war sein Einwand, eine Ebene tiefer.
+
+  Warum das die Kampagnenfarbe NICHT kaputtmacht, und das ist der ganze Trick: hier steht
+  ein `background-image`, keine `background-color`. Ein Bild liegt ÜBER der Farbe, statt
+  sie zu ersetzen — die Kampagnenfarbe der Startseite (`Card` gibt sie über `tone` als
+  `bg-emerald-950/40` mit) bleibt darunter sichtbar. Und auf der Startseite steht ohnehin
+  kein `data-accent`: draußen färbt die Kampagne, drinnen die Klasse.
+
+  Der Farbton kommt von der Klasse, die Stärke vom Papier (`--karte-a`) — dieselbe
+  Dreiteilung wie überall in dieser Datei.
+*/
+[data-accent] .karte {
+  background-image: linear-gradient(
+    to bottom,
+    oklch(
+      calc(var(--wash-l) + var(--wash-shift, 0%))
+      calc(var(--wash-c) * var(--ac-s))
+      var(--ac-h) / var(--karte-a)
+    ),
+    oklch(
+      calc(var(--wash-l) + var(--wash-shift, 0%))
+      calc(var(--wash-c) * var(--ac2-s) * 1.2)
+      var(--ac2-h) / calc(var(--karte-a) * 0.55)
+    )
+  );
 }
 
 /* --------------------------------------------------------------------------

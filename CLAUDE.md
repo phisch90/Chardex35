@@ -710,6 +710,89 @@ lesbar als das, was er heute benutzt. Nachgemessen, nicht behauptet.
   `string | undefined` (`noUncheckedIndexedAccess`) — genau der Grund, warum beide immer
   laufen.
 
+### Runde 4: die Klassenfarbe bestimmt den Bogen — und der Weg zurück
+
+Zwei Aufträge. Der erste wörtlich: **„Ich möchte aus den Einstellungen direkt zurück in den
+Charakter gehen können."** Der zweite: **„Können wir nicht einfach für alle Klassen
+Kontrastfarben festlegen? Die dann den Stil der Bögen bestimmen? Ich sehe da grade kaum
+Unterschiede."**
+
+#### Der Weg zurück
+
+`lib/lastSheet.ts` merkt in `sessionStorage`, welcher Bogen offen war; in den Einstellungen
+steht dann „← Zurück zu Hike". Bewusst **nicht** der `BackButton`: der geht einen Schritt im
+VERLAUF zurück, und wer zwei Papiere ausprobiert und dazwischen etwas antippt, landet damit
+irgendwo. Er will zurück in DEN Charakter — deshalb steht der Name im Knopf.
+
+Ohne gemerkten Bogen (oder wenn es ihn nicht mehr gibt) erscheint **nichts**: ein Knopf, der
+auf einen gelöschten Charakter zeigt, ist schlimmer als keiner. Deshalb löscht `doDelete`
+den Eintrag mit, UND die Anzeige prüft zusätzlich, ob der Bogen noch da ist — beides, weil
+ein Löschen auf dem anderen Gerät hier gar nicht vorbeikommt.
+
+#### „Kaum Unterschiede" — nachgemessen waren es zwei getrennte Ursachen
+
+**Erste Ursache: drei Paare lagen praktisch aufeinander.** Kleriker 240° gegen Kämpfer 245°
+(fünf Grad!), Waldläufer 120° gegen Druide 130°, Paladin 272° gegen Magier 285°. Dazu
+Sättigungen von 0,20 bis 0,40, die grau lesen. Beides waren MEINE Werte — „der Kämpfer darf
+fast grau sein (Stahl)" stand als Absicht in dieser Datei und war schlicht falsch, sobald
+elf Klassen unterscheidbar sein sollen. Jetzt liegen alle elf **32 Grad** auseinander, und
+keine ist unter 0,55.
+
+**Zweite Ursache, und die größere: die Farbe hatte kaum FLÄCHE.** Sie saß am aktiven Reiter,
+an den Hauptknöpfen und an ein paar Chips. Der Eindruck eines Bogens kommt aber vom
+Untergrund, und der war in jeder Klasse derselbe. Dagegen zwei neue Schichten:
+
+- **Der ANSTRICH** (`--anstrich` am `#root`): ein weicher Zug der Klassenfarbe über das
+  Papier. Am `#root` und nicht am `body`, weil das Papier dort schon seine Struktur hat und
+  eine Klassenregel sie ERSETZT statt ergänzt hätte. Zwei Ebenen, die sich nicht kennen.
+- **Die KARTEN** (`[data-accent] .karte`): sie tragen den Ton mit. Ohne das bringt der
+  Anstrich fast nichts — die Karten liegen darüber und sind zu 70% deckend, sichtbar blieb
+  die Klassenfarbe also nur in den LÜCKEN. Gefunden im gebauten Bogen, nicht gerechnet.
+
+**Und der Grund, warum das die Kampagnenfarbe nicht kaputtmacht — das ist der ganze Trick:**
+an der Karte steht ein `background-image`, keine `background-color`. Ein Bild liegt ÜBER der
+Farbe statt sie zu ersetzen, also bleibt die Kampagnenfarbe darunter sichtbar. Und auf der
+Startseite steht ohnehin kein `data-accent`.
+
+#### Was die Messung gelehrt hat, und es war jedes Mal überraschend
+
+- **Entsättigen macht zwei Farben ÄHNLICHER, nicht verschiedener.** Der Kämpfer war zu nah
+  am Kleriker; ich habe seine Sättigung gesenkt, und der Abstand fiel von 48 auf 28 — weniger
+  Buntheit schiebt ihn Richtung Grau und damit näher an das helle Blau des Klerikers.
+- **32 Grad reichen bei BLAU nicht.** Zwei Grüne mit demselben Abstand sahen deutlich
+  verschieden aus, Kleriker und Kämpfer nicht. Also eine ZWEITE Achse: `--wash-shift`, eine
+  Helligkeitsstufe je Klasse, bei den drei Blauen um je 18%.
+- **Der Anstrich ist ZWEIFARBIG** — oben die Bedienfarbe, unten die Zierfarbe. Das war der
+  dritte Schritt, weil die Helligkeitsstufe allein noch nicht reichte, und es kostet nichts:
+  die zweite Farbe steht je Klasse längst da und ist ausdrücklich QUER zur ersten gewählt.
+  Barden-Koralle gegen Kämpfer-Messing sind 53 Grad, wo die Bedienfarben nur 32 hergeben.
+- **Eine Zier-Kollision zählt nur zwischen Klassen, deren HAUPTfarben nah sind.** Fünf
+  Klassen teilen ungefähr dasselbe Gold (62–92) — harmlos, solange ihre Hauptfarben weit
+  auseinanderliegen. Durchgerechnet blieb genau EIN echtes Problempaar: Barbar und
+  Hexenmeister hatten dieselbe Zierfarbe (40) UND dieselbe Helligkeitsstufe (0) bei nur 40
+  Grad Hauptfarben-Abstand. Und ein zweites bei den Karten: Waldläufer-„Leder" stand auf 62
+  und damit fast auf der Rinde des Druiden, wo beide Klassen grün sind.
+
+#### Zwei Testfallen, und die zweite ist die schlimmste Sorte
+
+- **`^Wild$` trifft den Knopf nicht.** Er trägt den Namen UND den Hinweis darunter
+  („Wild\nRost und Ruß — Barbar"). Zum dritten Mal derselbe Fehler, und er sieht jedes Mal
+  aus wie ein fehlender Knopf in der App.
+- **Ein Test, der nichts messen konnte und Erfolg meldet.** Die erste Fassung verglich alle
+  Paare gegen einen Anfangswert von 999 — und war GRÜN, obwohl kein einziges Thema gefunden
+  wurde. Das ist schlimmer als kein Test: er behauptet genau das, was zu beweisen war. Jetzt
+  steht die Frage „wurden alle elf gemessen?" VOR dem Vergleich, und bei weniger als zwei
+  bricht der Lauf ab.
+- **Und eine Schwelle, die ich selbst falsch gesetzt hatte:** von JEDER Schicht 25 zu
+  verlangen ist unfair gegen die Karte, die absichtlich die leiseste ist (Text steht darauf).
+  Von einer zurückhaltenden Schicht dasselbe zu fordern wie vom Ganzen heißt, sie so lange
+  hochzudrehen, bis sie nicht mehr zurückhaltend ist. Jetzt entscheidet die SUMME über alle
+  drei Flächen (≥70), dazu ein Mindestmaß je Fläche, damit keine still auf null fällt.
+
+Ergebnis, gemessen im gebauten Bogen: das engste Paar liegt insgesamt bei **123**, die
+Bedienfarben bei **51**, der Anstrich bei **40**, die Karten bei **19**. Vorher war der
+Anstrich zwischen Kleriker und Kämpfer **7**.
+
 ### Runde 2: die zweite Farbe und der Charakter je Klasse
 
 Sein Auftrag danach: „Ich hab 2 Varianten bitte Bau jetzt die nächsten für die Klassen."
@@ -921,9 +1004,11 @@ in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`d
   anfassen: es würde jeden Bogen ändern. Der halbe Stärkeschaden in der zweiten Hand und
   die Rundung im ×1,5-Pfad standen bis vor kurzem hier — beides ist beantwortet und gebaut
   (Martins Regeln 4 und 5).
-- **Die zweiten Farben je Klasse in der einen Rampe.** Paladin-Gold und Barden-Koralle
-  stehen als `--ac2-*` und färben die Abschnitts-Überschriften; in der BEDIENfarbe (die eine
-  Rampe) stecken sie noch nicht. Das ist der Rest, der am Aussehen offen ist.
+- **Am Aussehen ist nichts Großes mehr offen.** Vier Papiere stehen, elf Klassenfarben sind
+  nachgemessen unterscheidbar, und die zweite Farbe je Klasse arbeitet jetzt an drei Stellen
+  (Überschriften, Anstrich, Karten). Wer hier weitermachen will: die Zierfarben ballen sich
+  im Gold-Band (fünf Klassen zwischen 62 und 92) — harmlos, weil ihre Hauptfarben weit
+  auseinanderliegen, aber es wäre die nächste Feinarbeit.
 - **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" fehlt noch.
   Eigene Gegenstände mit echten Rüstungs- und Waffenwerten sind gebaut (Editor im
   Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in
