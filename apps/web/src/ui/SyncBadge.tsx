@@ -5,6 +5,13 @@ import { useSyncStatus } from "../sync/SyncGate.js";
  * Kleiner Hinweis am Rand, nur wenn es etwas zu sagen gibt: „gleicht ab" und
  * Fehler. Im Normalfall (fertig, alles gleich) bleibt der Bildschirm ruhig —
  * ein Sync, der ständig auf sich aufmerksam macht, ist ein schlechter Sync.
+ *
+ * Seit der Abgleich nur beim Start läuft (`sync/SyncGate.tsx`, `MID_SESSION_SYNC`),
+ * erscheint die Marke praktisch nur dort — das „gleicht ab …" mitten im Kampf ist weg.
+ * Dafür ändert sich die Bedeutung des roten Falls: es versucht es KEINER mehr von allein.
+ * Deshalb steht jetzt dabei, was zu tun ist, statt nur dass etwas schiefging — eine
+ * Meldung, die einen Zustand nennt und den Weg heraus verschweigt, ist in diesem Projekt
+ * schon einmal teuer geworden.
  */
 export function SyncBadge() {
   const status = useSyncStatus();
@@ -14,14 +21,25 @@ export function SyncBadge() {
   return (
     <Link
       to="/einstellungen"
-      className={`fixed right-3 z-40 bottom-[calc(4rem+env(safe-area-inset-bottom))] flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] shadow-lg backdrop-blur md:bottom-3 ${
+      /*
+        3,5rem Hauptnavigation + 3,5rem Reiter-Leiste des Bogens — derselbe Wert wie bei
+        `UndoBar.tsx`, und aus demselben Grund: bei 4rem liegt die Marke GENAU auf den
+        Reitern, und weil sie ein Link in die Einstellungen ist, öffnet ein Tap auf
+        „Talente" die Einstellungen. Stand als offener Befund im Prüfbericht; aufgefallen
+        ist es jetzt, weil der Lauf im gebauten Bogen an der Marke hängenblieb — sie fing
+        den Klick ab. Und seit der Abgleich nur beim Start läuft, wird ein Fehler nicht mehr
+        von allein überschrieben: die Marke steht dann die ganze Sitzung da.
+        `md:bottom-3` bleibt, weil die Reiterleiste ab md gar nicht unten sitzt (fünfte
+        Falle in CLAUDE.md).
+      */
+      className={`fixed right-3 z-40 bottom-[calc(7rem+env(safe-area-inset-bottom))] flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] shadow-lg backdrop-blur md:bottom-3 ${
         syncing
           ? "border-slate-600 bg-slate-900/90 text-slate-300"
           : "border-red-700 bg-red-950/90 text-red-200"
       }`}
     >
       <span className={syncing ? "animate-spin" : ""}>{syncing ? "⟳" : "⚠"}</span>
-      {syncing ? "gleicht ab …" : "Abgleich fehlgeschlagen"}
+      {syncing ? "gleicht ab …" : "Abgleich fehlgeschlagen — tippen"}
     </Link>
   );
 }

@@ -391,20 +391,35 @@ function CasterBlock({
               <span className="shrink-0 text-[11px] text-slate-500">
                 {S.spells.dc} {block.dcBase + level}
               </span>
+              {/*
+                − verbraucht, + gibt zurück. Sein Wort: „Bei den Zaubern würde ich gerne +
+                und - in der Funktion vertauschen. Das ist aus meiner Sicht logischer."
+
+                Er hat recht, und der Grund steht direkt daneben: die Zahl im Kopf zeigt die
+                FREIEN Plätze („Slots 3/4"). Ein „+" an einer 3, nach dem eine 2 dasteht,
+                widerspricht sich selbst. Gespeichert wird zwar die Gegenzahl (die
+                VERBRAUCHTEN Plätze, `usedSlots`) — aber der Knopf gehört zur Anzeige, nicht
+                zum Speicher.
+
+                Und die Sperren wandern mit: − kann man nur drücken, wenn noch ein Platz frei
+                ist, + nur, wenn überhaupt etwas verbraucht wurde. Ein Knopf, der nichts tut,
+                verspricht etwas, das nicht kommt.
+              */}
               <GhostButton
+                disabled={!canCastAt(level)}
+                onClick={() => castAt(level)}
+                title={S.spells.cast}
+              >
+                −
+              </GhostButton>
+              <GhostButton
+                disabled={used === 0}
                 onClick={() =>
                   mutate((s) => {
                     s.usedSlots[level] = Math.max(0, (s.usedSlots[level] ?? 0) - 1);
                   })
                 }
                 title={S.spells.giveBackSlot}
-              >
-                −
-              </GhostButton>
-              <GhostButton
-                disabled={!canCastAt(level)}
-                onClick={() => castAt(level)}
-                title={S.spells.cast}
               >
                 +
               </GhostButton>
@@ -646,8 +661,13 @@ function CasterBlock({
             <span className="text-amber-400">●</span> / <span className="text-slate-500">○</span> im
             Grad-Kopf — verbrauchter / freier Slot dieses Grads
           </li>
+          {/*
+            Die Reihenfolge in der Legende folgt der Reihenfolge der Knöpfe im Kopf, und
+            beide folgen der angezeigten Zahl: − macht sie kleiner, + größer. Stand hier
+            „＋ / −", während im Kopf „− +" steht, wäre die Legende die dritte Wahrheit.
+          */}
           <li>
-            <span className="text-slate-300">＋</span> / <span className="text-slate-300">−</span> im
+            <span className="text-slate-300">−</span> / <span className="text-slate-300">＋</span> im
             Grad-Kopf — Slot von Hand verbrauchen bzw. zurückgeben
           </li>
           {usesSpellbook && (

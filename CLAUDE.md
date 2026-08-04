@@ -261,6 +261,14 @@ sonst hätte ich zu viel entfernt und es nicht gemerkt.
 
 - **Geräte:** iPhone UND iPad, beide. Deshalb war der Abgleich-Fehler dringend — er
   ist behoben (Abzweigpunkt je Regal, siehe `sync/merge.ts`).
+- **Abgleich: nur beim Start.** Wörtlich: „Mitten drin ist Quatsch denn ich spiele ja nicht
+  auf 2 Geräten gleichzeitig. Deaktiviere die Funktion. Nicht löschen!" Also deaktiviert
+  statt entfernt (`MID_SESSION_SYNC`), Einzelheiten im eigenen Abschnitt weiter unten. Nicht
+  neu fragen — auch nicht „wäre einmal pro Stunde nicht praktisch".
+- **Zauberplätze: − verbraucht, + gibt zurück.** Wörtlich: „Bei den Zaubern würde ich gerne
+  + und - in der Funktion vertauschen. Das ist aus meiner Sicht logischer." Er hat recht: die
+  Zahl im Grad-Kopf zeigt die FREIEN Plätze, ein „+" durfte sie nie kleiner machen. Gespeichert
+  wird weiter die Gegenzahl (`usedSlots`) — der Knopf gehört zur Anzeige, nicht zum Speicher.
 - **Turn Undead: 7.** Seine Notiz hat recht (3 + CHA + 4 vom Talent), die 8 in Fight
   Club war ein alter Stand. Der Zähler rechnet, er speichert nicht.
 - **Domänen: fehlten wirklich.** Gebaut: Heal/War als Wahl am Charakter, ein
@@ -544,6 +552,53 @@ aufgeschrieben zu werden, weil sie alle dieselbe Frage beantworten: **wo gehört
   deshalb mit allem rechnen, was dort liegen kann (kein `spellState`, `prepared` keine
   Liste) — die erste Fehlerfamilie, diesmal von vorn bedacht. Der Test in
   `db/migrate.test.ts` prüft beide Richtungen: Grad 0 weg, Grad 1 und höher unangetastet.
+
+## Abgleich nur beim Start — und die Kosten, die mit weggefallen sind
+
+Sein Auftrag, wörtlich: „Abgleich bitte nur nach dem Start der App. Mitten drin ist Quatsch
+denn ich spiele ja nicht auf 2 Geräten gleichzeitig. Deaktiviere die Funktion. Nicht
+löschen!" Also **deaktiviert, nicht entfernt**: `MID_SESSION_SYNC` in `sync/SyncGate.tsx` ist
+die eine Zahl, an der die zwei Auslöser mittendrin hängen (Rückkehr in den Vordergrund und
+das gedrosselte Hochschreiben vier Sekunden nach jeder Änderung). Auf `true` ist das alte
+Verhalten zurück, ohne dass jemand etwas nachbaut.
+
+Drei Dinge daran sind eine Notiz wert:
+
+- **Der „online"-Horcher bleibt, aber nur als NACHHOLEN.** Am Spieltisch ist kein Netz der
+  Normalfall, der Start-Abgleich fällt dort also aus. Kommt das Netz später, wird er
+  nachgeholt — und danach schweigt der Horcher (`startDone`). Ohne diese Abfrage wäre er ein
+  Abgleich mittendrin, denn am Tisch fällt das Netz mehrmals aus und wieder ein.
+- **Der Fingerabdruck lief weiter und kaufte nichts mehr.** `useLocalFingerprint` liest bei
+  JEDEM Schreibvorgang alle Charaktere samt Porträt aus der Datenbank — sinnvoll, solange
+  danach abgeglichen wurde. Jetzt liest es niemand mehr, also läuft die Abfrage auch nicht
+  mehr. Der Hook selbst bleibt und wird unbedingt gerufen (ein Hook hinter einer Bedingung
+  ist kein Hook); übersprungen wird nur die Arbeit darin.
+- **Die Kehrseite steht dabei:** eine installierte Web-App auf dem iPhone wird aus dem
+  Hintergrund geholt und selten wirklich neu geladen — dieselbe Beobachtung wie beim „Es
+  kommt kein Update". Zwischen zwei echten Starts kann also viel Zeit liegen. Deshalb sagt
+  der Kleintext am Schalter jetzt „Beim Start abgleichen … dafür ist der Knopf oben da",
+  und die Sicherungs-Zusage in den Einstellungen nennt den Stand vom LETZTEN Abgleich statt
+  von diesem Moment. Eine Sicherung, die man für aktueller hält, als sie ist, ist die
+  gefährlichste.
+
+**Und ein alter Befund wurde dadurch scharf.** Die Abgleich-Marke lag bei `bottom-4rem`
+genau auf der Reiterleiste des Bogens; weil sie ein Link in die Einstellungen ist, öffnete
+ein Tap auf „Talente" die Einstellungen. Das stand als offener Punkt im Prüfbericht und war
+selten — bis jetzt: einen Fehler überschreibt kein späterer Abgleich mehr, die Marke steht
+also die ganze Sitzung da. Behoben mit demselben Wert wie `UndoBar.tsx` (7rem = 3,5rem
+Hauptnavigation + 3,5rem Reiterleiste). Gefunden hat es der Lauf im gebauten Bogen, und zwar
+auf die harte Art: er blieb an der Marke hängen, weil sie den Klick abfing.
+
+Dazu zwei Testfallen aus derselben Runde:
+
+- **Die Sperre gehört zur Richtung.** Nach dem Vertauschen von − und + prüft der Lauf beide
+  Enden: bei allen freien Plätzen ist + gesperrt (es gibt nichts zurückzugeben), bei keinem
+  freien Platz −. Ohne diese zwei Prüfungen hätte ein vertauschtes `disabled` niemandem
+  wehgetan, bis er am Tisch auf einen toten Knopf tippt.
+- **Die fünfte Falle, diesmal im Test.** Die Prüfung „Marke liegt über der Reiterleiste"
+  schlug ab `md` fehl — dort steht die Leiste OBEN, und der Vergleich lief gegen etwas am
+  anderen Bildschirmrand. Die App hatte recht. Wer eine Überdeckung prüft, muss prüfen, ob
+  das Verdeckte in dieser Breite überhaupt dort ist.
 
 ## Halbe Fertigkeitsränge — und warum sie zweimal weg mussten
 

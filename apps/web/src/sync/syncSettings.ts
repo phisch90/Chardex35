@@ -13,7 +13,14 @@ export interface SyncSettings {
   provider: "none" | "gist";
   token: string;
   gistId: string;
-  /** Von allein abgleichen (Start, Fokus, nach Änderungen). */
+  /**
+   * Von allein abgleichen — beim START, und nur dort.
+   *
+   * Hieß früher „Start, Fokus, nach Änderungen". Seine Entscheidung: „Abgleich bitte nur
+   * nach dem Start der App. Mitten drin ist Quatsch." Das Feld heißt weiter `auto`, weil es
+   * auf seinen Geräten schon so gespeichert liegt — ein umbenanntes Feld wäre eine
+   * Wanderung für nichts. Was es AUSLÖST, steht in `sync/SyncGate.tsx`.
+   */
   auto: boolean;
   /** ISO-Zeitstempel des letzten erfolgreichen Abgleichs. */
   lastSyncAt: string;

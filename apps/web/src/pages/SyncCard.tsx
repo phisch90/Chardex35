@@ -70,7 +70,7 @@ function Setup() {
       <p className="text-xs leading-relaxed text-slate-400">
         Damit liegen deine Charaktere in einem <strong>privaten Gist</strong> in deinem
         GitHub-Konto. Jedes Gerät, auf dem du dasselbe Token einträgst, zieht sich den Stand
-        automatisch — beim Öffnen der App und nach jeder Änderung.
+        beim Öffnen der App — nicht währenddessen, dafür jederzeit von Hand.
       </p>
 
       <ol className="ml-4 list-decimal space-y-1 text-xs text-slate-400">
@@ -198,12 +198,19 @@ function Connected(props: { gistId: string; auto: boolean; deviceName: string })
         </GhostButton>
       </div>
 
+      {/*
+        Der Kleintext sagt genau das, was `sync/SyncGate.tsx` tut — nicht mehr. Vorher
+        stand hier „bei Rückkehr in den Vordergrund und wenige Sekunden nach jeder
+        Änderung", und das war ab seiner Entscheidung („Mitten drin ist Quatsch") eine
+        Zusage, die nichts mehr einhält. Ein Text, der etwas verspricht, das die Aktion
+        nicht kann, ist in diesem Projekt schon einmal teuer geworden.
+      */}
       <label className="flex cursor-pointer items-center justify-between gap-3 border-t border-slate-800 pt-2">
         <span className="min-w-0">
-          <span className="text-sm">Von allein abgleichen</span>
+          <span className="text-sm">Beim Start abgleichen</span>
           <span className="block text-xs text-slate-500">
-            Beim Öffnen der App, bei Rückkehr in den Vordergrund und wenige Sekunden nach jeder
-            Änderung.
+            Einmal beim Öffnen der App — und nachgeholt, falls dabei kein Netz war. Während
+            du spielst, gleicht die App nicht ab; dafür ist der Knopf oben da.
           </span>
         </span>
         <input

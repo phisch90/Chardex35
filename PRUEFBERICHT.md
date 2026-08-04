@@ -697,6 +697,15 @@ Dass es ein Versehen ist, zeigt die Rückgängig-Meldung: dieselbe Bauart, aber 
 3,5rem Reiter-Leiste, sonst deckt die Meldung genau die Reiter ab, die man als
 Nächstes braucht". Die Abgleich-Meldung ist der Nachzügler, der nur die
 Hauptnavigation eingerechnet hat. **Zu tun:** denselben Wert verwenden (7rem).
+
+**BEHOBEN.** `SyncBadge.tsx` steht jetzt auf denselben 7rem wie die Rückgängig-Meldung.
+Aufgefallen ist es beim Umbau auf „Abgleich nur beim Start": der Lauf im gebauten Bogen
+blieb an der Marke hängen, weil sie den Klick auf den Reiter abfing — und dringend wurde
+es, weil ein Fehler seither von keinem späteren Abgleich mehr überschrieben wird, die
+Marke also die ganze Sitzung stehen bleibt. Der Satz über „kehrt vier Sekunden nach jeder
+Änderung wieder" gilt damit auch nicht mehr: während einer Sitzung gleicht die App gar
+nicht mehr ab (`MID_SESSION_SYNC`). Eine Prüfung hält die Lage jetzt fest — und zwar nur
+dort, wo die Reiterleiste wirklich unten sitzt, denn ab `md` steht sie oben.
 (`apps/web/src/ui/SyncBadge.tsx:17`, `apps/web/src/pages/sheet/index.tsx:312`,
 `apps/web/src/ui/UndoBar.tsx:60`)
 
