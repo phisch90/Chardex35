@@ -17,6 +17,7 @@ import {
   type Character,
 } from "@codex35/core";
 import { S } from "../strings.js";
+import { IconInline } from "../ui/icons.js";
 import { CharacterRepo } from "../db/repo.js";
 import {
   useAllEntities,
@@ -572,7 +573,7 @@ export function LevelUpPage() {
           <GhostButton>{S.actions.cancel}</GhostButton>
         </Link>
         <PrimaryButton disabled={!afterCharacter || !classId} onClick={apply}>
-          ⬆ {S.levelUp.apply}
+          <IconInline name="levelUp" /> {S.levelUp.apply}
         </PrimaryButton>
       </div>
     </div>

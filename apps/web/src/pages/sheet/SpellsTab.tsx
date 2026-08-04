@@ -8,6 +8,7 @@ import {
   type SpellcastingBlock,
 } from "@codex35/core";
 import { S } from "../../strings.js";
+import { Icon, IconInline } from "../../ui/icons.js";
 import { DomainPicker } from "../../ui/DomainPicker.js";
 import { useCompendium } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
@@ -596,7 +597,7 @@ function CasterBlock({
                   active={addLevel === level}
                   onClick={() => setAddLevel(addLevel === level ? null : level)}
                 >
-                  📖 {S.spells.addToSpellbook}
+                  <IconInline name="spellbook" size={14} /> {S.spells.addToSpellbook}
                 </Chip>
                 {addLevel === level && (
                   <ul className="mt-1 max-h-64 divide-y divide-slate-800 overflow-y-auto rounded-lg bg-slate-900/60 p-1">
@@ -672,7 +673,10 @@ function CasterBlock({
           </li>
           {usesSpellbook && (
             <li>
-              <span className="text-slate-300">📖</span> — Zauberbuch erweitern
+              <span className="inline-flex align-[-0.15em] text-slate-300">
+                <Icon name="spellbook" size={14} />
+              </span>{" "}
+              — Zauberbuch erweitern
             </li>
           )}
           <li>

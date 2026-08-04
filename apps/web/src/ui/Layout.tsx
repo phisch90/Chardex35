@@ -4,17 +4,25 @@ import { S } from "../strings.js";
 import { ensureSeeded, requestPersistentStorage } from "../db/seed.js";
 import { useAppSettings } from "../lib/hooks.js";
 import { useScrollMemory } from "../lib/scrollMemory.js";
+import { Icon, type IconName } from "./icons.js";
 import { DiceResultSheet } from "./DiceSheet.js";
 import { SyncGate } from "../sync/SyncGate.js";
 import { SyncBadge } from "./SyncBadge.js";
 import { UpdateBar } from "./UpdateBar.js";
 
+/*
+  Eigene Zeichen statt Emoji (sein Auftrag). `icon` ist jetzt ein Name aus `ui/icons.tsx`
+  und keine Zeichenkette mehr — der Typ verhindert damit einen Reiter ohne Zeichen.
+
+  Sie tragen `currentColor`, also färbt der aktive Reiter sein Zeichen mit. Bei einem Emoji
+  war das unmöglich: dort bestimmt die Schriftart des Geräts die Farbe.
+*/
 const NAV = [
-  { to: "/", label: S.nav.characters, icon: "🛡️" },
-  { to: "/kompendium", label: S.nav.compendium, icon: "📖" },
-  { to: "/wuerfel", label: S.nav.dice, icon: "🎲" },
-  { to: "/einstellungen", label: S.nav.settings, icon: "⚙️" },
-] as const;
+  { to: "/", label: S.nav.characters, icon: "characters" },
+  { to: "/kompendium", label: S.nav.compendium, icon: "compendium" },
+  { to: "/wuerfel", label: S.nav.dice, icon: "dice" },
+  { to: "/einstellungen", label: S.nav.settings, icon: "settings" },
+] as const satisfies readonly { to: string; label: string; icon: IconName }[];
 
 export function Layout() {
   const [seedMessage, setSeedMessage] = useState<string | null>(S.misc.seedRunning);
@@ -72,7 +80,9 @@ export function Layout() {
               isActive(item.to) ? "bg-amber-600/20 text-amber-300" : "text-slate-300 hover:bg-slate-800"
             }`}
           >
-            <span className="mr-2">{item.icon}</span>
+            <span className="mr-2 inline-flex align-[-0.2em]">
+              <Icon name={item.icon} size={18} />
+            </span>
             {item.label}
           </Link>
         ))}
@@ -108,7 +118,7 @@ export function Layout() {
               isActive(item.to) ? "text-amber-400" : "text-slate-400"
             }`}
           >
-            <span className="text-lg leading-none">{item.icon}</span>
+            <Icon name={item.icon} size={20} />
             {item.label}
           </Link>
         ))}

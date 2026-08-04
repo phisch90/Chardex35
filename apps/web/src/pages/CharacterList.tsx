@@ -11,6 +11,7 @@ import {
   type Character,
 } from "@codex35/core";
 import { S } from "../strings.js";
+import { Icon, IconInline } from "../ui/icons.js";
 import { useCharacters, useCompendium, useHouseRules } from "../lib/hooks.js";
 import { CharacterRepo } from "../db/repo.js";
 import { importEnvelope, type ImportResult } from "../lib/transfer.js";
@@ -271,7 +272,7 @@ function ImportBar() {
     <div className="space-y-1">
       <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
         <label className="cursor-pointer rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:bg-slate-800">
-          📥 Charakter-Datei (JSON)
+          <IconInline name="import" /> Charakter-Datei (JSON)
           <input
             type="file"
             /* iOS blendet Dateien aus, wenn nur der MIME-Typ steht. */
@@ -288,7 +289,7 @@ function ImportBar() {
           to="/import"
           className="rounded-lg border border-slate-700 px-3 py-1.5 text-slate-300 hover:bg-slate-800"
         >
-          📂 {S.import.title}
+          <IconInline name="import" /> {S.import.title}
         </Link>
       </div>
       {result && (
@@ -462,9 +463,9 @@ function CharacterRow(props: {
             />
           ) : (
             <div
-              className={`${tier.portrait} ${tier.emoji} flex shrink-0 items-center justify-center rounded-lg bg-slate-800`}
+              className={`${tier.portrait} flex shrink-0 items-center justify-center rounded-lg bg-slate-800 text-slate-500`}
             >
-              🛡️
+              <Icon name="characters" size={tier.markPx} />
             </div>
           )}
           <div className="min-w-0 flex-1">
@@ -542,7 +543,7 @@ function DraftRow({ draft, origin }: { draft: Character; origin: Character | und
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold">
-            🧪 {draft.name}
+            <IconInline name="draft" /> {draft.name}
           </div>
           <div className="truncate text-xs text-slate-400">
             {classText}

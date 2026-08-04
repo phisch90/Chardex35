@@ -11,6 +11,7 @@ import {
   type TrackerRefillKind,
 } from "@codex35/core";
 import { S } from "../../strings.js";
+import { Icon } from "../../ui/icons.js";
 import { cryptoRng } from "../../lib/rng.js";
 import { useAppSettings } from "../../lib/hooks.js";
 import { useDiceStore } from "../../lib/diceStore.js";
@@ -111,7 +112,7 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
                       mutate(tracker.id, (t) => void (t.value = result.total));
                     }}
                   >
-                    🎲
+                    <Icon name="dice" size={17} />
                   </GhostButton>
                 )}
               </>

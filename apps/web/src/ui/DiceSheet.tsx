@@ -1,5 +1,6 @@
 import { useDiceStore } from "../lib/diceStore.js";
 import { BottomSheet } from "./bits.js";
+import { IconInline } from "./icons.js";
 
 /** Globales Ergebnis-Sheet: jeder tap-to-roll landet hier. */
 export function DiceResultSheet() {
@@ -27,7 +28,7 @@ export function DiceResultSheet() {
           onClick={() => roll(result.expression, latest.label)}
           className="mt-4 w-full rounded-lg border border-slate-600 py-2 text-sm hover:bg-slate-800"
         >
-          🎲 Nochmal würfeln
+          <IconInline name="dice" /> Nochmal würfeln
         </button>
       </div>
     </BottomSheet>

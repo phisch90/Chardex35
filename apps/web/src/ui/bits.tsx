@@ -318,8 +318,12 @@ export function NumberStepper(props: {
 
   Sie war amber, und damit dieselbe Farbe wie alles andere in dieser App: der aktive
   Reiter, die Sterne an den Klassenfertigkeiten, jeder Hauptknopf. Am Handy sitzt der
-  Punkt zusätzlich AM SYMBOL — über „Zauber" steht ✨, und ein gelber Punkt an gelben
-  Funken ist kein Punkt mehr. Sein Wort dazu: „Übersieht man leicht."
+  Punkt zusätzlich AM ZEICHEN — über „Zauber" stand damals ✨, und ein gelber Punkt an
+  gelben Funken ist kein Punkt mehr. Sein Wort dazu: „Übersieht man leicht."
+
+  Das Emoji ist inzwischen ein gezeichnetes Zeichen (`ui/icons.tsx`), die Farbe dahinter
+  also unsere. Am Punkt ändert das nichts: sie ist die KLASSENFARBE und wechselt je
+  Bogen, ein gelber Punkt läge beim Paladin also weiter auf Gold.
 
   Rosé bedeutet im Bogen sonst nichts (rot ist der TP-Balken, grün der gesunde Stand,
   amber die Bedienung), und weil der Punkt jetzt die einzige rosé Sache in der
@@ -334,9 +338,9 @@ export const OPEN_CARD = "border-rose-800/70 bg-slate-900";
  * weil eine hinten angehängte Klasse bei gleicher Spezifität nicht gewinnt (dieselbe
  * Regel wie bei `Card`).
  *
- * `ring` trennt den Punkt von dem, was hinter ihm liegt: in der unteren Leiste ist
- * das ein Symbol, dessen Farbe wir nicht bestimmen. Wo er hinter einem Wort steht,
- * braucht er den Ring nicht.
+ * `ring` trennt den Punkt von dem, was hinter ihm liegt: in der unteren Leiste sind das
+ * die Striche des Zeichens, und die tragen die Farbe der Klasse. Wo er hinter einem Wort
+ * steht, braucht er den Ring nicht.
  *
  * Ohne `label` ist er für den Vorleser unsichtbar — in der unteren Leiste sagt schon
  * der Knopf, was offen ist, und zweimal dasselbe zu hören hilft niemandem.

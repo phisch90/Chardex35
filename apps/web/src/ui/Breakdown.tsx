@@ -1,6 +1,7 @@
 import type { StatValue } from "@codex35/core";
 import { S } from "../strings.js";
 import { BottomSheet, d20Roll, fmtMod } from "./bits.js";
+import { IconInline } from "./icons.js";
 
 /**
  * DAS Vertrauens-Feature: jeder abgeleitete Wert zeigt auf Tap seine
@@ -63,7 +64,7 @@ export function BreakdownSheet(props: {
               {/* Dieselbe Zahl wie der Wurf selbst — siehe `d20Roll`: ein krummer
                   Gesamtwert (halber Rang) wird abgerundet, statt einen Ausdruck zu
                   zeigen, den der Würfelparser nicht lesen kann. */}
-              🎲 {S.actions.roll} ({d20Roll(value.total)})
+              <IconInline name="dice" /> {S.actions.roll} ({d20Roll(value.total)})
             </button>
           )}
         </>

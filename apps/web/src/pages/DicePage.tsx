@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { parseDice } from "@codex35/core";
 import { S } from "../strings.js";
+import { IconInline } from "../ui/icons.js";
 import { useDiceStore } from "../lib/diceStore.js";
 import { Card, PrimaryButton, SectionTitle } from "../ui/bits.js";
 
@@ -32,7 +33,7 @@ export function DicePage() {
             }`}
           />
           <PrimaryButton type="submit" disabled={!parseDice(input)}>
-            🎲 {S.actions.roll}
+            <IconInline name="dice" /> {S.actions.roll}
           </PrimaryButton>
         </form>
         {!valid && <p className="mt-1 text-xs text-red-400">{S.dice.invalid}</p>}
