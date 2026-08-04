@@ -28,9 +28,24 @@ export function Card(props: {
   );
 }
 
+/**
+ * Die Abschnitts-Überschrift — und die Stelle, an der die ZWEITE Farbe der Klasse arbeitet.
+ *
+ * `text-trim-400` ist ohne Klassenthema genau das alte `slate-400` (der Standardwert steht in
+ * `styles.css` bei `:root`). Mit Thema wird daraus das Gold des Paladins, die Rinde des
+ * Druiden, die Koralle des Barden.
+ *
+ * Der Job der Zierfarbe: sie färbt, was der Bogen über SICH sagt. Die Bedienfarbe färbt, was
+ * man drücken kann. Ohne diese Trennung wären es zwei Farben mit derselben Bedeutung — und
+ * dann bedeutet keine etwas.
+ *
+ * `tracking-widest` bleibt stehen und ist trotzdem je Klasse anders: Tailwind liest die
+ * Laufweite aus `--tracking-widest`, und die setzt das Thema. Der Mönch bekommt Luft, der
+ * Barbar drängt.
+ */
 export function SectionTitle(props: { children: ReactNode }) {
   return (
-    <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+    <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-trim-400">
       {props.children}
     </h2>
   );
