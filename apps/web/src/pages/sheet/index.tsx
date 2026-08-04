@@ -12,6 +12,7 @@ import { S } from "../../strings.js";
 import { CharacterRepo } from "../../db/repo.js";
 import { useAppSettings, useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
 import { useDiceStore } from "../../lib/diceStore.js";
+import { rememberSheet } from "../../lib/lastSheet.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
 import { Chip, GhostButton, OpenDot, d20Roll, fmtMod } from "../../ui/bits.js";
@@ -127,6 +128,13 @@ export function CharacterSheetPage() {
     Amber stehen.
   */
   useEffect(() => {
+    /*
+      Nebenbei merken, welcher Bogen offen ist — dafür ist der Knopf „Zurück zu …" in den
+      Einstellungen da. Der Hook läuft genau dann, wenn ein Bogen offen ist, und steht vor
+      allen frühen `return`s; ein zweiter Hook wäre eine zweite Stelle, die es vergessen
+      kann.
+    */
+    if (character) rememberSheet(character.id);
     const root = document.documentElement;
     const own = character?.accent;
     const key = isAccentKey(own) ? own : accentOfClass(character ? accentClassIdOf(character) : undefined);

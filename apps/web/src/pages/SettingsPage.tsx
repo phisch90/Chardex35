@@ -7,7 +7,8 @@ import { db } from "../db/db.js";
 import { SettingsRepo } from "../db/repo.js";
 import { AppSettingsRepo, MATERIALS } from "../db/appSettings.js";
 import { LIGHT_MATERIALS, MATERIAL_HINTS, MATERIAL_LABELS } from "../ui/materials.js";
-import { useAppSettings, useHouseRules } from "../lib/hooks.js";
+import { useAppSettings, useCharacter, useHouseRules } from "../lib/hooks.js";
+import { lastSheetId } from "../lib/lastSheet.js";
 import { buildExport, downloadExport, importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton, PrimaryButton, SectionTitle } from "../ui/bits.js";
 import { SyncCard } from "./SyncCard.js";
@@ -31,6 +32,35 @@ const oglText = Object.values(
 */
 const LIGHT_KEYS = MATERIALS.filter((key) => LIGHT_MATERIALS.includes(key));
 const DARK_KEYS = MATERIALS.filter((key) => !LIGHT_MATERIALS.includes(key));
+
+/**
+ * „Zurück zu Hike" — sein Auftrag: „Ich möchte aus den Einstellungen direkt zurück in den
+ * Charakter gehen können."
+ *
+ * Bewusst NICHT der `BackButton`: der geht einen Schritt im Verlauf zurück, und das ist
+ * hier etwas anderes. Wer zwei Papiere ausprobiert und dazwischen etwas antippt, landet
+ * damit irgendwo. Er will zurück in DEN Charakter — deshalb steht der Name im Knopf.
+ *
+ * Steht kein Bogen im Gedächtnis oder gibt es ihn nicht mehr, erscheint gar nichts: ein
+ * Knopf, der auf einen gelöschten Charakter zeigt, wäre schlimmer als keiner.
+ */
+function ZurueckZumBogen() {
+  const charId = lastSheetId();
+  // Der Hook muss laufen, auch wenn nichts gemerkt ist — ein Hook hinter einer Bedingung
+  // ist kein Hook. `useCharacter` verträgt eine leere Kennung.
+  const character = useCharacter(charId ?? "");
+  if (charId === null || !character) return null;
+  return (
+    <Link
+      to="/charaktere/$charId"
+      params={{ charId }}
+      className="-ml-1 inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-amber-300 hover:bg-slate-800"
+    >
+      <span aria-hidden="true">←</span>
+      Zurück zu {character.name}
+    </Link>
+  );
+}
 
 export function SettingsPage() {
   const houseRules = useHouseRules();
@@ -82,6 +112,7 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-4">
+      <ZurueckZumBogen />
       <h1 className="text-xl font-bold">{S.nav.settings}</h1>
 
       {/* Das große Logo hat hier Platz — auf einem App-Symbol wären drei
