@@ -108,6 +108,117 @@ describe("Die Papiere", () => {
   });
 });
 
+describe("Ruhige Flächen, kräftige Rahmen", () => {
+  /*
+    Seine Ansage: „Farben bitte deutlich dezenter im Hintergründe. Aber die Rahmen und den
+    Kopf Teil so lassen." Das sind ZWEI Forderungen in einem Satz, und sie zeigen in
+    verschiedene Richtungen — genau deshalb steht das hier als Zahl und nicht als Absicht
+    in einem Kommentar. Eine Aufräumrunde, die „alle Farbwerte angleichen" will, hätte
+    sonst die Hälfte seines Auftrags rückgängig gemacht, ohne dass etwas kaputtgeht.
+  */
+  const zahl = (name: string): number[] =>
+    [...CSS.matchAll(new RegExp(`${name}:\\s*([0-9.]+)`, "g"))].map(([, v]) => Number(v));
+
+  it("die Kartentönung ist leise", () => {
+    // Die Karten sind die größte Fläche des Bogens — getönt schlucken sie die Ruhe.
+    const werte = zahl("--karte-a");
+    expect(werte.length, "--karte-a steht im Stylesheet").toBeGreaterThan(0);
+    for (const v of werte) expect(v, `--karte-a: ${v}`).toBeLessThanOrEqual(0.12);
+  });
+
+  it("der Anstrich ist nach einem Viertel vorbei", () => {
+    /*
+      Was ihn dezent macht, ist nicht ein kleinerer Wert, sondern ein kürzerer WEG: als
+      Gradient von oben bleibt er am KOPF stehen (den soll er behalten) und läuft in der
+      Fläche früh aus. Ein blindes Absenken von `--wash-a` hätte den Kopf mit entfärbt.
+    */
+    const reach = zahl("--wash-reach");
+    expect(reach.length, "--wash-reach steht im Stylesheet").toBeGreaterThan(0);
+    for (const v of reach) expect(v, `--wash-reach: ${v}%`).toBeLessThanOrEqual(35);
+    // Und der Gradient muss die Variable auch BENUTZEN, sonst ist sie Zierde.
+    expect(CSS).toMatch(/var\(--wash-reach\)/);
+    // Am Kopf bleibt die Kraft: hier wird nicht heruntergedreht, sondern verkürzt.
+    for (const v of zahl("--wash-a")) expect(v, `--wash-a: ${v}`).toBeGreaterThanOrEqual(0.28);
+  });
+
+  it("der Rahmen bleibt kräftig", () => {
+    // „Aber die Rahmen … so lassen." Die andere Hälfte seines Satzes.
+    const werte = zahl("--rahmen-a");
+    expect(werte.length, "--rahmen-a steht im Stylesheet").toBeGreaterThan(0);
+    for (const v of werte) expect(v, `--rahmen-a: ${v}`).toBeGreaterThanOrEqual(0.8);
+  });
+});
+
+describe("Der Hauptschalter für die Klassenfarbe", () => {
+  /*
+    Sein Auftrag: „Stelle ein, das Man die Klassen Farbe auch abschalten kann."
+
+    Der Schalter ist ein einzelnes `boolean` — was daran schiefgehen kann, liegt trotzdem
+    an drei Stellen: der Standardwert, der Rückfall für ein Gerät, auf dem das Feld noch
+    gar nicht liegt, und die Frage, OB die Oberfläche ihn überhaupt liest.
+  */
+  it("steht standardmäßig AN", () => {
+    // Die Klassenfarben sind der Stand, den er gerade abgenommen hat. Wer sie nicht will,
+    // schaltet sie ab — nicht umgekehrt.
+    expect(DEFAULT_APP_SETTINGS.classAccent).toBe(true);
+  });
+
+  it("ein fehlendes Feld bedeutet AN, nicht aus", () => {
+    /*
+      Das ist die wichtigste Prüfung hier. Auf seinem iPhone liegen die Einstellungen ohne
+      dieses Feld; fiele es auf `false` zurück, wären die Klassenfarben nach dem Update
+      spurlos weg — und er würde einen Fehler suchen, wo eine Voreinstellung stand.
+    */
+    expect(parseAppSettings({}).classAccent).toBe(true);
+    expect(parseAppSettings({ material: "kladde" }).classAccent).toBe(true);
+    // Ein Unsinnswert genauso: lieber der abgenommene Stand als ein farbloser Bogen.
+    expect(parseAppSettings({ classAccent: "nein" }).classAccent).toBe(true);
+  });
+
+  it("ein ausdrückliches Aus bleibt aus", () => {
+    // Die Gegenprobe zum Rückfall: sonst wäre der Schalter ein Knopf ohne Wirkung.
+    expect(parseAppSettings({ classAccent: false }).classAccent).toBe(false);
+  });
+
+  it("der Bogen entscheidet an EINER Stelle, und der Schalter steht in den Abhängigkeiten", () => {
+    /*
+      Zwei Fehler wären hier möglich, und beide sähen aus wie ein kaputter Schalter:
+
+      - jede der drei Schichten (Rahmen, Anstrich, Kartentönung) prüft den Schalter selbst.
+        Dann fällt beim nächsten Umbau eine davon durch. Deshalb entscheidet EINE Stelle,
+        ob `data-accent` überhaupt gesetzt wird — fällt es weg, fallen alle drei mit.
+      - der Schalter fehlt in der Abhängigkeitsliste des Effekts. Dann wirkt er erst beim
+        nächsten Öffnen des Bogens, und in den Einstellungen tut der Umschalter scheinbar
+        nichts. Genau die Familie „etwas weiß es, und etwas anderes kann es nicht".
+    */
+    const sheet = readFileSync(join(SRC, "pages/sheet/index.tsx"), "utf8");
+    expect(sheet).toContain("!classAccent");
+    expect(sheet).toContain("}, [character, classAccent]);");
+    // Und der Schalter muss aus den Einstellungen kommen, nicht aus einem eigenen Speicher.
+    expect(sheet).toMatch(/const \{[^}]*classAccent[^}]*\} = useAppSettings\(\)/);
+  });
+
+  it("die Einstellungen haben einen Umschalter dafür", () => {
+    const settings = readFileSync(join(SRC, "pages/SettingsPage.tsx"), "utf8");
+    expect(settings).toContain("appSettings.classAccent");
+    expect(settings).toMatch(/label="Klassenfarbe im Bogen"/);
+  });
+
+  it("die Versionsmarke steht in den Einstellungen, aber nicht mehr auf der Startseite", () => {
+    /*
+      Sein Auftrag war „Bogen Version löschen" — gemeint war die kleine Marke über der
+      Charakterliste. In den Einstellungen BLEIBT sie, und das ist kein Übersehen: sie ist
+      das einzige ehrliche Zeichen dafür, ob sein GERÄT einen neuen Stand hat (ein grüner
+      Deploy sagt nur, dass er auf dem Server liegt). Wer sie ganz entfernt, nimmt der App
+      die Antwort auf „Es kommt kein Update".
+    */
+    const liste = readFileSync(join(SRC, "pages/CharacterList.tsx"), "utf8");
+    expect(liste).not.toContain("VersionBadge");
+    const settings = readFileSync(join(SRC, "pages/SettingsPage.tsx"), "utf8");
+    expect(settings).toContain("VersionBadge");
+  });
+});
+
 describe("Die Griffe, an denen ein Papier anfassen darf", () => {
   /*
     `karte` und `abschnitt` sind keine Tailwind-Klassen, sondern Griffe für die Papiere.

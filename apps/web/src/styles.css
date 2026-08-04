@@ -151,18 +151,34 @@ button,
     Farbton der Klasse. Auf dunklem Papier ein heller Hauch, damit man ihn sieht.
   */
   /*
-    Die Kraft des Anstrichs. Stand bei 0,22 und war ihm zu wenig — wörtlich: „die Farben
-    sind alle zu blass und dezent. Dann mach doch lieber was farbigeres." Jetzt fast das
-    Doppelte. Was dabei NICHT verhandelbar ist, prüft der Lauf im gebauten Bogen: die
-    Kleinschrift muss so lesbar bleiben wie vorher.
+    Die Kraft des Anstrichs — und die Zahl hat drei Runden gebraucht:
+
+      0,22  „zu blass und dezent"
+      0,42  zu viel im HINTERGRUND: „Farben bitte deutlich dezenter im Hintergründe.
+            Aber die Rahmen und den Kopf Teil so lassen."
+      0,40  oben, 0,05 in der Fläche
+
+    Der Widerspruch löst sich, weil „Hintergrund" und „Kopf" verschiedene Stellen sind: der
+    Anstrich ist ein Gradient von oben, also bleibt er am KOPF fast unverändert und läuft
+    nur viel früher aus. Was ihn dezent macht, ist nicht ein kleinerer Wert, sondern ein
+    kürzerer WEG — `--wash-reach` weiter unten.
+
+    Rahmen (`--rahmen-a`) und Kopf sind ausdrücklich unberührt geblieben.
   */
   --wash-l: 72%;
   --wash-c: 0.2;
-  --wash-a: 0.42;
-  /* Wie kräftig eine KARTE den Klassenton trägt. Schwächer als der Anstrich, weil hier
-     Text darauf steht — aber nicht mehr nur geahnt. */
-  --karte-a: 0.3;
-  /* Wie satt der RAHMEN einer Karte ist. 1 = die volle Klassenfarbe. */
+  --wash-a: 0.4;
+  /* Wie weit der Anstrich von oben nach unten reicht. Vorher lief er über 72% der Höhe
+     aus und tönte damit den ganzen Bogen; jetzt ist er nach einem Viertel vorbei. */
+  --wash-reach: 26%;
+  /*
+    Wie kräftig eine KARTE den Klassenton trägt. Von 0,3 auf 0,07 zurück — das war der
+    eigentliche „Hintergrund", über den er gestolpert ist: die Karten sind die größte
+    Fläche des Bogens, und getönt schluckten sie die Ruhe. Der RAHMEN der Karte bleibt
+    voll, und das ist genau, was er wollte: kräftige Linien, ruhige Flächen.
+  */
+  --karte-a: 0.07;
+  /* Wie satt der RAHMEN einer Karte ist. 1 = die volle Klassenfarbe. Unberührt. */
   --rahmen-a: 0.85;
 }
 
@@ -308,22 +324,28 @@ button,
 [data-accent] {
   --anstrich:
     radial-gradient(
-      115% 55% at 50% 0%,
+      130% var(--wash-reach) at 50% 0%,
       oklch(
         calc(var(--wash-l) + var(--wash-shift, 0%))
         calc(var(--wash-c) * var(--ac-s))
         var(--ac-h) / var(--wash-a)
       ),
-      transparent 72%
+      transparent 100%
     ),
+    /*
+      Der zweite Zug in der ZIERfarbe. Er trägt die halbe Unterscheidbarkeit zweier
+      Klassen (Barden-Koralle gegen Kämpfer-Messing sind 53 Grad, wo die Bedienfarben nur
+      32 hergeben) — er bleibt also, sitzt aber jetzt oben RECHTS statt unten und ist
+      genauso kurz. Unten am Bogen soll nichts mehr getönt sein.
+    */
     radial-gradient(
-      85% 45% at 105% 100%,
+      70% calc(var(--wash-reach) * 0.9) at 100% 0%,
       oklch(
         calc(var(--wash-l) + var(--wash-shift, 0%))
         calc(var(--wash-c) * var(--ac2-s) * 1.2)
-        var(--ac2-h) / calc(var(--wash-a) * 0.8)
+        var(--ac2-h) / calc(var(--wash-a) * 0.85)
       ),
-      transparent 70%
+      transparent 100%
     );
 }
 
@@ -515,10 +537,11 @@ button,
   /* Der Anstrich kippt mit: ein heller Hauch auf Creme wäre unsichtbar. */
   --wash-l: 55%;
   --wash-c: 0.17;
-  --wash-a: 0.32;
-  /* Auf Papier fällt eine getönte Fläche stärker auf — also zurückhaltender als im
-     Dunkeln, aber immer noch deutlich sichtbar. */
-  --karte-a: 0.16;
+  --wash-a: 0.3;
+  --wash-reach: 24%;
+  /* Auf Papier fällt eine getönte Fläche stärker auf — also noch zurückhaltender als im
+     Dunkeln. */
+  --karte-a: 0.05;
   --rahmen-a: 0.9;
 
   /* Warnung — Rosé. Farbton 13, wie Tailwinds `rose`. */

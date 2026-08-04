@@ -173,11 +173,29 @@ export function SettingsPage() {
             </div>
           </div>
         ))}
+        {/*
+          Der Hauptschalter über den elf Klassenthemen — sein Auftrag: „Stelle ein, das Man
+          die Klassen Farbe auch abschalten kann."
+
+          Er steht HIER und nicht im ⋯-Menü des Bogens, weil dort die Wahl EINES Themas
+          sitzt. Das eine ist „welche Farbe", das andere „überhaupt Farbe" — zwei Fragen,
+          zwei Orte. Und weil es eine Geräte-Einstellung ist: dass er am Handy bunt mag und
+          auf dem iPad nicht, ist keine Eigenschaft seiner Figuren.
+        */}
+        <div className="mt-3 border-t border-slate-800 pt-3">
+          <Toggle
+            label="Klassenfarbe im Bogen"
+            hint="Aus: jeder Bogen bleibt beim ursprünglichen Amber — kein Anstrich, keine getönten Karten, keine farbigen Rahmen. Das Klassensymbol bleibt."
+            checked={appSettings.classAccent}
+            onChange={(v) => void AppSettingsRepo.set({ ...appSettings, classAccent: v })}
+          />
+        </div>
+
         <p className="mt-2 text-[11px] leading-snug text-slate-500">
           Das Papier bestimmt Untergrund, Schrift, Linien und Kästen. Die FARBE im Bogen
-          kommt weiter von der Klasse — der Druide ist grün, der Paladin königsblau; am
-          einzelnen Bogen lässt sie sich im ⋯-Menü überschreiben. Die Warnfarbe behält in
-          jedem Papier ihren Ton und wird nur so hell oder dunkel, wie der Grund es braucht.
+          kommt von der Klasse — der Druide ist grün, der Paladin königsblau; am einzelnen
+          Bogen lässt sie sich im ⋯-Menü überschreiben. Die Warnfarbe behält in jedem Papier
+          ihren Ton und wird nur so hell oder dunkel, wie der Grund es braucht.
         </p>
       </Card>
 
