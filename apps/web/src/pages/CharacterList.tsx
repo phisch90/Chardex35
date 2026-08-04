@@ -19,7 +19,6 @@ import { importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton, OPEN_MARK } from "../ui/bits.js";
 import { campaignLook } from "../ui/campaignColors.js";
 import { cardTier, type CardTier } from "../ui/cardTier.js";
-import { VersionBadge } from "../ui/VersionBadge.js";
 import { CharacterActionsSheet, DiscardDraftButton } from "../ui/CharacterActions.js";
 import { useCachedShelves } from "../group/useGroup.js";
 
@@ -68,11 +67,18 @@ export function CharacterListPage() {
 
   return (
     <div className="space-y-3">
-      {/* Version zwischen Titel und Knopf — dort sieht er sie jedes Mal, ohne
-          dafür in die Einstellungen zu müssen. */}
+      {/*
+        Sein Auftrag: „Bogen Version löschen." Die Marke mit dem Commit („✓ 748c1e4") stand
+        hier zwischen Titel und Knopf und ist weg.
+
+        Die AUSFÜHRLICHE Marke in den Einstellungen bleibt — und zwar mit Absicht: sie ist
+        die einzige ehrliche Auskunft darüber, ob SEIN GERÄT den neuen Stand hat. Ein
+        grüner Deploy-Lauf sagt nur, dass er auf dem Server liegt; monatelang stand in
+        meinen Meldungen „läuft jetzt live", während seine Web-App unverändert weiterlief.
+        Wer diese Marke ganz entfernt, nimmt genau die Anzeige weg, die das gemerkt hat.
+      */}
       <div className="flex items-center justify-between gap-2">
         <h1 className="shrink-0 text-xl font-bold">{S.nav.characters}</h1>
-        <VersionBadge compact />
         <Link
           to="/charaktere/neu"
           className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-500"

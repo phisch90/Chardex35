@@ -35,12 +35,28 @@ export interface AppSettings {
    * Figuren. Dieselbe Trennung wie beim zugeklappten Zaubergrad.
    */
   material: Material;
+  /**
+   * Färbt die Klasse den Bogen? Sein Auftrag: „Stelle ein, das Man die Klassen Farbe auch
+   * abschalten kann."
+   *
+   * Auch das eine GERÄTE-Einstellung und nicht eine je Charakter — es gibt schon eine je
+   * Charakter (`character.accent` im ⋯-Menü, dort wählt er das Thema). Das hier ist der
+   * Hauptschalter darüber: aus heißt aus, für alle Bögen, auf diesem Gerät.
+   *
+   * Aus ist NICHT „grau statt bunt": ohne `data-accent` fällt alles auf das ursprüngliche
+   * Amber zurück, das er von Anfang an abgenommen hat — Rahmen, Anstrich und Tönung
+   * verschwinden mit.
+   */
+  classAccent: boolean;
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   diceEnabled: true,
   lastExportAt: "",
   material: "codex",
+  // AN als Standard: die Klassenfarben sind der Stand, den er gerade abgenommen hat. Wer
+  // sie nicht will, schaltet sie ab — nicht umgekehrt.
+  classAccent: true,
 };
 
 export const APP_SETTINGS_KEY = "appSettings";
@@ -61,6 +77,13 @@ export function parseAppSettings(value: unknown): AppSettings {
     material: (MATERIALS as readonly string[]).includes(raw.material as string)
       ? (raw.material as Material)
       : DEFAULT_APP_SETTINGS.material,
+    /*
+      Auf seinem Gerät liegt das Feld noch gar nicht — ein fehlender Wert muss deshalb AN
+      bedeuten und nicht aus. Sonst wären die Klassenfarben nach dem Update spurlos weg,
+      und er würde einen Fehler suchen, wo eine Voreinstellung stand.
+    */
+    classAccent:
+      typeof raw.classAccent === "boolean" ? raw.classAccent : DEFAULT_APP_SETTINGS.classAccent,
   };
 }
 

@@ -112,7 +112,7 @@ export function CharacterSheetPage() {
     note?: string | undefined;
   } | null>(null);
   const roll = useDiceStore((s) => s.roll);
-  const { diceEnabled } = useAppSettings();
+  const { diceEnabled, classAccent } = useAppSettings();
 
   /*
     Die Klassenfarbe ans <html>, solange DIESER Bogen offen ist — und beim Verlassen wieder
@@ -138,11 +138,20 @@ export function CharacterSheetPage() {
     const root = document.documentElement;
     // Die Rangfolge (eigene Wahl vor Klasse) steht in `accentKeyOf` — EINMAL, weil sie
     // auch der Porträt-Platzhalter der Startseite braucht.
-    const key = character === undefined || character === null ? undefined : accentKeyOf(character);
+    /*
+      Der Hauptschalter aus den Einstellungen kommt VOR der Rangfolge: ist er aus, wird das
+      Attribut gar nicht gesetzt, und damit fallen Rahmenfarbe, Anstrich und Kartentönung
+      alle zusammen weg. Genau EINE Stelle entscheidet das — sonst müsste jede der drei
+      Schichten den Schalter selbst kennen.
+    */
+    const key =
+      !classAccent || character === undefined || character === null
+        ? undefined
+        : accentKeyOf(character);
     if (key === undefined) root.removeAttribute("data-accent");
     else root.setAttribute("data-accent", key);
     return () => root.removeAttribute("data-accent");
-  }, [character]);
+  }, [character, classAccent]);
 
   if (character === undefined) return <p className="text-slate-400">{S.misc.loading}</p>;
   if (character === null) return <p className="text-slate-400">Charakter nicht gefunden.</p>;
@@ -246,7 +255,15 @@ export function CharacterSheetPage() {
       <ClassMark
         character={character}
         size={220}
-        className="pointer-events-none absolute -right-6 top-6 text-amber-400/15"
+        /*
+          Das SYMBOL bleibt auch mit abgeschalteter Klassenfarbe — abgeschaltet ist die
+          Farbe, nicht das Zeichen. Ohne den Schalter wäre es sonst golden (ohne
+          `data-accent` ist `amber` wieder das echte Amber), und das wäre genau die Farbe,
+          die er nicht mehr sehen wollte.
+        */
+        className={`pointer-events-none absolute -right-6 top-6 ${
+          classAccent ? "text-amber-400/15" : "text-slate-500/15"
+        }`}
       />
       {/*
         Eine Arbeitskopie für einen fremden Bogen muss sich genauso verraten wie

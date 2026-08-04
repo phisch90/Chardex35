@@ -570,7 +570,9 @@ nicht kennen:
   Abschnitt „Die zwei hellen Papiere" weiter unten.
 - **`data-accent`** am `<html>`, aber nur **solange ein Bogen offen ist** — genau die Farbe,
   die heute Amber ist. Draußen färbt die Kampagne, drinnen die Klasse: außen sieht man, zu
-  welcher Gruppe eine Figur zählt, innen, wer sie ist.
+  welcher Gruppe eine Figur zählt, innen, wer sie ist. **Ganz abschaltbar** über
+  `classAccent` in den Einstellungen (Runde 6): dann wird das Attribut nicht gesetzt, und
+  alles, was daran hängt, fällt zusammen weg.
 
 **Warum das billig ist, und es ist der ganze Trick:** Tailwind 4 legt jede Farbe als
 CSS-Variable ab (`--color-slate-900`), und jede Hilfsklasse LIEST sie. Ein Thema fasst
@@ -587,12 +589,80 @@ Drei Entscheidungen daran sind es wert, aufgeschrieben zu werden:
 - **Eine Klasse ist EINE Zeile.** Die Rampe steht einmal (`[data-accent]`, Helligkeit und
   Sättigung 1:1 von `amber` abgelesen), variabel sind nur Farbton `--ac-h` und ein
   Sättigungs-Faktor `--ac-s`. Damit kann keine Klasse versehentlich einen anderen Kontrast
-  haben als die anderen — und der Kämpfer darf fast grau sein (Stahl), ohne dass jemand elf
-  Rampen pflegt.
+  haben als die anderen, ohne dass jemand elf Rampen pflegt. (Hier stand „und der Kämpfer
+  darf fast grau sein (Stahl)" — das war falsch, sobald elf Klassen unterscheidbar sein
+  sollen, und Runde 4 hat es nachgemessen: alle elf mindestens 32 Grad auseinander, keine
+  unter 0,55 Sättigung.)
 - **Die Farbe ist eine FOLGE, die Wahl eine Eingabe.** `accentClassIdOf` rechnet die Klasse
   mit den meisten Stufen aus (bei Gleichstand die zuletzt gestiegene) — gefragt und
   entschieden, Hike wird damit Kleriker und nicht Kämpfer. Gespeichert wird nur, was er von
   Hand überschreibt (`character.accent`), und auch das als Schlüssel, nicht als Farbwert.
+
+### Runde 6: ein Hauptschalter, und „dezent" heißt kürzer, nicht blasser
+
+Drei Sätze: **„Stelle ein, das Man die Klassen Farbe auch abschalten kann. Bogen Version
+löschen."** und **„Farben bitte deutlich dezenter im Hintergründe. Aber die Rahmen und den
+Kopf Teil so lassen."**
+
+#### Der dritte Satz ist der interessante, weil er in zwei Richtungen zeigt
+
+„Dezenter" und „so lassen" schließen sich aus, solange man Farbe als EINEN Regler denkt.
+Sie lösen sich auf, weil Hintergrund und Kopf verschiedene STELLEN sind: der Anstrich ist
+ein Gradient von oben. Wer `--wash-a` senkt, nimmt dem Kopf die Farbe mit — **was ihn
+dezent macht, ist nicht ein kleinerer Wert, sondern ein kürzerer WEG.** Also neu
+`--wash-reach` (26% dunkel, 24% hell): dieselbe Kraft oben, nach einem Viertel der Höhe
+vorbei. Vorher lief er über 72% aus und tönte damit den ganzen Bogen.
+
+Der eigentliche „Hintergrund", über den er gestolpert ist, waren aber die **Karten**:
+`--karte-a` von 0,30 auf **0,07** (hell 0,16 → 0,05). Sie sind die größte Fläche des
+Bogens; getönt schlucken sie jede Ruhe. `--rahmen-a` ist ausdrücklich unberührt geblieben
+(0,85 / 0,9) — das ist die andere Hälfte seines Satzes.
+
+**Gemessen im gebauten Bogen, gegen denselben Bogen OHNE Klassenfarbe als Nullpunkt:** am
+Kopf 128 Abstand, in der Fläche weit unten **0**. Die elf Klassen bleiben dabei
+unterscheidbar (engstes Paar 151, Karten-Boden 13 gegen die alte Schwelle 8) — **keine
+Schwelle wurde gesenkt, damit es grün wird.**
+
+Und die Messung geht über ein BILDSCHIRMFOTO durch eine Zeichenfläche, nicht über
+`getComputedStyle`: gefragt ist die Überlagerung aus Papier, Anstrich und Deckkraft, und
+die steht in keiner einzelnen Eigenschaft.
+
+#### Der Hauptschalter: EINE Stelle entscheidet
+
+`classAccent` in den GERÄTE-Einstellungen — es gibt schon eine Wahl je Charakter
+(`character.accent` im ⋯-Menü: „welche Farbe"), das hier ist die Frage darüber
+(„überhaupt Farbe"). Zwei Fragen, zwei Orte.
+
+Entschieden wird im Bogen VOR der Rangfolge: ist der Schalter aus, wird `data-accent` gar
+nicht gesetzt — und damit fallen Rahmenfarbe, Anstrich und Kartentönung **zusammen** weg.
+Prüfte jede der drei Schichten den Schalter selbst, würde beim nächsten Umbau eine davon
+durchfallen. Der Schalter steht dafür in der Abhängigkeitsliste des Effekts; ohne das
+wirkte er erst beim nächsten Öffnen, und in den Einstellungen täte der Umschalter
+scheinbar nichts (die Familie „etwas weiß es, und etwas anderes kann es nicht").
+
+**Aus ist nicht grau, sondern Amber:** ohne `data-accent` fällt die Rampe auf das
+ursprüngliche Aussehen zurück, das er von Anfang an abgenommen hat. Das Klassensymbol
+BLEIBT (nur gedämpft) — der Hinweis am Schalter sagt das zu, also prüft der Lauf es mit.
+
+**Und der Standardwert ist AN, auch für ein fehlendes Feld.** Auf seinem iPhone liegt das
+Feld noch gar nicht; fiele es auf `false`, wären die Klassenfarben nach dem Update spurlos
+weg, und er würde einen Fehler suchen, wo eine Voreinstellung stand.
+
+#### „Bogen Version löschen" — und warum die Marke in den Einstellungen bleibt
+
+Weg ist die knappe Marke über der Charakterliste. In den Einstellungen bleibt sie, und das
+ist kein Übersehen: sie ist das EINZIGE ehrliche Zeichen dafür, ob sein GERÄT einen neuen
+Stand hat — ein grüner Deploy sagt nur, dass er auf dem Server liegt. Wer sie ganz
+entfernt, nimmt der App die Antwort auf „Es kommt kein Update". Ein Test hält beides fest:
+nicht auf der Startseite, weiter in den Einstellungen.
+
+#### Was der Test dieser Runde festhält, und warum als ZAHL
+
+Seine zwei Forderungen zeigen in verschiedene Richtungen, also stehen sie als Schwellen im
+Stylesheet-Test (`--karte-a` ≤ 0,12 · `--wash-reach` ≤ 35% · `--wash-a` ≥ 0,28 ·
+`--rahmen-a` ≥ 0,8) und nicht als Absicht in einem Kommentar. Eine Aufräumrunde, die „alle
+Farbwerte angleichen" will, hätte sonst die Hälfte seines Auftrags rückgängig gemacht, ohne
+dass etwas kaputtgeht.
 
 ### Runde 5: kräftig statt dezent — Rahmen, Wasserzeichen, elf Klassensymbole
 
@@ -1086,10 +1156,12 @@ in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`d
   die Rundung im ×1,5-Pfad standen bis vor kurzem hier — beides ist beantwortet und gebaut
   (Martins Regeln 4 und 5).
 - **Am Aussehen ist nichts Großes mehr offen.** Vier Papiere stehen, elf Klassenfarben sind
-  nachgemessen unterscheidbar, und die zweite Farbe je Klasse arbeitet jetzt an drei Stellen
-  (Überschriften, Anstrich, Karten). Wer hier weitermachen will: die Zierfarben ballen sich
-  im Gold-Band (fünf Klassen zwischen 62 und 92) — harmlos, weil ihre Hauptfarben weit
-  auseinanderliegen, aber es wäre die nächste Feinarbeit.
+  nachgemessen unterscheidbar, die zweite Farbe je Klasse arbeitet an drei Stellen
+  (Überschriften, Anstrich, Karten), Rahmen und Klassensymbole sind kräftig, die Flächen
+  darunter ruhig, und ein Hauptschalter nimmt die Klassenfarbe ganz weg. Wer hier
+  weitermachen will: die Zierfarben ballen sich im Gold-Band (fünf Klassen zwischen 62 und
+  92) — harmlos, weil ihre Hauptfarben weit auseinanderliegen, aber es wäre die nächste
+  Feinarbeit.
 - **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" fehlt noch.
   Eigene Gegenstände mit echten Rüstungs- und Waffenwerten sind gebaut (Editor im
   Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in
