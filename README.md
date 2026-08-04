@@ -11,8 +11,10 @@ Zwei Wege, bewusst getrennt:
 
 - **Geräte-Abgleich** (Einstellungen → Geräte-Abgleich): ein *privater* GitHub-Gist als
   Ablage, ein Token mit ausschließlich der Berechtigung `gist`. Jedes Gerät mit demselben
-  Token findet die Ablage von allein und gleicht beim Start, bei Rückkehr in den
-  Vordergrund und wenige Sekunden nach jeder Änderung ab. Pro Dokument entscheidet `rev`,
+  Token findet die Ablage von allein und gleicht **beim Start** ab — einmal, und nachgeholt,
+  falls dabei kein Netz war. Während einer Sitzung nicht: wer nicht auf zwei Geräten
+  gleichzeitig spielt, braucht das nicht, und ein Abgleich mitten im Kampf ist nur Unruhe.
+  Von Hand geht es jederzeit über „Jetzt abgleichen". Pro Dokument entscheidet `rev`,
   bei Gleichstand die neuere `updatedAt`; ändert man denselben Bogen auf beiden Geräten,
   bleibt der Verlierer als **Konfliktkopie** stehen — der Abgleich wirft nie etwas weg.
   Das Token liegt nur in der lokalen IndexedDB und steht in keiner Export-Datei.

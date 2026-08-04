@@ -101,7 +101,8 @@ export function Layout() {
       </nav>
 
       {diceEnabled && <DiceResultSheet />}
-      {/* Hält den Geräte-Abgleich am Laufen; zeigt selbst nichts an. */}
+      {/* Löst den Geräte-Abgleich beim Start aus; zeigt selbst nichts an. Während einer
+          Sitzung gleicht er nicht ab — seine Entscheidung, siehe `MID_SESSION_SYNC`. */}
       <SyncGate />
       <SyncBadge />
       {/* „Neue Fassung ist da" — einmal für die ganze App, nicht je Seite. */}

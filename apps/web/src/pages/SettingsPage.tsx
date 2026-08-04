@@ -210,11 +210,16 @@ export function SettingsPage() {
           {persisted === null ? "…" : persisted ? S.settings.persisted : S.settings.notPersisted}
         </p>
         {/* Läuft der Abgleich, liegt die Kopie ohnehin außerhalb des Geräts —
-            dann ist die Warnung oben nur noch die halbe Wahrheit. */}
+            dann ist die Warnung oben nur noch die halbe Wahrheit.
+
+            Seit der Abgleich nur beim Start läuft, ist die Kopie aber der Stand VOM
+            LETZTEN Abgleich und nicht der von diesem Moment. Das muss dastehen: eine
+            Sicherung, die man für aktueller hält, als sie ist, ist die gefährlichste. */}
         {syncConnected && (
           <p className="mt-1 text-xs text-slate-400">
-            Der Geräte-Abgleich hält zusätzlich eine Kopie in deinem privaten Gist. Ein
-            Browser, der hier aufräumt, kostet dich damit keinen Charakter.
+            Der Geräte-Abgleich hält zusätzlich eine Kopie in deinem privaten Gist — den
+            Stand vom letzten Abgleich, also vom Öffnen der App oder vom Knopf. Ein Browser,
+            der hier aufräumt, kostet dich damit höchstens die Arbeit seit dann.
           </p>
         )}
         <p className="mt-2 text-xs text-amber-300/90">{S.settings.iosWarning}</p>
