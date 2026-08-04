@@ -5,7 +5,8 @@ import { backupStatus, type HouseRules } from "@codex35/core";
 import { S } from "../strings.js";
 import { db } from "../db/db.js";
 import { SettingsRepo } from "../db/repo.js";
-import { AppSettingsRepo } from "../db/appSettings.js";
+import { AppSettingsRepo, MATERIALS } from "../db/appSettings.js";
+import { MATERIAL_HINTS, MATERIAL_LABELS } from "../ui/materials.js";
 import { useAppSettings, useHouseRules } from "../lib/hooks.js";
 import { buildExport, downloadExport, importEnvelope, type ImportResult } from "../lib/transfer.js";
 import { Card, GhostButton, PrimaryButton, SectionTitle } from "../ui/bits.js";
@@ -89,6 +90,40 @@ export function SettingsPage() {
             bewusst nachsehen will. */}
         <VersionBadge />
       </div>
+
+      {/*
+        Das Aussehen steht VOR den Funktionen: es ist das Erste, was er hier sucht, seit es
+        eine Wahl gibt. Zwei Möglichkeiten, deshalb zwei Knöpfe und keine Liste — bei zwei
+        Werten ist ein Auswahlfeld mehr Bedienung als Auskunft.
+      */}
+      <Card>
+        <SectionTitle>Aussehen</SectionTitle>
+        <div className="flex flex-wrap gap-2">
+          {MATERIALS.map((key) => {
+            const active = appSettings.material === key;
+            return (
+              <button
+                key={key}
+                onClick={() => void AppSettingsRepo.set({ ...appSettings, material: key })}
+                aria-pressed={active}
+                className={`flex-1 rounded-lg border px-3 py-2 text-left text-sm ${
+                  active
+                    ? "border-amber-600 bg-amber-950/40 text-amber-200"
+                    : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                <span className="block font-medium">{MATERIAL_LABELS[key]}</span>
+                <span className="block text-[11px] text-slate-500">{MATERIAL_HINTS[key]}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-[11px] leading-snug text-slate-500">
+          Die Farbe im Bogen kommt von der Klasse — der Druide ist grün, der Paladin
+          königsblau. Am einzelnen Bogen lässt sie sich im ⋯-Menü überschreiben. Die
+          Warnfarbe bleibt in jedem Aussehen dieselbe.
+        </p>
+      </Card>
 
       <Card>
         <SectionTitle>{S.settings.features}</SectionTitle>

@@ -41,6 +41,7 @@ export * from "./tables.js";
 export * from "./trackers.js";
 export * from "./rest.js";
 export * from "./dying.js";
+export * from "./accent.js";
 export * from "./prereqs.js";
 export * from "./advice.js";
 export * from "./classFeatures.js";

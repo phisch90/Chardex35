@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  accentClassIdOf,
   applyRest,
   planRest,
   snapshotForRest,
@@ -17,6 +18,8 @@ import { buildCharacterExport, shareOrDownload } from "../lib/transfer.js";
 import { useAllEntities, useHouseRules } from "../lib/hooks.js";
 import { BottomSheet, GhostButton } from "./bits.js";
 import { CampaignPicker } from "./CampaignPicker.js";
+import { AccentPicker } from "./AccentPicker.js";
+import { accentOfClass, isAccentKey, ACCENT_LABELS } from "./classAccents.js";
 import { campaignLook } from "./campaignColors.js";
 
 /**
@@ -72,6 +75,7 @@ export function CharacterActionsSheet(props: {
   const [restUndo, setRestUndo] = useState<RestUndo | null>(null);
   const [restDone, setRestDone] = useState<RestPlan | null>(null);
   const [campaignOpen, setCampaignOpen] = useState(false);
+  const [accentOpen, setAccentOpen] = useState(false);
 
   const character = props.character;
   const isDraft = character.draftOf !== undefined;
@@ -85,6 +89,7 @@ export function CharacterActionsSheet(props: {
     setDangerOpen(false);
     setDeleteArmed(false);
     setCampaignOpen(false);
+    setAccentOpen(false);
     setNote(null);
     props.onClose();
   };
@@ -259,6 +264,43 @@ export function CharacterActionsSheet(props: {
             label={S.campaign.label}
             hint={character.campaign?.name ?? S.campaign.none}
             onClick={() => setCampaignOpen(true)}
+          />
+        )}
+
+        {/*
+          Das Farbthema dieses Bogens. Steht direkt hinter der Kampagne, weil beides
+          dasselbe ist: eine Farbe, die sagt, wohin die Figur gehört bzw. wer sie ist.
+          Draußen (Startseite) färbt die Kampagne, drinnen die Klasse.
+        */}
+        {accentOpen ? (
+          <AccentPicker
+            value={character.accent}
+            fromClass={accentOfClass(accentClassIdOf(character))}
+            onChange={(next) => {
+              void CharacterRepo.mutate(character.id, (c) => {
+                if (next === undefined) delete c.accent;
+                else c.accent = next;
+              }).catch((error: unknown) => {
+                console.error(`Farbthema an ${character.name} fehlgeschlagen:`, error);
+              });
+            }}
+            onClose={() => setAccentOpen(false)}
+          />
+        ) : (
+          <ActionRow
+            icon="🎨"
+            label="Farbthema"
+            hint={
+              isAccentKey(character.accent)
+                ? `${ACCENT_LABELS[character.accent]} — von Hand gewählt`
+                : (() => {
+                    const auto = accentOfClass(accentClassIdOf(character));
+                    return auto === undefined
+                      ? "Aus der Klasse — diese hat kein eigenes Thema"
+                      : `${ACCENT_LABELS[auto]} — aus der Klasse`;
+                  })()
+            }
+            onClick={() => setAccentOpen(true)}
           />
         )}
 

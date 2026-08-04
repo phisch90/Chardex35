@@ -30,3 +30,106 @@ button,
 [role="button"] {
   touch-action: manipulation;
 }
+
+/* ==========================================================================
+   ZWEI REGLER: das Material und die Klassenfarbe
+   ==========================================================================
+
+   Seine Bitte war „ein alternatives Design, was an pen and paper erinnert",
+   dazu „für jede Klasse ein eigenes Farbkonzept". Drei Papiere × elf Klassen
+   wären 33 Entwürfe — so gebaut wäre es nach dem zweiten neuen Knopf kaputt,
+   weil jede neue Karte 33-mal stimmen müsste. Deshalb sind es ZWEI Regler, die
+   sich nicht kennen:
+
+     A) `data-material` am <html> — Untergrund, Karten, Linien, Text.
+     B) `data-accent`   am <html> — genau die Farbe, die heute Amber ist.
+
+   Und der Trick, der das billig macht: Tailwind 4 legt jede Farbe als
+   CSS-Variable ab (`--color-slate-900`), und jede Hilfsklasse LIEST sie
+   (`background: var(--color-slate-900)`). Ein Thema muss deshalb keine einzige
+   Komponente anfassen — es setzt die Variablen neu, und die 168 Stellen mit
+   `text-slate-500` wechseln mit. Nachgeprüft im gebauten Stylesheet, nicht
+   vermutet.
+
+   Was hier ABSICHTLICH nicht steht: `rose` (Warnung), `red` (Gefahr),
+   `emerald` (in Ordnung) und `violet` (Domänenplatz). Das sind Bedeutungen,
+   keine Dekoration. Eine Warnfarbe, die je Klasse wechselt, wäre genau der
+   Fehler, den wir gerade behoben haben, als der Punkt „offen" seine eigene
+   Farbe bekam — eine Farbe, die alles bedeutet, bedeutet nichts.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   A) Material „Nachtbogen": dunkles Papier statt kaltem Blaugrau.
+   --------------------------------------------------------------------------
+   Dieselbe Rampe wie `slate`, nur warm — Tabak und Leder. Die Helligkeiten
+   folgen den Tailwind-Stufen, damit kein Kontrast verlorengeht: `slate-500`
+   ist mit 168 Fundstellen die häufigste Farbe der App und trägt Kleintext,
+   deshalb steht sie hier bewusst HELLER als eine reine Umfärbung ergäbe. */
+[data-material="nachtbogen"] {
+  --color-slate-50: oklch(96.5% 0.016 86);
+  --color-slate-100: oklch(93.5% 0.02 84);
+  --color-slate-200: oklch(89% 0.024 82);
+  --color-slate-300: oklch(82% 0.028 80);
+  --color-slate-400: oklch(73% 0.03 78);
+  --color-slate-500: oklch(64% 0.03 76);
+  --color-slate-600: oklch(47% 0.026 74);
+  --color-slate-700: oklch(36% 0.022 72);
+  --color-slate-800: oklch(28.5% 0.018 72);
+  --color-slate-900: oklch(21.5% 0.014 70);
+  --color-slate-950: oklch(16.5% 0.012 70);
+}
+
+/* Das Papier bekommt eine Andeutung von Struktur — drei sehr weiche Flecken,
+   kein Bild und kein Filter: es läuft auf einem Handy mit halbleerem Akku. */
+[data-material="nachtbogen"] body {
+  background-image:
+    radial-gradient(60% 45% at 18% 8%, oklch(85% 0.05 85 / 0.05), transparent 70%),
+    radial-gradient(55% 40% at 88% 55%, oklch(85% 0.04 70 / 0.04), transparent 70%),
+    radial-gradient(75% 45% at 45% 102%, oklch(0% 0 0 / 0.3), transparent 70%);
+  background-attachment: fixed;
+}
+
+/* --------------------------------------------------------------------------
+   B) Die Klassenfarbe: EINE Rampe, ein Farbton je Klasse.
+   --------------------------------------------------------------------------
+   Die Stufen sind die von `amber` (Helligkeit und Sättigung 1:1 abgelesen aus
+   dem gebauten Stylesheet), variabel sind nur der Farbton `--ac-h` und ein
+   Sättigungs-Faktor `--ac-s`. Damit ist eine Klasse EINE Zeile — und keine
+   Klasse kann versehentlich einen anderen Kontrast haben als die anderen.
+
+   `--ac-s` ist nicht Kosmetik: der Kämpfer soll fast grau sein (Stahl), der
+   Hexenmeister satt (Funke). Ohne den Faktor wären alle elf gleich laut. */
+[data-accent] {
+  --color-amber-100: oklch(96.2% calc(0.059 * var(--ac-s)) var(--ac-h));
+  --color-amber-200: oklch(92.4% calc(0.12 * var(--ac-s)) var(--ac-h));
+  --color-amber-300: oklch(87.9% calc(0.169 * var(--ac-s)) var(--ac-h));
+  --color-amber-400: oklch(82.8% calc(0.189 * var(--ac-s)) var(--ac-h));
+  --color-amber-500: oklch(76.9% calc(0.188 * var(--ac-s)) var(--ac-h));
+  --color-amber-600: oklch(66.6% calc(0.179 * var(--ac-s)) var(--ac-h));
+  --color-amber-700: oklch(55.5% calc(0.163 * var(--ac-s)) var(--ac-h));
+  --color-amber-800: oklch(47.3% calc(0.137 * var(--ac-s)) var(--ac-h));
+  --color-amber-900: oklch(41.4% calc(0.112 * var(--ac-s)) var(--ac-h));
+  --color-amber-950: oklch(27.9% calc(0.077 * var(--ac-s)) var(--ac-h));
+}
+
+/*
+  Die elf Spielerklassen. Die Zuordnung Klasse → Schlüssel steht in
+  `ui/classAccents.ts` (dort auch die deutschen Namen), hier steht nur, wie ein
+  Schlüssel AUSSIEHT — dieselbe Trennung wie bei den Kampagnenfarben.
+
+  NPC-Klassen (Adept, Aristokrat, Bürger, Experte, Krieger), Prestigeklassen und
+  alles Selbstgebaute bekommen absichtlich keinen Eintrag: ohne `data-accent`
+  bleibt Amber stehen, und das ist die richtige Antwort auf „diese Klasse kenne
+  ich nicht" — kein Raten, keine Behauptung.
+*/
+[data-accent="wild"]      { --ac-h: 40;  --ac-s: 0.8;  } /* Barbar — Rost      */
+[data-accent="verspielt"] { --ac-h: 185; --ac-s: 0.55; } /* Barde — Türkis     */
+[data-accent="fromm"]     { --ac-h: 240; --ac-s: 0.35; } /* Kleriker — Silber  */
+[data-accent="natur"]     { --ac-h: 130; --ac-s: 0.65; } /* Druide — Moos      */
+[data-accent="stahl"]     { --ac-h: 245; --ac-s: 0.2;  } /* Kämpfer — Stahl    */
+[data-accent="ruhe"]      { --ac-h: 65;  --ac-s: 0.95; } /* Mönch — Safran     */
+[data-accent="edel"]      { --ac-h: 272; --ac-s: 0.6;  } /* Paladin — Königsb. */
+[data-accent="faehrte"]   { --ac-h: 120; --ac-s: 0.35; } /* Waldläufer — Oliv  */
+[data-accent="schatten"]  { --ac-h: 160; --ac-s: 0.4;  } /* Schurke — Grünspan */
+[data-accent="funke"]     { --ac-h: 330; --ac-s: 0.6;  } /* Hexenmeister       */
+[data-accent="zeichen"]   { --ac-h: 285; --ac-s: 0.5;  } /* Magier — Indigo    */

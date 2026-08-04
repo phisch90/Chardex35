@@ -27,9 +27,23 @@ export function Layout() {
   */
   const mainRef = useRef<HTMLElement | null>(null);
   useScrollMemory(mainRef, pathname + searchStr);
-  const { diceEnabled } = useAppSettings();
+  const { diceEnabled, material } = useAppSettings();
   // Würfeln abgeschaltet → der Reiter verschwindet ganz aus der Navigation.
   const visibleNav = NAV.filter((item) => diceEnabled || item.to !== "/wuerfel");
+
+  /*
+    Das Material ans <html>, nicht an diesen Kasten: der Untergrund steht am `body`, und
+    die Reiterleiste unten ist `fixed` — beide liegen außerhalb. Ein Thema, das nur den
+    Inhalt umfärbt und den Rand vergisst, ist schlimmer als keins.
+
+    `data-material="codex"` wird ENTFERNT statt gesetzt: „codex" ist der Grundzustand, und
+    ein Attribut, auf das keine Regel zeigt, wäre eine Einladung, es doch zu benutzen.
+  */
+  useEffect(() => {
+    const root = document.documentElement;
+    if (material === "codex") root.removeAttribute("data-material");
+    else root.setAttribute("data-material", material);
+  }, [material]);
 
   useEffect(() => {
     void requestPersistentStorage();
