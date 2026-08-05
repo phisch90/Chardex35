@@ -659,6 +659,39 @@ aufgeschrieben zu werden, weil sie alle dieselbe Frage beantworten: **wo gehört
   Liste) — die erste Fehlerfamilie, diesmal von vorn bedacht. Der Test in
   `db/migrate.test.ts` prüft beide Richtungen: Grad 0 weg, Grad 1 und höher unangetastet.
 
+### Die Punkte zählen AB — zwei Anzeigen, eine Richtung
+
+Sein Befund: **„Irgendwie Quatsch, dass sich die Zauberplätze füllen wenn ich einen Zauber
+wirke. Die Punkte sollen bitte abgezogen werden."** Er hat recht, und der Fehler stand in
+DERSELBEN Kopfzeile: die ZAHL lief abwärts („Slots 3/4" sind die FREIEN Plätze), die PUNKTE
+liefen aufwärts (`i < used ? "●" : "○"` — ein gewirkter Zauber füllte einen Punkt). Zwei
+Anzeigen für dieselbe Sache, in Gegenrichtung, zehn Pixel voneinander entfernt.
+
+Das ist genau die Verwechslung, die er beim − / + schon einmal gemeldet hat, und die
+Antwort ist dieselbe: **die Anzeige zeigt, was er NOCH HAT.** Ein voller Punkt ist ein
+Platz, den er noch hat; Wirken nimmt einen weg. Der Hinweistext hat mitwandern müssen
+(„Wirken zieht einen Slot des Grads ab" statt „zählt hoch") und die Legende auch — sie ist
+die Stelle, an der man nachliest, und eine falsche Legende ist schlimmer als keine.
+
+Zwei Dinge daran hat nur das MESSEN gefunden, nicht das Nachdenken:
+
+- **Ein zweiter Ton für denselben Zustand kippt irgendwann.** Der verbrauchte Domänenplatz
+  bekam zuerst `violet-800`, der freie `violet-300` — auf der KLADDE war damit der
+  VERBRAUCHTE kräftiger (Kontrast zum Papier 179 gegen 160), weil die Buntrampe dort anders
+  faltet als die von Slate. Jetzt tragen alle verbrauchten Punkte denselben Ton: **die FORM
+  sagt „Domäne", der TON sagt „noch da" oder „weg".** Die Messung steht als Schranke in
+  `e2e-papiere.mjs` — in allen vier Papieren, und mit einer Untergrenze auch dafür, dass der
+  verbrauchte Punkt SICHTBAR bleibt (mit `slate-700` war die Reihe auf dem Bild leer, und
+  sie soll weiter sagen, wie viele Plätze der Grad überhaupt hat).
+- **Kein Amber für die Punkte.** Das ist die Bedienfarbe; die Punkte sind Auskunft und kein
+  Knopf (elfte Falle). Sie stehen deshalb in der Slate-Rampe, und die faltet mit dem Papier.
+
+Und eine Falle in der Probe selbst, die zur dritten Anzeige-Falle gehört: **eine Klasse, die
+im Quelltext nicht mehr vorkommt, existiert im Stylesheet nicht.** Nach dem Entfernen von
+`text-violet-800` maß meine Probe weiter diese Klasse — der Messpunkt erbte die Textfarbe,
+und die Messung meldete 238 statt 38. Wer Farben messen will, muss messen, was die App
+WIRKLICH benutzt.
+
 ## Aussehen: zwei Regler, nicht 33 Entwürfe
 
 Sein Wunsch war „ein alternatives Design, was an pen and paper erinnert", dann drei Entwürfe

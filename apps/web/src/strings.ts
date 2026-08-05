@@ -1184,8 +1184,14 @@ export const S = {
     /** Im Zauber-Auswähler: dieser Grad ist voll (Hexenmeister-Grenze je Grad). */
     levelFull: (level: number) => `Grad ${level} ist voll`,
     noneFound: "Kein Zauber gefunden.",
+    /*
+      „zieht ab" und nicht „zählt hoch": die Anzeige nennt die FREIEN Plätze — die Zahl
+      („Slots 3/4") wie die Punkte. Ein Satz, der das Gegenteil sagt, ist genau der Grund
+      für seinen Befund gewesen: „Irgendwie Quatsch, dass sich die Zauberplätze füllen wenn
+      ich einen Zauber wirke."
+    */
     preparedHint:
-      "Wirken zählt die Slots des Grads hoch — welcher konkrete Zauber verbraucht ist, merkt ihr euch wie am Tisch üblich.",
+      "Wirken zieht einen Slot des Grads ab — welcher konkrete Zauber verbraucht ist, merkt ihr euch wie am Tisch üblich.",
     knownLimit: (have: number, max: string) => `${have}/${max} bekannt`,
     slots: "Slots",
     addToSpellbook: "Zauberbuch erweitern",

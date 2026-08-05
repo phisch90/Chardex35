@@ -368,17 +368,60 @@ function CasterBlock({
               </button>
               <span className="flex-1 truncate font-mono text-[11px] text-slate-400">
                 {/*
-                  Der Domänenplatz ist der LETZTE Punkt der Reihe und trägt eine
-                  eigene Form. Verbraucht wird von links, also füllt er sich
-                  zuletzt — was der Wahrheit entspricht: die App weiß nicht,
-                  welcher der gewirkten Zauber der Domänenzauber war, und sie soll
-                  nicht so tun als ob.
+                  Ein VOLLER Punkt ist ein Platz, den er noch hat.
+
+                  Vorher war es umgekehrt (voll = verbraucht), und sein Befund dazu ist
+                  richtig: „Irgendwie Quatsch, dass sich die Zauberplätze füllen wenn ich
+                  einen Zauber wirke. Die Punkte sollen bitte abgezogen werden." In
+                  derselben Kopfzeile lief die ZAHL abwärts („Slots 3/4" sind die FREIEN)
+                  und die Punkte aufwärts — zwei Anzeigen für dieselbe Sache in
+                  Gegenrichtung. Dieselbe Verwechslung wie bei − und +, und dieselbe
+                  Antwort: die Anzeige zeigt, was er NOCH HAT, nicht was weg ist.
+
+                  Der Domänenplatz ist der LETZTE Punkt der Reihe und trägt eine eigene
+                  Form. Verbraucht wird von links, er leert sich also zuletzt — was der
+                  Wahrheit entspricht: die App weiß nicht, welcher der gewirkten Zauber der
+                  Domänenzauber war, und sie soll nicht so tun als ob.
                 */}
                 {Array.from({ length: total }, (_, i) => {
                   const isDomain = i >= total - slot.domain;
-                  const symbol = isDomain ? (i < used ? "◆" : "◇") : i < used ? "●" : "○";
+                  const frei = i >= used;
+                  const symbol = isDomain ? (frei ? "◆" : "◇") : frei ? "●" : "○";
+                  /*
+                    Und die Farbe zeigt in dieselbe Richtung wie die Form: der Platz, den
+                    er noch hat, ist Tinte, der verbrauchte gedämpft. Vorher trugen alle
+                    Punkte dieselbe Farbe — dann muss man die Form lesen, und bei 11 px
+                    ist ● gegen ○ fast kein Unterschied.
+
+                    Zwei Sachen sind hier bewusst NICHT gemacht:
+
+                    Kein Amber. Das ist die Bedienfarbe (aktiver Reiter, Hauptknöpfe), und
+                    die Punkte sind Auskunft und kein Knopf — eine Farbe, die alles
+                    bedeutet, bedeutet nichts (elfte Falle).
+
+                    Und der verbrauchte Punkt ist gedämpft, aber NICHT unsichtbar: mit
+                    `slate-700` war die Reihe auf dem Bild leer, sobald alles verbraucht
+                    war. Sie soll weiter sagen, wie viele Plätze der Grad überhaupt hat.
+                    Gefunden hat das der Blick auf das Bild, nicht die Prüfung — die zählt
+                    Zeichen und sieht keine Farbe.
+                  */
+                  /*
+                    Und der VERBRAUCHTE Punkt trägt immer denselben Ton — auch der
+                    Domänenplatz. Das ist keine Sparsamkeit, sondern das Ergebnis einer
+                    Messung: mit `violet-800` für den verbrauchten Domänenplatz stand die
+                    Bedeutung auf der KLADDE auf dem Kopf (Kontrast zum Papier 179 gegen
+                    160 beim freien) — dort faltet die Buntrampe anders als die von Slate.
+                    Zwei Regeln für denselben Zustand sind zwei Gelegenheiten, dass eine
+                    davon in einem Papier kippt. Die FORM sagt „Domäne", der TON sagt
+                    „noch da" oder „weg".
+                  */
+                  const ton = frei
+                    ? isDomain
+                      ? "text-violet-300"
+                      : "text-slate-200"
+                    : "text-slate-600";
                   return (
-                    <span key={i} className={isDomain ? "text-violet-300" : undefined}>
+                    <span key={i} className={ton}>
                       {symbol}
                       {i < total - 1 ? " " : ""}
                     </span>
@@ -658,9 +701,15 @@ function CasterBlock({
       <details className="mt-3 border-t border-slate-800 pt-2">
         <summary className="cursor-pointer text-xs text-slate-400">Zeichen-Legende</summary>
         <ul className="mt-1.5 space-y-1 text-xs leading-snug text-slate-500">
+          {/*
+            Die Legende folgt der Anzeige, nicht der Erinnerung: voll = noch da. Stand hier
+            weiter „verbrauchter / freier", wäre sie die dritte Wahrheit neben Punkten und
+            Zahl — und die Legende ist die Stelle, an der man nachliest, wenn man unsicher
+            ist. Eine falsche Legende ist schlimmer als keine.
+          */}
           <li>
-            <span className="text-amber-400">●</span> / <span className="text-slate-500">○</span> im
-            Grad-Kopf — verbrauchter / freier Slot dieses Grads
+            <span className="text-slate-200">●</span> / <span className="text-slate-600">○</span> im
+            Grad-Kopf — freier / verbrauchter Slot dieses Grads
           </li>
           {/*
             Die Reihenfolge in der Legende folgt der Reihenfolge der Knöpfe im Kopf, und
@@ -685,9 +734,9 @@ function CasterBlock({
           </li>
           {block.domainPick > 0 && (
             <li>
-              <span className="text-violet-300">◆</span> / <span className="text-violet-300">◇</span>{" "}
+              <span className="text-violet-300">◆</span> / <span className="text-slate-600">◇</span>{" "}
               im Grad-Kopf — der {S.spells.domainSlot} dieses Grads. Er gehört einem Zauber aus deinen
-              Domänen; verbraucht wird von links, er füllt sich also zuletzt.
+              Domänen; verbraucht wird von links, er leert sich also zuletzt.
             </li>
           )}
         </ul>
