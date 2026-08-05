@@ -80,7 +80,8 @@ Regel, die man nicht geändert hat, hat keinen Commit, an dem man sie später wi
 
 Dazu sein zweiter Satz: **„Bitte auch immer bab nennen."** Der Wert heißt in der App
 jetzt überall BAB (vorher am Bogen „GAB", in den Einstellungen „BAB"), und er steht an
-jeder Angriffszeile dabei: „Volle Attacke aus BAB +6: …".
+jeder Angriffszeile dabei: „Volle Attacke aus BAB +6: …". Ein Satz über den Tisch selbst
+steht dort ausdrücklich NICHT — den hatte ich angehängt, und er wollte ihn weg.
 
 ---
 

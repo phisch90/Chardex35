@@ -144,5 +144,12 @@ describe("Regelkürzel bleiben englisch", () => {
     expect(lang).toContain("BAB +6");
     expect(lang).toContain("+9");
     expect(lang).toContain("+4");
+    /*
+      Und was NICHT dasteht: der Satz „Euer Tisch spielt die Reihe ab BAB +6." Er ist auf
+      seinen Wunsch weg („Das „euer Tisch…" kann raus"), und ohne diese Zeile hier käme er
+      bei der nächsten Runde als gut gemeinte Ergänzung zurück. Ein Test, der eine
+      Auslassung festhält, ist die einzige Art, eine Entscheidung gegen Text zu schützen.
+    */
+    expect(lang).not.toMatch(/euer tisch/i);
   });
 });

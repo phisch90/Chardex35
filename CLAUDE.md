@@ -329,6 +329,12 @@ Jetzt läuft die Prüfung als kleiner Zustandsautomat über die Datei.
   Runde (BAB +6)", ab `sm` der ganze Satz „Volle Attacke aus BAB +6: …". Er hat den
   besseren Grund dafür geliefert, als ihm vermutlich klar war — die Reihe „+9/+4" kommt
   aus dem BAB und nicht aus der Zahl, die daneben steht.
+  **Was NICHT dazugehört: ein Satz über seinen Tisch.** Ich hatte „Euer Tisch spielt die
+  Reihe ab BAB +6." angehängt; sein Wort dazu: „Das „euer Tisch…" kann raus." Er hat recht,
+  und der Grund ist mehr als Kürze — der Satz erzählte ihm eine Regel, die er selbst
+  gesetzt hat, an einer Stelle, an der er mitten im Kampf eine ZAHL sucht. Die Auslassung
+  steht als Prüfung in `strings.test.ts` und in der Teststrecke, sonst kommt sie beim
+  nächsten Mal als gut gemeinte Ergänzung zurück.
 - **Startseite: Kampagne mit Farbe, keine TP, Karten in Stufen.** Gefragt und
   entschieden: eintragen an ALLEN DREI Stellen (Bogen bei Name/Spieler, ⋯-Menü der
   Karte, Assistent) · **nach Kampagne gruppieren**, nicht nur färben · **in Stufen

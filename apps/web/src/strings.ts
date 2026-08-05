@@ -100,8 +100,14 @@ export const S = {
     */
     iterativeShort: (n: number, bab: string) =>
       `${n} Angriffe pro Runde (BAB ${bab}) — antippen erklärt es`,
+    /*
+     * Hier stand am Ende noch „Euer Tisch spielt die Reihe ab BAB +6." — sein Wort dazu:
+     * „Das „euer Tisch…" kann raus." Er hat recht, und der Grund ist mehr als Kürze: der
+     * Satz erzählte ihm eine Regel, die er selbst gesetzt hat, an einer Stelle, an der er
+     * eine ZAHL sucht. Am Tisch liest man diese Zeile mitten im Kampf.
+     */
     iterativeHint: (mods: string[], bab: string) =>
-      `Volle Attacke aus BAB ${bab}: ${mods.length} Angriffe hintereinander mit ${mods.join(" und ")} — jeder weitere liegt 5 niedriger. Ein einzelner Angriff (Standard-Aktion) nutzt immer ${mods[0]}. Euer Tisch spielt die Reihe ab BAB +6.`,
+      `Volle Attacke aus BAB ${bab}: ${mods.length} Angriffe hintereinander mit ${mods.join(" und ")} — jeder weitere liegt 5 niedriger. Ein einzelner Angriff (Standard-Aktion) nutzt immer ${mods[0]}.`,
     damage2: "Schaden",
     critical: "Krit.",
     ranks: "Ränge",
