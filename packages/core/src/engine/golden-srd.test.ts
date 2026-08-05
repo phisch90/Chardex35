@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { characterSchema, type Character } from "../schema/character.js";
+import { DEFAULT_HOUSE_RULES, characterSchema, type Character } from "../schema/character.js";
 import { entitySchema, resolveCompendium, type Entity } from "../schema/entities.js";
 import { deriveSheet } from "./index.js";
 
@@ -225,6 +225,120 @@ describe.skipIf(!packsAvailable)("Golden-Tests gegen die SRD-Packs", () => {
     // Schaden: STR ×1,5 = +6, dazu Power Attack ×2 = +8 → 2d6+14.
     expect(a0!.damageText).toBe("2d6+6");
     expect(a1!.damageText).toBe("2d6+14");
+  });
+
+  /**
+   * SEIN Aufbau, und der Weg dorthin ist die Geschichte dieses Tests.
+   *
+   * Sein Befund: „da hat eben bei Hike kein power attack auf den schaden gezählt … Ich
+   * kämpfe mit kurzschwert und Schild." Das Kurzschwert steht in den Packs als
+   * `handedness: "light"`, und der SRD verbietet dort den Schadensbonus — der
+   * Angriffsmalus gilt trotzdem. Nach dem Buch kostet Power Attack ihn also
+   * Trefferchance und bringt nichts, und die App sagte kein Wort dazu.
+   *
+   * Seine Entscheidung mit dieser Auskunft: „Bei uns zählt sie trotzdem." Der Test hält
+   * BEIDE Fassungen fest, weil die Hausregel abschaltbar ist — und weil die eine ohne die
+   * andere nichts beweist.
+   */
+  it("Power Attack mit Kurzschwert und Schild: Hausregel gibt den Schaden, SRD nicht", () => {
+    const basis = {
+      id: "pa-light-1",
+      name: "Kurzschwert und Schild",
+      raceId: "srd:race:human",
+      abilities: { base: { str: 18, dex: 12, con: 14, int: 10, wis: 10, cha: 8 } },
+      levels: Array.from({ length: 6 }, () => ({ classId: "srd:class:fighter", hpRoll: "max" })),
+      feats: [{ featId: "srd:feat:power-attack" }],
+      inventory: [
+        { id: "w1", itemId: "srd:item:sword-short", qty: 1, slot: "mainHand" },
+        { id: "s1", itemId: "srd:item:shield-heavy-steel", qty: 1, slot: "offHand" },
+      ],
+      combatOptions: { powerAttack: 4 },
+    };
+    const zeile = (sheet: ReturnType<typeof deriveSheet>) => {
+      const line = sheet.attacks.find((a) => a.label.includes("Sword, short"));
+      if (!line) throw new Error("Kurzschwert-Zeile fehlt");
+      return line;
+    };
+
+    // Standard = seine Tischregel.
+    const tisch = zeile(deriveSheet(C(basis), compendium));
+    // STR 18 (+4) + Power Attack 4 = +8; einhändig, also NICHT doppelt.
+    expect(tisch.damageText).toBe("1d6+8");
+
+    // Und nach dem Buch: derselbe Angriff, aber kein Schadensbonus.
+    const srd = zeile(
+      deriveSheet(C(basis), compendium, {
+        ...DEFAULT_HOUSE_RULES,
+        powerAttackLightWeapons: false,
+      }),
+    );
+    expect(srd.damageText).toBe("1d6+4");
+
+    // Der ANGRIFF ist in beiden Fassungen gleich — das ist der Kern seines Befunds.
+    expect(tisch.bonuses).toEqual(srd.bonuses);
+    // BAB 6 + STR 4 − Power Attack 4 = +6, dazu der zweite Angriff fünf tiefer.
+    expect(tisch.bonuses).toEqual([6, 1]);
+
+    /*
+      Und die Auslassung, die genauso wichtig ist: nach dem Buch STEHT der Satz an der
+      Zeile, mit der Hausregel nicht. Eine App, die etwas weiß und schweigt, ist der
+      Grund, warum er es überhaupt gemeldet hat.
+    */
+    expect(srd.notes.join(" ")).toMatch(/leichte Waffe/i);
+    expect(tisch.notes.join(" ")).not.toMatch(/leichte Waffe/i);
+  });
+
+  /**
+   * „Wir bekommen immer den HD der Klasse die wir leveln." — seine Ansage, und die App tut
+   * es schon: `LevelUp.tsx` schreibt `hpRoll: "max"` an die neue STUFE, und die Timeline
+   * nimmt den Trefferwürfel der Klasse GENAU DIESER Stufe.
+   *
+   * Ohne Test wäre das eine unbelegte Behauptung, und der Fehler dazu wäre still: nähme
+   * die Rechnung den Würfel der ERSTEN Klasse, bekäme sein Kämpfer/Kleriker beim
+   * Kleriker-Aufstieg 10 statt 8 — eine Zahl, die niemand nachrechnet.
+   *
+   * Die zweite Hälfte ist sein Zusatz: „Anfangs haben wir auch gewürfelt, deswegen passt
+   * hikes TP nicht ganz." Gewürfelte Stufen müssen deshalb Zahl für Zahl stehen bleiben,
+   * auch wenn danach volle Würfel dazukommen — genau deshalb steht `hpRoll` an der Stufe
+   * und nicht als Hausregel über allen.
+   */
+  it("Aufstieg nimmt den Trefferwürfel der gesteigerten Klasse, und alte Würfe bleiben", () => {
+    const kaempfer3 = Array.from({ length: 3 }, () => ({
+      classId: "srd:class:fighter",
+      hpRoll: "max" as const,
+    }));
+    const con12 = { base: { str: 12, dex: 12, con: 12, int: 10, wis: 10, cha: 10 } };
+    const hp = (levels: unknown[]) =>
+      deriveSheet(
+        C({ id: "hd-1", name: "Würfelprobe", raceId: "srd:race:human", abilities: con12, levels }),
+        compendium,
+      ).hp.max;
+
+    // Kämpfer 3, volle Würfel, CON 12 (+1): 10+1 + 10+1 + 10+1 = 33.
+    expect(hp(kaempfer3)).toBe(33);
+    // Eine KLERIKER-Stufe dazu: +8+1 = 42. Mit dem Kämpferwürfel wären es 44.
+    expect(hp([...kaempfer3, { classId: "srd:class:cleric", hpRoll: "max" }])).toBe(42);
+    // Und noch eine Kämpferstufe: +10+1 = 53. Der Würfel folgt der Klasse, nicht der Reihe.
+    expect(
+      hp([
+        ...kaempfer3,
+        { classId: "srd:class:cleric", hpRoll: "max" },
+        { classId: "srd:class:fighter", hpRoll: "max" },
+      ]),
+    ).toBe(53);
+
+    /*
+      Der gewürfelte Altbestand: Stufe 2 stand auf einer 4 und bleibt es, obwohl Stufe 3
+      und 4 volle Würfel sind. 10+1 + 4+1 + 10+1 + 8+1 = 36.
+    */
+    expect(
+      hp([
+        { classId: "srd:class:fighter", hpRoll: "max" },
+        { classId: "srd:class:fighter", hpRoll: 4 },
+        { classId: "srd:class:fighter", hpRoll: "max" },
+        { classId: "srd:class:cleric", hpRoll: "max" },
+      ]),
+    ).toBe(36);
   });
 
   /**

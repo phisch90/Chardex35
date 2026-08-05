@@ -193,7 +193,7 @@ export function ClassInfo({
             Stufe {gain.level} dieser Klasse bringt
           </div>
           <div className="text-amber-100/90">
-            {gain.hitDie > 0 && `+1W${gain.hitDie} TP`}
+            {gain.hitDie > 0 && `+1W${gain.hitDie} HP`}
             {gain.babDelta > 0 && ` · BAB ${fmtMod(gain.babDelta)}`}
             {(["fort", "ref", "will"] as const)
               .filter((key) => gain.saveDeltas[key] > 0)

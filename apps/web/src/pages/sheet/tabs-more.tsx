@@ -783,7 +783,7 @@ const MISC_TARGETS: { path: StatPath; label: string }[] = [
   { path: "save.ref", label: "Reflex" },
   { path: "save.will", label: "Will" },
   { path: "init", label: "Initiative" },
-  { path: "hp.max", label: "Max. TP" },
+  { path: "hp.max", label: "Max. HP" },
   { path: "speed.land", label: "Bewegung" },
   { path: "skill.all", label: "Alle Fertigkeiten" },
   { path: "ability.str", label: "Stärke" },

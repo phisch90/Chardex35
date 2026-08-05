@@ -1021,7 +1021,7 @@ export function mapFightClubPc(
     issues.push({
       severity: "info",
       code: "hp-override",
-      message: `TP aus dem Export übernommen (${pc.hp.current}/${pc.hp.max}) — als festes Maximum gesetzt, im Bogen änderbar.`,
+      message: `HP aus dem Export übernommen (${pc.hp.current}/${pc.hp.max}) — als festes Maximum gesetzt, im Bogen änderbar.`,
     });
   }
 

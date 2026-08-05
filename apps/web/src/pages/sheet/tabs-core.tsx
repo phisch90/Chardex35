@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ABILITIES, stepRank } from "@codex35/core";
+import { ABILITIES, iterativeAttacks, stepRank } from "@codex35/core";
 import { Link } from "@tanstack/react-router";
 import { S } from "../../strings.js";
 import { Icon, IconInline } from "../../ui/icons.js";
@@ -213,6 +213,25 @@ export function CombatTab(props: TabProps) {
 
       <Card>
         <SectionTitle>{S.sheet.attacks}</SectionTitle>
+        {/*
+          Die volle Attacke EINMAL deutlich, über der Liste und ohne Tap. Sein Auftrag:
+          „das mit dem zweifachen Angriff deutlicher aufnehmen sobald der Char einen BAB 6
+          erreicht." Klein an jeder Waffe stand es schon — nur eben klein, an jeder Waffe,
+          und damit nirgends.
+
+          Die Zahl ist eine FOLGE aus dem BAB und wird gerechnet, nicht gespeichert. Die
+          Farbe ist die Bedeutungsfarbe für „das ist in Ordnung/neu" und nicht die
+          Bedienfarbe: hier ist nichts zu drücken (elfte Falle).
+        */}
+        {iterativeAttacks(sheet.bab).length > 1 && (
+          <p className="mb-2 rounded-lg border border-emerald-800/60 bg-emerald-950/40 px-2 py-1.5 text-xs leading-snug text-emerald-200">
+            {S.sheet.fullAttack(
+              iterativeAttacks(sheet.bab).length,
+              fmtMod(sheet.bab),
+              iterativeAttacks(sheet.bab).map(fmtMod),
+            )}
+          </p>
+        )}
         <ul className="space-y-2">
           {sheet.attacks.map((attack) => (
             <li key={attack.key} className="rounded-lg bg-slate-800/60 p-2">

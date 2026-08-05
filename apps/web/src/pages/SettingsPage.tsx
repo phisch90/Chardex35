@@ -251,6 +251,30 @@ export function SettingsPage() {
             ? S.settings.deathAtNegConHint
             : S.settings.deathAtMinus10Hint}
         </p>
+
+        {/*
+          Power Attack mit leichter Waffe. Sein Weg dahin, kurz: „bei Hike hat kein power
+          attack auf den schaden gezählt" → er kämpft mit Kurzschwert und Schild → das
+          Kurzschwert ist eine LEICHTE Waffe, und der SRD verbietet dort den Schadensbonus
+          (der Angriffsmalus gilt trotzdem) → seine Frage „Oder gilt power attack beim
+          Kurzschwert nie?" → ja → seine Entscheidung: „Bei uns zählt sie trotzdem."
+
+          Deshalb ist AN der Standard. Der Satz darunter nennt, was bei AUS passiert —
+          dieselbe Machart wie bei der Todesgrenze: erst der Schalter, dann die Folge in
+          Zahlen, damit eine falsche Einstellung auffällt statt still zu wirken.
+        */}
+        <div className="mt-3 border-t border-slate-800 pt-3">
+          <Toggle
+            label={S.settings.powerAttackLight}
+            checked={houseRules.powerAttackLightWeapons}
+            onChange={(v) => setRule({ powerAttackLightWeapons: v })}
+          />
+          <p className="mt-0.5 text-[11px] leading-snug text-slate-500">
+            {houseRules.powerAttackLightWeapons
+              ? S.settings.powerAttackLightOnHint
+              : S.settings.powerAttackLightOffHint}
+          </p>
+        </div>
       </Card>
 
       <SyncCard />

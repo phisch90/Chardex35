@@ -25,6 +25,15 @@ import { describe, expect, it } from "vitest";
 import { S } from "./strings.js";
 
 const SRC = dirname(fileURLToPath(import.meta.url));
+/**
+ * Geprüft werden BEIDE Pakete.
+ *
+ * Die Texte, die er liest, liegen nicht nur in der Oberfläche: die Begründungen der
+ * Empfehlungen und die 1866 Gegenstands-Erklärungen stehen im Kern. Eine Schranke, die nur
+ * `apps/web` abdeckt, wäre genau die „eine Regel in drei Ansichten"-Falle — sie meldet
+ * grün, während die Hälfte der App das alte Kürzel zeigt.
+ */
+const ROOTS = [SRC, join(SRC, "../../../packages/core/src")];
 
 /**
  * Die verbotenen Kürzel: die deutschen Eigenerfindungen für Werte, die in den Büchern
@@ -36,6 +45,13 @@ const SRC = dirname(fileURLToPath(import.meta.url));
  */
 const VERBOTEN: Array<{ kuerzel: string; statt: string; re: RegExp }> = [
   { kuerzel: "GAB", statt: "BAB", re: /\bGAB\b/ },
+  /*
+    „TP bitte in HP umbenennen." Dieselbe Entscheidung wie GAB → BAB, eine Runde später —
+    und derselbe Grund, sie als Schranke zu schreiben statt als Prosa: die Abkürzung stand
+    an rund zwanzig Stellen in vier Dateien und zwei Paketen, und eine davon zu vergessen
+    heißt, dass der Bogen zwei Namen für dieselbe Zahl hat.
+  */
+  { kuerzel: "TP", statt: "HP", re: /\bTP\b/ },
   { kuerzel: "GE", statt: "DEX", re: /\bGE[- ](?:Mod|Bonus)/ },
   { kuerzel: "KO", statt: "CON", re: /\bKO[- ](?:Mod|Bonus)/ },
   { kuerzel: "WE", statt: "WIS", re: /\bWE[- ](?:Mod|Bonus)/ },
@@ -103,19 +119,32 @@ describe("Regelkürzel bleiben englisch", () => {
     expect(S.sheet.bab).toBe("BAB");
   });
 
-  it("kein deutsches Kürzel in den Quelltexten", () => {
+  it("kein deutsches Kürzel in den Quelltexten — in BEIDEN Paketen", () => {
     const funde: string[] = [];
-    for (const file of sources(SRC)) {
-      const rel = file.slice(SRC.length + 1);
-      const text = readFileSync(file, "utf8");
-      const kommentare = commentLines(text);
-      text.split("\n").forEach((line, i) => {
-        if (kommentare.has(i)) return;
-        for (const { kuerzel, statt, re } of VERBOTEN) {
-          if (re.test(line)) funde.push(`${rel}:${i + 1} — „${kuerzel}" statt „${statt}": ${line.trim()}`);
-        }
-      });
+    let gelesen = 0;
+    for (const root of ROOTS) {
+      for (const file of sources(root)) {
+        gelesen++;
+        const rel = file.slice(root.length + 1);
+        const text = readFileSync(file, "utf8");
+        const kommentare = commentLines(text);
+        text.split("\n").forEach((line, i) => {
+          if (kommentare.has(i)) return;
+          for (const { kuerzel, statt, re } of VERBOTEN) {
+            if (re.test(line))
+              funde.push(`${rel}:${i + 1} — „${kuerzel}" statt „${statt}": ${line.trim()}`);
+          }
+        });
+      }
     }
+    /*
+      Die Frage „wurde überhaupt gelesen?" steht VOR dem Vergleich. Ein Test, der nichts
+      messen konnte und Erfolg meldet, ist schlimmer als kein Test — genau das ist mir bei
+      den Klassenfarben passiert (grün, obwohl kein einziges Thema gefunden wurde). Der
+      zweite Pfad zeigt über eine Paketgrenze und ist damit die wahrscheinlichste Stelle,
+      an der still gar nichts mehr gelesen wird.
+    */
+    expect(gelesen, "Quelldateien gefunden").toBeGreaterThan(100);
     expect(funde, `Deutsche Regelkürzel gefunden:\n${funde.join("\n")}`).toEqual([]);
   });
 

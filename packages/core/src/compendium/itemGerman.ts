@@ -753,11 +753,11 @@ const GEAR: Record<string, ItemGerman> = {
   "road-or-gate-toll": { name: "Weg- oder Torzoll", summary: "Was das Stadttor oder die Brücke kostet." },
   "rope-hempen-50-ft": {
     name: "Hanfseil (15 m)",
-    summary: "Ein Seil, das 2 TP hat und 0 Panzerung: mit einer Waffe in zwei Runden durchzutrennen.",
+    summary: "Ein Seil, das 2 HP hat und 0 Panzerung: mit einer Waffe in zwei Runden durchzutrennen.",
   },
   "rope-silk-50-ft": {
     name: "Seidenseil (15 m)",
-    summary: "Halb so schwer wie Hanf und stärker (4 TP). Gibt +2 auf Kletterproben.",
+    summary: "Halb so schwer wie Hanf und stärker (4 HP). Gibt +2 auf Kletterproben.",
   },
   rowboat: { name: "Ruderboot", summary: "Ein Boot für drei Personen, 2,5 bis 3,5 m. Eine halbe Meile die Stunde." },
   "royal-outfit": {
@@ -1088,7 +1088,7 @@ const RINGS: Record<string, ItemGerman> = {
   "rapid-healing": { name: "Ring der schnellen Heilung" },
   regeneration: {
     name: "Ring der Regeneration",
-    summary: "Heilt den Träger von allein: 1 TP je Stunde, und abgetrennte Glieder wachsen nach.",
+    summary: "Heilt den Träger von allein: 1 HP je Stunde, und abgetrennte Glieder wachsen nach.",
   },
   "ring-of-elemental-command-water": {
     name: "Ring der Elementarherrschaft (Wasser)",
@@ -2759,7 +2759,7 @@ const MAGIC: Record<string, ItemGerman> = {
   },
   "sword-of-life-stealing": {
     name: "Schwert des Lebensraubs",
-    summary: "Ein +2 Langschwert: ein kritischer Treffer raubt eine Stufe und gibt dem Träger 1d6 TP.",
+    summary: "Ein +2 Langschwert: ein kritischer Treffer raubt eine Stufe und gibt dem Träger 1d6 HP.",
   },
   "sword-of-subtlety": {
     name: "Schwert der Feinheit",
@@ -2820,7 +2820,7 @@ const MAGIC: Record<string, ItemGerman> = {
   },
   wounding: {
     name: "Eigenschaft: Verwundend",
-    summary: "Waffe: jeder Treffer raubt 1 TP dauerhaft — die Wunde blutet weiter.",
+    summary: "Waffe: jeder Treffer raubt 1 HP dauerhaft — die Wunde blutet weiter.",
   },
 };
 

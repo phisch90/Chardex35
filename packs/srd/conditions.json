@@ -116,7 +116,7 @@
   },
   {
     "data": {
-      "summary": "0 TP: nur Standard- ODER Bewegungsaktion, anstrengende Aktion kostet 1 TP"
+      "summary": "0 HP: nur Standard- ODER Bewegungsaktion, anstrengende Aktion kostet 1 HP"
     },
     "description": "A character with 0 hit points, or one who has negative hit points but has become stable and conscious, is disabled. A disabled character may take a single move action or standard action each round (but not both, nor can she take full-round actions). She moves at half speed. Taking move actions doesn't risk further injury, but performing any standard action (or any other strenuous action) deals 1 point of damage after the completion of the act. Unless the action increased the disabled character's hit points, she is now in negative hit points and dying.",
     "effects": [],
@@ -131,7 +131,7 @@
   },
   {
     "data": {
-      "summary": "−1 bis −9 TP: bewusstlos, verliert 1 TP pro Runde (10% Chance zu stabilisieren)"
+      "summary": "−1 bis −9 HP: bewusstlos, verliert 1 HP pro Runde (10% Chance zu stabilisieren)"
     },
     "description": "A dying character is unconscious and near death. She has –1 to –9 current hit points. A dying character can take no actions and is unconscious. At the end of each round (starting with the round in which the character dropped below 0 hit points), the character rolls d% to see whether she becomes stable. She has a 10% chance of becoming stable. If she does not, she loses 1 hit point. If a dying character reaches –10 hit points, she is dead.",
     "effects": [],
@@ -543,7 +543,7 @@
   },
   {
     "data": {
-      "summary": "bewusstlos, verliert aber keine TP mehr"
+      "summary": "bewusstlos, verliert aber keine HP mehr"
     },
     "description": "A character who was dying but who has stopped losing hit points and still has negative hit points is stable. The character is no longer dying, but is still unconscious. If the character has become stable because of aid from another character (such as a Heal check or magical healing), then the character no longer loses hit points. He has a 10% chance each hour of becoming conscious and disabled (even though his hit points are still negative). If the character became stable on his own and hasn't had help, he is still at risk of losing hit points.",
     "effects": [],

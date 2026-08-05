@@ -32,6 +32,15 @@ export interface CombatOptionContext {
   hasTwoWeaponFighting: boolean;
   hasImprovedTwoWeaponFighting: boolean;
   hasGreaterTwoWeaponFighting: boolean;
+  /**
+   * Hausregel: gibt Power Attack den Schadensbonus auch mit einer leichten Waffe?
+   *
+   * Kommt als Kontext herein und wird nicht hier gelesen, weil die Hausregeln am
+   * CHARAKTER hängen und dieses Modul nichts über ihn weiß. `undefined` heißt
+   * SRD — so bleiben alte Aufrufe (und die Tests, die den Kontext von Hand bauen)
+   * bei der Buchregel, statt sie stillschweigend zu verlieren.
+   */
+  powerAttackLightWeapons?: boolean;
 }
 
 /**
@@ -327,8 +336,33 @@ export function applyCombatOptions(
           obwohl sie als „light" geführt sind. Ohne diese Ausnahme kassiert ein
           waffenloser Mönch den Malus und bekommt nichts dafür.
     */
-    if (weapon.handedness === "light" && weapon.naturalOrUnarmed !== true) return [];
-    const twoHanded = weapon.handedness === "two" || weapon.wieldedInTwoHands === true;
+    /*
+      Die HAUSREGEL hebt Fall 2 auf, und sie ist der Grund, warum Philipp das gemeldet
+      hat: sein Bogen kämpft mit Kurzschwert und Schild. Nach dem Buch kostet Power
+      Attack ihn dort Trefferchance und bringt ihm nichts — der Malus kommt an, der
+      Schaden nicht. Seine Entscheidung, gefragt und beantwortet: „Bei uns zählt sie
+      trotzdem."
+
+      Die Ausnahme für unbewaffnet/natürliche Waffen bleibt trotzdem stehen: sie gilt
+      auch nach dem Buch, und wer die Hausregel abschaltet, soll den Mönch nicht
+      mitverlieren.
+    */
+    const lightBlocked =
+      weapon.handedness === "light" &&
+      weapon.naturalOrUnarmed !== true &&
+      context.powerAttackLightWeapons !== true;
+    if (lightBlocked) return [];
+    /*
+      Eine LEICHTE Waffe bekommt nie das Doppelte, auch mit Hausregel nicht. Die Regel für
+      ×2 verlangt eine zweihändige Waffe oder eine einhändige in zwei Händen; ein
+      Kurzschwert in beiden Händen ist nach dem Buch gar nicht vorgesehen. Die Hausregel
+      sagt „Power Attack zählt auch mit leichter Waffe" — nicht „eine leichte Waffe ist ein
+      Zweihänder". Ohne diese Zeile käme aus einem Kurzschwert im Platz „beide Hände"
+      still der doppelte Bonus.
+    */
+    const twoHanded =
+      weapon.handedness === "two" ||
+      (weapon.wieldedInTwoHands === true && weapon.handedness !== "light");
     const factor = twoHanded ? 2 : 1;
     return [
       {

@@ -102,7 +102,7 @@ describe.skipIf(!packsAvailable)("diffSheets", () => {
 
   it(`macht neue Trefferpunkte und Rettungswürfe sichtbar`, () => {
     const groups = diffSheets(derive(hike([FIGHTER])), derive(hike([FIGHTER, FIGHTER])));
-    const hp = find(groups, "Trefferpunkte & Verteidigung", "Trefferpunkte (max)");
+    const hp = find(groups, "Trefferpunkte & Verteidigung", "HP (max)");
     expect(hp?.delta).toBeGreaterThan(0);
     const fort = find(groups, "Rettungswürfe", "Fortitude");
     expect(fort?.before).toMatch(/^\+/);
@@ -131,8 +131,8 @@ describe.skipIf(!packsAvailable)("diffSheets", () => {
   it(`ist richtungsabhängig: vertauschte Eingaben tauschen vorher und nachher`, () => {
     const a = derive(hike([FIGHTER]));
     const b = derive(hike([FIGHTER, FIGHTER]));
-    const forward = find(diffSheets(a, b), "Trefferpunkte & Verteidigung", "Trefferpunkte (max)");
-    const backward = find(diffSheets(b, a), "Trefferpunkte & Verteidigung", "Trefferpunkte (max)");
+    const forward = find(diffSheets(a, b), "Trefferpunkte & Verteidigung", "HP (max)");
+    const backward = find(diffSheets(b, a), "Trefferpunkte & Verteidigung", "HP (max)");
     expect(forward?.before).toBe(backward?.after);
     expect(forward?.after).toBe(backward?.before);
     expect(forward?.delta).toBe(-(backward?.delta ?? 0));

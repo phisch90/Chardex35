@@ -2156,7 +2156,7 @@
     "kind": "feat",
     "localized": {
       "de": {
-        "summary": "Bei −1 bis −9 Trefferpunkten wirst du automatisch stabil und verlierst nicht jede Runde einen weiteren Trefferpunkt. Du darfst weiter handeln wie außer Gefecht (eine Standard- oder Bewegungsaktion pro Runde, anstrengende Handlungen kosten 1 TP)."
+        "summary": "Bei −1 bis −9 Trefferpunkten wirst du automatisch stabil und verlierst nicht jede Runde einen weiteren Trefferpunkt. Du darfst weiter handeln wie außer Gefecht (eine Standard- oder Bewegungsaktion pro Runde, anstrengende Handlungen kosten 1 HP)."
       }
     },
     "name": "Diehard",

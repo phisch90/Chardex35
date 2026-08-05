@@ -1,6 +1,7 @@
 import { COMBAT_EXPERTISE_MAX } from "@codex35/core";
 import { S } from "../../strings.js";
 import { Card, Chip, GhostButton, NumberStepper, SectionTitle } from "../../ui/bits.js";
+import { useHouseRules } from "../../lib/hooks.js";
 import type { TabProps } from "./index.js";
 
 /**
@@ -13,6 +14,12 @@ import type { TabProps } from "./index.js";
  * Defensiv kämpfen und totale Verteidigung braucht jeder — die stehen immer da.
  */
 export function CombatOptionsCard({ character, sheet, save }: TabProps) {
+  /*
+    Die Hausregel gehört in den HINWEIS und nicht nur in die Rechnung: stand dort „mit
+    leichter Waffe gar nicht", während die Engine den Schaden gab, widersprach der
+    Erklärtext der Zahl daneben — und man sucht den Fehler dann in der Zahl.
+  */
+  const houseRules = useHouseRules();
   const options = character.combatOptions;
   const featIds = new Set(sheet.featIds);
   const has = (id: string) => featIds.has(id);
@@ -56,7 +63,7 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
         {has("srd:feat:power-attack") && (
           <NumberStepper
             label={S.combat.powerAttack}
-            hint={S.combat.powerAttackHint(sheet.bab)}
+            hint={S.combat.powerAttackHint(sheet.bab, houseRules.powerAttackLightWeapons)}
             value={options.powerAttack}
             max={sheet.bab}
             onChange={(v) => set({ powerAttack: v })}

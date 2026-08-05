@@ -6,6 +6,7 @@ import {
   classCategory,
   deriveSheet,
   displayName,
+  iterativeAttacks,
   maxRanks,
   applyTrackerLines,
   buildIssues,
@@ -503,6 +504,23 @@ export function LevelUpPage() {
             <li>
               {S.sheet.bab}: {fmtMod(sheetBefore.bab)} → <b>{fmtMod(sheetAfter.bab)}</b>
             </li>
+            {/*
+              Kommt mit dieser Stufe ein ANGRIFF dazu, wird es hier angesagt — sein Auftrag:
+              „Auch beim leveln sollte das erwähnt werden."
+
+              Verglichen wird die ANZAHL vorher gegen nachher und nicht der BAB gegen 6.
+              Damit stimmt es auch für die Grenzen +11 und +16, und bei 6 → 7 steht es
+              nicht da. Ein Satz, der immer dasteht, wird nicht gelesen.
+            */}
+            {iterativeAttacks(sheetAfter.bab).length >
+              iterativeAttacks(sheetBefore.bab).length && (
+              <li className="rounded bg-emerald-950/40 px-1.5 py-1 text-emerald-200">
+                {S.levelUp.moreAttacks(
+                  iterativeAttacks(sheetAfter.bab).length,
+                  fmtMod(sheetAfter.bab),
+                )}
+              </li>
+            )}
             <li>
               Saves: {fmtMod(sheetBefore.saves.fort.total)}/{fmtMod(sheetBefore.saves.ref.total)}/
               {fmtMod(sheetBefore.saves.will.total)} →{" "}

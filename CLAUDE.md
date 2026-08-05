@@ -329,6 +329,29 @@ Jetzt läuft die Prüfung als kleiner Zustandsautomat über die Datei.
   Runde (BAB +6)", ab `sm` der ganze Satz „Volle Attacke aus BAB +6: …". Er hat den
   besseren Grund dafür geliefert, als ihm vermutlich klar war — die Reihe „+9/+4" kommt
   aus dem BAB und nicht aus der Zahl, die daneben steht.
+- **Die Trefferpunkte heißen HP, nicht TP.** Wörtlich: „TP bitte in HP umbenennen." Dieselbe
+  Familie wie GAB → BAB, eine Runde später, und der Umfang war größer als er klingt: **rund
+  zwanzig Stellen in vier Dateien und ZWEI Paketen**, dazu vier deutsche Texte in den Packs
+  selbst (`conditions.json`, `feats-1.json` — die haben eine Quelle in `tools/etl`, also
+  wurde dort geändert und `srdRev` erhöht). Die Kürzel-Prüfung liest jetzt **beide** Pakete;
+  vorher hätte sie grün gemeldet, während die halbe App das alte Wort zeigt. Sie hat dabei
+  drei Stellen gefunden, die ich von Hand übersehen hatte (Vergleichsseite, Import-Bericht,
+  eine Warnung in `validate.ts`).
+  Das deutsche WORT „Trefferpunkte" bleibt in Erklärsätzen stehen — verboten ist die
+  Abkürzung. Die Feldnamen im Code (`hp`, `tempHp`, `hpRoll`) waren schon englisch und
+  wurden nicht angefasst: eine Datenbank-Wanderung für einen Namen wäre Risiko ohne Nutzen.
+- **Zwei Angriffe ab BAB +6 stehen jetzt EINMAL deutlich da.** Wörtlich: „das mit dem
+  zweifachen Angriff deutlicher aufnehmen sobald der Char einen BAB 6 erreicht. Auch beim
+  leveln." Gebaut als abgesetzte Zeile über der Angriffsliste (ohne Tap sichtbar) und als
+  Ansage im Stufenaufstieg. Verglichen wird dort die ANZAHL vorher gegen nachher und nicht
+  der BAB gegen 6 — damit stimmt es auch für +11 und +16, und bei 6 → 7 steht es nicht da.
+  Ein Satz, der immer dasteht, wird nicht gelesen.
+- **Der Trefferwürfel beim Aufstieg ist der der gesteigerten Klasse.** Wörtlich: „wir
+  bekommen immer den HD der Klasse die wir leveln." Das tat die App schon richtig; neu ist
+  der Test dafür (Kämpfer 3 + eine Kleriker-Stufe = W8, nicht W10). Und die zweite Hälfte
+  seines Satzes ist der Grund, warum nichts umgerechnet wird: „Anfangs haben wir auch
+  gewürfelt, deswegen passt hikes TP nicht ganz." Gewürfelte Stufen bleiben Zahl für Zahl
+  stehen — genau deshalb steht `hpRoll` an der STUFE und nicht als Hausregel über allen.
   **Was NICHT dazugehört: ein Satz über seinen Tisch.** Ich hatte „Euer Tisch spielt die
   Reihe ab BAB +6." angehängt; sein Wort dazu: „Das „euer Tisch…" kann raus." Er hat recht,
   und der Grund ist mehr als Kürze — der Satz erzählte ihm eine Regel, die er selbst
@@ -509,6 +532,43 @@ jeweils daraus folgt. **Diese sechs sind entschieden — nicht neu fragen.**
    Unterschied im Satz: der Tod steht beim negativen CON-**WERT** (CON 14 → tot bei −14),
    die Probenzone endet beim negativen CON-**MODIFIKATOR** (−2). Das sind drei Zonen, und
    damit bekommt das Hausregel-Feld `deathAt` („negCon") endlich eine Wirkung.
+
+### Power Attack mit leichter Waffe — seine Entscheidung, und der Weg dorthin
+
+Sein Befund: **„Wenn der Würfel an ist. Dann sollte die power attack auch auf den
+Schadenswurf gerechnet werden."** Nachgemessen war die Anzeige aber richtig: der
+Schadenswurf enthält Power Attack längst (Langschwert mit PA 4: `1d8+4` → `1d8+8`, und der
+Würfel liefert wirklich `d8: [4]+8`). **Außer bei einer leichten Waffe** — dort verbietet
+der SRD den Bonus, und der Angriffsmalus gilt trotzdem.
+
+Erst sein zweiter Satz machte es eindeutig: **„Ich kämpfe mit kurzschwert und Schild."**
+Das Kurzschwert steht in den Packs als `handedness: "light"`, und „leicht" ist eine
+Eigenschaft der WAFFE und nicht des Platzes — mit Schild in der anderen Hand bleibt es
+leicht. Power Attack kostete ihn also Trefferchance und brachte nichts.
+
+Seine Rückfrage darauf war die genau richtige (**„Oder gilt power attack beim Kurzschwert
+nie?"** — ja, nie), und mit dieser Auskunft hat er entschieden: **„Bei uns zählt sie
+trotzdem."** Gebaut als `powerAttackLightWeapons`, **Standard AN**, gelesen an genau EINER
+Stelle (`meleeDamage` in `core/engine/combatOptions.ts`).
+
+Drei Dinge daran sind eine Notiz wert:
+
+- **Das ist die erste Runde, in der eine Zahl auf einem bestehenden Bogen wandert** — und
+  sie wandert nur, weil er nach der Regelauskunft ausdrücklich zugestimmt hat. Die Frage
+  vorher war Pflicht (Ausnahme 1 oben), die Antwort ist die Deckung.
+- **Ist die Hausregel AUS, sagt die Zeile jetzt warum** („Leichte Waffe: Power Attack gibt
+  hier keinen Schaden — der Angriffsmalus gilt trotzdem"). Das war die eigentliche Ursache
+  seines Befunds: die App wusste es und schwieg. Ein Zustand ohne Satz ist ein Fehler, den
+  man in der Zahl sucht.
+- **Und der Erklärtext am Feld musste mitwandern.** Dort stand „mit leichter Waffe gar
+  nicht", während die Rechnung das Gegenteil tat — ein Text, der der Zahl neben sich
+  widerspricht, ist schlimmer als keiner. **Gefunden hat das der Blick auf ein Bild, kein
+  Test**, und deshalb prüft die Strecke jetzt beide Fassungen des Hinweises.
+
+Eine Schranke ist nebenbei mit eingebaut: eine leichte Waffe bekommt auch mit Hausregel
+NIE das Doppelte. „Power Attack zählt auch mit leichter Waffe" heißt nicht „eine leichte
+Waffe ist ein Zweihänder" — sonst käme aus einem Kurzschwert im Platz „beide Hände" still
+der doppelte Bonus.
 
 **Alle sechs sind gebaut**, in zwei Runden: erst 3, 4, 5 (Aktionspunkte, der Test zum
 Anderthalbfachen, die zweite Hand), dann 1, 2, 6 (volle Trefferwürfel, Grad-0-Zauber,

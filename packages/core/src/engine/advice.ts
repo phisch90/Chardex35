@@ -123,7 +123,7 @@ function computedAbilities(klass: Entity): AbilityAdvice[] {
   out.push({
     ability: "con",
     why: `Trefferpunkte (W${data.hitDie})`,
-    ...(data.hitDie >= 8 ? { min: 12, minWhy: "ab 12 bringt jede Stufe einen TP mehr" } : {}),
+    ...(data.hitDie >= 8 ? { min: 12, minWhy: "ab 12 bringt jede Stufe einen HP mehr" } : {}),
   });
 
   if (data.skillPointsPerLevel >= 6) {
@@ -203,7 +203,7 @@ const BY_CLASS: Record<string, HandWritten> = {
         why: "Zauber, ihre Zahl und ihr Schwierigkeitsgrad",
         min: { value: 14, why: "ab 14 gibt es Bonus-Zauberplätze" },
       },
-      { ability: "con", why: "Trefferpunkte (W8)", min: { value: 12, why: "ab 12 bringt jede Stufe einen TP mehr" } },
+      { ability: "con", why: "Trefferpunkte (W8)", min: { value: 12, why: "ab 12 bringt jede Stufe einen HP mehr" } },
       { ability: "str", why: "er kämpft mit, in schwerer Rüstung" },
       {
         ability: "cha",
@@ -225,7 +225,7 @@ const BY_CLASS: Record<string, HandWritten> = {
         why: "Zauber, ihre Zahl und ihr Schwierigkeitsgrad",
         min: { value: 14, why: "ab 14 gibt es Bonus-Zauberplätze" },
       },
-      { ability: "con", why: "Trefferpunkte (W8)", min: { value: 12, why: "ab 12 bringt jede Stufe einen TP mehr" } },
+      { ability: "con", why: "Trefferpunkte (W8)", min: { value: 12, why: "ab 12 bringt jede Stufe einen HP mehr" } },
       { ability: "dex", why: "Rüstungsklasse in leichter Rüstung" },
     ],
     skills: [
@@ -238,7 +238,7 @@ const BY_CLASS: Record<string, HandWritten> = {
   "srd:class:fighter": {
     abilities: [
       { ability: "str", why: "Angriff und Schaden", min: { value: 15, why: "der Kämpfer lebt vom Treffen" } },
-      { ability: "con", why: "Trefferpunkte (W10)", min: { value: 12, why: "ab 12 bringt jede Stufe einen TP mehr" } },
+      { ability: "con", why: "Trefferpunkte (W10)", min: { value: 12, why: "ab 12 bringt jede Stufe einen HP mehr" } },
       { ability: "dex", why: "Rüstungsklasse und Bogen", min: { value: 13, why: "DEX 13 öffnet Dodge" } },
       { ability: "int", why: "Kampfgeschick", min: { value: 13, why: "INT 13 öffnet Combat Expertise" } },
     ],
@@ -258,7 +258,7 @@ const BY_CLASS: Record<string, HandWritten> = {
       },
       { ability: "wis", why: "kommt bei ihm auf die RK dazu" },
       { ability: "str", why: "sein waffenloser Schlag" },
-      { ability: "con", why: "Trefferpunkte (W8)", min: { value: 12, why: "ab 12 bringt jede Stufe einen TP mehr" } },
+      { ability: "con", why: "Trefferpunkte (W8)", min: { value: 12, why: "ab 12 bringt jede Stufe einen HP mehr" } },
     ],
     skills: [
       { skillId: "srd:skill:tumble", why: "aus dem Nahkampf heraus, ohne Gegenangriff" },
@@ -275,7 +275,7 @@ const BY_CLASS: Record<string, HandWritten> = {
         why: "seine Aura, das Handauflegen und Untote vertreiben",
         min: { value: 14, why: "fast alles am Paladin rechnet mit CHA" },
       },
-      { ability: "con", why: "Trefferpunkte (W10)", min: { value: 12, why: "ab 12 bringt jede Stufe einen TP mehr" } },
+      { ability: "con", why: "Trefferpunkte (W10)", min: { value: 12, why: "ab 12 bringt jede Stufe einen HP mehr" } },
       { ability: "wis", why: "seine wenigen Zauber" },
     ],
     skills: [
@@ -293,7 +293,7 @@ const BY_CLASS: Record<string, HandWritten> = {
         min: { value: 13, why: "DEX 13 öffnet Point Blank Shot und Dodge" },
       },
       { ability: "str", why: "wenn er mit zwei Waffen kämpft", min: { value: 13, why: "STR 13 öffnet Power Attack" } },
-      { ability: "con", why: "Trefferpunkte (W8)", min: { value: 12, why: "ab 12 bringt jede Stufe einen TP mehr" } },
+      { ability: "con", why: "Trefferpunkte (W8)", min: { value: 12, why: "ab 12 bringt jede Stufe einen HP mehr" } },
       { ability: "wis", why: "Aufspüren und seine wenigen Zauber" },
     ],
     skills: [
