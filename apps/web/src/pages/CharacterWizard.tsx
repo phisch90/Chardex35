@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ABILITIES,
@@ -58,6 +58,9 @@ import { DraftSummary } from "../ui/DraftSummary.js";
 import { OpenWorkConfirm } from "../ui/OpenWorkConfirm.js";
 import { FeatText } from "../ui/FeatText.js";
 import { ClassInfo, RaceInfo, classDetailLine, raceDetailLine } from "../ui/RaceClassInfo.js";
+import { PickTiles } from "../ui/PickTiles.js";
+import { raceIconName } from "../ui/raceIcon.js";
+import { accentOfClass } from "../ui/classAccents.js";
 
 interface Draft {
   name: string;
@@ -529,10 +532,11 @@ export function CharacterWizardPage() {
       </div>
 
       {step === "race" && (
-        <PickList
+        <PickTiles
           items={races}
           selectedId={draft.raceId}
           onSelect={(id) => setDraft({ ...draft, raceId: id })}
+          icon={(race) => raceIconName(race.id)}
           info={(race) => <RaceInfo race={race} compendium={compendium} />}
           detail={raceDetailLine}
         />
@@ -637,10 +641,11 @@ export function CharacterWizardPage() {
           <Chip active={showNpcClasses} onClick={() => setShowNpcClasses(!showNpcClasses)}>
             {S.wizard.showNpcClasses}
           </Chip>
-          <PickList
+          <PickTiles
             items={classes}
             selectedId={draft.classId}
             onSelect={(id) => setDraft({ ...draft, classId: id })}
+            icon={(cls) => accentOfClass(cls.id) ?? "characters"}
             info={(cls) => <ClassInfo klass={cls} compendium={compendium} nextLevelInClass={1} />}
             detail={classDetailLine}
           />
@@ -864,64 +869,6 @@ function AbilityResult({ block, min }: { block: AbilityBlock; min?: number }) {
       )}
       {below && <span className="ml-1.5 text-amber-400">⚠ {S.advice.below(min)}</span>}
     </span>
-  );
-}
-
-/**
- * Auswahlliste mit Infofeld. Das Feld klappt beim Auswählen von allein auf —
- * man soll die Werte sehen, sobald man sich festlegt — und lässt sich für jeden
- * anderen Eintrag zum Nachlesen aufziehen, BEVOR man sich festlegt.
- */
-function PickList(props: {
-  items: Entity[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  detail: (entity: Entity) => string;
-  info?: (entity: Entity) => ReactNode;
-}) {
-  const [openId, setOpenId] = useState<string | null>(null);
-  return (
-    <ul className="space-y-2">
-      {props.items.length === 0 && (
-        <p className="py-6 text-center text-sm text-slate-400">{S.compendium.empty}</p>
-      )}
-      {props.items.map((entity) => {
-        const open = openId === entity.id;
-        return (
-          <li key={entity.id}>
-            <div
-              className={`rounded-xl border ${
-                props.selectedId === entity.id
-                  ? "border-amber-500 bg-amber-600/10"
-                  : "border-slate-700 bg-slate-900/60"
-              }`}
-            >
-              <button
-                onClick={() => {
-                  props.onSelect(entity.id);
-                  setOpenId(entity.id);
-                }}
-                className="w-full p-3 text-left"
-              >
-                <div className="font-semibold">{displayName(entity)}</div>
-                <div className="text-xs text-slate-400">{props.detail(entity)}</div>
-              </button>
-              {props.info && (
-                <div className="px-3 pb-2">
-                  <button
-                    onClick={() => setOpenId(open ? null : entity.id)}
-                    className="text-[11px] text-slate-400 underline decoration-dotted hover:text-amber-300"
-                  >
-                    {open ? "Infos ausblenden ▾" : "Infos ▸"}
-                  </button>
-                  {open && props.info(entity)}
-                </div>
-              )}
-            </div>
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 

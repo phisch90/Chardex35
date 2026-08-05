@@ -30,7 +30,9 @@ import {
 import { Card, Chip, GhostButton, PrimaryButton, SectionTitle, fmtMod } from "../ui/bits.js";
 import { OpenWorkConfirm } from "../ui/OpenWorkConfirm.js";
 import { FeatPicker } from "../ui/FeatPicker.js";
-import { ClassInfo } from "../ui/RaceClassInfo.js";
+import { ClassInfo, classDetailLine } from "../ui/RaceClassInfo.js";
+import { PickTiles } from "../ui/PickTiles.js";
+import { accentOfClass } from "../ui/classAccents.js";
 import { SkillAdviceLine, SkillMark, suggestionWhy } from "../ui/SkillAdvice.js";
 import { SubtypePicker } from "../ui/SubtypePicker.js";
 import { SpellPicker } from "../ui/SpellPicker.js";
@@ -47,7 +49,6 @@ export function LevelUpPage() {
   const [classId, setClassId] = useState<string | null>(null);
   const [showAllClasses, setShowAllClasses] = useState(false);
   const [showNpcClasses, setShowNpcClasses] = useState(false);
-  const [infoClassId, setInfoClassId] = useState<string | null>(null);
   const [abilityPick, setAbilityPick] = useState<Ability | null>(null);
   const [ranks, setRanks] = useState<Record<string, number> | null>(null);
   /** Beim Aufstieg neu angelegte Teilgebiete (z.B. erstes Knowledge (arcana)). */
@@ -124,7 +125,16 @@ export function LevelUpPage() {
     setClassId(id);
   };
 
-  const existingClassIds = [...new Set(character.levels.map((l) => l.classId))];
+  /*
+    Die Klassen, in denen er schon Stufen hat — als ENTITÄTEN, weil eine Kachel ein
+    Zeichen und eine Kleinzeile braucht. Eine Kennung ohne Eintrag im Kompendium (eine
+    gelöschte eigene Klasse) fällt damit aus der Reihe; sie bleibt aber gewählt, wenn sie
+    die letzte Stufe war, und die Karte darunter sagt dann ehrlich, dass sie den
+    Trefferwürfel nicht kennt.
+  */
+  const existingClasses = [...new Set(character.levels.map((l) => l.classId))]
+    .map((id) => compendium.get(id))
+    .filter((cls): cls is NonNullable<typeof cls> => cls !== undefined);
   /*
     NPC-Klassen tragen in den Packs auch `base`. Beim Aufstieg gehören sie nicht
     zwischen die spielbaren — aber erreichbar müssen sie sein: einen Aristocrat 3
@@ -233,16 +243,24 @@ export function LevelUpPage() {
 
       <Card>
         <SectionTitle>{S.levelUp.chooseClass}</SectionTitle>
-        <div className="flex flex-wrap gap-1.5">
-          {existingClassIds.map((id) => {
-            const cls = compendium.get(id);
-            return (
-              <Chip key={id} active={classId === id} onClick={() => chooseClass(id)}>
-                {cls ? displayName(cls) : id}
-              </Chip>
-            );
-          })}
-        </div>
+        {/*
+          Dieselben Kacheln wie im Assistenten, und aus demselben Grund: es ist derselbe
+          Handgriff („welche Klasse?"), und eine App, die eine Frage an zwei Stellen
+          verschieden stellt, lässt einen zweimal nachdenken. Vorher stand hier eine
+          Chip-Reihe und darunter ein Aufklapper mit einer schmalen Liste.
+
+          `info` wird ABSICHTLICH nicht übergeben: die Faktentabelle der gewählten Klasse
+          steht schon darunter und richtet sich nach `classId`. Zwei Infofelder auf einem
+          Schirm wären zwei Wahrheiten — und Antippen kostet hier nichts, weil erst
+          „Aufstieg übernehmen" etwas speichert.
+        */}
+        <PickTiles
+          items={existingClasses}
+          selectedId={classId}
+          onSelect={chooseClass}
+          icon={(cls) => accentOfClass(cls.id) ?? "characters"}
+          detail={classDetailLine}
+        />
         {/* Sobald eine Klasse gewählt ist: was bringt genau diese Stufe darin?
             Die Stufe IN DER KLASSE, nicht die Gesamtstufe — davon hängen
             Tabelle, Zaubergrade und Klassenfähigkeiten ab. */}
@@ -258,7 +276,7 @@ export function LevelUpPage() {
 
         <details className="mt-2">
           <summary className="cursor-pointer text-sm text-slate-400">andere Klasse wählen…</summary>
-          <div className="mt-1 flex items-center gap-2">
+          <div className="mt-1 mb-2 flex items-center gap-2">
             <Chip active={showAllClasses} onClick={() => setShowAllClasses(!showAllClasses)}>
               auch Prestigeklassen
             </Chip>
@@ -266,43 +284,13 @@ export function LevelUpPage() {
               {S.wizard.showNpcClasses}
             </Chip>
           </div>
-          <ul className="mt-1 max-h-60 divide-y divide-slate-800 overflow-y-auto">
-            {baseClasses.map((cls) => (
-              <li key={cls.id}>
-                <button
-                  onClick={() => chooseClass(cls.id)}
-                  className={`w-full px-2 py-1.5 text-left text-sm hover:bg-slate-800 ${
-                    classId === cls.id ? "text-amber-300" : ""
-                  }`}
-                >
-                  {displayName(cls)}
-                  {cls.kind === "class" && (
-                    <span className="ml-1 text-xs text-slate-500">
-                      W{cls.data.hitDie}
-                      {cls.data.spellcasting ? " · Zauberer" : ""}
-                    </span>
-                  )}
-                </button>
-                <div className="px-2 pb-1">
-                  <button
-                    onClick={() => setInfoClassId(infoClassId === cls.id ? null : cls.id)}
-                    className="text-[11px] text-slate-400 underline decoration-dotted hover:text-amber-300"
-                  >
-                    {infoClassId === cls.id ? "Infos ausblenden ▾" : "Infos ▸"}
-                  </button>
-                  {infoClassId === cls.id && (
-                    <ClassInfo
-                      klass={cls}
-                      compendium={compendium}
-                      nextLevelInClass={
-                        character.levels.filter((l) => l.classId === cls.id).length + 1
-                      }
-                    />
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <PickTiles
+            items={baseClasses}
+            selectedId={classId}
+            onSelect={chooseClass}
+            icon={(cls) => accentOfClass(cls.id) ?? "characters"}
+            detail={classDetailLine}
+          />
         </details>
       </Card>
 

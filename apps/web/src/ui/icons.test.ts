@@ -24,8 +24,11 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { ICON_NAMES, ICON_SHAPES, type IconName } from "./icons.js";
 import { ACCENT_KEYS } from "./classAccents.js";
+import { RACE_ICONS, RACE_ICON_FALLBACK, raceIconName } from "./raceIcon.js";
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
+/** Die Packs sind die Quelle der Völker — nicht eine Liste in diesem Test. */
+const PACKS = join(SRC, "../../../packs/srd");
 
 /**
  * Emoji im engeren Sinn: die farbigen. Bewusst NICHT die typografischen Zeichen
@@ -39,8 +42,8 @@ const PATH_OK = /^[MmLlHhVvCcSsQqTtAaZz0-9 ,.\-]+$/;
 
 describe("Zeichen-Formen", () => {
   it("kennt jedes Zeichen, das die Oberfläche benutzt", () => {
-    // Die sieben Reiter, die vier Hauptwege, das ⋯-Blatt, drei im Inhalt, elf Klassen.
-    expect(ICON_NAMES.length).toBe(32);
+    // 7 Reiter, 4 Hauptwege, 8 im ⋯-Blatt, 3 im Inhalt, 11 Klassen, 7 Völker.
+    expect(ICON_NAMES.length).toBe(39);
     expect(new Set(ICON_NAMES).size).toBe(ICON_NAMES.length);
   });
 
@@ -57,6 +60,44 @@ describe("Zeichen-Formen", () => {
       expect(ICON_SHAPES[key].d.length, key).toBeGreaterThan(0);
     }
     expect(ACCENT_KEYS.length).toBe(11);
+  });
+
+  it("jedes Volk aus den Packs löst auf ein Zeichen auf", () => {
+    /*
+      Dieselbe Prüfung wie bei den Klassen, nur in die andere Richtung gelesen: die
+      VÖLKER stehen in den Packs, und der Name des Zeichens ist ihre Kennung in
+      Binnenschreibweise. Wer ein achtes Volk einspielt, bekommt hier den Fehler — in der
+      App wäre es ein Kopf, der wie alle unbekannten aussieht (`characters`), und das
+      fällt zwischen sieben Kacheln niemandem auf.
+
+      Gelesen wird die PACK-Datei und nicht eine Liste hier: eine Liste im Test wäre eine
+      zweite Wahrheit, die genauso veraltet wie die Zuordnung, die es nicht gibt.
+    */
+    const races = JSON.parse(readFileSync(join(PACKS, "races.json"), "utf8")) as { id: string }[];
+    expect(races.length).toBe(7);
+    for (const race of races) {
+      const name = raceIconName(race.id);
+      expect(name, race.id).not.toBe(RACE_ICON_FALLBACK);
+      expect(ICON_NAMES, race.id).toContain(name);
+      expect(ICON_SHAPES[name].d.length, race.id).toBeGreaterThan(0);
+    }
+    // Und kein verwaistes Kopfzeichen: jedes wird von genau einem Volk getroffen.
+    const getroffen = new Set(races.map((race) => raceIconName(race.id)));
+    expect([...getroffen].sort()).toEqual([...RACE_ICONS].sort());
+  });
+
+  it("ein unbekanntes Volk bekommt das neutrale Zeichen", () => {
+    /*
+      Der Unterschied zu den Klassen, und er ist Absicht: eine unbekannte Klasse bekommt
+      GAR kein Thema (eine falsche Farbe wäre schlimmer als keine), eine Kachel dagegen
+      muss etwas zeigen — sonst klafft ein Loch im Raster.
+    */
+    expect(raceIconName("homebrew:race:kobold")).toBe(RACE_ICON_FALLBACK);
+    expect(raceIconName(undefined)).toBe(RACE_ICON_FALLBACK);
+    // Ein Elf bleibt ein Elf, auch aus einem anderen Pack.
+    expect(raceIconName("meinbuch:race:elf")).toBe("elf");
+    // Und der Bindestrich wird zur Binnenschreibweise, nicht weggeworfen.
+    expect(raceIconName("srd:race:half-orc")).toBe("halfOrc");
   });
 
   it("jedes Zeichen hat mindestens einen Pfad", () => {

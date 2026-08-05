@@ -1094,13 +1094,101 @@ Zwei Fallen aus dieser Runde:
   hilft offenbar nicht, es aufzuschreiben: **in Teststrecken gar keine `„…"` verwenden**, auch
   nicht in Beschriftungen.
 
+## Volk und Klasse als Kacheln — und die sieben Köpfe
+
+Sein Auftrag: **„Danach hätte ich gerne die Volkauswahl als Kacheln mit jeweils einem
+Piktogramm des Kopfes (wie bei BG3) der jeweiligen Rasse. Danach das selbe mit den Klassen.
+Piktogramme und Kacheln."**
+
+Vorher war beides eine LISTE (`PickList` im Assistenten): pro Zeile ein Name, eine
+Kleinzeile, ein „Infos ▸". Jetzt ein Raster (`ui/PickTiles.tsx`), zwei Spalten am Handy,
+drei ab `sm`, je Kachel ein Zeichen in 40 px. **Für die Klassen war nichts zu zeichnen** —
+sie tragen genau die elf Embleme, die schon am Bogen als Wasserzeichen stehen
+(`accentOfClass`), und das ist der Punkt: eine zweite Tabelle hier hätte bedeutet, dass der
+Assistent ein anderes Symbol zeigt als der Bogen danach. Der Lauf prüft es hart — dieselbe
+Form, Pfad für Pfad.
+
+Drei Entscheidungen sind eine Notiz wert:
+
+- **Der Zeichenname kommt aus der KENNUNG**, nicht aus einer Zuordnung: `srd:race:half-orc`
+  → `halfOrc` (`ui/raceIcon.ts`). Dieselbe Regel wie bei den Reitern und den Klassen. Der
+  Unterschied ist der RÜCKFALL: eine unbekannte Klasse bekommt gar kein Thema (eine falsche
+  Farbe wäre schlimmer als keine), eine Kachel dagegen MUSS etwas zeigen, sonst klafft ein
+  Loch im Raster — also das neutrale `characters`. Der Test liest dazu `packs/srd/races.json`
+  und nicht eine Liste im Test: sonst wäre die Liste die zweite Wahrheit, die veraltet.
+- **Das Infofeld steht in voller Breite UNTER dem Raster**, nicht in der Kachel: `RaceInfo`
+  und `ClassInfo` sind dichte Faktentabellen und in 170 px unlesbar. Dafür trägt es den Namen
+  als Überschrift — losgelöst von der Zeile muss es selbst sagen, wovon es redet.
+- **Der Stufenaufstieg bekommt dieselben Kacheln** (vorher eine Chip-Reihe plus ein
+  Aufklapper mit schmaler Liste). Dort wird `info` ABSICHTLICH nicht übergeben: die
+  Faktentabelle der gewählten Klasse steht schon darunter, und zwei Infofelder auf einem
+  Schirm wären zwei Wahrheiten. Nebenbei ist damit ein zweiter Weg zur selben Auskunft weg.
+
+**Die sieben Köpfe haben vier Anläufe gebraucht, und jeder Fehlschlag war dieselbe Sorte
+Missverständnis: eine FLÄCHE an der falschen Stelle wird etwas anderes.**
+
+| Fehlschlag | las sich als |
+|---|---|
+| Mensch: Haaransatz bis an den Umriss | Badekappe |
+| Elf: Ohren bis x=2,6, so dick wie der Kopf | Flügel |
+| Zwerg: ein durchgehender Umriss | Affengesicht (kein Bart zu sehen) |
+| Zwerg: Schnurrbart als ∩-Bogen | trauriger Mund |
+| Zwerg: Nase plus Schnurrbart | Schnauze |
+| Gnom: spitzes V unter dem Kinn | Möhre |
+| Gnom: breiter Kinnbart | offener Mund |
+| Gnom: große Nase | Schlüsselloch, mit den Ohren ein Affe |
+| Gnom: Zipfelmütze | Helm |
+| Halb-Ork: Mundlinie plus zwei Hauer | Eimer im Mund |
+| Halb-Ork: gebogene Hauer außen | Wangenfalten |
+| Halb-Ork: Braue über die ganze Breite | Mützenschirm |
+
+Daraus die zwei Regeln, die am Ende alle sieben gerettet haben: **in der Mitte des Gesichts
+steht nichts** (dort entsteht sofort eine Schnauze), und **was Haar sein soll, darf den
+Umriss nicht berühren** (sonst ist es eine Kappe). Unterschieden wird im UMRISS: schlicht ·
+kurze Spitzohren · lange Spitzohren · breiter Bart · große Rundohren · Locken oben ·
+schwerer Kiefer mit Hauern. Dazu die Gegenprobe gegen die zwei Klassenzeichen, die selbst
+Gesichter sind (Schädel, Maske) — sie kommen im Assistenten einen Schritt später.
+**Gefunden hat das alles ein Blatt mit allen sieben in 30/40/56/110 px, kein Test.** Dieselbe
+Lehre wie beim Barbaren, nur diesmal von vorn eingeplant.
+
+### Was der Lauf dieser Runde in ALTEN Strecken gefunden hat
+
+Sechs Strecken schlugen fehl, und **keiner der Fehler lag an dieser Runde** — nachgemessen,
+nicht behauptet: dieselbe Strecke gegen einen Build OHNE die Änderung meldet dasselbe.
+Zwei Ursachen, beide lehrreich:
+
+- **Eine Adressprüfung, die auch die Adresse des Assistenten trifft.** `/\/charaktere\//`
+  passt auf `/charaktere/neu`. Seit der Assistent am Ende EINMAL nachfragt, wenn noch etwas
+  offen ist, endet „Anlegen" auf einer Rückfrage — vier Strecken klickten sie nie, blieben im
+  Assistenten und hielten ihn für einen Bogen. Danach prüften sie einen Bogen, den es nicht
+  gab, und der Fehler zeigte auf die Reiterleiste, den Zauber-Reiter, den Zähler. Die Prüfung
+  verlangt jetzt die KENNUNG (`/charaktere/[0-9a-f-]{8,}/`).
+- **`:visible` fehlte**, zum wiederholten Mal: der Weiter-Balken steht zweimal im DOM (einer
+  für schmal, einer ab `md`), und der unsichtbare steht vorn. Zwei Sonden von VOR diesem
+  Balken (30.07., der Balken kam am 31.07. mit `222c6b1`) liefen deshalb seit Monaten in
+  einen Timeout, ohne dass es jemandem auffiel.
+
+Dazu zwei stehengebliebene Erwartungen aus der TP→HP-Runde: eine Zusammenfassungs-Prüfung
+auf `\bTP\b` und die harte Liste der 13 Talent-Kategorien, in der noch „TP" stand — sie
+zählte 12 und meldete die App als falsch. **Eine Kürzel-Umbenennung muss auch durch die
+Teststrecken gehen**, nicht nur durch den Quelltext; die Schranke in `strings.test.ts` deckt
+`src`, nicht die Sonden im Notizordner.
+
+Und ein Befund, der bleibt und NICHT von hier kommt: **bei neun Bögen scrollt die Startseite
+schon** (933 gegen 844 px bei 390×844), obwohl seine Entscheidung „ab etwa zehn wird
+gescrollt" lautet. Auch das gegen den alten Build gemessen — identisch. Wer das angeht, dreht
+an `ui/cardTier.ts`; es ist eine Geschmacksfrage über die Kartenhöhe und deshalb hier nur
+notiert.
+
 ## Eigene Zeichen statt Emoji
 
 Sein Auftrag: „Kannst du die Emojis durch eigene icons ersetzen? Kannst du die bei Figma
 erstellen?" Beides ja — und der Grund für das Erste ist mehr als Geschmack: **bei einem Emoji
 bestimmt die Schriftart des Geräts die Farbe, nicht die App.** Genau daran ist die elfte Falle
-gescheitert (gelber Punkt auf gelben Funken). 21 Zeichen liegen jetzt als Striche in
-`ui/icons.tsx`, alle 24×24, Strichbreite 1,6, `currentColor`.
+gescheitert (gelber Punkt auf gelben Funken). Diese Runde legte 21 Zeichen als Striche in
+`ui/icons.tsx`, alle 24×24, Strichbreite 1,6, `currentColor` — inzwischen sind es **39**
+(elf Klassen, sieben Völker sind dazugekommen; die Zahl steht als Schranke in
+`ui/icons.test.ts`).
 
 Vier Entscheidungen daran sind eine Notiz wert:
 
