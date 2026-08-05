@@ -48,7 +48,7 @@ export interface PrereqLine {
   met: boolean;
   /** Konnte die App das überhaupt prüfen? Bei `custom` nein. */
   checkable: boolean;
-  /** „STR 13", „GAB +6", „Talent Power Attack", „5 Ränge in Hide". */
+  /** „STR 13", „BAB +6", „Talent Power Attack", „5 Ränge in Hide". */
   label: string;
 }
 
@@ -87,7 +87,7 @@ function nameOf(compendium: ReadonlyMap<string, Entity> | undefined, id: string)
 /**
  * Eine einzelne Voraussetzung gegen den abgeleiteten Bogen prüfen.
  *
- * Der Bogen genügt: Attribute, GAB, Talente, Ränge, Zauberstufe und Klassenstufen
+ * Der Bogen genügt: Attribute, BAB, Talente, Ränge, Zauberstufe und Klassenstufen
  * stehen alle darin. Deshalb kann die Oberfläche dieselbe Funktion rufen wie die
  * Engine — sie hat den Bogen ohnehin.
  */
@@ -110,7 +110,7 @@ export function checkPrerequisite(
         prerequisite: p,
         checkable: true,
         met: sheet.bab >= p.value,
-        label: `GAB +${p.value}`,
+        label: `BAB +${p.value}`,
       };
     case "hasFeat":
       return {

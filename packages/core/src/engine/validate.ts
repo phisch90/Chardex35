@@ -173,7 +173,7 @@ export function validate(
       issues.push({
         severity: "warning",
         code: "hp-roll-out-of-range",
-        message: `Stufe ${i + 1}: TP-Wurf ${level.hpRoll} liegt außerhalb von 1–${cls.data.hitDie} (W${cls.data.hitDie}).`,
+        message: `Stufe ${i + 1}: HP-Wurf ${level.hpRoll} liegt außerhalb von 1–${cls.data.hitDie} (W${cls.data.hitDie}).`,
         tab: "stats",
       });
     }

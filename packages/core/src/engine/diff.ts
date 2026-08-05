@@ -95,7 +95,7 @@ export function diffSheets(before: DerivedSheet, after: DerivedSheet): SheetDiff
 
   // --- Trefferpunkte & Verteidigung --------------------------------------
   const defense: SheetDiffEntry[] = [];
-  pushNumber(defense, "Trefferpunkte (max)", before.hp.max, after.hp.max);
+  pushNumber(defense, "HP (max)", before.hp.max, after.hp.max);
   pushNumber(defense, "Rüstungsklasse", before.ac.total.total, after.ac.total.total);
   pushNumber(defense, "RK berührt", before.ac.touch.total, after.ac.touch.total);
   pushNumber(defense, "RK auf dem falschen Fuß", before.ac.flatFooted.total, after.ac.flatFooted.total);
@@ -114,7 +114,7 @@ export function diffSheets(before: DerivedSheet, after: DerivedSheet): SheetDiff
 
   // --- Angriff ------------------------------------------------------------
   const offense: SheetDiffEntry[] = [];
-  pushNumber(offense, "Grundangriffsbonus", before.bab, after.bab, mod);
+  pushNumber(offense, "BAB", before.bab, after.bab, mod);
   pushNumber(offense, "Initiative", before.init.total, after.init.total, mod);
   pushNumber(offense, "Raufen", before.grapple.total, after.grapple.total, mod);
   pushNumber(offense, "Bewegung (ft)", before.speedFt.total, after.speedFt.total);

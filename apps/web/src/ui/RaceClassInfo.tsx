@@ -109,8 +109,8 @@ export function classDetailLine(klass: Entity): string {
   if (!summary) return "";
   const parts = [
     `W${summary.hitDie}`,
-    `${summary.skillPointsPerLevel}+IN Punkte`,
-    BAB_DE[summary.babProgression].replace(/ \(.*\)/, "") + " GAB",
+    `${summary.skillPointsPerLevel}+INT Punkte`,
+    BAB_DE[summary.babProgression].replace(/ \(.*\)/, "") + " BAB",
   ];
   if (summary.spellcasting) parts.push("Zauberer");
   if (summary.isPrestige) parts.push("Prestige");
@@ -193,8 +193,8 @@ export function ClassInfo({
             Stufe {gain.level} dieser Klasse bringt
           </div>
           <div className="text-amber-100/90">
-            {gain.hitDie > 0 && `+1W${gain.hitDie} TP`}
-            {gain.babDelta > 0 && ` · GAB ${fmtMod(gain.babDelta)}`}
+            {gain.hitDie > 0 && `+1W${gain.hitDie} HP`}
+            {gain.babDelta > 0 && ` · BAB ${fmtMod(gain.babDelta)}`}
             {(["fort", "ref", "will"] as const)
               .filter((key) => gain.saveDeltas[key] > 0)
               .map((key) => ` · ${S.saves[key]} ${fmtMod(gain.saveDeltas[key])}`)
@@ -224,9 +224,9 @@ export function ClassInfo({
 
       <Fact label="Trefferwürfel">W{summary.hitDie}</Fact>
       <Fact label="Fertigkeitspunkte">
-        ({summary.skillPointsPerLevel} + IN) je Stufe, ×4 auf der ersten Stufe
+        ({summary.skillPointsPerLevel} + INT) je Stufe, ×4 auf der ersten Stufe
       </Fact>
-      <Fact label="Grundangriffsbonus">{BAB_DE[summary.babProgression]}</Fact>
+      <Fact label="BAB (Grundangriffsbonus)">{BAB_DE[summary.babProgression]}</Fact>
       <Fact label="Rettungswürfe">{saveText}</Fact>
       {summary.spellcasting && (
         <Fact label="Zauber">
@@ -277,7 +277,7 @@ export function ClassInfo({
                       : req.type === "classLevel"
                         ? `${req.classId.replace("srd:class:", "")} Stufe ${req.level}`
                         : req.type === "minBab"
-                          ? `GAB ${fmtMod(req.value)}`
+                          ? `BAB ${fmtMod(req.value)}`
                           : JSON.stringify(req),
             )
             .join(" · ")}

@@ -28,7 +28,7 @@ import {
  * - **RK und Rettungswürfe** werden über EINEN manuellen Ausgleichsmodifikator
  *   auf den Importwert gebracht — dort sitzt typischerweise Ausrüstung, die der
  *   Export nicht mitliefert. Der Modifikator ist im Bogen sichtbar und löschbar.
- * - **Alles andere** (GAB, Ringkampf, Initiative, Angriffsboni, Fertigkeits-
+ * - **Alles andere** (BAB, Ringkampf, Initiative, Angriffsboni, Fertigkeits-
  *   summen) wird NICHT verbogen: Abweichungen erscheinen als Bericht, damit man
  *   sieht, wo eine Regel-Interpretation auseinandergeht.
  */
@@ -532,7 +532,7 @@ export interface ImportComparison {
   label: string;
   imported: number;
   derived: number;
-  /** true = absoluter Wert (RK), false = Modifikator (Saves, GAB, …). */
+  /** true = absoluter Wert (RK), false = Modifikator (Saves, BAB, …). */
   absolute?: boolean | undefined;
   /**
    * `match` – App rechnet denselben Wert (Vertrauensbeweis),
@@ -596,7 +596,7 @@ export function mapFightClubPc(
     issues.push({
       severity: "error",
       code: "no-classes",
-      message: "Keine Klassenstufen erkannt — Stufe, GAB und Rettungswürfe bleiben leer.",
+      message: "Keine Klassenstufen erkannt — Stufe, BAB und Rettungswürfe bleiben leer.",
     });
   }
 
@@ -992,7 +992,7 @@ export function mapFightClubPc(
   };
 
   // Aus den Klassentabellen abgeleitet — hier wäre ein Ausgleich Selbstbetrug.
-  report("GAB", pc.bab, sheet.bab, { always: true });
+  report("BAB", pc.bab, sheet.bab, { always: true });
   report("Ringkampf", pc.grapple, sheet.grapple.total, { always: true });
   report("Initiative", pc.init, sheet.init.total, {
     always: true,
@@ -1021,7 +1021,7 @@ export function mapFightClubPc(
     issues.push({
       severity: "info",
       code: "hp-override",
-      message: `TP aus dem Export übernommen (${pc.hp.current}/${pc.hp.max}) — als festes Maximum gesetzt, im Bogen änderbar.`,
+      message: `HP aus dem Export übernommen (${pc.hp.current}/${pc.hp.max}) — als festes Maximum gesetzt, im Bogen änderbar.`,
     });
   }
 

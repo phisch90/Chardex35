@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ABILITIES, stepRank } from "@codex35/core";
+import { ABILITIES, iterativeAttacks, stepRank } from "@codex35/core";
 import { Link } from "@tanstack/react-router";
 import { S } from "../../strings.js";
 import { Icon, IconInline } from "../../ui/icons.js";
@@ -194,7 +194,7 @@ export function CombatTab(props: TabProps) {
             }
           />
         </div>
-        {/* Nah-/Fernkampf als Gesamtwert — GAB allein sagt am Tisch zu wenig. */}
+        {/* Nah-/Fernkampf als Gesamtwert — der BAB allein sagt am Tisch zu wenig. */}
         <div className="mt-2 grid grid-cols-2 gap-2">
           {(["melee", "ranged"] as const).map((mode) => {
             const line = sheet.attacks.find((a) => a.key === mode);
@@ -213,6 +213,25 @@ export function CombatTab(props: TabProps) {
 
       <Card>
         <SectionTitle>{S.sheet.attacks}</SectionTitle>
+        {/*
+          Die volle Attacke EINMAL deutlich, über der Liste und ohne Tap. Sein Auftrag:
+          „das mit dem zweifachen Angriff deutlicher aufnehmen sobald der Char einen BAB 6
+          erreicht." Klein an jeder Waffe stand es schon — nur eben klein, an jeder Waffe,
+          und damit nirgends.
+
+          Die Zahl ist eine FOLGE aus dem BAB und wird gerechnet, nicht gespeichert. Die
+          Farbe ist die Bedeutungsfarbe für „das ist in Ordnung/neu" und nicht die
+          Bedienfarbe: hier ist nichts zu drücken (elfte Falle).
+        */}
+        {iterativeAttacks(sheet.bab).length > 1 && (
+          <p className="mb-2 rounded-lg border border-emerald-800/60 bg-emerald-950/40 px-2 py-1.5 text-xs leading-snug text-emerald-200">
+            {S.sheet.fullAttack(
+              iterativeAttacks(sheet.bab).length,
+              fmtMod(sheet.bab),
+              iterativeAttacks(sheet.bab).map(fmtMod),
+            )}
+          </p>
+        )}
         <ul className="space-y-2">
           {sheet.attacks.map((attack) => (
             <li key={attack.key} className="rounded-lg bg-slate-800/60 p-2">
@@ -225,7 +244,7 @@ export function CombatTab(props: TabProps) {
                       // Beim Antippen die Angriffsfolge erklären — das ist der Weg
                       // auf dem Handy, wo der ganze Satz nicht in die Zeile passt.
                       ...(attack.bonuses.length > 1
-                        ? { note: S.sheet.iterativeHint(attack.bonuses.map(fmtMod)) }
+                        ? { note: S.sheet.iterativeHint(attack.bonuses.map(fmtMod), fmtMod(sheet.bab)) }
                         : {}),
                     })
                   }
@@ -259,10 +278,10 @@ export function CombatTab(props: TabProps) {
                   {attack.bonuses.length > 1 && (
                     <div className="text-[10px] leading-snug text-slate-500">
                       <span className="sm:hidden">
-                        {S.sheet.iterativeShort(attack.bonuses.length)}
+                        {S.sheet.iterativeShort(attack.bonuses.length, fmtMod(sheet.bab))}
                       </span>
                       <span className="hidden sm:inline">
-                        {S.sheet.iterativeHint(attack.bonuses.map(fmtMod))}
+                        {S.sheet.iterativeHint(attack.bonuses.map(fmtMod), fmtMod(sheet.bab))}
                       </span>
                     </div>
                   )}

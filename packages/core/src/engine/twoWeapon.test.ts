@@ -180,7 +180,7 @@ describe.skipIf(!packsAvailable)("Zweiwaffenkampf", () => {
     const { byLabel } = lines(c);
     expect(byLabel.get("Nahkampf")?.bonuses).toEqual([8, 3]);
     expect(byLabel.get("Nahkampf")?.notes.join(" ")).toContain("Zweiwaffenkampf ist an");
-    // Fernkampf: GAB +6 und DEX +1 — vom Zweiwaffenkampf unberührt.
+    // Fernkampf: BAB +6 und DEX +1 — vom Zweiwaffenkampf unberührt.
     expect(byLabel.get("Fernkampf")?.bonuses).toEqual([7, 2]);
   });
 

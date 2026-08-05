@@ -230,7 +230,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(sheet.hp.current).toBe(36);
   });
 
-  it("reproduziert GAB, Rettungswürfe und Ringkampf des Originals exakt", () => {
+  it("reproduziert BAB, Rettungswürfe und Ringkampf des Originals exakt", () => {
     // Diese Werte kommen aus den Klassentabellen — hier darf NICHT ausgeglichen werden.
     expect(sheet.bab).toBe(6);
     expect(sheet.saves.fort.total).toBe(8);
@@ -239,7 +239,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(sheet.grapple.total).toBe(8);
     // Genau diese vier Werte müssen als „stimmt" gemeldet werden.
     const matching = comparisons.filter((c) => c.status === "match").map((c) => c.label);
-    expect(matching).toEqual(["Fortitude", "Reflex", "Will", "GAB", "Ringkampf"]);
+    expect(matching).toEqual(["Fortitude", "Reflex", "Will", "BAB", "Ringkampf"]);
     expect(comparisons.filter((c) => c.status === "reconciled").map((c) => c.label)).toEqual(["RK"]);
   });
 
@@ -300,7 +300,7 @@ describe.skipIf(!packsAvailable)("Fight-Club-Import gegen die SRD-Packs", () => 
     expect(character.skillRanks["srd:skill:intimidate"]).toBe(3);
     expect(character.skillRanks["srd:skill:jump"]).toBe(2);
     const skillDeviations = comparisons.filter(
-      (c) => !["RK", "GAB", "Ringkampf", "Initiative", "Fortitude", "Reflex", "Will"].includes(c.label),
+      (c) => !["RK", "BAB", "Ringkampf", "Initiative", "Fortitude", "Reflex", "Will"].includes(c.label),
     );
     expect(skillDeviations).toEqual([]);
     // Stichprobe: Intimidate 3 Ränge + CH 0 = +3 wie im Original.

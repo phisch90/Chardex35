@@ -34,6 +34,25 @@ export const houseRulesSchema = z.object({
    * Schalter: die Hausregel-Karte in den Einstellungen.
    */
   deathAt: z.enum(["minus10", "negCon"]).default("negCon"),
+  /**
+   * Gibt Power Attack den Schadensbonus auch mit einer LEICHTEN Waffe?
+   *
+   * Der SRD sagt nein, wörtlich: „You can't add the bonus from Power Attack to the damage
+   * dealt with a light weapon (except with unarmed strikes or natural weapon attacks)."
+   * „Leicht" ist dabei eine Eigenschaft der WAFFE und nicht des Platzes — ein Kurzschwert
+   * bleibt leicht, auch als einzige Waffe mit einem Schild in der anderen Hand.
+   *
+   * Genau darüber ist Philipp gestolpert: sein Bogen kämpft mit Kurzschwert und Schild,
+   * der Angriffsmalus kam an, der Schaden nicht, und die App sagte kein Wort dazu. Seine
+   * Frage war „Oder gilt power attack beim Kurzschwert nie?" — ja, nie. Und seine
+   * Entscheidung mit dieser Auskunft: „Bei uns zählt sie trotzdem."
+   *
+   * Deshalb ist der Standard `true` (seine Tischregel), wie bei `deathAt` und
+   * `maxHpFirstLevel`: ein Standardwert, den er erst suchen muss, ist keine Entscheidung,
+   * die man erhalten müsste. Wirkung: `meleeDamage` in `engine/combatOptions.ts` — genau
+   * eine Stelle. Schalter: die Hausregel-Karte in den Einstellungen.
+   */
+  powerAttackLightWeapons: z.boolean().default(true),
   pointBuyBudget: z.number().int().optional(),
   /**
    * Traglast komplett ignorieren („wir spielen ohne Gewicht"): keine

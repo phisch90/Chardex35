@@ -64,6 +64,61 @@ describe("Power Attack", () => {
     expect(sum(out.meleeAttack)).toBe(-3);
   });
 
+  it(`gibt mit der HAUSREGEL auch der leichten Waffe den Schaden — seine Tischregel`, () => {
+    /*
+      Sein Auftrag, und er hat einen Weg dahin gebraucht: erst „die power attack auch auf
+      den Schadenswurf gerechnet werden", dann der Aufbau („Kurzschwert und Schild"), dann
+      die richtige Rückfrage („Oder gilt power attack beim Kurzschwert nie?" — ja, nie) und
+      mit dieser Auskunft die Entscheidung: „Bei uns zählt sie trotzdem."
+
+      Der Angriffsmalus bleibt in BEIDEN Fassungen gleich. Das ist die halbe Pointe: nach
+      dem Buch zahlt eine leichte Waffe den Preis und bekommt nichts.
+    */
+    const srd = applyCombatOptions(options({ powerAttack: 4 }), context());
+    const tisch = applyCombatOptions(
+      options({ powerAttack: 4 }),
+      context({ powerAttackLightWeapons: true }),
+    );
+    expect(sum(srd.meleeDamage({ handedness: "light", hand: "main" }))).toBe(0);
+    expect(sum(tisch.meleeDamage({ handedness: "light", hand: "main" }))).toBe(4);
+    expect(sum(srd.meleeAttack)).toBe(-4);
+    expect(sum(tisch.meleeAttack)).toBe(-4);
+  });
+
+  it(`lässt eine nicht-leichte Waffe von der Hausregel unberührt`, () => {
+    /*
+      Die Gegenprobe, ohne die die Regel doppelt zählen könnte: am Langschwert darf sich
+      NICHTS ändern. Ein Schalter, der auch dort etwas verschiebt, wäre eine zweite Regel
+      unter demselben Namen.
+    */
+    for (const hausregel of [undefined, true]) {
+      const out = applyCombatOptions(
+        options({ powerAttack: 4 }),
+        context(hausregel === undefined ? {} : { powerAttackLightWeapons: hausregel }),
+      );
+      expect(sum(out.meleeDamage({ handedness: "one", hand: "main" })), String(hausregel)).toBe(4);
+      expect(
+        sum(out.meleeDamage({ handedness: "two", hand: "both" })),
+        String(hausregel),
+      ).toBe(8);
+    }
+  });
+
+  it(`macht aus einer leichten Waffe auch mit Hausregel keinen Zweihänder`, () => {
+    /*
+      „Power Attack zählt auch mit leichter Waffe" heißt NICHT „eine leichte Waffe ist ein
+      Zweihänder". Ohne diese Schranke käme aus einem Kurzschwert im Platz „beide Hände"
+      still der doppelte Bonus — und still ist genau das, was diese App nicht sein soll.
+    */
+    const out = applyCombatOptions(
+      options({ powerAttack: 4 }),
+      context({ powerAttackLightWeapons: true }),
+    );
+    expect(
+      sum(out.meleeDamage({ handedness: "light", wieldedInTwoHands: true, hand: "main" })),
+    ).toBe(4);
+  });
+
   it(`macht für unbewaffnet und natürliche Waffen die SRD-Ausnahme`, () => {
     // „except with unarmed strikes or natural weapon attacks" — sonst kassiert
     // ein waffenloser Mönch den Malus und bekommt nichts dafür.
@@ -84,10 +139,10 @@ describe("Power Attack", () => {
     expect(out.meleeDamage({ handedness: "ranged", hand: "main" })).toEqual([]);
   });
 
-  it(`meldet eine Höhe über dem GAB, wendet sie aber an (der DM hat Recht)`, () => {
+  it(`meldet eine Höhe über dem BAB, wendet sie aber an (der DM hat Recht)`, () => {
     const out = applyCombatOptions(options({ powerAttack: 9 }), context({ bab: 6 }));
     expect(sum(out.meleeAttack)).toBe(-9);
-    expect(out.warnings.join(" ")).toContain("über dem Grundangriffsbonus");
+    expect(out.warnings.join(" ")).toContain("über dem BAB");
   });
 
   it(`tut ohne das Talent gar nichts und sagt das`, () => {
@@ -130,7 +185,7 @@ describe("Kampfgeschick", () => {
     expect(out.warnings.join(" ")).toContain("höchstens 5");
   });
 
-  it(`und dass der GAB die Grenze zusätzlich drückt`, () => {
+  it(`und dass der BAB die Grenze zusätzlich drückt`, () => {
     const out = applyCombatOptions(options({ combatExpertise: 3 }), context({ bab: 2 }));
     expect(out.warnings.join(" ")).toContain("höchstens 2");
   });

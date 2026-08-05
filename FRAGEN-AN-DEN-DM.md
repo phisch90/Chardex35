@@ -1,6 +1,6 @@
 # Fragen an Martin (Spielleiter)
 
-**Stand: sechs Regeln sind beantwortet.** Was noch offen ist, steht unten in Teil 2 —
+**Stand: sieben Regeln sind beantwortet.** Was noch offen ist, steht unten in Teil 2 —
 das ist der Teil, den Martin noch vorgelegt bekommt.
 
 Warum die Liste hier liegt und nicht im Chat: ein Chat fängt irgendwann von vorn an,
@@ -66,6 +66,23 @@ Probe, −3 bis −13 blutend, tot bei −14.
 Probe? Der Satz fängt bei „zwischen 0 und minus CON Mod" an, die App nimmt die 0 also
 mit hinein. Im Regelwerk ist 0 eine eigene Zone (wach, aber nur halbe Handlung).
 
+### ✔ Volle Attacke ab BAB +6
+
+> Philipp: „Wir spielen bei 6bab mit zwei Angriffen."
+
+Damit bleibt alles, wie es ist: der Bogen zeigt die Reihe seit dem ersten Tag (bei BAB +9
+also „+9/+4"), genau wie Fight Club. Die zweite Hand folgt weiter NICHT dieser Reihe —
+sie bekommt die Angriffe, die die Zweiwaffen-Talente hergeben.
+
+Es war die letzte offene Frage, die **jeden Bogen der Gruppe** hätte ändern können;
+deshalb wurde daran ohne Antwort nichts angefasst. Neu ist nur ein Test dafür — eine
+Regel, die man nicht geändert hat, hat keinen Commit, an dem man sie später wiederfindet.
+
+Dazu sein zweiter Satz: **„Bitte auch immer bab nennen."** Der Wert heißt in der App
+jetzt überall BAB (vorher am Bogen „GAB", in den Einstellungen „BAB"), und er steht an
+jeder Angriffszeile dabei: „Volle Attacke aus BAB +6: …". Ein Satz über den Tisch selbst
+steht dort ausdrücklich NICHT — den hatte ich angehängt, und er wollte ihn weg.
+
 ---
 
 # Teil 2 — noch offen
@@ -130,31 +147,13 @@ Grad-0-Regel hätte keine Wirkung mehr.
 
 ---
 
-## 2. Volle Attacke ab Grundangriffsbonus +6
-
-**Heute:** der Bogen zeigt die ganze Reihe, genau wie Fight Club — bei
-Grundangriffsbonus +9 also „+9/+4". Bei der zweiten Hand zeigt er nur die Angriffe, die
-die Zweiwaffen-Talente hergeben.
-
-### 2.1 Ist das für euren Tisch richtig?
-
-- [ ] ja, wie im Regelwerk (zweiter Angriff ab +6, dritter ab +11, jeder weitere −5)
-- [ ] nein, bei uns gibt es einen Angriff pro Runde — die zweite Zahl kann weg
-- [ ] anders: ______
-
-*Warum:* wenn ihr die volle Attacke nicht spielt, steht auf jedem Bogen ab Stufe 6 eine
-Zahl, die niemand benutzt. Und weil es JEDEN Bogen der Gruppe betrifft, wird daran ohne
-Antwort nichts angefasst.
-
----
-
-## 3. Zwei Regeln, für die schon ein Fach existiert
+## 2. Zwei Regeln, für die schon ein Fach existiert
 
 Die App hat für diese Tischregeln ein Feld, aber keins davon tut etwas. Billige Fragen
 mit einer fertigen Hälfte dahinter. (Die dritte aus dieser Reihe — die Todesgrenze — ist
 mit Martins Antwort erledigt.)
 
-### 3.1 Erfahrungspunkte-Strafe beim Mischen von Klassen?
+### 2.1 Erfahrungspunkte-Strafe beim Mischen von Klassen?
 
 Die Regel im Buch: liegen die Klassenstufen einer Figur mehr als eine Stufe auseinander,
 gibt es weniger Erfahrungspunkte.
@@ -165,7 +164,7 @@ gibt es weniger Erfahrungspunkte.
 *Heute:* der Schalter steht in den Einstellungen und lässt sich umlegen, aber **keine
 Zeile der App liest ihn**.
 
-### 3.2 Wie entstehen die Attributswerte?
+### 2.2 Wie entstehen die Attributswerte?
 
 - [ ] gewürfelt
 - [ ] mit einem Punktebudget gekauft, und zwar ______ Punkte
@@ -175,7 +174,7 @@ Zeile der App liest ihn**.
 
 ---
 
-## 4. Kleinigkeiten zu den Aktionspunkten
+## 3. Kleinigkeiten zu den Aktionspunkten
 
 Martins Antwort klärt den Nachschub. Zwei Details sind noch nicht bestätigt — die App
 macht bis dahin das Naheliegende (immer 6, beim Aufstieg wieder voll):

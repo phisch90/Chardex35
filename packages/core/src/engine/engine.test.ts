@@ -756,7 +756,7 @@ describe("deriveSheet — Fertigkeiten", () => {
       const c = armed([
         { featId: "test:feat:weapon-focus", choice: "Langschwert", choiceRef: "test:item:longsword", extraEffects: [] },
       ]);
-      // GAB 4 + ST 3 = 7; mit Talent 8 — aber nur beim Langschwert.
+      // BAB 4 + ST 3 = 7; mit Talent 8 — aber nur beim Langschwert.
       expect(attack(c, "Longsword").total).toBe(8);
       expect(attack(c, "Greatsword").total).toBe(7);
     });
@@ -813,7 +813,7 @@ describe("deriveSheet — Fertigkeiten", () => {
       });
       const sheet = deriveSheet(c, compendium, HOUSE);
       const variantLine = sheet.attacks.find((a) => a.label === "Templer Schwert")!;
-      expect(variantLine.attack.total).toBe(8); // GAB 4 + ST 3 + 1 Talent
+      expect(variantLine.attack.total).toBe(8); // BAB 4 + ST 3 + 1 Talent
       // Eine andere Waffe bleibt außen vor.
       expect(sheet.attacks.find((a) => a.label === "Greatsword")!.attack.total).toBe(7);
     });

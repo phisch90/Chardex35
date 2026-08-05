@@ -117,7 +117,7 @@ export function CompareDraftPage() {
           <p className="text-xs text-amber-400">
             Die maximalen Trefferpunkte sind bei diesem Bogen <strong>fest eingetragen</strong> (
             {draft.hp.overrideMax}) — daher ändert die neue Stufe sie nicht. Im Reiter „Werte"
-            unter TP auf „berechnen lassen" stellen, damit die Engine sie ausrechnet.
+            unter HP auf „berechnen lassen" stellen, damit die Engine sie ausrechnet.
           </p>
         </Card>
       )}

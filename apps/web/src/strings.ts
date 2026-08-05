@@ -56,11 +56,11 @@ export const S = {
       feats: "Talente",
       notes: "Notiz",
     },
-    hp: "TP",
+    hp: "HP",
     hpMax: "max.",
     damage: "Schaden",
     nonlethal: "Nichttödlich",
-    temp: "Temp. TP",
+    temp: "Temp. HP",
     ac: "RK",
     touch: "Touch",
     flatFooted: "Flat-Footed",
@@ -68,7 +68,15 @@ export const S = {
     flatFootedHint: "Überrascht, vor der ersten Aktion: kein DEX-Bonus, kein Ausweichen.",
     init: "Initiative",
     speed: "Bewegung",
-    bab: "GAB",
+    /**
+     * BAB und nicht GAB. Sein Wort: „Wir spielen bei 6bab mit zwei Angriffen. Bitte auch
+     * immer bab nennen." Damit ist die Abkürzung entschieden — und sie war ohnehin die
+     * einzige richtige: Regelkürzel bleiben englisch (DEX statt GE), und die Engine nennt
+     * den Wert längst „BAB" (`derive.ts`, die Aufschlüsselung des Angriffs). Am Bogen
+     * stand trotzdem „GAB", in den Einstellungen „Fraktionale BAB/Saves" — ein Wert mit
+     * zwei Namen, und keiner der beiden war überall.
+     */
+    bab: "BAB",
     grapple: "Ringkampf",
     level: "Stufe",
     xp: "EP",
@@ -78,10 +86,38 @@ export const S = {
       „+8 / +3" sagt niemandem etwas, der es nicht schon weiß. Auf dem Handy
       steht der kurze Hinweis, auf breiten Schirmen (iPad) gleich der ganze Satz
       — sein Wunsch: „kann in der iPad-Version gerne schon danebenstehen".
+
+      Und der BAB steht dazu, in BEIDEN Fassungen. Sein Auftrag: „Bitte auch immer bab
+      nennen." Er hat auch den besseren Grund dafür: die Reihe „+9/+4" kommt aus dem BAB
+      und nicht aus der Zahl, die daneben steht — wer wissen will, WARUM es zwei Angriffe
+      sind, muss den BAB sehen. Bei +9 aus BAB 6 ist das der Unterschied zwischen einem
+      Angriff und zwei.
     */
-    iterativeShort: (n: number) => `${n} Angriffe pro Runde — antippen erklärt es`,
-    iterativeHint: (mods: string[]) =>
-      `Volle Attacke: ${mods.length} Angriffe hintereinander mit ${mods.join(" und ")} — jeder weitere liegt 5 niedriger. Ein einzelner Angriff (Standard-Aktion) nutzt immer ${mods[0]}.`,
+    /*
+      Der BAB kommt als fertige Zeichenkette und nicht als Zahl: `fmtMod` steht in
+      `ui/bits.tsx` bei den Bauteilen, und diese Datei soll keine React-Datei importieren.
+      Die Boni daneben (`mods`) werden aus demselben Grund vom Aufrufer formatiert.
+    */
+    /**
+     * Die Zeile ÜBER der Angriffsliste, sichtbar ohne Tap.
+     *
+     * Sein Auftrag: „Außer dem sollen wir das mit dem zweifachen Angriff deutlicher
+     * aufnehmen sobald der Char einen BAB 6 erreicht." Klein an jeder Waffe stand es
+     * schon; einmal deutlich stand es nirgends — und wer ab Stufe 6 einen Angriff pro
+     * Runde zu wenig macht, verliert die Hälfte seines Schadens.
+     */
+    fullAttack: (n: number, bab: string, mods: string[]) =>
+      `Volle Attacke: ${n} Angriffe pro Runde aus BAB ${bab} — ${mods.join(" / ")}. Ein einzelner Angriff nutzt ${mods[0]}.`,
+    iterativeShort: (n: number, bab: string) =>
+      `${n} Angriffe pro Runde (BAB ${bab}) — antippen erklärt es`,
+    /*
+     * Hier stand am Ende noch „Euer Tisch spielt die Reihe ab BAB +6." — sein Wort dazu:
+     * „Das „euer Tisch…" kann raus." Er hat recht, und der Grund ist mehr als Kürze: der
+     * Satz erzählte ihm eine Regel, die er selbst gesetzt hat, an einer Stelle, an der er
+     * eine ZAHL sucht. Am Tisch liest man diese Zeile mitten im Kampf.
+     */
+    iterativeHint: (mods: string[], bab: string) =>
+      `Volle Attacke aus BAB ${bab}: ${mods.length} Angriffe hintereinander mit ${mods.join(" und ")} — jeder weitere liegt 5 niedriger. Ein einzelner Angriff (Standard-Aktion) nutzt immer ${mods[0]}.`,
     damage2: "Schaden",
     critical: "Krit.",
     ranks: "Ränge",
@@ -239,7 +275,7 @@ export const S = {
     } as Record<string, string>,
     name: "Name",
     playerName: "Spieler:in",
-    hpRoll: "TP-Wurf",
+    hpRoll: "HP-Wurf",
     pointsLeft: "Punkte übrig",
     slotsLeft: "Slots übrig",
     /** Steht in der haftenden Leiste, wenn kein Talent-Slot mehr frei ist. */
@@ -320,12 +356,22 @@ export const S = {
     encumbranceHint: "Aus: keine Gewichtsangaben, und die Last bremst weder Bewegung noch Geschicklichkeit.",
     houseRules: "Hausregeln",
     fractional: "Fraktionale BAB/Saves (Unearthed Arcana)",
-    maxHpL1: "Volle TP auf Stufe 1",
+    maxHpL1: "Volle HP auf Stufe 1",
     xpPenalty: "Multiclass-EP-Strafe (RAW)",
     deathAtNegCon: "Tod erst beim negativen CON-Wert",
     deathAtNegConHint:
-      "Eure Hausregel: bei CON 14 ist die Figur erst bei −14 TP tot. Zwischen 0 und dem negativen CON-Modifikator stabilisiert eine Fortitude-Probe gegen SG 10.",
-    deathAtMinus10Hint: "Regel des Buches: tot bei −10 TP, egal wie zäh die Figur ist.",
+      "Eure Hausregel: bei CON 14 ist die Figur erst bei −14 HP tot. Zwischen 0 und dem negativen CON-Modifikator stabilisiert eine Fortitude-Probe gegen SG 10.",
+    deathAtMinus10Hint: "Regel des Buches: tot bei −10 HP, egal wie zäh die Figur ist.",
+    /*
+      „Leichte Waffe" ist absichtlich im Namen: der Schalter ist sonst nicht auffindbar,
+      wenn man ihn braucht — und man braucht ihn genau dann, wenn man mit Kurzschwert oder
+      Dolch kämpft und sich über den fehlenden Schaden wundert.
+    */
+    powerAttackLight: "Power Attack zählt auch mit leichter Waffe",
+    powerAttackLightOnHint:
+      "Eure Hausregel: der Schadensbonus gilt auf jede Nahkampfwaffe — mit Kurzschwert und Power Attack 4 sind das +4 Schaden. Der Angriffsmalus ist derselbe.",
+    powerAttackLightOffHint:
+      "Regel des Buches: mit einer leichten Waffe (Kurzschwert, Dolch) gibt Power Attack keinen Schaden — der Angriffsmalus gilt trotzdem. Unbewaffnet und natürliche Waffen sind davon ausgenommen.",
     exportTitle: "Export / Import",
     exportAll: "Alles exportieren (JSON)",
     importFile: "JSON importieren",
@@ -533,7 +579,7 @@ export const S = {
       save: "Rettung",
       skill: "Fertigkeiten",
       spell: "Zauber",
-      hp: "TP",
+      hp: "HP",
       initiative: "Initiative",
       speed: "Bewegung",
       action: "Handlungen",
@@ -567,8 +613,19 @@ export const S = {
     hint: "Gilt für diese Runde. Die Werte oben ändern sich mit.",
     reset: "alles zurück",
     powerAttack: "Power Attack",
-    powerAttackHint: (bab: number) =>
-      `Vom Angriff auf den Schaden, höchstens ${bab} (dein GAB). Zweihändig zählt der Schaden doppelt, mit leichter Waffe gar nicht.`,
+    /*
+      Der letzte Halbsatz hängt an der HAUSREGEL, und das ist keine Kosmetik: er stand hier
+      als „mit leichter Waffe gar nicht", während die Rechnung seit seiner Entscheidung das
+      Gegenteil tut. Ein Erklärtext, der der Rechnung widerspricht, ist schlimmer als
+      keiner — man sucht dann den Fehler in der Zahl. Gefunden hat das ein BLICK auf das
+      Bild, kein Test.
+    */
+    powerAttackHint: (bab: number, lightCounts: boolean) =>
+      `Vom Angriff auf den Schaden, höchstens ${bab} (dein BAB). Zweihändig zählt der Schaden doppelt, ${
+        lightCounts
+          ? "mit leichter Waffe einfach (eure Hausregel)."
+          : "mit leichter Waffe gar nicht."
+      }`,
     combatExpertise: "Kampfgeschick",
     combatExpertiseHint: (max: number) => `Vom Angriff auf die RK, höchstens ${max}.`,
     fightingDefensively: "Defensiv kämpfen (−4 / +2 RK)",
@@ -912,7 +969,7 @@ export const S = {
       1 TP pro Stufe pro Nachtruhe steht nirgends in dieser App, und ob temporäre
       TP eine Nacht überdauern, ist eine Entscheidung für seinen Tisch.
     */
-    hpNote: "TP fasse ich nicht an — die trägst du im TP-Rechner nach.",
+    hpNote: "HP fasse ich nicht an — die trägst du im HP-Rechner nach.",
     confirm: "Rast machen",
     cancel: "Abbrechen",
     doneTitle: "Rast gemacht.",
@@ -975,7 +1032,7 @@ export const S = {
     temp: "Temp.",
     damage: "Schaden",
     nonlethal: "Nichttödl.",
-    open: "TP ändern",
+    open: "HP ändern",
     backspace: "Zeichen löschen",
     clear: "leeren",
     errors: {
@@ -1008,17 +1065,17 @@ export const S = {
         case "stable":
           return `Stabil — der Verlust ist gestoppt. Neuer Schaden hebt das auf, ${tot}.`;
         case "bleeding":
-          return `Sterbend — 1 TP pro Runde, keine Probe mehr möglich. ${
+          return `Sterbend — 1 HP pro Runde, keine Probe mehr möglich. ${
             tot.charAt(0).toUpperCase() + tot.slice(1)
           }.`;
         case "dead":
-          return `Tot — bei ${deadAt} TP ist die Grenze erreicht (negativer CON-Wert).`;
+          return `Tot — bei ${deadAt} HP ist die Grenze erreicht (negativer CON-Wert).`;
         default:
           return "";
       }
     },
     /** Der Knopf im TP-Rechner: eine Runde weiter, während die Figur blutet. */
-    roundOn: "Eine Runde weiter: −1 TP",
+    roundOn: "Eine Runde weiter: −1 HP",
     stabilizedOn: "Probe geschafft — stabil",
     stabilizedOff: "nicht mehr stabil",
     stabilizedHint: "Fortitude gegen SG 10, oder wie dein DM es entscheidet.",
@@ -1174,7 +1231,7 @@ export const S = {
     reconciled: "ausgeglichen",
     reportedOnly: "weicht ab",
     matches: "Alle Werte stimmen mit dem Original überein.",
-    noValues: "Der Export enthält keine Vergleichswerte (RK, Rettungswürfe, GAB) — nichts zu prüfen.",
+    noValues: "Der Export enthält keine Vergleichswerte (RK, Rettungswürfe, BAB) — nichts zu prüfen.",
     notes: "Hinweise",
     failed: "Datei konnte nicht gelesen werden",
     nothing: "Keine Charaktere in der Datei gefunden.",
@@ -1199,7 +1256,7 @@ export const S = {
     */
     hpTitle: "Trefferpunkte für diese Stufe",
     hpFull: (die: number, gain: number) =>
-      `Voller Trefferwürfel: W${die} → ${gain >= 0 ? "+" : ""}${gain} TP (mit CON).`,
+      `Voller Trefferwürfel: W${die} → ${gain >= 0 ? "+" : ""}${gain} HP (mit CON).`,
     hpFullWhy: "Hausregel am Tisch: beim Aufstieg wird nicht gewürfelt.",
     hpNoClass: "Erst eine Klasse wählen.",
     abilityIncrease: "Attributssteigerung (alle 4 Stufen)",
@@ -1210,6 +1267,16 @@ export const S = {
     apply: "Stufe aufsteigen",
     hpDelta: "Trefferpunkte",
     newLevel: "Neue Stufe",
+    /**
+     * Der Aufstieg sagt VORHER an, dass ab jetzt ein Angriff dazukommt.
+     *
+     * Sein Auftrag: „Auch beim leveln sollte das erwähnt werden." Dieselbe Sorte Ansage
+     * wie bei den Zählern, die der Aufstieg zurücksetzt — was er gelesen hat, passiert
+     * danach. Und es steht nur da, wenn die ANZAHL wirklich steigt: bei Stufe 6 → 7
+     * ändert sich nichts, und ein Satz, der immer dasteht, wird nicht gelesen.
+     */
+    moreAttacks: (n: number, bab: string) =>
+      `Neu ab dieser Stufe: ${n} Angriffe pro Runde bei voller Attacke (BAB ${bab}).`,
   },
 
   misc: {

@@ -91,7 +91,7 @@ export const FEATS_DE: Record<string, string> = {
   "blind-fight":
     "Verfehlst du im Nahkampf wegen Sichtschutz, darfst du den Prozentwurf einmal wiederholen. Unsichtbare Angreifer haben im Nahkampf gegen dich keinen Vorteil, und schwieriges Gelände halbiert deine Geschwindigkeit nicht, wenn du blind kämpfst.",
   diehard:
-    "Bei −1 bis −9 Trefferpunkten wirst du automatisch stabil und verlierst nicht jede Runde einen weiteren Trefferpunkt. Du darfst weiter handeln wie außer Gefecht (eine Standard- oder Bewegungsaktion pro Runde, anstrengende Handlungen kosten 1 TP).",
+    "Bei −1 bis −9 Trefferpunkten wirst du automatisch stabil und verlierst nicht jede Runde einen weiteren Trefferpunkt. Du darfst weiter handeln wie außer Gefecht (eine Standard- oder Bewegungsaktion pro Runde, anstrengende Handlungen kosten 1 HP).",
   endurance:
     "+4 auf Würfe gegen Erschöpfung: Swim gegen nichttödlichen Schaden, KO-Würfe beim Rennen und Gewaltmarsch, Hunger, Durst, Hitze und Kälte, sowie gegen Ersticken. Du darfst außerdem in Rüstung schlafen, ohne müde zu werden.",
   toughness: "+3 Trefferpunkte. Das Talent lässt sich mehrfach nehmen.",

@@ -25,7 +25,7 @@ const SRD_REV_KEY = "srdRev";
  * also weiter „Longsword" gezeigt. Wer die deutsche Tabelle ändert, erhöht hier
  * um eins; die Packs bleiben unangetastet.
  */
-const GERMAN_REV = 1;
+const GERMAN_REV = 2;
 
 interface Manifest {
   srdRev: number;

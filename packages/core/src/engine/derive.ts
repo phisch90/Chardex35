@@ -306,6 +306,7 @@ export function deriveSheetValues(
     hasTwoWeaponFighting: featIdSet.has("srd:feat:two-weapon-fighting"),
     hasImprovedTwoWeaponFighting: featIdSet.has("srd:feat:improved-two-weapon-fighting"),
     hasGreaterTwoWeaponFighting: featIdSet.has("srd:feat:greater-two-weapon-fighting"),
+    powerAttackLightWeapons: houseRules.powerAttackLightWeapons,
   });
   for (const message of combat.warnings) {
     issues.push({ severity: "warning", code: "combat-option", message, tab: "combat" });
@@ -570,7 +571,7 @@ export function deriveSheetValues(
       Die ZWEITE HAND folgt dieser Reihe aber nicht — sie bekommt genau die
       Angriffe, die die Zweiwaffen-Talente gewähren: einen, mit Improved zwei,
       mit Greater drei. Vorher zeigte der Bogen ihr die volle Reihe und damit bei
-      GAB +6 einen Angriff zu viel.
+      BAB +6 einen Angriff zu viel.
     */
     const offHandSteps = hand === "off" ? combat.offHandSteps : [];
     const bonuses =
@@ -642,6 +643,29 @@ export function deriveSheetValues(
         });
       }
       damageContributions.push(...combat.meleeDamage(wield));
+      /*
+        Power Attack läuft, aber diese Waffe bekommt keinen Schaden davon — dann muss die
+        Zeile es SAGEN. Genau hier hat die App geschwiegen: Philipp kämpft mit Kurzschwert
+        und Schild, sah den Angriffsmalus ankommen, den Schaden nicht, und hielt es für
+        einen Fehler. Sein Satz war „da hat eben bei Hike kein power attack auf den schaden
+        gezählt".
+
+        Sein Tisch spielt es inzwischen anders (Hausregel, Standard an), also erscheint der
+        Satz nur, wenn jemand sie abschaltet. Ohne ihn wäre die Rückkehr zur Buchregel
+        wieder stumm.
+      */
+      if (
+        !ranged &&
+        character.combatOptions.powerAttack > 0 &&
+        featIdSet.has("srd:feat:power-attack") &&
+        wield.handedness === "light" &&
+        !wield.naturalOrUnarmed &&
+        houseRules.powerAttackLightWeapons !== true
+      ) {
+        notes.push(
+          "Leichte Waffe: Power Attack gibt hier keinen Schaden — der Angriffsmalus gilt trotzdem.",
+        );
+      }
       if (ranged) {
         notes.push(
           rule === "full"

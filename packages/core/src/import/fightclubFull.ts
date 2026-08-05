@@ -858,7 +858,7 @@ function readCharacter(block: string, issues: ImportIssue[]): FightClubFullPc {
     Der gemeinsame Mapper liest „Volk Klasse N / Klasse M" — mit Schrägstrich
     zwischen den Klassen, so wie der Statblock-Export es schreibt. Ohne ihn war
     „Human Fighter 3 Cleric 4" EINE unbekannte Klasse, und der Bogen kam ohne
-    Stufe, ohne GAB und ohne Rettungswürfe an.
+    Stufe, ohne BAB und ohne Rettungswürfe an.
   */
   const raceClass = [
     raceName,

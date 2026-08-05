@@ -276,7 +276,7 @@ describe.skipIf(!packsAvailable)("Eigene Werte rechnen wie die aus dem Regelwerk
     };
     expect(withRef.basedOn).toBe(template.id);
     expect(noRef.basedOn).toBeUndefined();
-    // Kämpfer 1, GAB +1, DEX 18 (leichte Waffe → Kampfgeschick zählt nicht ohne
+    // Kämpfer 1, BAB +1, DEX 18 (leichte Waffe → Kampfgeschick zählt nicht ohne
     // Talent, also STR 10 = +0): ohne Talent +1, mit Weapon Focus +2.
     expect(attackWith(noRef.id)).toBe(1);
     expect(attackWith(withRef.id)).toBe(2);

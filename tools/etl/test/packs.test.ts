@@ -13,7 +13,19 @@ describe("packs/srd", () => {
   const manifest = loadManifest();
 
   it("manifest listet Dateien und counts", () => {
-    expect(manifest.srdRev).toBe(9);
+    /*
+      Die Nummer steht hier ABSICHTLICH als Zahl und nicht als „ist größer als".
+
+      Sie entscheidet, ob sein Gerät das Kompendium neu einspielt (`db/seed.ts`): ändert
+      sich ein Pack und die Nummer NICHT, bleibt sein iPhone auf dem alten Stand — die
+      achte Falle in CLAUDE.md. Umgekehrt kostet jede Erhöhung ein Neu-Einrichten, also
+      soll sie kein Versehen sein. Ein fester Wert erzwingt beides: wer ein Pack anfasst,
+      sieht diese Zeile im Diff.
+
+      Stand 10: die deutschen Texte sagen „HP" statt „TP" (vier Stellen in
+      `conditions.json` und `feats-1.json`).
+    */
+    expect(manifest.srdRev).toBe(10);
     expect(manifest.files.length).toBeGreaterThan(0);
     expect([...manifest.files].sort()).toEqual(manifest.files);
     expect(manifest.files).not.toContain("manifest.json");

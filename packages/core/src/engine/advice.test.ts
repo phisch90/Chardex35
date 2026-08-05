@@ -161,7 +161,7 @@ describe.skipIf(!packsAvailable)("Empfehlungen für Volk und Klasse", () => {
     /*
       Für den Assassinen gibt es keinen Tabelleneintrag — trotzdem muss etwas Sinnvolles
       herauskommen, sonst stünde bei jeder Prestige-, NSC- und Homebrew-Klasse nichts da.
-      Gerechnet aus seinen Daten: W6, 4 Fertigkeitspunkte, GAB 7 auf 10 Stufen (drei
+      Gerechnet aus seinen Daten: W6, 4 Fertigkeitspunkte, BAB 7 auf 10 Stufen (drei
       Viertel) → Nahkampf und Trefferpunkte.
 
       NEBENBEFUND: im Pack steht `spellcasting: null`, obwohl der Assassine im SRD

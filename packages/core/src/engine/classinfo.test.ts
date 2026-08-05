@@ -30,7 +30,7 @@ describe.skipIf(!packsAvailable)("classSummary gegen die PHB-Tabellen", () => {
     return entity;
   };
 
-  it(`liest den Kämpfer richtig: W10, voller GAB, nur Fortitude gut`, () => {
+  it(`liest den Kämpfer richtig: W10, voller BAB, nur Fortitude gut`, () => {
     const summary = classSummary(get("srd:class:fighter"));
     expect(summary?.hitDie).toBe(10);
     expect(summary?.skillPointsPerLevel).toBe(2);
@@ -40,7 +40,7 @@ describe.skipIf(!packsAvailable)("classSummary gegen die PHB-Tabellen", () => {
     expect(summary?.isPrestige).toBe(false);
   });
 
-  it(`liest den Magier richtig: W4, halber GAB, nur Will gut, Zauberbuch`, () => {
+  it(`liest den Magier richtig: W4, halber BAB, nur Will gut, Zauberbuch`, () => {
     const summary = classSummary(get("srd:class:wizard"));
     expect(summary?.hitDie).toBe(4);
     expect(summary?.babProgression).toBe("half");
@@ -52,7 +52,7 @@ describe.skipIf(!packsAvailable)("classSummary gegen die PHB-Tabellen", () => {
     expect(summary?.spellcasting?.maxSpellLevel).toBe(9);
   });
 
-  it(`liest den Kleriker richtig: W8, 3/4-GAB, Fort und Will gut`, () => {
+  it(`liest den Kleriker richtig: W8, 3/4-BAB, Fort und Will gut`, () => {
     const summary = classSummary(get("srd:class:cleric"));
     expect(summary?.hitDie).toBe(8);
     expect(summary?.babProgression).toBe("threeQuarter");
@@ -62,7 +62,7 @@ describe.skipIf(!packsAvailable)("classSummary gegen die PHB-Tabellen", () => {
     expect(summary?.spellcasting?.usesSpellbook).toBe(false);
   });
 
-  it(`liest den Schurken richtig: W6, 3/4-GAB, nur Reflex gut, 8 Punkte`, () => {
+  it(`liest den Schurken richtig: W6, 3/4-BAB, nur Reflex gut, 8 Punkte`, () => {
     const summary = classSummary(get("srd:class:rogue"));
     expect(summary?.hitDie).toBe(6);
     expect(summary?.skillPointsPerLevel).toBe(8);
@@ -99,7 +99,7 @@ describe.skipIf(!packsAvailable)("classLevelGain — was bringt genau diese Stuf
     return entity;
   };
 
-  it(`Kämpfer Stufe 2: +1 GAB, Bonustalent`, () => {
+  it(`Kämpfer Stufe 2: +1 BAB, Bonustalent`, () => {
     const gain = classLevelGain(get("srd:class:fighter"), 2);
     expect(gain?.babDelta).toBe(1);
     expect(gain?.saveDeltas.fort).toBe(1);
@@ -121,17 +121,17 @@ describe.skipIf(!packsAvailable)("classLevelGain — was bringt genau diese Stuf
     expect(gain?.slots?.[2]).toBe(2);
   });
 
-  it(`Kleriker Stufe 5: Grad 3 kommt neu, GAB steht still`, () => {
+  it(`Kleriker Stufe 5: Grad 3 kommt neu, BAB steht still`, () => {
     const gain = classLevelGain(get("srd:class:cleric"), 5);
     expect(gain?.newSpellLevels).toEqual([3]);
-    // 3/4-Progression: von Stufe 4 auf 5 bleibt der GAB bei +3.
+    // 3/4-Progression: von Stufe 4 auf 5 bleibt der BAB bei +3.
     expect(gain?.babDelta).toBe(0);
     expect(gain?.saveDeltas).toEqual({ fort: 0, ref: 0, will: 0 });
   });
 
   it(`Stufe 1 vergleicht gegen nichts — die Werte sind die Stufe selbst`, () => {
     const gain = classLevelGain(get("srd:class:cleric"), 1);
-    expect(gain?.babDelta).toBe(0); // Kleriker hat auf Stufe 1 GAB +0
+    expect(gain?.babDelta).toBe(0); // Kleriker hat auf Stufe 1 BAB +0
     expect(gain?.saveDeltas.fort).toBe(2);
     expect(gain?.saveDeltas.will).toBe(2);
     expect(gain?.newSpellLevels).toContain(0);
@@ -149,7 +149,7 @@ describe.skipIf(!packsAvailable)("classLevelGain — was bringt genau diese Stuf
       for (let level = 1; level <= summary.maxLevel; level++) {
         const gain = classLevelGain(entity, level);
         expect(gain, `${entity.id} Stufe ${level}`).not.toBeNull();
-        // Kein Rettungswurf und kein GAB springt je um mehr als 1 pro Stufe.
+        // Kein Rettungswurf und kein BAB springt je um mehr als 1 pro Stufe.
         expect(gain?.babDelta, `${entity.id} Stufe ${level}`).toBeLessThanOrEqual(1);
         for (const key of ["fort", "ref", "will"] as const) {
           expect(gain?.saveDeltas[key], `${entity.id} ${key} Stufe ${level}`).toBeLessThanOrEqual(2);
