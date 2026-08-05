@@ -290,6 +290,19 @@ Jetzt läuft die Prüfung als kleiner Zustandsautomat über die Datei.
   wird weiter die Gegenzahl (`usedSlots`) — der Knopf gehört zur Anzeige, nicht zum Speicher.
 - **Turn Undead: 7.** Seine Notiz hat recht (3 + CHA + 4 vom Talent), die 8 in Fight
   Club war ein alter Stand. Der Zähler rechnet, er speichert nicht.
+- **Die Hauptnavigation sitzt am Handy OBEN.** Wörtlich: „Die untere Menü Leiste soll bitte
+  ganz nach oben wandern." Gemeint ist die Hauptnavigation (Charaktere · Kompendium · Würfel
+  · Einstellungen), nicht die Reiterleiste des Bogens — die bleibt unten in Daumenreichweite
+  und ist nur nachgerutscht. Ab `md` ändert sich nichts: dort steht die Navigation links als
+  Seitenleiste.
+  **Und das ist die fünfte Falle in der ANDEREN Richtung.** Fünf Stellen rechneten die Höhe
+  der Leiste unten ein — die Reiterleiste des Bogens, der Weiter-Balken des Assistenten, die
+  Rücknahme-Meldung, die Abgleich-Marke, das Polster des Inhalts. Wer eine Höhe aus der Hülle
+  einrechnet, muss sie zurückstellen, sobald die Hülle sie nicht mehr hat: aus 7rem wird
+  3,5rem, aus `bottom-[3.5rem]` wird `bottom-0`, aus `pb-` wird `pt-`. Ein Wert zu viel ist
+  hier kein kleiner Fehler, sondern genau das Band, das 56px über dem Rand schwebt.
+  Dazu ein Punkt, der leicht untergeht: oben heißt `env(safe-area-inset-TOP)`. Ein Polster
+  für den falschen Rand ist so gut wie keines — auf dem iPhone liegt oben die Dynamic Island.
 - **Domänen: fehlten wirklich.** Gebaut: Heal/War als Wahl am Charakter, ein
   Domänenplatz je Zaubergrad ab 1, die Domänenzauber in der Auswahl, und der Import
   liest seine Notiz „Domains".

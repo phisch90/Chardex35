@@ -55,9 +55,11 @@ export function UndoBar(props: {
     */
     <div
       role="status"
-      // 3,5rem Hauptnavigation + 3,5rem Reiter-Leiste, sonst deckt die Meldung
-      // genau die Reiter ab, die man als Nächstes braucht.
-      className="fixed inset-x-3 bottom-[calc(7rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-2 rounded-lg border border-amber-700 bg-amber-950 px-3 py-2 text-xs text-amber-100 shadow-lg shadow-black/50 md:inset-x-auto md:bottom-4 md:right-4 md:max-w-md"
+      // 3,5rem für die Reiter-Leiste, sonst deckt die Meldung genau die Reiter ab, die man
+      // als Nächstes braucht. Vorher 7rem — die zweite Hälfte war die Hauptnavigation, und
+      // die sitzt jetzt oben (sein Auftrag). Ein Abstand für etwas, das dort nicht mehr
+      // ist, lässt die Meldung schweben.
+      className="fixed inset-x-3 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-2 rounded-lg border border-amber-700 bg-amber-950 px-3 py-2 text-xs text-amber-100 shadow-lg shadow-black/50 md:inset-x-auto md:bottom-4 md:right-4 md:max-w-md"
     >
       <span className="min-w-0 flex-1">
         <strong className="font-semibold">{props.pending.label}</strong> gelöscht

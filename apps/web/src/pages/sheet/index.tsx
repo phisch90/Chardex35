@@ -491,10 +491,15 @@ export function CharacterSheetPage() {
       </SwipeTabs>
 
       {/*
-        Mobile Reiter-Leiste: direkt über der Hauptnavigation, in Daumenreichweite.
-        Icons + Kurzlabel, damit alle sieben Reiter nebeneinander passen.
+        Mobile Reiter-Leiste: ganz unten, in Daumenreichweite. Icons + Kurzlabel, damit
+        alle sieben Reiter nebeneinander passen.
+
+        Sie saß über der Hauptnavigation und rechnete deren Höhe ein. Seit die Navigation
+        oben sitzt (sein Auftrag), ist unten Platz — und der Abstand von 3,5rem wäre jetzt
+        ein Band, das über dem Rand schwebt. Dafür braucht sie das Polster für den unteren
+        Geräte-Rand, das vorher die Navigation getragen hat.
       */}
-      <nav className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 flex border-t border-slate-800 bg-slate-900/95 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-slate-800 bg-slate-900/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         {tabs.map((key) => (
           <button
             key={key}
