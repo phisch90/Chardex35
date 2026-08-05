@@ -65,7 +65,19 @@ export type IconName =
   | "faehrte"
   | "schatten"
   | "funke"
-  | "zeichen";
+  | "zeichen"
+  /*
+    Die sieben VÖLKER als Kopf. Ihre Namen sind die Kennung aus den Packs in
+    Binnenschreibweise (`srd:race:half-orc` → `halfOrc`), siehe `ui/raceIcon.ts` —
+    dieselbe Regel wie oben: der Schlüssel IST der Name des Zeichens.
+  */
+  | "human"
+  | "dwarf"
+  | "elf"
+  | "gnome"
+  | "halfElf"
+  | "halfOrc"
+  | "halfling";
 
 /**
  * Die Formen. Jede in einem 24×24-Feld, jede als Striche — `d` für Linien, `dots` für die
@@ -382,6 +394,155 @@ export const ICON_SHAPES: Record<IconName, { d: string[]; dots?: [number, number
       "M12 2.6l4.6 12.2h-9.2z",
       "M4 16.2c2.4-1 5-1.4 8-1.4s5.6.4 8 1.4l-1.2 3.6c-2.2-.8-4.5-1.2-6.8-1.2s-4.6.4-6.8 1.2z",
       "M9.4 9.6h5.2",
+    ],
+  },
+
+  /* ----------------------------------------------------------------------
+     Die sieben VÖLKER — je ein KOPF, für die Kacheln der Volkauswahl.
+     ----------------------------------------------------------------------
+     Sein Auftrag: „die Volkauswahl als Kacheln mit jeweils einem Piktogramm des
+     Kopfes (wie bei BG3) der jeweiligen Rasse."
+
+     Unterschieden wird im UMRISS, nicht im Detail — bei 40 px (der Kachelgröße) liest
+     man die Silhouette und nicht die Frisur. Die Reihe ist deshalb eine Reihe von
+     UMRISSEN: schlicht (Mensch) · kurze Spitzohren (Halb-Elf) · lange Spitzohren (Elf) ·
+     breiter Bart (Zwerg) · große Rundohren (Gnom) · Locken oben (Halbling) · schwerer
+     Kiefer mit Hauern (Halb-Ork).
+
+     Vier Anläufe, und jeder Fehlschlag war dieselbe Sorte Missverständnis — eine FLÄCHE
+     an der falschen Stelle wird etwas anderes:
+
+       Mensch   1. Haaransatz bis an den Umriss        → BADEKAPPE
+       Elf      1. Ohren bis x=2,6 und so dick wie der Kopf → FLÜGEL
+       Zwerg    1. ein durchgehender Umriss             → AFFENGESICHT (kein Bart zu sehen)
+                2. Schnurrbart als ∩-Bogen             → trauriger MUND
+                3. Nase plus Schnurrbart               → SCHNAUZE
+       Gnom     1. spitzes V unter dem Kinn            → MÖHRE
+                2. breiter Kinnbart                    → offener MUND
+                3. große Nase                          → SCHLÜSSELLOCH, mit den Ohren ein AFFE
+                4. Zipfelmütze                         → HELM
+       Halb-Ork 1. Mundlinie plus zwei Hauer           → EIMER im Mund
+                2. gebogene Hauer außen an den Wangen  → WANGENFALTEN
+                3. Braue über die ganze Breite         → MÜTZENSCHIRM
+
+     Daraus die zwei Regeln, die am Ende alle sieben gerettet haben: **in der Mitte des
+     Gesichts steht nichts** (dort entsteht sofort eine Schnauze), und **was Haar sein
+     soll, darf den Umriss nicht berühren** (sonst ist es eine Kappe). Der Gnom hat
+     deshalb nur Ohren, der Zwerg nur Bart und Schnurrbart, und der Halb-Ork zwei kurze
+     Brauenstriche statt einer Linie.
+
+     Gegengeprüft gegen die zwei Klassenzeichen, die selbst Gesichter sind: der
+     Barbaren-Schädel (`wild`) und die Schurkenmaske (`schatten`) — sie stehen im
+     Assistenten einen Schritt weiter und dürfen sich nicht verwechseln lassen.
+     Gefunden hat das alles ein Blatt mit allen sieben in 30/40/56/110 px, kein Test. */
+
+  /* Mensch — schlicht. Der Nullpunkt der Reihe: Haaransatz und kleine runde Ohren. */
+  human: {
+    d: [
+      "M12 2.6c-3.1 0-5.3 2.4-5.3 5.8 0 4.1 2.4 7.5 5.3 7.5s5.3-3.4 5.3-7.5c0-3.4-2.2-5.8-5.3-5.8z",
+      "M8.4 7c1.6-2 5.6-2 7.2 0",
+      "M6.8 9.2c-1.1 0-1.8.8-1.8 1.8 0 1 .7 1.7 1.8 1.7",
+      "M17.2 9.2c1.1 0 1.8.8 1.8 1.8 0 1-.7 1.7-1.8 1.7",
+    ],
+    dots: [
+      [9.9, 9.6, 0.95],
+      [14.1, 9.6, 0.95],
+    ],
+  },
+
+  /*
+    Zwerg — Schädeldecke und Bart sind ZWEI Formen mit einem Schnitt an den Schläfen.
+    Ein einziger Umriss sah nur nach einem breiten Kopf aus; erst der Schnitt macht den
+    Bart zum Bart. Der Schnurrbart sind zwei Striche, die nach außen streichen — ein
+    Bogen an dieser Stelle ist ein Mund.
+  */
+  dwarf: {
+    d: [
+      "M6.5 12.4c-.4-1.2-.6-2.4-.6-3.6C5.9 5 8.6 2.6 12 2.6s6.1 2.4 6.1 6.2c0 1.2-.2 2.4-.6 3.6",
+      "M6.5 11.4c-1.2.4-1.9 1.4-1.9 2.8 0 4 3.3 7.4 7.4 7.4s7.4-3.4 7.4-7.4c0-1.4-.7-2.4-1.9-2.8",
+      "M11.4 12.6c-1 1-2.2 1.7-3.6 2",
+      "M12.6 12.6c1 1 2.2 1.7 3.6 2",
+    ],
+    dots: [
+      [9.6, 9, 0.95],
+      [14.4, 9, 0.95],
+    ],
+  },
+
+  /* Elf — schmaler Kopf, die Ohren steil nach oben. Sie sind das Zeichen, also dürfen
+     sie lang sein — aber nicht dicker als ein Strich, sonst werden sie Flügel. */
+  elf: {
+    d: [
+      "M12 2.8c-2.7 0-4.7 2.4-4.7 5.7 0 4.1 2.1 7.5 4.7 7.5s4.7-3.4 4.7-7.5c0-3.3-2-5.7-4.7-5.7z",
+      "M7.3 10.6L3.6 4.6l3.7 3.4",
+      "M16.7 10.6l3.7-6-3.7 3.4",
+      "M8.4 6.9c1.3-1.7 5.9-1.7 7.2 0",
+    ],
+    dots: [
+      [10, 9.6, 0.9],
+      [14, 9.6, 0.9],
+    ],
+  },
+
+  /* Gnom — kleiner runder Kopf, große Rundohren, und in der Mitte NICHTS. */
+  gnome: {
+    d: [
+      "M12 4.2c-3 0-5.2 2.3-5.2 5.6 0 4 2.3 7.2 5.2 7.2s5.2-3.2 5.2-7.2c0-3.3-2.2-5.6-5.2-5.6z",
+      "M6.9 9.2c-2-.5-3.5.5-3.5 2.2 0 1.8 1.5 2.9 3.5 2.5",
+      "M17.1 9.2c2-.5 3.5.5 3.5 2.2 0 1.8-1.5 2.9-3.5 2.5",
+    ],
+    dots: [
+      [10, 10.4, 0.95],
+      [14, 10.4, 0.95],
+    ],
+  },
+
+  /* Halb-Elf — der Kopf des Menschen, die Ohren halb so lang wie beim Elfen, und das
+     Haar seitlich gestrichen statt mittig. Zwei Unterschiede, weil einer zu wenig ist:
+     er muss sich vom Elfen UND vom Menschen unterscheiden. */
+  halfElf: {
+    d: [
+      "M12 2.6c-3.1 0-5.3 2.4-5.3 5.8 0 4.1 2.4 7.5 5.3 7.5s5.3-3.4 5.3-7.5c0-3.4-2.2-5.8-5.3-5.8z",
+      "M7 11.2L4.4 7.2l2.7 1.6",
+      "M17 11.2l2.6-4-2.7 1.6",
+      "M7.8 7.6C9 4.8 13.4 4.2 16.2 6.6",
+    ],
+    dots: [
+      [9.9, 9.6, 0.95],
+      [14.1, 9.6, 0.95],
+    ],
+  },
+
+  /* Halb-Ork — der breiteste Kopf, schwerer Kiefer, zwei Hauer nach oben. Die Braue
+     sind zwei kurze Striche über den Augen: eine durchgehende Linie ist ein
+     Mützenschirm, und eine Mundlinie zwischen den Hauern ein Eimer. */
+  halfOrc: {
+    d: [
+      "M12 2.8c-3.5 0-5.9 2.3-5.9 5.6 0 2.6.6 4.6 1.8 6 1.1 1.3 2.5 2 4.1 2s3-.7 4.1-2c1.2-1.4 1.8-3.4 1.8-6 0-3.3-2.4-5.6-5.9-5.6z",
+      "M7.8 7.8l2.8 1",
+      "M16.2 7.8l-2.8 1",
+      "M8.4 14.6l1-3 1 3z",
+      "M13.6 14.6l1-3 1 3z",
+    ],
+    dots: [
+      [9.8, 10.6, 0.85],
+      [14.2, 10.6, 0.85],
+    ],
+  },
+
+  /* Halbling — die Locken sind der Umriss: der Kopf ist unten offen gezeichnet, die
+     Lockenlinie schließt ihn oben. Sonst stünde die Schädeldecke als zweite Linie
+     darunter, und aus den Locken würde eine Haube. */
+  halfling: {
+    d: [
+      "M6.9 8.6c-.1 4.3 2.2 8 5.1 8s5.2-3.7 5.1-8",
+      "M6.9 8.6c.2-1.5 1.1-2.3 2.3-2.2.1-1.6 1.2-2.6 2.8-2.6s2.7 1 2.8 2.6c1.2-.1 2.1.7 2.3 2.2",
+      "M6.9 10.4c-1.1-.1-1.8.6-1.8 1.5s.7 1.6 1.8 1.5",
+      "M17.1 10.4c1.1-.1 1.8.6 1.8 1.5s-.7 1.6-1.8 1.5",
+    ],
+    dots: [
+      [10.1, 11, 0.9],
+      [13.9, 11, 0.9],
     ],
   },
 };
