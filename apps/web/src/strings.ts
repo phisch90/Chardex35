@@ -68,7 +68,15 @@ export const S = {
     flatFootedHint: "Überrascht, vor der ersten Aktion: kein DEX-Bonus, kein Ausweichen.",
     init: "Initiative",
     speed: "Bewegung",
-    bab: "GAB",
+    /**
+     * BAB und nicht GAB. Sein Wort: „Wir spielen bei 6bab mit zwei Angriffen. Bitte auch
+     * immer bab nennen." Damit ist die Abkürzung entschieden — und sie war ohnehin die
+     * einzige richtige: Regelkürzel bleiben englisch (DEX statt GE), und die Engine nennt
+     * den Wert längst „BAB" (`derive.ts`, die Aufschlüsselung des Angriffs). Am Bogen
+     * stand trotzdem „GAB", in den Einstellungen „Fraktionale BAB/Saves" — ein Wert mit
+     * zwei Namen, und keiner der beiden war überall.
+     */
+    bab: "BAB",
     grapple: "Ringkampf",
     level: "Stufe",
     xp: "EP",
@@ -78,10 +86,22 @@ export const S = {
       „+8 / +3" sagt niemandem etwas, der es nicht schon weiß. Auf dem Handy
       steht der kurze Hinweis, auf breiten Schirmen (iPad) gleich der ganze Satz
       — sein Wunsch: „kann in der iPad-Version gerne schon danebenstehen".
+
+      Und der BAB steht dazu, in BEIDEN Fassungen. Sein Auftrag: „Bitte auch immer bab
+      nennen." Er hat auch den besseren Grund dafür: die Reihe „+9/+4" kommt aus dem BAB
+      und nicht aus der Zahl, die daneben steht — wer wissen will, WARUM es zwei Angriffe
+      sind, muss den BAB sehen. Bei +9 aus BAB 6 ist das der Unterschied zwischen einem
+      Angriff und zwei.
     */
-    iterativeShort: (n: number) => `${n} Angriffe pro Runde — antippen erklärt es`,
-    iterativeHint: (mods: string[]) =>
-      `Volle Attacke: ${mods.length} Angriffe hintereinander mit ${mods.join(" und ")} — jeder weitere liegt 5 niedriger. Ein einzelner Angriff (Standard-Aktion) nutzt immer ${mods[0]}.`,
+    /*
+      Der BAB kommt als fertige Zeichenkette und nicht als Zahl: `fmtMod` steht in
+      `ui/bits.tsx` bei den Bauteilen, und diese Datei soll keine React-Datei importieren.
+      Die Boni daneben (`mods`) werden aus demselben Grund vom Aufrufer formatiert.
+    */
+    iterativeShort: (n: number, bab: string) =>
+      `${n} Angriffe pro Runde (BAB ${bab}) — antippen erklärt es`,
+    iterativeHint: (mods: string[], bab: string) =>
+      `Volle Attacke aus BAB ${bab}: ${mods.length} Angriffe hintereinander mit ${mods.join(" und ")} — jeder weitere liegt 5 niedriger. Ein einzelner Angriff (Standard-Aktion) nutzt immer ${mods[0]}. Euer Tisch spielt die Reihe ab BAB +6.`,
     damage2: "Schaden",
     critical: "Krit.",
     ranks: "Ränge",
@@ -568,7 +588,7 @@ export const S = {
     reset: "alles zurück",
     powerAttack: "Power Attack",
     powerAttackHint: (bab: number) =>
-      `Vom Angriff auf den Schaden, höchstens ${bab} (dein GAB). Zweihändig zählt der Schaden doppelt, mit leichter Waffe gar nicht.`,
+      `Vom Angriff auf den Schaden, höchstens ${bab} (dein BAB). Zweihändig zählt der Schaden doppelt, mit leichter Waffe gar nicht.`,
     combatExpertise: "Kampfgeschick",
     combatExpertiseHint: (max: number) => `Vom Angriff auf die RK, höchstens ${max}.`,
     fightingDefensively: "Defensiv kämpfen (−4 / +2 RK)",
@@ -1174,7 +1194,7 @@ export const S = {
     reconciled: "ausgeglichen",
     reportedOnly: "weicht ab",
     matches: "Alle Werte stimmen mit dem Original überein.",
-    noValues: "Der Export enthält keine Vergleichswerte (RK, Rettungswürfe, GAB) — nichts zu prüfen.",
+    noValues: "Der Export enthält keine Vergleichswerte (RK, Rettungswürfe, BAB) — nichts zu prüfen.",
     notes: "Hinweise",
     failed: "Datei konnte nicht gelesen werden",
     nothing: "Keine Charaktere in der Datei gefunden.",

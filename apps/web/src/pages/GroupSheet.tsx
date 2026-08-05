@@ -164,7 +164,7 @@ export function GroupSheetPage() {
           <StatButton label="TOUCH" value={String(sheet.ac.touch.total)} />
           <StatButton label="FLAT-FOOTED" value={String(sheet.ac.flatFooted.total)} />
           <StatButton label={S.sheet.init} value={fmtMod(sheet.init.total)} />
-          <StatButton label="GAB" value={fmtMod(sheet.bab)} />
+          <StatButton label={S.sheet.bab} value={fmtMod(sheet.bab)} />
           <StatButton label={S.sheet.grapple} value={fmtMod(sheet.grapple.total)} />
           <StatButton label={S.sheet.speed} value={`${sheet.speedFt.total} ft`} />
         </div>

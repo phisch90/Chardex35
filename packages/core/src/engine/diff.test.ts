@@ -75,10 +75,10 @@ describe.skipIf(!packsAvailable)("diffSheets", () => {
     // Die Stufe bleibt 7 — darf also NICHT auftauchen.
     expect(find(groups, "Stufe & Klassen", "Stufe")).toBeUndefined();
 
-    // Der lehrreiche Teil: der Grundangriffsbonus ist in BEIDEN Wegen +6
-    // (4+2 bzw. 3+3). Wer „dann nehme ich Kämpfer für den Angriff" denkt,
-    // sieht hier, dass das auf dieser Stufe nichts bringt.
-    expect(find(groups, "Angriff", "Grundangriffsbonus")).toBeUndefined();
+    // Der lehrreiche Teil: der BAB ist in BEIDEN Wegen +6 (4+2 bzw. 3+3).
+    // Wer „dann nehme ich Kämpfer für den Angriff" denkt, sieht hier, dass
+    // das auf dieser Stufe nichts bringt.
+    expect(find(groups, "Angriff", "BAB")).toBeUndefined();
 
     // Was sich stattdessen unterscheidet:
     expect(find(groups, "Rettungswürfe", "Will")).toMatchObject({
@@ -110,7 +110,7 @@ describe.skipIf(!packsAvailable)("diffSheets", () => {
   });
 
   it(`meldet einen neuen Iterativangriff als Textänderung`, () => {
-    // GAB +5 → zweiter Angriff. Ohne Waffe gibt es die Unbewaffnet-Zeile.
+    // BAB +5 → zweiter Angriff. Ohne Waffe gibt es die Unbewaffnet-Zeile.
     const groups = diffSheets(
       derive(hike(Array.from({ length: 5 }, () => FIGHTER))),
       derive(hike(Array.from({ length: 6 }, () => FIGHTER))),

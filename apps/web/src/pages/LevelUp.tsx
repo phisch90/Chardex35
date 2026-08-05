@@ -453,7 +453,7 @@ export function LevelUpPage() {
             Hier stand eine eigene Liste mit eigener Suche — die dritte Kopie
             derselben Sache, und wie die anderen zwei ohne ein Wort über die
             Voraussetzungen. Der Bogen, gegen den geprüft wird, ist der VOR dem
-            Aufstieg: was er sich beim Aufstieg an GAB und Attributen dazuholt,
+            Aufstieg: was er sich beim Aufstieg an BAB und Attributen dazuholt,
             zählt für die Voraussetzung eines Talents in derselben Stufe nicht.
             Das ist regeltechnisch die strengere Lesart; wo sein Tisch es anders
             spielt, hilft der Notausgang.

@@ -176,7 +176,7 @@ describe("Was der Charakter darf, und was noch nicht", () => {
 
   it("Der Grundangriffsbonus zählt aus der Klasse, nicht aus der Stufe", () => {
     const sheet1 = sheetOf(hero());
-    expect(featEligibility(improvedTwf, sheet1, COMPENDIUM).missing).toEqual(["GAB +6"]);
+    expect(featEligibility(improvedTwf, sheet1, COMPENDIUM).missing).toEqual(["BAB +6"]);
 
     const sheet6 = sheetOf(
       hero({ levels: Array.from({ length: 6 }, () => ({ classId: "t:class:fighter", hpRoll: "max" })) }),

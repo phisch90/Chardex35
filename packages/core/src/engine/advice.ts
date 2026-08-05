@@ -18,7 +18,7 @@ import { displayName, type Entity } from "../schema/entities.js";
  * elf Spielerklassen des SRD. Für jede Prestigeklasse, jede NSC-Klasse und alles, was er
  * sich selbst baut, gibt es keinen Eintrag — dort muss trotzdem etwas Sinnvolles
  * herauskommen, also wird zuerst aus den Daten gerechnet (`hitDie`,
- * `skillPointsPerLevel`, `spellcasting.ability`, der GAB-Verlauf) und die Handarbeit
+ * `skillPointsPerLevel`, `spellcasting.ability`, der BAB-Verlauf) und die Handarbeit
  * ORDNET das anschließend. Sie ersetzt es nicht.
  *
  * **Jeder Mindestwert nennt seinen Grund.** „WIS ab 14" ohne Begründung ist eine
@@ -80,7 +80,7 @@ export function abilityAdviceFor(advice: Advice, ability: Ability): AbilityAdvic
 
 /**
  * Steigt der Grundangriffsbonus auf jeder Stufe? Der SRD kennt drei Verläufe: voll
- * (Kämpfer, GAB = Stufe), mittel (drei Viertel) und langsam (die Hälfte). Gerechnet
+ * (Kämpfer, BAB = Stufe), mittel (drei Viertel) und langsam (die Hälfte). Gerechnet
  * statt aus `template` gelesen, weil `template` optional ist und Homebrew es nicht
  * setzen muss — die Tabelle selbst ist immer da.
  */

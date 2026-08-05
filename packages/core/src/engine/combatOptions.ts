@@ -17,7 +17,7 @@ import type { Contribution } from "./types.js";
  */
 
 export interface CombatOptionContext {
-  /** Grundangriffsbonus — die Obergrenze für Power Attack. */
+  /** BAB — die Obergrenze für Power Attack. */
   bab: number;
   /** Hat der Charakter das Talent? Ohne Talent gibt es die Option nicht. */
   hasPowerAttack: boolean;
@@ -61,7 +61,7 @@ export interface TwoWeaponSetup {
   offHandIsLight: boolean;
 }
 
-/** Kampfgeschick ist laut SRD auf 5 begrenzt, zusätzlich zum GAB. */
+/** Kampfgeschick ist laut SRD auf 5 begrenzt, zusätzlich zum BAB. */
 export const COMBAT_EXPERTISE_MAX = 5;
 
 /**
@@ -132,7 +132,7 @@ export interface CombatOptionOutcome {
    * `[0, -5]` mit Improved, `[0, -5, -10]` mit Greater.
    *
    * Die zweite Hand bekommt NICHT die absteigende Reihe aus dem
-   * Grundangriffsbonus. Genau das tat der Bogen vorher: bei GAB +6 zeigte er der
+   * BAB. Genau das tat der Bogen vorher: bei BAB +6 zeigte er der
    * zweiten Hand zwei Angriffe — zufällig das, was ein Charakter MIT Improved
    * Two-Weapon Fighting bekäme, und für alle anderen einer zu viel.
    */
@@ -158,7 +158,7 @@ export function applyCombatOptions(
   }
   if (powerAttack > context.bab) {
     warnings.push(
-      `Power Attack ${powerAttack} liegt über dem Grundangriffsbonus (+${context.bab}) — nach den Regeln ist höchstens ${context.bab} erlaubt.`,
+      `Power Attack ${powerAttack} liegt über dem BAB (+${context.bab}) — nach den Regeln ist höchstens ${context.bab} erlaubt.`,
     );
   }
 
@@ -169,7 +169,7 @@ export function applyCombatOptions(
   const expertiseCap = Math.min(COMBAT_EXPERTISE_MAX, context.bab);
   if (expertise > expertiseCap) {
     warnings.push(
-      `Kampfgeschick ${expertise} liegt über der Grenze (höchstens ${expertiseCap}: 5 und nicht mehr als der Grundangriffsbonus).`,
+      `Kampfgeschick ${expertise} liegt über der Grenze (höchstens ${expertiseCap}: 5 und nicht mehr als der BAB).`,
     );
   }
 
@@ -296,7 +296,7 @@ export function applyCombatOptions(
 
     Ob die −5 „zusätzlich zum Zweiwaffen-Malus" oder „als absteigende Reihe"
     gemeint ist, lässt die Quelle offen — rechnerisch macht es keinen
-    Unterschied: (GAB−5)+Mali ist dasselbe wie GAB+Mali−5.
+    Unterschied: (BAB−5)+Mali ist dasselbe wie BAB+Mali−5.
   */
   const offHandSteps =
     twoWeapon === null

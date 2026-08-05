@@ -194,7 +194,7 @@ export function CombatTab(props: TabProps) {
             }
           />
         </div>
-        {/* Nah-/Fernkampf als Gesamtwert — GAB allein sagt am Tisch zu wenig. */}
+        {/* Nah-/Fernkampf als Gesamtwert — der BAB allein sagt am Tisch zu wenig. */}
         <div className="mt-2 grid grid-cols-2 gap-2">
           {(["melee", "ranged"] as const).map((mode) => {
             const line = sheet.attacks.find((a) => a.key === mode);
@@ -225,7 +225,7 @@ export function CombatTab(props: TabProps) {
                       // Beim Antippen die Angriffsfolge erklären — das ist der Weg
                       // auf dem Handy, wo der ganze Satz nicht in die Zeile passt.
                       ...(attack.bonuses.length > 1
-                        ? { note: S.sheet.iterativeHint(attack.bonuses.map(fmtMod)) }
+                        ? { note: S.sheet.iterativeHint(attack.bonuses.map(fmtMod), fmtMod(sheet.bab)) }
                         : {}),
                     })
                   }
@@ -259,10 +259,10 @@ export function CombatTab(props: TabProps) {
                   {attack.bonuses.length > 1 && (
                     <div className="text-[10px] leading-snug text-slate-500">
                       <span className="sm:hidden">
-                        {S.sheet.iterativeShort(attack.bonuses.length)}
+                        {S.sheet.iterativeShort(attack.bonuses.length, fmtMod(sheet.bab))}
                       </span>
                       <span className="hidden sm:inline">
-                        {S.sheet.iterativeHint(attack.bonuses.map(fmtMod))}
+                        {S.sheet.iterativeHint(attack.bonuses.map(fmtMod), fmtMod(sheet.bab))}
                       </span>
                     </div>
                   )}

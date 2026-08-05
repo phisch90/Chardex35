@@ -570,7 +570,7 @@ export function deriveSheetValues(
       Die ZWEITE HAND folgt dieser Reihe aber nicht — sie bekommt genau die
       Angriffe, die die Zweiwaffen-Talente gewähren: einen, mit Improved zwei,
       mit Greater drei. Vorher zeigte der Bogen ihr die volle Reihe und damit bei
-      GAB +6 einen Angriff zu viel.
+      BAB +6 einen Angriff zu viel.
     */
     const offHandSteps = hand === "off" ? combat.offHandSteps : [];
     const bonuses =

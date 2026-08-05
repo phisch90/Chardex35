@@ -107,7 +107,7 @@ describe("Kopfdaten", () => {
 
   it(`setzt Volk und Klassen mit SCHRÄGSTRICH zusammen`, () => {
     // „Human Fighter 3 Cleric 4" war eine unbekannte Klasse — der Bogen kam ohne
-    // Stufe, ohne GAB und ohne Rettungswürfe an.
+    // Stufe, ohne BAB und ohne Rettungswürfe an.
     expect(pc.raceClass).toBe("Human Fighter 3 / Cleric 4");
   });
 

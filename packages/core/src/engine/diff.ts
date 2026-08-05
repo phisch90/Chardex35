@@ -114,7 +114,7 @@ export function diffSheets(before: DerivedSheet, after: DerivedSheet): SheetDiff
 
   // --- Angriff ------------------------------------------------------------
   const offense: SheetDiffEntry[] = [];
-  pushNumber(offense, "Grundangriffsbonus", before.bab, after.bab, mod);
+  pushNumber(offense, "BAB", before.bab, after.bab, mod);
   pushNumber(offense, "Initiative", before.init.total, after.init.total, mod);
   pushNumber(offense, "Raufen", before.grapple.total, after.grapple.total, mod);
   pushNumber(offense, "Bewegung (ft)", before.speedFt.total, after.speedFt.total);

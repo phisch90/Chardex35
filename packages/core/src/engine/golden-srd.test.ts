@@ -57,7 +57,7 @@ describe.skipIf(!packsAvailable)("Golden-Tests gegen die SRD-Packs", () => {
     }
   });
 
-  it("Fighter-Tabelle (PHB): Stufe 20 = GAB +20, Fort +12, Ref/Will +6", () => {
+  it("Fighter-Tabelle (PHB): Stufe 20 = BAB +20, Fort +12, Ref/Will +6", () => {
     const fighter = get("srd:class:fighter");
     if (fighter.kind !== "class") throw new Error("kind");
     expect(fighter.data.hitDie).toBe(10);
@@ -217,7 +217,7 @@ describe.skipIf(!packsAvailable)("Golden-Tests gegen die SRD-Packs", () => {
     const a1 = linie(mit);
     expect(a0, "Greatsword-Zeile fehlt").toBeDefined();
 
-    // GAB 6, STR +4 → +10; mit Power Attack 4 → +6. Zweite Attacke 5 tiefer.
+    // BAB 6, STR +4 → +10; mit Power Attack 4 → +6. Zweite Attacke 5 tiefer.
     expect(a0!.bonuses[0]).toBe(10);
     expect(a1!.bonuses[0]).toBe(6);
     expect(a1!.bonuses[1]).toBe(1);

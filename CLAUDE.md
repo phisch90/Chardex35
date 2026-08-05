@@ -257,6 +257,25 @@ nicht Textstellen („vorbereitet" steht auch im Blockkopf „Cleric — vorbere
 Erklärtext). Dazu gehört die Gegenprobe: Grad 0 hat 0 Vorbereiten-Knöpfe, Grad 1 hat 31 —
 sonst hätte ich zu viel entfernt und es nicht gemerkt.
 
+Vierzehnte Falle, und sie kostet vor allem SUCHZEIT: **ein `*/` im Text eines
+Blockkommentars beendet ihn.** In `strings.test.ts` erklärte ein Kommentar, warum die
+Notiz daneben ein `/** … */`-Block ist — und genau diese drei Zeichen im Erklärtext
+schlossen den Kommentar zwanzig Zeilen zu früh. Alles danach war plötzlich Code, und
+esbuild meldete „Expected ; but found $" an einer völlig gesunden Zeile weiter unten.
+Man sucht den Fehler dann dort, wo er gemeldet wird, und dort ist er nicht. Regel: **in
+einem Kommentar keine Kommentar-Zeichen ZEIGEN** — beschreiben („ein Block, dessen Zeilen
+alle einen Stern tragen") statt hinschreiben. Dieselbe Familie wie die deutschen
+Anführungszeichen: ein Zeichen, das die Sprache selbst benutzt, gehört nicht in einen
+Text über die Sprache.
+
+Und die Verwandte davon aus derselben Runde, diesmal in einer PRÜFUNG: **eine Schranke,
+die eine Formatierung verlangt statt einen Zustand zu lesen, meldet irgendwann am
+falschen Ort.** Die erste Fassung der Kürzel-Prüfung hielt eine Zeile für einen Kommentar,
+wenn sie mit einem Stern ANFÄNGT — und meldete damit die alte Notiz in `strings.ts`, die
+eingerückter Fließtext ist und genau diese Umbenennung erklärt. Ein Block-Kommentar ist
+ein Block: was zwischen Anfang und Ende steht, ist Kommentar, ganz egal wie eingerückt.
+Jetzt läuft die Prüfung als kleiner Zustandsautomat über die Datei.
+
 ## Beantwortete Entscheidungen (nicht neu fragen)
 
 - **Geräte:** iPhone UND iPad, beide. Deshalb war der Abgleich-Fehler dringend — er
@@ -291,10 +310,25 @@ sonst hätte ich zu viel entfernt und es nicht gemerkt.
   `core/engine/rest.ts`; `planRest` rechnet, `applyRest` führt genau diesen Plan
   aus. Die kurze Pause ist eine Hausregel seines Tisches — im Regelwerk füllen sich
   Fähigkeiten pro Tag erst nach acht Stunden.
-- **Iterative Angriffe ab GAB +6:** er klärt mit seinem DM, ob sein Tisch die
-  volle Attacke spielt. Fight Club zeigt sie ihm seit zwei Jahren als „+9/+4",
-  ohne ein Wort dazu. Bis zur Antwort NICHT anfassen — das würde jeden Bogen
-  ändern.
+- **Iterative Angriffe ab BAB +6: sein Tisch spielt sie.** Wörtlich: „Wir spielen bei
+  6bab mit zwei Angriffen." Damit ist die letzte große offene Frage beantwortet, und
+  zwar mit „alles bleibt" — der Bogen zeigt die Reihe seit dem ersten Tag. Die Zahl
+  ändert sich also NICHT, aber die Regel hat jetzt einen Test
+  (`core/engine/iterativeAttacks.test.ts`): eine Regel, die man nicht geändert hat, hat
+  keinen Commit, an dem sie ablesbar wäre, und ohne Test sieht die zweite Zahl wie eine
+  unbelegte Annahme aus. Geprüft wird die Grenze von BEIDEN Seiten (+5 einer, +6 zwei)
+  und dass die Reihe wirklich am Bogen landet.
+- **Der Wert heißt BAB, nicht GAB.** Wörtlich: „Bitte auch immer bab nennen." Die
+  Entscheidung „Regelkürzel bleiben englisch" gab es längst, aber am Bogen stand „GAB",
+  in den Einstellungen „Fraktionale BAB/Saves" und in der Engine „BAB" — **ein Wert mit
+  zwei Namen, und keiner davon überall.** Dasselbe hatte „4+IN Punkte" überlebt (an drei
+  Stellen). Beides ist jetzt englisch, und `strings.test.ts` verbietet die deutschen
+  Kürzel im Quelltext: eine Entscheidung, die nur als Prosa in dieser Datei steht, ist
+  nachweislich keine Schranke.
+  **Und der BAB steht am Angriff dabei**, in beiden Fassungen: am Handy „2 Angriffe pro
+  Runde (BAB +6)", ab `sm` der ganze Satz „Volle Attacke aus BAB +6: …". Er hat den
+  besseren Grund dafür geliefert, als ihm vermutlich klar war — die Reihe „+9/+4" kommt
+  aus dem BAB und nicht aus der Zahl, die daneben steht.
 - **Startseite: Kampagne mit Farbe, keine TP, Karten in Stufen.** Gefragt und
   entschieden: eintragen an ALLEN DREI Stellen (Bogen bei Name/Spieler, ⋯-Menü der
   Karte, Assistent) · **nach Kampagne gruppieren**, nicht nur färben · **in Stufen
@@ -504,8 +538,10 @@ derselbe Zähler am Bogen voll beginnt. Eine neue Figur hat ihre Tagesfähigkeit
 nicht verbraucht.
 
 **Noch keine Antwort von Martin** haben: die Spellcraft-Probe statt eines Zauberplatzes,
-die volle Attacke ab GAB +6, die EP-Strafe beim Mischen von Klassen und das Punktebudget
-für die Attribute. Die stehen als Teil 2 in `FRAGEN-AN-DEN-DM.md`.
+die EP-Strafe beim Mischen von Klassen und das Punktebudget für die Attribute. Die stehen
+als Teil 2 in `FRAGEN-AN-DEN-DM.md`. Die volle Attacke stand bis vor kurzem auch hier —
+sie ist beantwortet („Wir spielen bei 6bab mit zwei Angriffen"), und die Antwort war
+„alles bleibt".
 
 Quer über 2 und 3 stand zweimal **„Zauberpunkte"**, und das war die Frage mit der
 größten Folge: bei einem echten Punktevorrat hätte die App einen ZWEITEN Weg gebraucht,
@@ -526,8 +562,12 @@ Deshalb bleibt „Platz" stehen, bis er etwas anderes sagt.
 `pointBuyBudget` haben nicht einmal eine Oberfläche. Das ist die Familie „etwas weiß es,
 und etwas anderes kann es nicht" in ihrer schlichtesten Form: ein Schalter, der etwas
 verspricht und nichts tut, ist schlimmer als kein Schalter. Alle drei sind Tischregeln,
-also stehen sie als Fragen 9.1–9.3 in `FRAGEN-AN-DEN-DM.md` — jede mit einer fertigen
-Hälfte dahinter.
+also stehen sie in `FRAGEN-AN-DEN-DM.md` — jede mit einer fertigen Hälfte dahinter. Von
+den drei ist `deathAt` inzwischen beantwortet und gebaut (Martins Regel 6); die anderen
+zwei stehen dort unter „Zwei Regeln, für die schon ein Fach existiert". **Auf eine
+Abschnittsnummer wird hier absichtlich nicht mehr verwiesen** — die Nummern verschieben
+sich, sobald eine Frage beantwortet ist und nach Teil 1 wandert, und ein Verweis auf
+„Frage 9.1" zeigte dann ins Leere.
 
 ## Zauber-Reiter: was wem gehört
 
@@ -1149,12 +1189,12 @@ in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`d
 
 ## Noch offen
 
-- **Die volle Attacke ab GAB +6** — der Bogen zeigt die Reihe („+9/+4") längst
-  (`iterativeAttacks`, `derive.ts:563`), die Frage ist nicht, ob sie dazukommt, sondern ob
-  sie wegkann. Liegt bei Martin (Teil 2 in `FRAGEN-AN-DEN-DM.md`), bis dahin NICHT
-  anfassen: es würde jeden Bogen ändern. Der halbe Stärkeschaden in der zweiten Hand und
-  die Rundung im ×1,5-Pfad standen bis vor kurzem hier — beides ist beantwortet und gebaut
-  (Martins Regeln 4 und 5).
+- **Die volle Attacke ist beantwortet und steht damit nicht mehr hier.** „Wir spielen bei
+  6bab mit zwei Angriffen" — die Reihe bleibt, wie sie war, und hat jetzt einen Test
+  (`core/engine/iterativeAttacks.test.ts`). Dasselbe Schicksal wie der halbe
+  Stärkeschaden in der zweiten Hand und die Rundung im ×1,5-Pfad, die auch hier standen
+  (Martins Regeln 4 und 5). Damit ist die Liste der Fragen, die JEDEN Bogen ändern
+  könnten, leer.
 - **Am Aussehen ist nichts Großes mehr offen.** Vier Papiere stehen, elf Klassenfarben sind
   nachgemessen unterscheidbar, die zweite Farbe je Klasse arbeitet an drei Stellen
   (Überschriften, Anstrich, Karten), Rahmen und Klassensymbole sind kräftig, die Flächen

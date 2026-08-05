@@ -84,10 +84,10 @@ describe("Power Attack", () => {
     expect(out.meleeDamage({ handedness: "ranged", hand: "main" })).toEqual([]);
   });
 
-  it(`meldet eine Höhe über dem GAB, wendet sie aber an (der DM hat Recht)`, () => {
+  it(`meldet eine Höhe über dem BAB, wendet sie aber an (der DM hat Recht)`, () => {
     const out = applyCombatOptions(options({ powerAttack: 9 }), context({ bab: 6 }));
     expect(sum(out.meleeAttack)).toBe(-9);
-    expect(out.warnings.join(" ")).toContain("über dem Grundangriffsbonus");
+    expect(out.warnings.join(" ")).toContain("über dem BAB");
   });
 
   it(`tut ohne das Talent gar nichts und sagt das`, () => {
@@ -130,7 +130,7 @@ describe("Kampfgeschick", () => {
     expect(out.warnings.join(" ")).toContain("höchstens 5");
   });
 
-  it(`und dass der GAB die Grenze zusätzlich drückt`, () => {
+  it(`und dass der BAB die Grenze zusätzlich drückt`, () => {
     const out = applyCombatOptions(options({ combatExpertise: 3 }), context({ bab: 2 }));
     expect(out.warnings.join(" ")).toContain("höchstens 2");
   });

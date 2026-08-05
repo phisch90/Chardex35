@@ -367,7 +367,7 @@ function ClassTable({ entity }: { entity: ClassEntity }) {
   return (
     <Card>
       <div className="mb-2 text-sm text-slate-300">
-        W{d.hitDie} · {d.skillPointsPerLevel} + IN Fertigkeitspunkte
+        W{d.hitDie} · {d.skillPointsPerLevel} + INT Fertigkeitspunkte
         {d.spellcasting && ` · Zauber (${d.spellcasting.ability.toUpperCase()})`}
       </div>
       <div className="table-scroll">
@@ -375,7 +375,7 @@ function ClassTable({ entity }: { entity: ClassEntity }) {
           <thead className="text-slate-400">
             <tr>
               <th className="px-1 py-1 text-left">Stufe</th>
-              <th className="px-1 text-left">GAB</th>
+              <th className="px-1 text-left">BAB</th>
               <th className="px-1">Fort</th>
               <th className="px-1">Ref</th>
               <th className="px-1">Will</th>
