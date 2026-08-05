@@ -1197,6 +1197,42 @@ Gesichter sind (Schädel, Maske) — sie kommen im Assistenten einen Schritt sp�
 **Gefunden hat das alles ein Blatt mit allen sieben in 30/40/56/110 px, kein Test.** Dieselbe
 Lehre wie beim Barbaren, nur diesmal von vorn eingeplant.
 
+### Und dann waren die Striche trotzdem falsch: „zu simpel"
+
+Sein Urteil über die fertigen Köpfe, DREIMAL in Folge: **„Finde ich alle zu simpel. Sehen
+nicht gut aus."** Das ist der wichtigste Abschnitt dieses Kapitels, weil er nicht von den
+Zeichen handelt, sondern von mir.
+
+**Mein erster Versuch war fünf Fassungen — und alle fünf waren dieselbe Zeichnung.** Fläche
+zu 18% darunter, dickerer Strich, ein Ring drumherum, alles zusammen. Das sind DOSEN, keine
+ARTEN. Wer „zu simpel" sagt und eine dickere Version derselben Strichzeichnung bekommt, sagt
+zu Recht noch einmal „zu simpel". Dass er es dreimal sagen musste, ist der Befund.
+
+Erst ein Blatt mit drei ARTEN hat es entschieden — gefüllt wie eine Prägung · drei Tonstufen ·
+viele Zierlinien —, und zwar an zwei Motiven und in vier Größen. **Seine Wahl: die Prägung
+(gefüllt, Details ausgestanzt).** Und der Grund dafür war am Blatt MESSBAR und nicht Geschmack:
+die Kachel zeigt 40 px, und das ist die einzige der drei Arten, die dort nicht zerfällt — die
+Tonstufen wurden ein grauer Klumpen, die Zierlinien liefen zusammen.
+
+Drei Dinge daran sind eine Notiz wert:
+
+- **Die Machart steht jetzt im TYP** (`IconShape`: `d` für Striche, `solid` für die Fläche mit
+  `fill-rule="evenodd"`), und der Test verbietet beides gleichzeitig UND erlaubt die Fläche
+  nur den sieben Köpfen. Zwei Macharten sind schon eine Ausnahme; drei Zustände wären eine
+  Einladung. Nebenbei prüft er, dass jede Fläche mindestens drei Teilpfade hat: eine Fläche
+  ohne Löcher ist ein schwarzer Klecks in Kopfform, und `evenodd` hätte nichts zu tun.
+- **Die Fläche braucht keinen Ton und keine zweite Farbe** — Löcher statt heller Stufen.
+  Deshalb dreht sie auf hellem Papier von allein mit und nimmt die Klassenfarbe wie jedes
+  andere Zeichen. Die Tonstufen-Fassung hätte je Papier anders gewirkt: genau das hat die
+  Messung an den verbrauchten Zauberpunkten schon einmal gezeigt (Kladde, Buntrampe).
+- **Ein Strich um eine Fläche macht die Löcher zu.** Bei 40 px ist ein Augenloch 1,7 px groß,
+  die Strichbreite 1,6 — das Loch verschwindet. `stroke="none"` an der Fläche ist deshalb
+  keine Kosmetik.
+
+Die elf Klassenembleme bleiben Striche: **seine Entscheidung war „nur die sieben Köpfe".** Der
+Assistent zeigt sie weiter genauso wie das Wasserzeichen am Bogen — und die Prüfung, die
+beide Formen Pfad für Pfad vergleicht, gilt unverändert.
+
 ### Was der Lauf dieser Runde in ALTEN Strecken gefunden hat
 
 Sechs Strecken schlugen fehl, und **keiner der Fehler lag an dieser Runde** — nachgemessen,

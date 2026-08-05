@@ -80,10 +80,40 @@ export type IconName =
   | "halfling";
 
 /**
- * Die Formen. Jede in einem 24×24-Feld, jede als Striche — `d` für Linien, `dots` für die
- * wenigen Stellen, an denen eine Fläche hilft (Zielmitte, Schieber-Knöpfe).
+ * Eine Form. Jede in einem 24×24-Feld.
+ *
+ * Es gibt ZWEI Macharten, und das ist keine Beliebigkeit, sondern seine Entscheidung:
+ *
+ *  - **Striche** (`d`, dazu `dots` für die wenigen Stellen, an denen eine Fläche hilft):
+ *    so sind die 32 Zeichen der Bedienung gezeichnet. Bei 18–20 px ist ein Strich das,
+ *    was noch lesbar bleibt.
+ *  - **Fläche** (`solid`): EIN Pfad mit `fill-rule="evenodd"`, Details AUSGESTANZT. So
+ *    sind die sieben Volk-Köpfe gezeichnet.
+ *
+ * Warum die Köpfe anders sind: sein Urteil über die Strich-Fassung war dreimal „zu simpel,
+ * sehen nicht gut aus" — und er hatte recht. Meine ersten fünf Vorschläge waren alle
+ * dieselbe dünne Zeichnung mit Dekoration (Fläche darunter, dicker, Ring drumherum), also
+ * dieselbe Art in anderer Dosis. Erst ein Blatt mit drei ARTEN hat es entschieden: gefüllt
+ * wie eine Prägung · drei Tonstufen · viele Zierlinien. Seine Wahl war die Prägung, und
+ * der Grund war messbar am Blatt: die Kachel zeigt 40 px, und das ist die einzige der
+ * drei, die dort nicht zerfällt. Die Tonstufen wurden bei 40 px ein grauer Klumpen, die
+ * Zierlinien liefen zusammen.
+ *
+ * Was die Fläche billig macht: sie braucht keine zweite Farbe und keine Deckkraft. Ein
+ * Pfad in `currentColor`, Löcher statt heller Töne — damit dreht der Kopf auf hellem
+ * Papier von allein mit, und die Klassenfarbe färbt ihn wie jedes andere Zeichen. Eine
+ * Fassung mit Tonstufen hätte je Papier anders gewirkt; genau das hat die Messung an den
+ * verbrauchten Zauberpunkten schon einmal gezeigt.
  */
-export const ICON_SHAPES: Record<IconName, { d: string[]; dots?: [number, number, number][] }> = {
+export type IconShape = {
+  /** Striche. LEER bei den Zeichen, die als Fläche gezeichnet sind. */
+  d: string[];
+  dots?: [number, number, number][];
+  /** Eine gefüllte Fläche mit ausgestanzten Details. Schließt `d` aus. */
+  solid?: string;
+};
+
+export const ICON_SHAPES: Record<IconName, IconShape> = {
   /* Werte — drei Balken, aufsteigend: ein Wertekasten, kein Diagramm-Symbol. */
   stats: { d: ["M6.5 20.5V14", "M12 20.5V8.5", "M17.5 20.5V4.5"] },
 
@@ -436,115 +466,105 @@ export const ICON_SHAPES: Record<IconName, { d: string[]; dots?: [number, number
      Assistenten einen Schritt weiter und dürfen sich nicht verwechseln lassen.
      Gefunden hat das alles ein Blatt mit allen sieben in 30/40/56/110 px, kein Test. */
 
-  /* Mensch — schlicht. Der Nullpunkt der Reihe: Haaransatz und kleine runde Ohren. */
-  human: {
-    d: [
-      "M12 2.6c-3.1 0-5.3 2.4-5.3 5.8 0 4.1 2.4 7.5 5.3 7.5s5.3-3.4 5.3-7.5c0-3.4-2.2-5.8-5.3-5.8z",
-      "M8.4 7c1.6-2 5.6-2 7.2 0",
-      "M6.8 9.2c-1.1 0-1.8.8-1.8 1.8 0 1 .7 1.7 1.8 1.7",
-      "M17.2 9.2c1.1 0 1.8.8 1.8 1.8 0 1-.7 1.7-1.8 1.7",
-    ],
-    dots: [
-      [9.9, 9.6, 0.95],
-      [14.1, 9.6, 0.95],
-    ],
-  },
-
   /*
-    Zwerg — Schädeldecke und Bart sind ZWEI Formen mit einem Schnitt an den Schläfen.
-    Ein einziger Umriss sah nur nach einem breiten Kopf aus; erst der Schnitt macht den
-    Bart zum Bart. Der Schnurrbart sind zwei Striche, die nach außen streichen — ein
-    Bogen an dieser Stelle ist ein Mund.
+    Gezeichnet als FLÄCHE mit ausgestanzten Details (siehe `IconShape`): ein Pfad je Kopf,
+    `fill-rule="evenodd"`. Was innen liegt, wird zum Loch — Augen, Haaransatz,
+    Schnurrbart, Braue, Hauer. Was außen anliegt, ist wieder Fläche: die Ohren.
+
+    Die Augen sitzen bei allen sieben an derselben Stelle und in derselben Größe. Das ist
+    Absicht: unterschieden wird im UMRISS, nicht im Gesicht — sonst sieht jeder Kopf nach
+    einer anderen Hand aus.
   */
+
+  /* Mensch — schlichte Fläche, der Haaransatz nur als schmale Kerbe. Der Nullpunkt der
+     Reihe: wer keine Ohren, keinen Bart und keine Locken hat, ist ein Mensch. */
+  human: {
+    d: [],
+    solid:
+      "M12 2.3c-3.4 0-5.8 2.5-5.8 6 0 4.3 2.6 7.9 5.8 7.9s5.8-3.6 5.8-7.9c0-3.5-2.4-6-5.8-6z" +
+      "M8 6.7c.9-1.5 2.3-2.3 4-2.3s3.1.8 4 2.3c-1.2-.7-2.5-1.1-4-1.1s-2.8.4-4 1.1z" +
+      "M9.9 8.55a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z" +
+      "M14.1 8.55a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z",
+  },
+
+  /* Zwerg — Schädeldecke und Bart sind EINE Fläche mit einem Einzug an den Schläfen; der
+     Schnurrbart ist ausgestanzt und trennt Gesicht von Bart. In der Strich-Fassung hat
+     genau diese Trennung fünf Anläufe gebraucht: ohne sie war es ein Affengesicht. */
   dwarf: {
-    d: [
-      "M6.5 12.4c-.4-1.2-.6-2.4-.6-3.6C5.9 5 8.6 2.6 12 2.6s6.1 2.4 6.1 6.2c0 1.2-.2 2.4-.6 3.6",
-      "M6.5 11.4c-1.2.4-1.9 1.4-1.9 2.8 0 4 3.3 7.4 7.4 7.4s7.4-3.4 7.4-7.4c0-1.4-.7-2.4-1.9-2.8",
-      "M11.4 12.6c-1 1-2.2 1.7-3.6 2",
-      "M12.6 12.6c1 1 2.2 1.7 3.6 2",
-    ],
-    dots: [
-      [9.6, 9, 0.95],
-      [14.4, 9, 0.95],
-    ],
+    d: [],
+    solid:
+      "M12 2.2c-3.6 0-6.2 2.5-6.2 6.1 0 1.1.2 2.1.6 3-1.1.5-1.7 1.5-1.7 3 0 4.3 3.4 7.9 7.3 7.9s7.3-3.6 7.3-7.9c0-1.5-.6-2.5-1.7-3 .4-.9.6-1.9.6-3 0-3.6-2.6-6.1-6.2-6.1z" +
+      "M12 12.2c-1.5 1-3.1 1.6-4.9 1.9 1.3 1.2 3 1.9 4.9 1.9s3.6-.7 4.9-1.9c-1.8-.3-3.4-.9-4.9-1.9z" +
+      "M9.9 7.8a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" +
+      "M14.1 7.8a1 1 0 1 0 0 2 1 1 0 0 0 0-2z",
   },
 
-  /* Elf — schmaler Kopf, die Ohren steil nach oben. Sie sind das Zeichen, also dürfen
-     sie lang sein — aber nicht dicker als ein Strich, sonst werden sie Flügel. */
+  /* Elf — schmaler Kopf, die langen Ohren sind Fläche und liegen außen an. Als Strich
+     waren sie bei dieser Länge Flügel; als Fläche mit Spitze sind sie Ohren. */
   elf: {
-    d: [
-      "M12 2.8c-2.7 0-4.7 2.4-4.7 5.7 0 4.1 2.1 7.5 4.7 7.5s4.7-3.4 4.7-7.5c0-3.3-2-5.7-4.7-5.7z",
-      "M7.3 10.6L3.6 4.6l3.7 3.4",
-      "M16.7 10.6l3.7-6-3.7 3.4",
-      "M8.4 6.9c1.3-1.7 5.9-1.7 7.2 0",
-    ],
-    dots: [
-      [10, 9.6, 0.9],
-      [14, 9.6, 0.9],
-    ],
+    d: [],
+    solid:
+      "M12 2.5c-3 0-5.2 2.4-5.2 5.9 0 4.3 2.3 7.9 5.2 7.9s5.2-3.6 5.2-7.9c0-3.5-2.2-5.9-5.2-5.9z" +
+      "M7.1 11.2L3 4.3l4.3 3.7z" +
+      "M16.9 11.2l4.1-6.9-4.3 3.7z" +
+      "M8 6.9c1-1.7 2.4-2.6 4-2.6s3 .9 4 2.6c-1.2-.9-2.5-1.3-4-1.3s-2.8.4-4 1.3z" +
+      "M10 8.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" +
+      "M14 8.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2z",
   },
 
-  /* Gnom — kleiner runder Kopf, große Rundohren, und in der Mitte NICHTS. */
+  /* Gnom — kleiner Kopf, große Ohren. Als Scheiben lasen sie sich auf dem Blatt als
+     KOPFHÖRER; jetzt sind sie oben spitz und nach außen geneigt, also Ohren. */
   gnome: {
-    d: [
-      "M12 4.2c-3 0-5.2 2.3-5.2 5.6 0 4 2.3 7.2 5.2 7.2s5.2-3.2 5.2-7.2c0-3.3-2.2-5.6-5.2-5.6z",
-      "M6.9 9.2c-2-.5-3.5.5-3.5 2.2 0 1.8 1.5 2.9 3.5 2.5",
-      "M17.1 9.2c2-.5 3.5.5 3.5 2.2 0 1.8-1.5 2.9-3.5 2.5",
-    ],
-    dots: [
-      [10, 10.4, 0.95],
-      [14, 10.4, 0.95],
-    ],
+    d: [],
+    solid:
+      "M12 4c-2.9 0-5 2.3-5 5.6 0 4 2.2 7.2 5 7.2s5-3.2 5-7.2c0-3.3-2.1-5.6-5-5.6z" +
+      "M7.2 8.5C5 7.4 3.1 8.3 2.8 10.2c-.3 1.9 1.1 3.4 3.5 3.7-.5-1.9-.5-3.7.9-5.4z" +
+      "M16.8 8.5c2.2-1.1 4.1-.2 4.4 1.7.3 1.9-1.1 3.4-3.5 3.7.5-1.9.5-3.7-.9-5.4z" +
+      "M9.9 9.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" +
+      "M14.1 9.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z",
   },
 
-  /* Halb-Elf — der Kopf des Menschen, die Ohren halb so lang wie beim Elfen, und das
-     Haar seitlich gestrichen statt mittig. Zwei Unterschiede, weil einer zu wenig ist:
-     er muss sich vom Elfen UND vom Menschen unterscheiden. */
+  /* Halb-Elf — der Kopf des Menschen, die Ohren halb so lang wie beim Elfen, das Haar
+     seitlich gestrichen. Zwei Unterschiede, weil einer zu wenig ist: er muss sich vom
+     Elfen UND vom Menschen unterscheiden. */
   halfElf: {
-    d: [
-      "M12 2.6c-3.1 0-5.3 2.4-5.3 5.8 0 4.1 2.4 7.5 5.3 7.5s5.3-3.4 5.3-7.5c0-3.4-2.2-5.8-5.3-5.8z",
-      "M7 11.2L4.4 7.2l2.7 1.6",
-      "M17 11.2l2.6-4-2.7 1.6",
-      "M7.8 7.6C9 4.8 13.4 4.2 16.2 6.6",
-    ],
-    dots: [
-      [9.9, 9.6, 0.95],
-      [14.1, 9.6, 0.95],
-    ],
+    d: [],
+    solid:
+      "M12 2.3c-3.4 0-5.8 2.5-5.8 6 0 4.3 2.6 7.9 5.8 7.9s5.8-3.6 5.8-7.9c0-3.5-2.4-6-5.8-6z" +
+      "M6.9 11L4.2 7.1l2.7 1.5z" +
+      "M17.1 11l2.7-3.9-2.7 1.5z" +
+      "M7.6 7.6C8.8 4.9 13 4.2 16 6.5c-1.4-.5-2.9-.6-4.4-.2-1.5.3-2.8 1-3.9 1.9z" +
+      "M9.9 8.55a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z" +
+      "M14.1 8.55a1.05 1.05 0 1 0 0 2.1 1.05 1.05 0 0 0 0-2.1z",
   },
 
-  /* Halb-Ork — der breiteste Kopf, schwerer Kiefer, zwei Hauer nach oben. Die Braue
-     sind zwei kurze Striche über den Augen: eine durchgehende Linie ist ein
-     Mützenschirm, und eine Mundlinie zwischen den Hauern ein Eimer. */
+  /* Halb-Ork — der breiteste Kopf, schwerer Kiefer. Braue und Hauer sind ausgestanzt:
+     zwei kurze Schrägen über den Augen (eine durchgehende Linie war ein Mützenschirm)
+     und zwei Dreiecke am Kiefer (mit einer Mundlinie dazwischen war es ein Eimer). */
   halfOrc: {
-    d: [
-      "M12 2.8c-3.5 0-5.9 2.3-5.9 5.6 0 2.6.6 4.6 1.8 6 1.1 1.3 2.5 2 4.1 2s3-.7 4.1-2c1.2-1.4 1.8-3.4 1.8-6 0-3.3-2.4-5.6-5.9-5.6z",
-      "M7.8 7.8l2.8 1",
-      "M16.2 7.8l-2.8 1",
-      "M8.4 14.6l1-3 1 3z",
-      "M13.6 14.6l1-3 1 3z",
-    ],
-    dots: [
-      [9.8, 10.6, 0.85],
-      [14.2, 10.6, 0.85],
-    ],
+    d: [],
+    solid:
+      "M12 2.4c-3.7 0-6.3 2.4-6.3 6 0 2.8.7 4.9 1.9 6.4 1.2 1.4 2.7 2.2 4.4 2.2s3.2-.8 4.4-2.2c1.2-1.5 1.9-3.6 1.9-6.4 0-3.6-2.6-6-6.3-6z" +
+      "M7.4 7.2l3.1 1.2-.5 1.3-3.1-1.2z" +
+      "M16.6 7.2l-3.1 1.2.5 1.3 3.1-1.2z" +
+      "M9.4 15.2l1-3.4 1 3.4z" +
+      "M13.6 15.2l1-3.4 1 3.4z" +
+      "M9.9 9.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" +
+      "M14.1 9.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z",
   },
 
-  /* Halbling — die Locken sind der Umriss: der Kopf ist unten offen gezeichnet, die
-     Lockenlinie schließt ihn oben. Sonst stünde die Schädeldecke als zweite Linie
-     darunter, und aus den Locken würde eine Haube. */
+  /* Halbling — die Locken sind Teil der Fläche und müssen DEUTLICH sein: als flache
+     Wellen las sich der Kopf auf dem Blatt als Helm. Drei Bögen, dazu die Ohren. */
   halfling: {
-    d: [
-      "M6.9 8.6c-.1 4.3 2.2 8 5.1 8s5.2-3.7 5.1-8",
-      "M6.9 8.6c.2-1.5 1.1-2.3 2.3-2.2.1-1.6 1.2-2.6 2.8-2.6s2.7 1 2.8 2.6c1.2-.1 2.1.7 2.3 2.2",
-      "M6.9 10.4c-1.1-.1-1.8.6-1.8 1.5s.7 1.6 1.8 1.5",
-      "M17.1 10.4c1.1-.1 1.8.6 1.8 1.5s-.7 1.6-1.8 1.5",
-    ],
-    dots: [
-      [10.1, 11, 0.9],
-      [13.9, 11, 0.9],
-    ],
+    d: [],
+    solid:
+      "M12 2.4c-1.7 0-3 1.1-3.3 2.6-.4-.2-.8-.3-1.2-.3-1.6 0-2.9 1.3-2.9 2.9 0 1 .5 1.9 1.3 2.4-.1.7-.2 1.4-.2 2.1 0 4.2 2.4 7.6 5.3 7.6s5.3-3.4 5.3-7.6c0-.7-.1-1.4-.2-2.1.8-.5 1.3-1.4 1.3-2.4 0-1.6-1.3-2.9-2.9-2.9-.4 0-.8.1-1.2.3C15 3.5 13.7 2.4 12 2.4z" +
+      "M6.8 10.4c-1.6-.3-2.7.6-2.7 1.9s1.1 2.2 2.7 1.9c-.4-1.3-.4-2.5 0-3.8z" +
+      "M17.2 10.4c1.6-.3 2.7.6 2.7 1.9s-1.1 2.2-2.7 1.9c.4-1.3.4-2.5 0-3.8z" +
+      "M9.9 10.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" +
+      "M14.1 10.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z",
   },
+
 };
 
 /**
@@ -578,6 +598,18 @@ export function Icon(props: {
   };
   return (
     <svg {...svgProps} className={props.className}>
+      {/*
+        Die FLÄCHE zuerst, und mit `stroke="none"`: sie trägt ihre Form selbst. Ein Strich
+        darum herum würde die ausgestanzten Details wieder zulaufen lassen — bei 40 px sind
+        die Augenlöcher 1,7 px groß, ein Strich von 1,6 schließt sie zu.
+
+        `fillRule="evenodd"` ist der ganze Trick: was innen liegt, wird zum Loch. Ohne diese
+        Regel (Standard ist `nonzero`) hinge es an der DREHRICHTUNG der Teilpfade, ob ein
+        Auge ein Loch wird — und die sieht man beim Zeichnen nicht.
+      */}
+      {shape.solid !== undefined && (
+        <path d={shape.solid} fill="currentColor" fillRule="evenodd" stroke="none" />
+      )}
       {shape.d.map((d, i) => (
         <path key={i} d={d} />
       ))}

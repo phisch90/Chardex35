@@ -79,7 +79,8 @@ describe("Zeichen-Formen", () => {
       const name = raceIconName(race.id);
       expect(name, race.id).not.toBe(RACE_ICON_FALLBACK);
       expect(ICON_NAMES, race.id).toContain(name);
-      expect(ICON_SHAPES[name].d.length, race.id).toBeGreaterThan(0);
+      // Die Köpfe sind FLÄCHE, nicht Striche (seine Wahl „A") — geprüft wird also `solid`.
+      expect(ICON_SHAPES[name].solid, race.id).toBeTruthy();
     }
     // Und kein verwaistes Kopfzeichen: jedes wird von genau einem Volk getroffen.
     const getroffen = new Set(races.map((race) => raceIconName(race.id)));
@@ -101,17 +102,55 @@ describe("Zeichen-Formen", () => {
   });
 
   it("jedes Zeichen hat mindestens einen Pfad", () => {
+    /*
+      „Pfad" heißt jetzt Striche ODER Fläche: die sieben Volk-Köpfe sind als gefüllte
+      Fläche gezeichnet (seine Wahl „A"), alle anderen als Striche. Ein Zeichen ohne
+      beides malt gar nichts — der Browser schweigt dazu, und der Reiter steht leer da.
+    */
     for (const name of ICON_NAMES) {
-      expect(ICON_SHAPES[name].d.length, name).toBeGreaterThan(0);
+      const shape = ICON_SHAPES[name];
+      expect(shape.d.length > 0 || shape.solid !== undefined, name).toBe(true);
+    }
+  });
+
+  it("Striche und Fläche schließen sich aus, und genau die sieben Köpfe sind Fläche", () => {
+    /*
+      Zwei Macharten sind schon eine Ausnahme; drei Zustände (nur Striche, nur Fläche,
+      beides) wären eine Einladung, sie zu vermischen. Ein Zeichen mit beidem sähe außerdem
+      falsch aus: der Strich um eine Fläche schließt die ausgestanzten Details zu.
+
+      Und die Liste der Flächen ist NICHT frei — es sind genau die Volk-Köpfe. Wer ein
+      Reiter-Zeichen auf Fläche umstellt, bekommt hier den Fehler statt bei 20 px einen
+      schwarzen Klecks.
+    */
+    for (const name of ICON_NAMES) {
+      const shape = ICON_SHAPES[name];
+      const flaeche = shape.solid !== undefined;
+      expect(flaeche && shape.d.length > 0, `${name}: Striche UND Fläche`).toBe(false);
+      expect(flaeche, name).toBe(RACE_ICONS.includes(name));
+      if (flaeche) expect(shape.dots, `${name}: Fläche braucht keine Punkte`).toBeUndefined();
     }
   });
 
   it("jeder Pfad fängt mit M an und enthält nur erlaubte Zeichen", () => {
     for (const name of ICON_NAMES) {
-      for (const d of ICON_SHAPES[name].d) {
+      const shape = ICON_SHAPES[name];
+      for (const d of [...shape.d, ...(shape.solid === undefined ? [] : [shape.solid])]) {
         expect(d.startsWith("M"), `${name}: ${d}`).toBe(true);
         expect(PATH_OK.test(d), `${name}: ${d}`).toBe(true);
       }
+    }
+  });
+
+  it("jede Fläche hat mehr als einen Teilpfad — sonst ist nichts ausgestanzt", () => {
+    /*
+      Die Machart LEBT von den Löchern: eine Fläche mit genau einem Teilpfad ist ein
+      schwarzer Klecks in Kopfform, und `fill-rule="evenodd"` hätte nichts zu tun. Gezählt
+      werden die `M`-Befehle — jeder beginnt einen Teilpfad.
+    */
+    for (const name of RACE_ICONS) {
+      const solid = ICON_SHAPES[name].solid ?? "";
+      expect((solid.match(/M/g) ?? []).length, name).toBeGreaterThanOrEqual(3);
     }
   });
 
@@ -122,7 +161,8 @@ describe("Zeichen-Formen", () => {
       (ein verrutschtes Komma), und genau der schneidet das Zeichen ab.
     */
     for (const name of ICON_NAMES) {
-      for (const d of ICON_SHAPES[name].d) {
+      const shape = ICON_SHAPES[name];
+      for (const d of [...shape.d, ...(shape.solid === undefined ? [] : [shape.solid])]) {
         for (const raw of d.match(/-?\d+(\.\d+)?/g) ?? []) {
           expect(Math.abs(Number(raw)), `${name}: ${d} → ${raw}`).toBeLessThanOrEqual(24);
         }
