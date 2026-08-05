@@ -819,15 +819,19 @@ export function CharacterWizardPage() {
            aus, nicht wie eine Leiste. Jetzt voll deckend.
 
         Und `sticky` war überhaupt das falsche Werkzeug: es rechnet gegen den
-        INHALTSRAND des Scroll-Containers, und `main` hält unten schon
-        `4rem + safe-area` frei. Gemessen lag die Leiste deshalb bei 724 statt 788 — 64px
-        Liste blieben darunter sichtbar. Also `fixed` wie die Reiterzeile des Bogens
-        (`pages/sheet/index.tsx:346`), mit demselben Abstand: dann sitzt sie wirklich auf
-        der Reiterleiste. Den Platz dafür reserviert `pb-20` an der Wurzel dieser Seite —
-        auch das genau wie der Bogen (dort `pb-14`), sonst verschwindet die letzte Karte
-        hinter der Leiste.
+        INHALTSRAND des Scroll-Containers, und `main` hielt unten schon Platz frei.
+        Gemessen lag die Leiste deshalb bei 724 statt 788 — 64px Liste blieben darunter
+        sichtbar. Also `fixed` wie die Reiterzeile des Bogens, und den Platz dafür
+        reserviert `pb-20` an der Wurzel dieser Seite — auch das genau wie der Bogen (dort
+        `pb-14`), sonst verschwindet die letzte Karte hinter der Leiste.
+
+        Seit die Hauptnavigation OBEN sitzt (sein Auftrag), sitzt diese Leiste auf
+        `bottom-0` und trägt das Polster für den unteren Geräte-Rand selbst — vorher hat
+        das die Navigation darunter getan. Punkt 1 von oben gilt unverändert weiter: was
+        eine Höhe aus der Hülle einrechnet, muss sie zurückstellen, wenn die Hülle sie
+        nicht mehr hat.
       */}
-      <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 space-y-1.5 border-t border-slate-800 bg-slate-950 px-3 py-2 sm:px-4 md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 space-y-1.5 border-t border-slate-800 bg-slate-950 px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 md:hidden">
         {navButtons}
       </div>
     </div>

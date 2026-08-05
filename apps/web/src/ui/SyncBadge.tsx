@@ -22,17 +22,20 @@ export function SyncBadge() {
     <Link
       to="/einstellungen"
       /*
-        3,5rem Hauptnavigation + 3,5rem Reiter-Leiste des Bogens — derselbe Wert wie bei
-        `UndoBar.tsx`, und aus demselben Grund: bei 4rem liegt die Marke GENAU auf den
-        Reitern, und weil sie ein Link in die Einstellungen ist, öffnet ein Tap auf
-        „Talente" die Einstellungen. Stand als offener Befund im Prüfbericht; aufgefallen
-        ist es jetzt, weil der Lauf im gebauten Bogen an der Marke hängenblieb — sie fing
-        den Klick ab. Und seit der Abgleich nur beim Start läuft, wird ein Fehler nicht mehr
-        von allein überschrieben: die Marke steht dann die ganze Sitzung da.
-        `md:bottom-3` bleibt, weil die Reiterleiste ab md gar nicht unten sitzt (fünfte
-        Falle in CLAUDE.md).
+        3,5rem für die Reiter-Leiste des Bogens — derselbe Wert wie bei `UndoBar.tsx`, und
+        aus demselben Grund: liegt die Marke GENAU auf den Reitern, öffnet ein Tap auf
+        „Talente" die Einstellungen, denn sie ist ein Link. Stand als offener Befund im
+        Prüfbericht; aufgefallen ist es, weil der Lauf im gebauten Bogen an der Marke
+        hängenblieb — sie fing den Klick ab. Und seit der Abgleich nur beim Start läuft,
+        wird ein Fehler nicht mehr von allein überschrieben: die Marke steht dann die ganze
+        Sitzung da.
+
+        Vorher waren es 7rem: 3,5 für die Hauptnavigation plus 3,5 für die Reiter. Die
+        Navigation sitzt jetzt OBEN (sein Auftrag), also fällt ihre Hälfte weg — sonst
+        schwebte die Marke 56px zu hoch. `md:bottom-3` bleibt, weil die Reiterleiste ab md
+        gar nicht unten sitzt (fünfte Falle in CLAUDE.md).
       */
-      className={`fixed right-3 z-40 bottom-[calc(7rem+env(safe-area-inset-bottom))] flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] shadow-lg backdrop-blur md:bottom-3 ${
+      className={`fixed right-3 z-40 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] shadow-lg backdrop-blur md:bottom-3 ${
         syncing
           ? "border-slate-600 bg-slate-900/90 text-slate-300"
           : "border-red-700 bg-red-950/90 text-red-200"

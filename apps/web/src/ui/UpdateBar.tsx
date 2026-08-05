@@ -41,6 +41,12 @@ export function UpdateBar() {
   return (
     <div
       role="status"
+      /*
+        4,5rem = 3,5 für die Reiter-Leiste des Bogens plus 1rem Luft. Die Zahl bleibt, obwohl
+        die Hauptnavigation nach oben gewandert ist: vorher rechnete sie deren Höhe ein, jetzt
+        die der Reiter — beide sind 3,5rem hoch. Aufgeschrieben, damit die nächste Runde nicht
+        eine Zahl „aufräumt", die aus einem anderen Grund richtig ist.
+      */
       className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 rounded-lg border border-emerald-700 bg-emerald-950 px-3 py-2 shadow-lg shadow-black/50 md:inset-x-auto md:bottom-4 md:right-4 md:max-w-md"
     >
       <div className="flex items-center gap-2">

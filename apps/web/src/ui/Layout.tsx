@@ -89,14 +89,21 @@ export function Layout() {
       </nav>
 
       {/*
-        Der Freiraum unten muss die Leiste WIRKLICH freihalten. Vorher stand hier
-        `pb-20` = 80px, die Leiste ist aber `3.5rem + env(safe-area-inset-bottom)` —
-        als Web-App auf dem iPhone rund 90px. Die unterste Karte war also
-        angeschnitten. Jetzt dieselbe Rechnung wie die Leiste, plus 8px Luft.
+        Der Freiraum muss die Leiste WIRKLICH freihalten, und seit sie OBEN sitzt (sein
+        Auftrag: „Die untere Menü Leiste soll bitte ganz nach oben wandern"), oben.
+
+        Die Rechnung ist dieselbe wie an der Leiste selbst — 3,5rem plus der obere
+        Geräte-Rand (Notch, Dynamic Island). Wer hier eine runde Zahl hinschreibt, schneidet
+        die erste Karte an: genau das war der alte Fehler, damals mit `pb-20` = 80px gegen
+        eine Leiste von rund 90px.
+
+        Unten bleibt nur noch Luft plus der untere Geräte-Rand. Die Reiterleiste des Bogens
+        und der Weiter-Balken des Assistenten sitzen jetzt selbst auf `bottom-0` und halten
+        sich ihren Platz mit eigenem Polster frei.
       */}
       <main
         ref={mainRef}
-        className="flex-1 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-4"
+        className="flex-1 overflow-y-auto pt-[calc(3.5rem+env(safe-area-inset-top))] pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:pt-0 md:pb-4"
       >
         {seedMessage && (
           <div className="bg-amber-900/40 px-4 py-2 text-center text-xs text-amber-200">
@@ -114,8 +121,23 @@ export function Layout() {
         </div>
       </main>
 
-      {/* Bottom-Tabs mobil */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-[calc(3.5rem+env(safe-area-inset-bottom))] border-t border-slate-800 bg-slate-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      {/*
+        Die Hauptnavigation am Handy — OBEN. Sein Auftrag: „Die untere Menü Leiste soll
+        bitte ganz nach oben wandern."
+
+        Drei Dinge sind dabei nicht Kosmetik:
+
+        `top-0` statt `bottom-0` heißt auch `border-b` statt `border-t` (der Strich gehört
+        zwischen Leiste und Inhalt, nicht ins Leere) und `env(safe-area-inset-top)` statt
+        `-bottom` — auf dem iPhone liegt oben die Dynamic Island, und ein Polster für den
+        falschen Rand ist so gut wie keines.
+
+        Und die Leiste macht dadurch UNTEN Platz frei: die Reiterleiste des Bogens und der
+        Weiter-Balken des Assistenten rechneten ihre Höhe ein und sind mitgewandert. Wer
+        eine Höhe aus der Hülle einrechnet, muss sie auch zurückstellen — das ist die
+        fünfte Falle, diesmal in der anderen Richtung.
+      */}
+      <nav className="fixed inset-x-0 top-0 z-40 flex h-[calc(3.5rem+env(safe-area-inset-top))] border-b border-slate-800 bg-slate-950/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
         {visibleNav.map((item) => (
           <Link
             key={item.to}
