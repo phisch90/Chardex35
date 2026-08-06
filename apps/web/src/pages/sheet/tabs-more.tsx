@@ -25,8 +25,10 @@ import { describeModifier } from "../../ui/modifierTargets.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
 import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import { useAllEntities, useCompendium, useHouseRules } from "../../lib/hooks.js";
+import { reportSaveFailure } from "../../lib/saveError.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import { EquipMark } from "../../ui/EquipMark.js";
+import { ArmorCostCard } from "../../ui/ArmorCostCard.js";
 import { HandsCard } from "./Hands.js";
 import { ItemName, ItemText } from "../../ui/ItemName.js";
 import { itemLabel, itemSummary } from "../../ui/itemSummary.js";
@@ -472,6 +474,14 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
         )}
       </Card>
 
+      {/*
+        Was die Rüstung KOSTET — direkt unter dem, was angelegt ist, und nicht im
+        Werte-Reiter. Hier stellt sich die Frage („soll ich die Vollplatte
+        anlegen?"), und hier steht die Antwort: dieselbe Nachbarschaft wie bei der
+        Traglast eine Zeile darüber.
+      */}
+      <ArmorCostCard sheet={sheet} />
+
       <Card>
         <SectionTitle>{S.actions.add}</SectionTitle>
         {/*
@@ -531,8 +541,9 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
             ? {
                 onRemove: () => {
                   const entity = editor.entity!;
-                  void CompendiumRepo.remove(entity).catch((error: unknown) =>
-                    console.error("Eigener Gegenstandstyp konnte nicht gelöscht werden:", error),
+                  const write = () => CompendiumRepo.remove(entity);
+                  void write().catch((error: unknown) =>
+                    reportSaveFailure(entity.name, error, write),
                   );
                 },
               }
@@ -546,19 +557,26 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               rev hoch, damit der Abgleich die Änderung als neuer erkennt.
             */
             const isNew = editor?.entity === undefined;
-            void (isNew
-              ? CompendiumRepo.createHomebrew(entity).then(() =>
-                  save((c) =>
-                    void c.inventory.push({
-                      id: crypto.randomUUID(),
-                      itemId: entity.id,
-                      qty: 1,
-                      slot: "none",
-                      extraEffects: [],
-                    }),
-                  ),
-                )
-              : CompendiumRepo.saveHomebrew(entity));
+            /*
+              Hier stand ein nacktes `void`: ein eigener Gegenstand, dessen
+              Speichern fehlschlug, verschwand mit dem Editor, ohne dass jemand
+              etwas sagte — und das ist ein Stück Arbeit, keine Zahl.
+            */
+            const write = () =>
+              isNew
+                ? CompendiumRepo.createHomebrew(entity).then(() =>
+                    save((c) =>
+                      void c.inventory.push({
+                        id: crypto.randomUUID(),
+                        itemId: entity.id,
+                        qty: 1,
+                        slot: "none",
+                        extraEffects: [],
+                      }),
+                    ),
+                  )
+                : CompendiumRepo.saveHomebrew(entity);
+            void write().catch((error: unknown) => reportSaveFailure(entity.name, error, write));
           }}
         />
       )}

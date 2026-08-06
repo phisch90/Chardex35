@@ -10,6 +10,7 @@ import {
 import { S } from "../strings.js";
 import { CharacterRepo } from "../db/repo.js";
 import { useCharacters } from "../lib/hooks.js";
+import { reportSaveFailure } from "../lib/saveError.js";
 import { Field, inputClass } from "./bits.js";
 import { campaignLook } from "./campaignColors.js";
 
@@ -74,12 +75,14 @@ export function CampaignPicker(props: {
     if (value === undefined) return;
     props.onChange({ ...value, color });
     for (const sibling of siblings(own, value.name, color, props.ownId)) {
-      void CharacterRepo.mutate(sibling.id, (c) => {
-        // Nur die Farbe. Den Namen anzufassen wäre ein Umbenennen, und das hat
-        // niemand verlangt.
-        if (c.campaign !== undefined) c.campaign.color = color;
-      }).catch((error: unknown) => {
-        console.error(`Farbe an ${sibling.name} fehlgeschlagen:`, error);
+      const write = () =>
+        CharacterRepo.mutate(sibling.id, (c) => {
+          // Nur die Farbe. Den Namen anzufassen wäre ein Umbenennen, und das hat
+          // niemand verlangt.
+          if (c.campaign !== undefined) c.campaign.color = color;
+        });
+      void write().catch((error: unknown) => {
+        reportSaveFailure(sibling.name, error, write);
       });
     }
   };

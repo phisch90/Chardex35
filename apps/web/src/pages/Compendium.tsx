@@ -12,6 +12,7 @@ import {
 } from "@codex35/core";
 import { S } from "../strings.js";
 import { useAllEntities, useCompendium } from "../lib/hooks.js";
+import { reportSaveFailure } from "../lib/saveError.js";
 import { CompendiumRepo } from "../db/repo.js";
 import { BackButton } from "../ui/BackButton.js";
 import { Card, Chip, SearchInput, fmtMod } from "../ui/bits.js";
@@ -185,11 +186,12 @@ function EntityList({ entities, kind }: { entities: Entity[]; kind: EntityKind }
             <div className="flex items-center justify-between gap-2 px-3 pt-2">
               <span className="text-[11px] text-slate-500">{S.compendium.deletedMark}</span>
               <button
-                onClick={() =>
-                  void CompendiumRepo.restore(entity).catch((error: unknown) =>
-                    console.error("Zurückholen ist fehlgeschlagen:", error),
-                  )
-                }
+                onClick={() => {
+                  const write = () => CompendiumRepo.restore(entity);
+                  void write().catch((error: unknown) =>
+                    reportSaveFailure(entity.name, error, write),
+                  );
+                }}
                 className="shrink-0 rounded border border-emerald-700 px-2 py-0.5 text-[11px] font-medium text-emerald-300 hover:bg-emerald-950/50"
               >
                 {S.compendium.restore}

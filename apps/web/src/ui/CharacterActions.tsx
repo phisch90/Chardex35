@@ -15,6 +15,7 @@ import {
 import { S } from "../strings.js";
 import { CharacterRepo } from "../db/repo.js";
 import { forgetSheet } from "../lib/lastSheet.js";
+import { reportSaveFailure } from "../lib/saveError.js";
 import { buildCharacterExport, shareOrDownload } from "../lib/transfer.js";
 import { useAllEntities, useHouseRules } from "../lib/hooks.js";
 import { BottomSheet, GhostButton } from "./bits.js";
@@ -113,14 +114,33 @@ export function CharacterActionsSheet(props: {
     await navigate({ to: "/charaktere/$charId", params: { charId: draft.id } });
   };
 
+  /*
+    Kopieren und Löschen schreiben auch, und beide hingen an einem `void`: der eine
+    hätte das Blatt geschlossen, ohne zu kopieren, der andere hätte den Bogen als
+    gelöscht gemeldet, obwohl er noch da ist. Beides sieht aus wie „der Knopf tut
+    nichts" — genau der Befund, um den es in dieser Runde geht.
+  */
   const makeCopy = async () => {
-    const copy = await CharacterRepo.duplicate(character, { asDraft: false });
+    const write = () => CharacterRepo.duplicate(character, { asDraft: false });
+    let copy: Character;
+    try {
+      copy = await write();
+    } catch (error: unknown) {
+      reportSaveFailure(character.name, error, write);
+      return;
+    }
     close();
     await navigate({ to: "/charaktere/$charId", params: { charId: copy.id } });
   };
 
   const doDelete = async () => {
-    await CharacterRepo.remove(character);
+    const write = () => CharacterRepo.remove(character);
+    try {
+      await write();
+    } catch (error: unknown) {
+      reportSaveFailure(character.name, error, write);
+      return;
+    }
     // Sonst zeigte der Knopf „Zurück zu …" in den Einstellungen auf einen Bogen, den es
     // nicht mehr gibt.
     forgetSheet(character.id);
@@ -158,12 +178,27 @@ export function CharacterActionsSheet(props: {
     } else setRestPlan(plan);
   };
 
+  /*
+    Die Rast und ihre Rücknahme schreiben BEIDE, und beide wurden mit `void`
+    aufgerufen — schlug das Schreiben fehl, meldete die App trotzdem „Rast
+    ausgeführt" samt Rücknahme-Knopf, und die Zauberplätze standen unverändert da.
+    Deshalb gehen sie jetzt durch dasselbe `catch` wie jeder andere Schreibvorgang,
+    und der Abschluss (Meldung, Rücknahme anbieten) passiert nur, wenn es geklappt
+    hat.
+  */
   const doRest = async (plan: RestPlan) => {
     let undo: RestUndo | null = null;
-    await CharacterRepo.mutate(character.id, (c) => {
-      undo = snapshotForRest(c, plan);
-      applyRest(c, plan);
-    });
+    const write = () =>
+      CharacterRepo.mutate(character.id, (c) => {
+        undo = snapshotForRest(c, plan);
+        applyRest(c, plan);
+      });
+    try {
+      await write();
+    } catch (error: unknown) {
+      reportSaveFailure(character.name, error, write);
+      return;
+    }
     setRestUndo(undo);
     setRestDone(plan);
     setRestPlan(null);
@@ -173,7 +208,13 @@ export function CharacterActionsSheet(props: {
   const undoTheRest = async () => {
     const undo = restUndo;
     if (undo === null) return;
-    await CharacterRepo.mutate(character.id, (c) => void undoRest(c, undo));
+    const write = () => CharacterRepo.mutate(character.id, (c) => void undoRest(c, undo));
+    try {
+      await write();
+    } catch (error: unknown) {
+      reportSaveFailure(character.name, error, write);
+      return;
+    }
     setRestDone(null);
     setRestUndo(null);
     setNote(S.rest.undone);
@@ -240,11 +281,13 @@ export function CharacterActionsSheet(props: {
               value={character.campaign}
               ownId={character.id}
               onChange={(next) => {
-                void CharacterRepo.mutate(character.id, (c) => {
-                  if (next === undefined) delete c.campaign;
-                  else c.campaign = next;
-                }).catch((error: unknown) => {
-                  console.error(`Kampagne an ${character.name} fehlgeschlagen:`, error);
+                const write = () =>
+                  CharacterRepo.mutate(character.id, (c) => {
+                    if (next === undefined) delete c.campaign;
+                    else c.campaign = next;
+                  });
+                void write().catch((error: unknown) => {
+                  reportSaveFailure(character.name, error, write);
                 });
               }}
             />
@@ -282,11 +325,13 @@ export function CharacterActionsSheet(props: {
             value={character.accent}
             fromClass={accentOfClass(accentClassIdOf(character))}
             onChange={(next) => {
-              void CharacterRepo.mutate(character.id, (c) => {
-                if (next === undefined) delete c.accent;
-                else c.accent = next;
-              }).catch((error: unknown) => {
-                console.error(`Farbthema an ${character.name} fehlgeschlagen:`, error);
+              const write = () =>
+                CharacterRepo.mutate(character.id, (c) => {
+                  if (next === undefined) delete c.accent;
+                  else c.accent = next;
+                });
+              void write().catch((error: unknown) => {
+                reportSaveFailure(character.name, error, write);
               });
             }}
             onClose={() => setAccentOpen(false)}

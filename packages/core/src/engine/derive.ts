@@ -45,8 +45,11 @@ import {
 import { ABILITY_BASE_SOURCE } from "./types.js";
 import type {
   AbilityBlock,
+  ArmorCostBlock,
+  ArmorPieceCost,
   AttackLine,
   Contribution,
+  CostSource,
   DerivedIssue,
   DerivedSheet,
   FeatureLine,
@@ -257,7 +260,9 @@ export function deriveSheetValues(
   let armorMaxDex: number | null = null;
   let armorAcpSum = 0;
   let armorIsMediumOrHeavy = false;
-  for (const { entity } of equippedArmor) {
+  let armorAsf = 0;
+  const armorPieces: ArmorPieceCost[] = [];
+  for (const { entity, label } of equippedArmor) {
     const armor = entity.data.armor;
     if (!armor) continue;
     if (armor.maxDex !== null) {
@@ -265,6 +270,16 @@ export function deriveSheetValues(
     }
     armorAcpSum += armor.acp;
     if (armor.kind === "medium" || armor.kind === "heavy") armorIsMediumOrHeavy = true;
+    // Arcane Spell Failure STACKT — Rüstung und Schild addieren sich (PHB S. 123).
+    armorAsf += armor.asf;
+    armorPieces.push({
+      label,
+      kind: armor.kind,
+      acBonus: armor.acBonus,
+      maxDex: armor.maxDex,
+      acp: armor.acp,
+      asf: armor.asf,
+    });
   }
   // Hausregel „ohne Gewicht": die Last schränkt nichts ein.
   const loadLimit = houseRules.ignoreEncumbrance
@@ -410,9 +425,15 @@ export function deriveSheetValues(
   const speedValue = stackPaths(buckets, ["speed.land"], [
     baseContribution(race ? displayName(race) : "Basis", baseSpeed),
   ]);
-  const speedReducedBy =
-    armorIsMediumOrHeavy ||
-    (!houseRules.ignoreEncumbrance && (loadLevel === "medium" || loadLevel === "heavy"));
+  /*
+    Zwei Gründe, dieselbe Reduktion — und die Karte „Was deine Rüstung kostet"
+    muss sagen, WELCHER greift. Deshalb steht die Bedingung der Last einmal in
+    einer eigenen Zahl statt zweimal ausgeschrieben: sonst wäre die Ansage in der
+    Karte eine zweite Wahrheit, die beim nächsten Umbau von der Rechnung abweicht.
+  */
+  const loadSlowsSpeed =
+    !houseRules.ignoreEncumbrance && (loadLevel === "medium" || loadLevel === "heavy");
+  const speedReducedBy = armorIsMediumOrHeavy || loadSlowsSpeed;
   let speedFt: StatValue = speedValue;
   if (speedReducedBy && speedValue.total > 0) {
     const reduced = reducedSpeed(speedValue.total);
@@ -973,6 +994,68 @@ export function deriveSheetValues(
     };
   });
 
+  /*
+    --- Was die Rüstung kostet ------------------------------------------------
+
+    Die Zahlen stehen alle schon oben — nur verstreut: die DEX-Grenze im NAMEN
+    einer RK-Zeile, der Malus in fünfzehn Fertigkeitszeilen, die Bewegungsstufe
+    als eine Zeile der Bewegung. Und `asf` hatte gar keinen Leser: eine Zahl in
+    den Packdaten, die niemand las („etwas weiß es, und etwas anderes kann es
+    nicht").
+
+    Hier zusammengetragen und nicht in der Anzeige, weil sonst die Regeln
+    doppelt lägen: welcher Wert gewinnt (schärfere DEX-Grenze, schlechterer
+    Malus), wann sich der Malus verdoppelt, und ob die Prozentzahl diesen Bogen
+    überhaupt betrifft.
+  */
+  const which = (fromArmor: boolean, fromLoad: boolean): CostSource | null =>
+    fromArmor && fromLoad ? "both" : fromArmor ? "armor" : fromLoad ? "load" : null;
+
+  const acpSkills: { name: string; value: number }[] = [];
+  if (acp < 0) {
+    for (const { entity } of resolved.skills) {
+      if (!entity.data.acpApplies) continue;
+      acpSkills.push({
+        name: entity.name,
+        value: entity.data.acpDouble ? acp * 2 : acp,
+      });
+    }
+    // Der teuerste zuerst — was am meisten kostet, will man zuerst lesen.
+    acpSkills.sort((a, b) => a.value - b.value || a.name.localeCompare(b.name));
+  }
+
+  /*
+    Arkane Klassen tragen die Marke in den Klassendaten (`armorFailure`): Barde,
+    Hexenmeister, Magier. Ein Kleriker in Vollplatte hat 35% in der Rüstung
+    stehen und zahlt sie nicht — die Zahl darf bei ihm nicht dastehen, als
+    würde sie gelten.
+  */
+  const asfApplies = [...resolved.classes.values()].some(
+    (cls) => cls.data.spellcasting?.armorFailure === true,
+  );
+
+  const speedReduced = speedFt.total < speedValue.total;
+  const armorCost: ArmorCostBlock = {
+    pieces: armorPieces,
+    maxDex,
+    maxDexFrom: which(
+      armorMaxDex !== null && armorMaxDex === maxDex,
+      loadLimit !== null && loadLimit.maxDex === maxDex,
+    ),
+    dexLost: maxDex !== null && dexMod > maxDex ? dexMod - maxDex : 0,
+    acp,
+    acpFrom: which(
+      armorAcpSum < 0 && armorAcpSum === acp,
+      loadLimit !== null && loadLimit.acp === acp,
+    ),
+    acpSkills,
+    asf: armorAsf,
+    asfApplies,
+    speedFrom: speedReduced ? speedValue.total : null,
+    speedTo: speedReduced ? speedFt.total : null,
+    speedSource: speedReduced ? which(armorIsMediumOrHeavy, loadSlowsSpeed) : null,
+  };
+
   const classLevels = [...resolved.classes.entries()].map(([classId, cls]) => ({
     classId,
     className: displayName(cls),
@@ -1001,6 +1084,7 @@ export function deriveSheetValues(
     extraUses,
     spellcasting,
     encumbrance,
+    armorCost,
     twoWeaponPossible: twoWeaponSetup !== null,
     xp: {
       current: character.xp,

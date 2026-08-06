@@ -12,6 +12,7 @@ import { CharacterRepo } from "../../db/repo.js";
 import { useAppSettings, useCharacter, useCompendium, useSheet } from "../../lib/hooks.js";
 import { useDiceStore } from "../../lib/diceStore.js";
 import { rememberSheet } from "../../lib/lastSheet.js";
+import { reportSaveFailure } from "../../lib/saveError.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
 import { Chip, GhostButton, OpenDot, d20Roll, fmtMod } from "../../ui/bits.js";
@@ -164,12 +165,18 @@ export function CharacterSheetPage() {
     Das `catch` ist nachgerüstet, und es hat einen Anlass: hier stand ein nacktes
     `void`. Als der Domänen-Fehler zuschlug (die Mutation warf, die Transaktion
     brach ab), verschluckte genau dieses `void` die Ursache — sichtbar blieb nur,
-    dass ein Tap nichts tat. Ein fehlgeschlagener Schreibvorgang muss wenigstens
-    irgendwo stehen.
+    dass ein Tap nichts tat.
+
+    Und die Konsole war die halbe Antwort: sein Wort dazu stand als offener Punkt
+    da, „auf dem Handy schaut da niemand hinein". Jetzt geht es zusätzlich in die
+    Leiste, MIT einem zweiten Versuch — und der ist derselbe Aufruf, nicht bloß ein
+    Knopf. Dass er beliebig oft laufen darf, liegt an `mutate`: es arbeitet auf dem
+    frischen Datenbankstand und nicht auf dem von damals.
   */
   const save: TabProps["save"] = (mutate) => {
-    void CharacterRepo.mutate(character.id, mutate).catch((error: unknown) => {
-      console.error(`Speichern an ${character.name} fehlgeschlagen:`, error);
+    const write = () => CharacterRepo.mutate(character.id, mutate);
+    void write().catch((error: unknown) => {
+      reportSaveFailure(character.name, error, write);
     });
   };
 
