@@ -138,6 +138,68 @@ export interface EncumbranceBlock {
   level: "light" | "medium" | "heavy" | "overloaded";
 }
 
+/** Ein angelegtes Rüstungs- oder Schildstück mit seinen eigenen Zahlen. */
+export interface ArmorPieceCost {
+  /** Wie am Bogen: der eigene Name, sonst der des Gegenstands. */
+  label: string;
+  kind: "light" | "medium" | "heavy" | "shield";
+  acBonus: number;
+  maxDex: number | null;
+  /** Nicht-positiv. */
+  acp: number;
+  /** Arcane Spell Failure in Prozent. */
+  asf: number;
+}
+
+/** Woher eine Grenze kommt — die Rüstung, die Last, oder beide gleich scharf. */
+export type CostSource = "armor" | "load" | "both";
+
+/**
+ * Was die Rüstung KOSTET — die Kehrseite des RK-Bonus, gesammelt an einer Stelle.
+ *
+ * Alles darin ist eine FOLGE und wird nie gespeichert. Die Zahlen lagen schon in
+ * der Ableitung, aber verteilt: die DEX-Grenze steckte im Namen einer
+ * RK-Zeile („DEX-Modifikator (max. DEX 4)"), der Malus in 15 Fertigkeitszeilen,
+ * die Bewegungsstufe in einer Zeile der Bewegung — und `asf` hatte gar keinen
+ * Leser. Wer das in der Anzeige zusammensuchte, müsste die Regeln nachbauen
+ * (welcher Wert gewinnt, verdoppelt sich der Malus, betrifft es diesen Bogen);
+ * das ist die Falle „eine Regel, die in drei Ansichten steht, steht in keiner".
+ */
+export interface ArmorCostBlock {
+  /** Angelegte Rüstung und Schilde. Leer = nichts angelegt. */
+  pieces: ArmorPieceCost[];
+  /** Die SCHÄRFERE Grenze aus Rüstung und Last. null = unbegrenzt. */
+  maxDex: number | null;
+  /** Woher sie kommt; null, wenn es keine gibt. */
+  maxDexFrom: CostSource | null;
+  /**
+   * Wie viel DEX-Bonus die Grenze WIRKLICH kostet — 0, solange der Modifikator
+   * darunter liegt. Das ist die Zahl, die am Tisch zählt: eine „max. DEX 4" bei
+   * DEX 12 kostet nichts.
+   */
+  dexLost: number;
+  /** Rüstungsmalus, nicht-positiv. Rüstung und Last stacken NICHT (PHB S. 162). */
+  acp: number;
+  acpFrom: CostSource | null;
+  /** Die betroffenen Fertigkeiten mit ihrem Abzug an DIESEM Bogen (×2 inklusive). */
+  acpSkills: { name: string; value: number }[];
+  /** Arcane Spell Failure in Prozent, über alles Angelegte summiert. */
+  asf: number;
+  /**
+   * Wirkt die Prozentzahl an diesem Bogen? Nur arkane Klassen kennen sie
+   * (`spellcasting.armorFailure` in den Klassendaten: Barde, Hexenmeister,
+   * Magier). Ein Kleriker in Vollplatte zahlt sie nicht — und ohne diese
+   * Unterscheidung stünde die Zahl bei ihm da, als würde sie gelten.
+   */
+  asfApplies: boolean;
+  /** Bewegung vor der Reduktion — null, wenn nichts bremst. */
+  speedFrom: number | null;
+  /** Bewegung nach der Reduktion. */
+  speedTo: number | null;
+  /** Bremst die Rüstung, die Last, oder beide? null, wenn nichts bremst. */
+  speedSource: CostSource | null;
+}
+
 export interface FeatureLine {
   key: string;
   classId: string;
@@ -248,6 +310,8 @@ export interface DerivedSheet {
   extraUses: Record<string, number>;
   spellcasting: SpellcastingBlock[];
   encumbrance: EncumbranceBlock;
+  /** Was die Rüstung kostet: DEX-Grenze, Malus, Bewegung, arkane Störung. */
+  armorCost: ArmorCostBlock;
   /**
    * Liegt in JEDER Hand eine Nahkampfwaffe? Nur dann ist der
    * Zweiwaffenkampf-Schalter im Kampf-Reiter sinnvoll.

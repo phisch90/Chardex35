@@ -9,6 +9,7 @@ import { DiceResultSheet } from "./DiceSheet.js";
 import { SyncGate } from "../sync/SyncGate.js";
 import { SyncBadge } from "./SyncBadge.js";
 import { UpdateBar } from "./UpdateBar.js";
+import { SaveErrorBar } from "./SaveErrorBar.js";
 
 /*
   Eigene Zeichen statt Emoji (sein Auftrag). `icon` ist jetzt ein Name aus `ui/icons.tsx`
@@ -159,6 +160,9 @@ export function Layout() {
       <SyncBadge />
       {/* „Neue Fassung ist da" — einmal für die ganze App, nicht je Seite. */}
       <UpdateBar />
+      {/* „Nicht gespeichert" — ebenfalls einmal: ein Schreibvorgang kann von jeder
+          Seite kommen, und die Meldung muss überall ankommen. */}
+      <SaveErrorBar />
     </div>
   );
 }

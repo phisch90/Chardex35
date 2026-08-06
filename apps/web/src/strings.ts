@@ -176,6 +176,58 @@ export const S = {
     acDoubleRemove: "Ausgleich entfernen",
     acDoubleUndo: "RK-Ausgleich",
     equipHint: "Auf die Marke tippen wechselt den Platz.",
+    /*
+      „Was deine Rüstung kostet" — die Kehrseite des RK-Bonus.
+
+      Die Karte stand seit der Ausrüstungs-Runde als offener Punkt da. Der Grund,
+      warum sie eine eigene Karte ist und nicht eine Zeile: die Rüstung kostet an
+      VIER Stellen, und alle vier standen bisher woanders — die DEX-Grenze klein im
+      Namen einer RK-Zeile, der Malus in fünfzehn Fertigkeitszeilen, die Bremse in
+      der Bewegung, und die arkane Störung nirgends.
+
+      Die Zahlen selbst kommen aus `sheet.armorCost` und werden hier nicht gerechnet.
+    */
+    armorCost: {
+      title: "Was deine Rüstung kostet",
+      /** Steht statt der Karte, solange nichts angelegt ist. */
+      nothing: "Nichts angelegt — deine Rüstung kostet dich gerade nichts.",
+      /** Sie ist da und kostet trotzdem nichts (leichte Rüstung, hohe STR). */
+      free: "Kostet dich nichts: die Grenzen greifen bei deinen Werten nicht.",
+      maxDex: "Höchster DEX-Bonus",
+      /**
+       * Was die Grenze WIRKLICH kostet. 0 heißt: sie steht da und greift nicht.
+       *
+       * Das Vorzeichen kommt FERTIG herein (`fmtMod`) und wird hier nicht gesetzt.
+       * Zuerst stand hier ein typografisches Minus, weil die Erklärtexte der App
+       * eines benutzen — direkt unter der Zahl `-8` aus `fmtMod` standen damit zwei
+       * verschiedene Minuszeichen auf EINER Karte. Gefunden hat das der Lauf im
+       * gebauten Bogen, und die Antwort ist die übliche: eine Stelle entscheidet.
+       */
+      dexLost: (lost: string) => `${lost} auf die RK, weil dein DEX-Bonus abgeschnitten wird`,
+      dexFine: "greift bei deinem DEX nicht",
+      acp: "Rüstungsmalus",
+      /** Die betroffenen Fertigkeiten, das Teuerste zuerst. */
+      acpSkills: "Trifft",
+      acpDoubleHint: "Swim zählt ihn doppelt (SRD).",
+      speed: "Bewegung",
+      speedLine: (from: number, to: number) => `${from} ft → ${to} ft`,
+      /*
+        „gehen schief" gehört in die BESCHRIFTUNG und nicht in den Wert: gilt die
+        Zahl an diesem Bogen nicht, wird sie durchgestrichen — und ein
+        durchgestrichener Satz ist kaum zu lesen, eine durchgestrichene Zahl sofort.
+      */
+      asf: "Arkane Zauber gehen schief",
+      asfLine: (pct: number) => `${pct} %`,
+      /** Sie steht in der Rüstung und betrifft diesen Bogen nicht. */
+      asfNotHere: "betrifft diesen Bogen nicht — nur Barde, Hexenmeister und Magier zahlen sie",
+      /** Woher die Grenze kommt: die Rüstung, die Last, oder beide gleich scharf. */
+      from: { armor: "aus der Rüstung", load: "aus der Last", both: "aus Rüstung und Last" } as Record<
+        string,
+        string
+      >,
+      /** Ein Stück mit seinen eigenen Zahlen, für die Zeile darunter. */
+      piece: (name: string, acBonus: number) => `${name} (+${acBonus} RK)`,
+    },
     hands: "Rüstung und Hände",
     /** Die drei Plätze, um die man sich im Kampf kümmert — als Frage, nicht als Zustand. */
     handsRows: { armor: "Rüstung", mainHand: "Haupthand", offHand: "Schildhand" } as Record<
@@ -1318,6 +1370,26 @@ export const S = {
      */
     hint:
       "Deine Bögen bleiben unangetastet — sie liegen im Gerät, nicht in der App. Falls nötig wird der Zwischenspeicher geleert; dann braucht die App beim nächsten Start einmal Netz.",
+  },
+
+  /*
+    „Nicht gespeichert" — die Leiste, die es sagt.
+
+    Bis hierher landete ein fehlgeschlagener Schreibvorgang nur in der Konsole, und
+    dazu stand sein Satz seit Monaten als offener Punkt da: auf dem Handy schaut da
+    niemand hinein. Was er merkte, war nur, dass ein Tap nichts tat.
+
+    Der Text sagt deshalb ZWEI Dinge, und beide sind wichtig: dass die Änderung NICHT
+    drin ist (sonst hält er die Zahl am Bogen für gespeichert), und dass ein zweiter
+    Versuch da ist. Ein Band, das nur „Fehler" sagt, macht Angst und ändert nichts.
+  */
+  saveError: {
+    title: (what: string) => `Nicht gespeichert: ${what}`,
+    retry: "Nochmal versuchen",
+    busy: "Versuche…",
+    /** Nach einem geglückten zweiten Versuch — steht kurz da, damit er es sieht. */
+    fixed: "Gespeichert.",
+    dismiss: "Meldung schließen",
   },
 
   /*

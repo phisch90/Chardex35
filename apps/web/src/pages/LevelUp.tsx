@@ -27,6 +27,7 @@ import {
   useHouseRules,
   useSheet,
 } from "../lib/hooks.js";
+import { reportSaveFailure } from "../lib/saveError.js";
 import { Card, Chip, GhostButton, PrimaryButton, SectionTitle, fmtMod } from "../ui/bits.js";
 import { OpenWorkConfirm } from "../ui/OpenWorkConfirm.js";
 import { FeatPicker } from "../ui/FeatPicker.js";
@@ -184,7 +185,19 @@ export function LevelUpPage() {
     if (!afterCharacter) return;
     const next = structuredClone(afterCharacter);
     applyTrackerLines(next, levelUpTrackers);
-    await CharacterRepo.save(next);
+    /*
+      Schlägt das Schreiben fehl, wird NICHT navigiert: sonst stünde er auf dem
+      Bogen ohne die neue Stufe und hätte den ganzen Aufstieg noch einmal vor sich,
+      ohne zu wissen warum. Der Aufstieg ist die längste Eingabe der App — hier
+      wiegt ein verschluckter Fehler am schwersten.
+    */
+    const write = () => CharacterRepo.save(next);
+    try {
+      await write();
+    } catch (error: unknown) {
+      reportSaveFailure(next.name, error, write);
+      return;
+    }
     void navigate({ to: "/charaktere/$charId", params: { charId } });
   };
 

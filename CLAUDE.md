@@ -427,6 +427,47 @@ neuen Fassung. Der Weg steht als Leiter in `lib/swUpdate.ts` — wartenden Worke
 den Zwischenspeicher leeren (das kostet die Offline-Bereitschaft, deshalb zuletzt).
 Gesucht wird bei Rückkehr in den Vordergrund, bei „wieder online" und halbstündlich.
 
+### Der stillste Fall dieser Familie: ein fehlgeschlagenes Speichern
+
+Er stand monatelang als offener Punkt in dieser Datei — und der Satz, mit dem er dort
+stand, war schon die Diagnose: „Es steht jetzt in der Konsole, aber auf dem Handy
+schaut da niemand hinein."
+
+Das ist dieselbe Familie in ihrer leisesten Form: die App WEISS, dass ein Tap verloren
+ging, und sagt es an einer Stelle, die auf einem iPhone gar nicht erreichbar ist.
+Sichtbar bleibt nur, dass eine Zahl zurückspringt — und wer das am Tisch erlebt, sucht
+den Fehler in seinen Fingern. Genau so hat der Domänen-Fehler ausgesehen („lassen sich
+quasi auflisten aber nicht auswählen").
+
+Gebaut als Band unter der Hauptnavigation (`ui/SaveErrorBar.tsx`, Speicher in
+`lib/saveError.ts`), und drei Entscheidungen daran sind eine Notiz wert:
+
+- **Das Band trägt einen ECHTEN zweiten Versuch**, nicht bloß einen Knopf. Das ist die
+  Lehre dieses Kapitels, wörtlich angewendet: gemeldet wird nur, was auch einen Weg
+  hat. Jede Schreibstelle übergibt deshalb ihren Aufruf als Funktion (`const write =
+  () => …`), und der Knopf ruft genau diesen noch einmal. Dass er beliebig oft laufen
+  darf, liegt an `CharacterRepo.mutate`: es arbeitet auf dem FRISCHEN Datenbankstand
+  und nicht auf dem von damals. Die Teststrecke klemmt dafür den Schreibweg wirklich
+  ab (`IDBObjectStore.prototype.put` wirft) und gibt ihn wieder frei — sonst wäre der
+  Knopf ungeprüft.
+- **Der Grund steht in seinen Worten.** `describeSaveError` macht aus
+  `QuotaExceededError` den Satz „Der Speicher des Geräts ist voll" — kein Fachjargon,
+  dieselbe Regel wie „Regal" statt Gist. Die Konsole behält das ganze Fehlerobjekt mit
+  Stapel; dort sucht man, in der Leiste liest man.
+- **Angeschlossen sind ALLE Schreibwege**, nicht nur der Bogen: Rast und ihre
+  Rücknahme, Kampagne, Farbthema, Kampagnenfarbe der Geschwister, eigener
+  Gegenstandstyp (anlegen, ändern, löschen), Zurückholen im Kompendium, Kopieren,
+  Löschen, der Stufenaufstieg und das Anlegen im Assistenten. Bei den drei letzten
+  passiert außerdem der FOLGESCHRITT nicht mehr, wenn das Schreiben scheitert — vorher
+  navigierte der Aufstieg weiter und der Bogen stand ohne die neue Stufe da.
+
+Zwei Dinge hat erst der Lauf gefunden. **`String(undefined)` ergibt „undefined"** — eine
+nicht-leere Zeichenkette, die als Grund durchgekommen wäre und wörtlich in der Leiste
+gestanden hätte; jetzt zählt nur ein Fehlerobjekt oder eine geworfene Zeichenkette.
+Und **`IDBDatabase.prototype.transaction` ist nicht der Weg, an dem Dexie 4
+vorbeikommt**: die erste Fassung der Strecke klemmte dort ab, der Klick ging durch, und
+die Prüfung meldete ein fehlendes Band, das die App zu Recht nicht gezeigt hat.
+
 ## Die zweite Fehlerfamilie: eine Schranke, die nur eine Richtung prüft
 
 `validate.ts` meldete jahrelang, wenn ein Topf ÜBERZOGEN war, und schwieg, wenn etwas
@@ -647,6 +688,57 @@ zwei stehen dort unter „Zwei Regeln, für die schon ein Fach existiert". **Auf
 Abschnittsnummer wird hier absichtlich nicht mehr verwiesen** — die Nummern verschieben
 sich, sobald eine Frage beantwortet ist und nach Teil 1 wandert, und ein Verweis auf
 „Frage 9.1" zeigte dann ins Leere.
+
+## Was deine Rüstung kostet — eine Karte für vier verstreute Zahlen
+
+Sein Auftrag war ein Wort: „Rüstung". Gemeint war die Werte-Karte, die aus der
+Ausrüstungs-Runde offen stand — und der Grund, warum sie eine eigene Karte ist und
+keine Zeile am Gegenstand: **die Rüstung kostet an vier Stellen, und alle vier standen
+woanders.**
+
+| Was | Stand bisher | steht jetzt |
+|---|---|---|
+| DEX-Grenze | klein im NAMEN einer RK-Zeile („DEX-Modifikator (max. DEX 1)") | als Zahl, mit ihrem Preis |
+| Rüstungsmalus | in fünfzehn Fertigkeitszeilen einzeln | als Summe, mit der Liste dahinter |
+| Bewegung | als eine Zeile in der Aufschlüsselung der Bewegung | „30 ft → 20 ft" |
+| Arcane Spell Failure | **nirgends** | mit der Antwort, ob sie diesen Bogen betrifft |
+
+Die vierte ist der eigentliche Fund: `asf` lag seit dem ersten ETL-Lauf in den
+Packdaten, `armorFailure` seit demselben Tag in den Klassendaten — und **beide hatte
+niemand gelesen.** Ein Wert ohne Leser ist die schlichteste Form der dritten
+Fehlerfamilie.
+
+Drei Entscheidungen sind eine Notiz wert:
+
+- **Gerechnet wird in der ENGINE, nicht in der Karte** (`armorCost` in `derive.ts`,
+  Typ in `engine/types.ts`). Die Karte hat keine einzige Regel: welche Grenze gewinnt
+  (Rüstung oder Last), dass der Malus NICHT stackt (der schlechtere zählt, PHB S. 162),
+  dass Swim ihn doppelt nimmt, ob die Prozentzahl gilt — alles kommt fertig herein.
+  Sonst stünde dieselbe Regel in Engine und Anzeige, und das ist die Falle „eine Regel,
+  die in drei Ansichten steht, steht in keiner".
+- **Die Karte nennt die HERKUNFT jeder Grenze** („aus der Rüstung", „aus der Last",
+  „aus Rüstung und Last"). Ohne das sieht ein MaxDex 3 bei einem Kettenhemd (das 4
+  erlaubt) nach einem Fehler aus — es ist die mittlere Last. Damit dafür EINE Wahrheit
+  bleibt, steht die Bedingung der Last jetzt als eigene Zahl in `derive.ts`
+  (`loadSlowsSpeed`) statt zweimal ausgeschrieben.
+- **Eine Grenze, die nichts kostet, sagt das.** „Max. DEX 4" bei DEX 14 kostet nichts;
+  die Zahl am Tisch ist nicht die Grenze, sondern ihr PREIS (`dexLost`).
+
+Zwei Dinge hat nur der BLICK auf das Bild gefunden, kein Test:
+
+- **Zwei verschiedene Minuszeichen auf einer Karte.** `fmtMod` liefert ASCII (`-8`, so
+  steht es am Angriff), die Gegenstandszeilen zwei Zentimeter darüber sagen
+  „Fertigkeiten −6" (`ui/itemSummary.ts`). Die Karte folgt ihrer NACHBARSCHAFT, weil
+  sie über genau diese Zahlen redet — das Vorzeichen steht deshalb einmal oben in
+  `ArmorCostCard.tsx` und nicht dreimal im Text. Mein Test war dabei zweimal grün: er
+  maß erst das eine Zeichen, dann das andere.
+- **Ein durchgestrichener Wert behauptet etwas.** Die erste Fassung strich die
+  DEX-Grenze durch, wenn sie nichts kostet — beim Magier stand damit „max. DEX ~~4~~",
+  also „es gibt keine". Gedämpft und durchgestrichen sind jetzt zwei Sachen: gedämpft
+  heißt „gilt, kostet dich aber nichts", durchgestrichen heißt „zählt an diesem Bogen
+  nicht" (nur die arkane Zahl beim Nicht-Arkanisten). Und weil ein durchgestrichener
+  SATZ kaum zu lesen ist, steht „gehen schief" in der Beschriftung und die Prozentzahl
+  allein im Wert.
 
 ## Zauber-Reiter: was wem gehört
 
@@ -1245,6 +1337,12 @@ Zwei Ursachen, beide lehrreich:
   Assistenten und hielten ihn für einen Bogen. Danach prüften sie einen Bogen, den es nicht
   gab, und der Fehler zeigte auf die Reiterleiste, den Zauber-Reiter, den Zähler. Die Prüfung
   verlangt jetzt die KENNUNG (`/charaktere/[0-9a-f-]{8,}/`).
+  **Inzwischen sind es SECHS**: in der Rüstungs-Runde kamen `e2e-eigene` und
+  `e2e-ausruestung-deutsch` dazu, beide mit derselben Ursache und beide nachweislich
+  älter als die Runde (dieselbe Strecke gegen einen Build ohne die Änderung meldet
+  dasselbe — nachgemessen, nicht behauptet). Eine Rückfrage, die eine Runde EINBAUT,
+  bricht jede Strecke, die durch den Assistenten geht; wer sie einbaut, muss die Sonden
+  mitzählen.
 - **`:visible` fehlte**, zum wiederholten Mal: der Weiter-Balken steht zweimal im DOM (einer
   für schmal, einer ab `md`), und der unsichtbare steht vorn. Zwei Sonden von VOR diesem
   Balken (30.07., der Balken kam am 31.07. mit `222c6b1`) liefen deshalb seit Monaten in
@@ -1438,13 +1536,12 @@ in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`d
   weitermachen will: die Zierfarben ballen sich im Gold-Band (fünf Klassen zwischen 62 und
   92) — harmlos, weil ihre Hauptfarben weit auseinanderliegen, aber es wäre die nächste
   Feinarbeit.
-- **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" fehlt noch.
-  Eigene Gegenstände mit echten Rüstungs- und Waffenwerten sind gebaut (Editor im
-  Ausrüstungs-Reiter, `ui/ItemEditor.tsx` + `ui/itemDraft.ts`, Erzeuger in
-  `core/compendium/homebrewItem.ts`), und der Assistent benutzt jetzt denselben
-  Blätterer wie der Bogen.
-- **Ein fehlgeschlagenes Speichern sieht er nicht.** Es steht jetzt in der Konsole,
-  aber auf dem Handy schaut da niemand hinein. Eine sichtbare Meldung fehlt.
+- **Ausrüstung — Rest:** die Werte-Karte „Was deine Rüstung kostet" ist gebaut (eigener
+  Abschnitt weiter unten). Eigene Gegenstände mit echten Rüstungs- und Waffenwerten
+  waren schon da (Editor im Ausrüstungs-Reiter, `ui/ItemEditor.tsx` +
+  `ui/itemDraft.ts`, Erzeuger in `core/compendium/homebrewItem.ts`), und der Assistent
+  benutzt denselben Blätterer wie der Bogen. Offen bleibt hier nur noch die
+  Übersetzung der 97 epischen Erklärungen (weiter unten).
 - **Behälter** (Inventar/Geldbeutel, Münzgewicht) und Umsortieren per Ziehen.
 - **97 Gegenstände tragen noch keine deutsche ERKLÄRUNG** — Name haben alle 1866. Die 97
   sind ausnahmslos episch (Stufe 21+, im Blätterer standardmäßig ausgeblendet) oder

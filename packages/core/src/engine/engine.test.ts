@@ -301,6 +301,19 @@ const fullPlate = E({
     armor: { kind: "heavy", acBonus: 8, maxDex: 1, acp: -6, asf: 35 },
   },
 });
+/*
+  Ballast, um die Traglast über eine Schwelle zu heben. STR 16 trägt 230 lb, also
+  ist LEICHT alles bis 76 lb — eine Rüstung samt Waffe kommt da nie hin. Ein Stück
+  wiegt 1 lb, die Menge macht das Gewicht: so steht die Zahl im Test statt in einem
+  Gegenstand mit erfundenem Gewicht.
+*/
+const rock = E({
+  id: "test:item:rock",
+  kind: "item",
+  name: "Rock",
+  source: "srd",
+  data: { weightLb: 1, category: "gear" },
+});
 const heavyShield = E({
   id: "test:item:heavy-shield",
   kind: "item",
@@ -346,7 +359,7 @@ const ALL_ENTITIES: Entity[] = [
   human, dwarf, halfling,
   skillClimb, skillSwim, skillJump, skillTumble, skillHide, skillLore,
   featDodge, featToughness, featFinesse, featWeaponFocus, featWeaponSpecialization,
-  longsword, greatsword, dagger, chainShirt, fullPlate, heavyShield, ringPlus1, ringPlus3,
+  longsword, greatsword, dagger, chainShirt, fullPlate, heavyShield, rock, ringPlus1, ringPlus3,
   conditionShaken,
 ];
 const COMPENDIUM = resolveCompendium(ALL_ENTITIES);
@@ -455,6 +468,192 @@ describe("deriveSheet — RK, Rüstung, MaxGE", () => {
     const dodge = sheet.ac.total.contributions.find((x) => x.bonusType === "dodge")!;
     expect(dodge.applied).toBe(false);
     expect(dodge.condition).toBeTruthy();
+  });
+});
+
+/**
+ * Was die Rüstung KOSTET — die Kehrseite des RK-Bonus (`sheet.armorCost`).
+ *
+ * Die Zahlen selbst rechnete die Ableitung längst, nur verstreut: die DEX-Grenze
+ * stand im NAMEN einer RK-Zeile, der Malus in fünfzehn Fertigkeitszeilen, die
+ * Bewegungsstufe in einer Zeile der Bewegung — und `asf` hatte gar keinen Leser.
+ *
+ * Geprüft wird deshalb vor allem, WELCHE Grenze gewinnt: Rüstung, Last, oder
+ * beide gleich scharf. Rüstung und Last stacken beim Malus nicht (PHB S. 162),
+ * und wer hier `+` statt `min` schreibt, bekommt Zahlen, die niemandem auffallen.
+ *
+ * Zwergen-Kämpfer, STR 16 → Traglast leicht ≤ 25 · mittel ≤ 50 · schwer ≤ 76 lb.
+ */
+describe("deriveSheet — was die Rüstung kostet", () => {
+  const NO_LOAD = houseRulesSchema.parse({ ignoreEncumbrance: true });
+
+  it("nichts angelegt: keine Grenze, kein Malus, keine Bremse", () => {
+    const cost = deriveSheet(fighterDwarf4(), COMPENDIUM, HOUSE).armorCost;
+    expect(cost.pieces).toEqual([]);
+    expect(cost.maxDex).toBeNull();
+    expect(cost.maxDexFrom).toBeNull();
+    expect(cost.dexLost).toBe(0);
+    expect(cost.acp).toBe(0);
+    expect(cost.acpFrom).toBeNull();
+    expect(cost.acpSkills).toEqual([]);
+    expect(cost.asf).toBe(0);
+    expect(cost.speedFrom).toBeNull();
+    expect(cost.speedTo).toBeNull();
+    expect(cost.speedSource).toBeNull();
+  });
+
+  it("Vollplatte allein (ohne Last): Grenze, Malus und Bremse kommen aus der Rüstung", () => {
+    const c = fighterDwarf4({
+      abilities: { base: { str: 16, dex: 18, con: 14, int: 10, wis: 12, cha: 8 } },
+      inventory: [{ id: "i1", itemId: "test:item:full-plate", slot: "armor" }],
+    });
+    const cost = deriveSheet(c, COMPENDIUM, NO_LOAD).armorCost;
+    expect(cost.pieces).toEqual([
+      { label: "Full Plate", kind: "heavy", acBonus: 8, maxDex: 1, acp: -6, asf: 35 },
+    ]);
+    expect(cost.maxDex).toBe(1);
+    expect(cost.maxDexFrom).toBe("armor");
+    // DEX 18 = +4, davon kommen 1 an: drei gehen verloren. DAS ist die Zahl am Tisch.
+    expect(cost.dexLost).toBe(3);
+    expect(cost.acp).toBe(-6);
+    expect(cost.acpFrom).toBe("armor");
+    // Zwerg: 20 ft → 15 ft (PHB-Tabelle 9-3), weil die Rüstung schwer ist.
+    expect(cost.speedFrom).toBe(20);
+    expect(cost.speedTo).toBe(15);
+    expect(cost.speedSource).toBe("armor");
+  });
+
+  it("eine Grenze, die nicht greift, kostet nichts", () => {
+    // DEX 13 = +1, MaxDex der Vollplatte 1 → die Grenze steht da und kostet nichts.
+    const c = fighterDwarf4({
+      inventory: [{ id: "i1", itemId: "test:item:full-plate", slot: "armor" }],
+    });
+    const cost = deriveSheet(c, COMPENDIUM, NO_LOAD).armorCost;
+    expect(cost.maxDex).toBe(1);
+    expect(cost.dexLost).toBe(0);
+  });
+
+  it("Malus trifft die Fertigkeiten, Swim doppelt, das Teuerste zuerst", () => {
+    const c = fighterDwarf4({
+      inventory: [{ id: "i1", itemId: "test:item:full-plate", slot: "armor" }],
+    });
+    const cost = deriveSheet(c, COMPENDIUM, NO_LOAD).armorCost;
+    expect(cost.acpSkills).toEqual([
+      { name: "Swim", value: -12 },
+      { name: "Climb", value: -6 },
+      { name: "Hide", value: -6 },
+      { name: "Jump", value: -6 },
+      { name: "Tumble", value: -6 },
+    ]);
+    // Gegenprobe: was die Karte sagt, muss an der Fertigkeitszeile stehen.
+    const swim = deriveSheet(c, COMPENDIUM, NO_LOAD).skills.find(
+      (s) => s.skillId === "test:skill:swim",
+    )!;
+    expect(swim.total.contributions.find((x) => x.source.startsWith("Rüstungsmalus"))?.value).toBe(
+      -12,
+    );
+  });
+
+  it("die LAST ist die schärfere Grenze — dann sagt die Karte das auch", () => {
+    // Kettenhemd 25 lb + 60 lb Ballast = 85 lb → mittlere Last (MaxDex 3, Malus −3).
+    const c = fighterDwarf4({
+      inventory: [
+        { id: "i1", itemId: "test:item:chain-shirt", slot: "armor" },
+        { id: "b1", itemId: "test:item:rock", qty: 60 },
+      ],
+    });
+    const cost = deriveSheet(c, COMPENDIUM, HOUSE).armorCost;
+    expect(cost.maxDex).toBe(3); // Rüstung erlaubt 4, die Last nur 3
+    expect(cost.maxDexFrom).toBe("load");
+    expect(cost.acp).toBe(-3); // Rüstung −2, die Last −3 — der SCHLECHTERE zählt
+    expect(cost.acpFrom).toBe("load");
+    // Ein Kettenhemd ist leicht; gebremst wird trotzdem, und zwar von der Last.
+    expect(cost.speedSource).toBe("load");
+    expect(cost.speedTo).toBe(15);
+  });
+
+  it("Rüstung und Last gleich scharf: beide, nicht eine von zweien", () => {
+    // Vollplatte 50 lb + 120 lb Ballast = 170 lb → schwere Last (MaxDex 1, Malus −6).
+    const c = fighterDwarf4({
+      inventory: [
+        { id: "i1", itemId: "test:item:full-plate", slot: "armor" },
+        { id: "b1", itemId: "test:item:rock", qty: 120 },
+      ],
+    });
+    const cost = deriveSheet(c, COMPENDIUM, HOUSE).armorCost;
+    expect(cost.maxDexFrom).toBe("both");
+    expect(cost.acpFrom).toBe("both");
+    expect(cost.speedSource).toBe("both");
+    // Und die Zahl bleibt EINE: −6 und −6 addieren sich nicht zu −12.
+    expect(cost.acp).toBe(-6);
+  });
+
+  it("Malus aus zwei Stücken addiert sich, gegen die Last gewinnt der schlechtere", () => {
+    // Kettenhemd −2 und Schwerer Schild −2 = −4; die Last (90 lb → mittel) nur −3.
+    const c = fighterDwarf4({
+      inventory: [
+        { id: "i1", itemId: "test:item:chain-shirt", slot: "armor" },
+        { id: "i2", itemId: "test:item:heavy-shield", slot: "offHand" },
+        { id: "b1", itemId: "test:item:rock", qty: 50 },
+      ],
+    });
+    const cost = deriveSheet(c, COMPENDIUM, HOUSE).armorCost;
+    expect(cost.acp).toBe(-4);
+    expect(cost.acpFrom).toBe("armor");
+    // Der Schild hat keine DEX-Grenze — die des Kettenhemds bleibt stehen, die Last ist schärfer.
+    expect(cost.pieces.map((p) => p.maxDex)).toEqual([4, null]);
+    expect(cost.maxDex).toBe(3);
+  });
+
+  it("Arcane Spell Failure: addiert sich, gilt aber nur für arkane Klassen", () => {
+    const c = fighterDwarf4({
+      inventory: [
+        { id: "i1", itemId: "test:item:chain-shirt", slot: "armor" },
+        { id: "i2", itemId: "test:item:heavy-shield", slot: "offHand" },
+      ],
+    });
+    const kaempfer = deriveSheet(c, COMPENDIUM, HOUSE).armorCost;
+    expect(kaempfer.asf).toBe(35); // 20 Kettenhemd + 15 Schild
+    /*
+      Der Kämpfer trägt die 35% und zahlt sie nicht. Ohne diese Unterscheidung
+      stünde die Zahl bei ihm da, als würde sie gelten — und `armorFailure` in
+      den Klassendaten hätte weiter keinen Leser.
+    */
+    expect(kaempfer.asfApplies).toBe(false);
+
+    const magier = C({
+      id: "char-asf",
+      name: "Mialee",
+      raceId: "test:race:human",
+      abilities: { base: { str: 8, dex: 14, con: 12, int: 16, wis: 12, cha: 10 } },
+      levels: [{ classId: "test:class:wizard", hpRoll: "avg" }],
+      inventory: [{ id: "i1", itemId: "test:item:chain-shirt", slot: "armor" }],
+    });
+    const gilt = deriveSheet(magier, COMPENDIUM, HOUSE).armorCost;
+    expect(gilt.asf).toBe(20);
+    expect(gilt.asfApplies).toBe(true);
+  });
+
+  it("Hausregel ohne Gewicht: die Last schränkt nichts mehr ein", () => {
+    /*
+      DERSELBE Bogen wie in der Last-Strecke oben (85 lb, mittlere Last). Ohne
+      diesen Ballast könnte die Prüfung gar nicht fehlschlagen — sie würde
+      beweisen, dass eine Last, die es nicht gibt, nichts einschränkt.
+    */
+    const c = fighterDwarf4({
+      inventory: [
+        { id: "i1", itemId: "test:item:chain-shirt", slot: "armor" },
+        { id: "b1", itemId: "test:item:rock", qty: 60 },
+      ],
+    });
+    expect(deriveSheet(c, COMPENDIUM, HOUSE).armorCost.maxDexFrom).toBe("load");
+
+    const cost = deriveSheet(c, COMPENDIUM, NO_LOAD).armorCost;
+    expect(cost.maxDex).toBe(4);
+    expect(cost.maxDexFrom).toBe("armor");
+    expect(cost.acp).toBe(-2);
+    expect(cost.acpFrom).toBe("armor");
+    expect(cost.speedSource).toBeNull(); // leichte Rüstung bremst nicht
   });
 });
 

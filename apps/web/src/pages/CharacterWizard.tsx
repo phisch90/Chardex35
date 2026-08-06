@@ -33,6 +33,7 @@ import {
 import { S } from "../strings.js";
 import { IconInline } from "../ui/icons.js";
 import { CharacterRepo } from "../db/repo.js";
+import { reportSaveFailure } from "../lib/saveError.js";
 import { useAllEntities, useCompendium, useHouseRules } from "../lib/hooks.js";
 import {
   Card,
@@ -339,7 +340,20 @@ export function CharacterWizardPage() {
   const create = async () => {
     const data = draftToCharacter(draft, trackersFromDraft(draft, sheet));
     const { id: _drop, ...rest } = data;
-    const created = await CharacterRepo.create(rest);
+    /*
+      Der Assistent ist die längste Eingabe der App. Schlägt das Anlegen fehl,
+      blieb er bisher einfach im letzten Schritt stehen — ohne ein Wort, und mit
+      der Vermutung, der Knopf sei kaputt. Der Entwurf bleibt dabei erhalten, ein
+      zweiter Versuch kostet also nur einen Tap.
+    */
+    const write = () => CharacterRepo.create(rest);
+    let created: Character;
+    try {
+      created = await write();
+    } catch (error: unknown) {
+      reportSaveFailure(rest.name, error, write);
+      return;
+    }
     void navigate({ to: "/charaktere/$charId", params: { charId: created.id } });
   };
 
