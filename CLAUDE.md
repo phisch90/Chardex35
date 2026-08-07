@@ -1924,8 +1924,103 @@ Nebenbei mitgeradegerückt: die Meldungen schrieben „2.5 Ränge" mit englische
 in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`de()` in
 `validate.ts`); ganze Zahlen bleiben unberührt.
 
+## Der Bearbeiten-Modus: eine rote Leiste statt zweier Leisten
+
+Vier Sätze in einer Runde, und alle vier zeigen auf denselben Zustand — den, in dem man
+etwas nachträgt statt zu spielen.
+
+1. **„Wenn ich einen neuen Zähler anlege, dann möchte ich … die kompletten Optionen …
+   sofort haben, nicht einfach nur den Namen anlegen. Jetzt aktuell muss ich dann immer
+   erst über Bearbeiten gehen und dann den Zähler bearbeiten. Wer das nicht weiß, findet
+   das niemals."**
+2. **„diese komische ZFW Button, das soll ausgeschrieben sein, dass son son Buttons
+   nebeneinander sein und nicht einer mit am einen Buchstaben nur der dann wechselt."**
+3. **„dann möchte ich bitte, dass Kopf- und Fußleisten verschwinden und dafür die Warnung,
+   dass ich im Bearbeitungsmodus bin, klar erkennbar, also bestenfalls in Rot, rötlich am
+   unteren Bildrand als Leiste mit Hover Effekt."**
+4. **„Außerdem soll es beim Bearbeiten möglich sein zwischen den verschiedenen Seiten hin
+   und her zu wechseln und dauerhaft im Bearbeitungsmodus zu bleiben."**
+
+Auf die Frage, wie man dann noch die Seite wechselt, hat er entschieden: **„Rote Leiste
+TRÄGT die Reiter."** Damit beantworten 3 und 4 sich gegenseitig, und es braucht keine
+zweite Leiste.
+
+### Punkt 1 und 2: drei `prompt()` weniger
+
+Das Anlegen ging über `prompt()` für den Namen, danach war der Zähler fertig — Art,
+Grenze, Auffüll-Bedingung und Bereich standen nur im Bearbeiten-Modus hinter einem
+weiteren Knopf. Und die Art war ein Knopf, der `Z` → `F` → `W` durchschaltete: dieselbe
+⟳-Falle, die bei den Auffüll-Bedingungen schon einmal aufgelöst wurde, nur mit
+ABKÜRZUNGEN statt Wörtern. Ab drei Werten rät man, welcher als nächstes kommt.
+
+Gebaut ist ein Formular (`TrackerFields`), das beim ANLEGEN und beim BEARBEITEN dasselbe
+ist — der Weg über „erst anlegen, dann bearbeiten" fällt damit weg, statt bequemer zu
+werden. Die Art steht als drei Knöpfe mit je einem Erklärsatz; der Entwurf lebt als
+`TrackerDraft` im Zustand und wird erst beim „Anlegen" geschrieben.
+
+**Der neue Zähler startet VOLL, wenn er eine Grenze hat.** Eine frische Figur hat ihre
+Tagesfähigkeiten noch nicht verbraucht — derselbe Fehler war beim Assistenten schon
+einmal da (`value: 0` in jedem Vorschlag).
+
+### Punkt 3 und 4: die Leiste, und die Falle darin
+
+Die Warnung IST die Reiterleiste unten: im Modus wird sie rosé und trägt links den
+Ausgang. Die Hauptnavigation oben fällt weg (`lib/editMode.ts`, ein Store — die Hülle
+kennt die Seite darin nicht), und mit ihr das obere Polster; ein Polster für eine Leiste,
+die es gerade nicht gibt, ist die fünfte Falle wörtlich.
+
+**Und die fünfte Falle ist mir in derselben Runde trotzdem passiert.** Die Reiterleiste
+ist seit jeher `md:hidden` — am iPad stehen die Reiter oben als Chips. Im Bearbeiten-Modus
+gab es dort deshalb **gar keine Leiste: keine Warnung und keinen Ausgang.** Sein Wort
+sagte es selbst und ich habe es überlesen: ein Daumen fährt nicht über etwas, „Leiste mit
+Hover Effekt" MEINT die große Fassung. Jetzt gilt `md:hidden` nur außerhalb des Modus; im
+Modus steht die Leiste in jeder Breite, rückt hinter die Seitenleiste (`md:left-52`), und
+die Chip-Reihe oben verschwindet — sonst gäbe es zwei Reiterleisten für dieselbe Frage.
+
+**Gefunden hat es keine Prüfung dieser Runde, sondern eine ALTE Strecke**, die den Modus
+auf dem iPad wirklich einschalten wollte und in einen Timeout lief. Meine neue Strecke war
+grün — weil ich ihren ganzen Leisten-Block hinter `width < 768` gestellt hatte. **Eine
+Prüfung, die eine Breite ausnimmt, behauptet nicht „hier gilt es nicht" — sie schaut nur
+nicht hin.** Ausgenommen wird jetzt nur, was in dieser Breite wirklich anders IST (oben
+die Hauptnavigation); alles andere wird überall gemessen, und dazu gehört die Gegenprobe,
+dass die Reiter genau EINMAL anklickbar sind.
+
+### Was der BLICK gefunden hat
+
+Der Satz „Für eigene Mechaniken: Aktionspunkte, Schicksalspunkte …" ist der Hinweis für
+einen leeren Bereich. Bei offenem Formular rutschte er unter „Anlegen / Abbrechen" und las
+sich wie deren Erklärung. Er steht jetzt nur, solange das Formular ZU ist. Genau dieser
+Fund ist beim Verteilen-Knopf im Punktekauf schon einmal gemacht worden, und wieder hat
+ihn kein Test gebracht, sondern ein Bildschirmfoto.
+
+### Vier tote Teststrecken, und keine davon war es wegen dieser Runde
+
+Beim Nachlaufen der bestehenden Strecken fielen vier durch. **Gegen einen Build OHNE diese
+Runde nachgemessen: identisch** — sie sind seit Runde #91 tot, als „Bearbeiten" hinter die
+drei Punkte wanderte und der ✎-Chip über dem Reiter verschwand. Drei suchten weiter diesen
+Chip, die vierte lief noch in die Rückfrage des Assistenten (das ist jetzt die SIEBTE
+Strecke mit dieser Ursache) und zeigte obendrein auf einen Port, der gar nicht läuft.
+
+Was sie dabei meldeten, ist die eigentliche Lehre: `e2e-vergessen` behauptete „Die Zahl im
+Hinweis sinkt mit — 12 → 12" und klagte damit die App an. In Wahrheit ging der Modus nie
+an, also gab es keine ±-Knöpfe, also wurde nichts geklickt. **Eine Strecke, deren
+Hilfsfunktion still scheitert, meldet nicht „ich komme nicht hin" — sie meldet einen
+Fehler an der Stelle, an der sie danach zufällig hinschaut.** Alle vier erkennen den
+Zustand jetzt am Ausgang in der Leiste und werfen, wenn sie ihn nicht schalten können.
+
+Dass es sich lohnt, sieht man an den Zahlen: `e2e-raenge` (15 Prüfungen) und
+`e2e-vergessen` (39) liefen monatelang gar nicht, `e2e-eigene` brach vor seinen letzten
+drei Prüfungen ab.
+
 ## Noch offen
 
+- **`e2e-featmods` lebt wieder, ist aber nicht grün.** Die Strecke war doppelt tot (falscher
+  Port, dazu die Rückfrage des Assistenten) und läuft jetzt bis tief hinein. Zwei Prüfungen
+  darin fallen weiter durch, und beide sind einen eigenen Blick wert: „Initiative auf dem
+  Bogen um 3 höher" (der Vorher-Wert wurde gar nicht gelesen, also ist der Vergleich
+  selbst fraglich) und „Aufschlüsselung nennt das Talent als Herkunft" (die Zeile
+  „Talent: …" steht nicht in der Aufschlüsselung). Ob das die App oder die Sonde ist, ist
+  ungeklärt — beides ist bei einer monatelang toten Strecke gleich wahrscheinlich.
 - **Die volle Attacke ist beantwortet und steht damit nicht mehr hier.** „Wir spielen bei
   6bab mit zwei Angriffen" — die Reihe bleibt, wie sie war, und hat jetzt einen Test
   (`core/engine/iterativeAttacks.test.ts`). Dasselbe Schicksal wie der halbe

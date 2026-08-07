@@ -332,6 +332,8 @@ export const S = {
     /* Die zwei Zeilen im ⋯-Blatt — dort wird ein- UND ausgeschaltet. */
     editHint: "Name, Ränge, Talente, Ausrüstung und Zähler ändern.",
     editStop: "Bearbeiten beenden",
+    /* Kurzform für die rote Leiste unten — dort ist die Zelle so schmal wie ein Reiter. */
+    editStopShort: "Fertig",
     editStopHint: "Zurück zum Lesen — am Tisch ändert dann kein Fehlgriff etwas.",
     identity: "Name und Spieler:in",
     characterName: "Name des Charakters",
@@ -1268,6 +1270,21 @@ export const S = {
     name: "Name",
     kind: "Art",
     kinds: { counter: "Zähler", value: "Fester Wert", roll: "Würfelwurf" } as Record<string, string>,
+    /*
+      Die Art als AUSGESCHRIEBENE Knopfreihe. Vorher ein Knopf, der durchschaltete und dabei
+      nur den ersten Buchstaben zeigte — sein Wort: „diese komische ZFW Button, das soll
+      ausgeschrieben sein, dass son son Buttons nebeneinander sein und nicht einer mit am
+      einen Buchstaben nur der dann wechselt."
+    */
+    kindTitle: "Art:",
+    kindHints: {
+      counter: "Zählt herunter und herauf, mit − und + am Bogen. Kann sich bei einer Rast wieder auffüllen.",
+      value: "Eine Zahl, die einfach dasteht — für alles, was du selbst nachträgst.",
+      roll: "Ein Würfelausdruck. Der Knopf am Bogen würfelt ihn, und das Ergebnis bleibt stehen.",
+    } as Record<string, string>,
+    namePlaceholder: "z.B. Aktionspunkte",
+    /** Steht im leeren Maximum-Feld, wenn es keine Grenze gibt. */
+    maxFree: "keine Grenze",
     value: "Wert",
     max: "Maximum (optional)",
     formula: "Würfelformel (z.B. 1d6+2)",
