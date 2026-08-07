@@ -23,6 +23,7 @@ import { FeatPicker } from "../../ui/FeatPicker.js";
 import { FeatModifiers } from "../../ui/FeatModifiers.js";
 import { describeModifier } from "../../ui/modifierTargets.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
+import { useDragSort } from "../../ui/useDragSort.js";
 import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import { useAllEntities, useCompendium, useHouseRules } from "../../lib/hooks.js";
 import { reportSaveFailure } from "../../lib/saveError.js";
@@ -123,23 +124,71 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
     row.container === undefined && row.containerId !== undefined && containerIds.has(row.containerId)
       ? row.containerId
       : undefined;
-  const childrenOf = (id: string) => character.inventory.filter((row) => parentOf(row) === id);
+  const childrenOf = (id: string) => inOrder.filter((row) => parentOf(row) === id);
   /** Was der Behälter laut Engine trägt — gerechnet wird dort, nicht hier. */
   const loadOf = (id: string) => sheet.encumbrance.containers.find((c) => c.id === id);
 
+  /**
+   * Gehören diese zwei Zeilen in dieselbe Gruppe — also darf ein Zug sie tauschen?
+   *
+   * Dieselbe Frage wie `siblingsOf` weiter unten, nur über Kennungen: gleicher Behälter,
+   * und beide entweder abgelegt oder beide angelegt. Ohne das schiebt ein Zug die Zeile
+   * aus ihrem Rucksack heraus, und das sieht wie ein Fehler aus.
+   */
+  const sameGroup = (aId: string, bId: string) => {
+    const a = character.inventory.find((row) => row.id === aId);
+    const b = character.inventory.find((row) => row.id === bId);
+    if (a === undefined || b === undefined) return false;
+    return parentOf(a) === parentOf(b) && (a.slot === "none") === (b.slot === "none");
+  };
+
+  /*
+    ZIEHEN zum Umsortieren — sein Wort: „Umsortieren per Ziehen, gerne."
+
+    Der Hook bekommt ALLE Kennungen des Gepäcks und nicht eine Liste je Behälter: Hooks
+    dürfen nicht in einer Schleife stehen, und drei Behälter wären vier Aufrufe. Die
+    Gruppengrenze steckt deshalb in `canSwap` — getauscht wird nur unter Geschwistern,
+    genau wie bei den ↑↓-Knöpfen, die als Rückweg BLEIBEN (mit einer Maus oder einem
+    Vorleseprogramm ist ein Zug kein Ersatz für einen Knopf).
+
+    Geschrieben wird EINMAL beim Loslassen: die Liste wird nach der neuen Reihenfolge
+    aufgebaut, und zwar über die Kennungen und nie über Indizes — die angezeigten Listen
+    sind gefiltert und gruppiert.
+  */
+  const drag = useDragSort(
+    character.inventory.map((row) => row.id),
+    (order) =>
+      save((c) => {
+        const byId = new Map(c.inventory.map((row) => [row.id, row]));
+        const next = order.map((id) => byId.get(id)).filter((row) => row !== undefined);
+        // Sicherheitsnetz: kommt eine Zeile in der Reihenfolge nicht vor (sie wurde
+        // während des Zugs gelöscht oder ist neu), bleibt sie erhalten statt zu
+        // verschwinden. Ein Umsortieren darf niemals Daten kosten.
+        for (const row of c.inventory) if (!order.includes(row.id)) next.push(row);
+        c.inventory = next;
+      }),
+    { canSwap: (a, b) => sameGroup(a, b) },
+  );
+
+  /*
+    Die Reihenfolge der ANZEIGE: während eines Zugs die Vorschau des Hooks, sonst die
+    gespeicherte. Gerendert wird immer aus dieser Liste, damit die Vorschau überall
+    gleich ankommt — im Gepäck und in jedem Behälter.
+  */
+  const byId = new Map(character.inventory.map((row) => [row.id, row]));
+  const inOrder = drag.order
+    .map((id) => byId.get(id))
+    .filter((row): row is (typeof character.inventory)[number] => row !== undefined);
+
   // Angelegt zuerst, wie in Fight Club — was am Körper hängt, zählt im Kampf.
   // Wer in einem Behälter liegt, erscheint NUR dort: sonst stünde er zweimal da.
-  const equipped = character.inventory.filter(
-    (row) => row.slot !== "none" && parentOf(row) === undefined,
-  );
-  const stowed = character.inventory.filter(
-    (row) => row.slot === "none" && parentOf(row) === undefined,
-  );
+  const equipped = inOrder.filter((row) => row.slot !== "none" && parentOf(row) === undefined);
+  const stowed = inOrder.filter((row) => row.slot === "none" && parentOf(row) === undefined);
   /** Alle Behälter — für die Knopfreihe „Einpacken:" an jeder Zeile. */
   const containers = character.inventory.filter((row) => row.container !== undefined);
 
   /**
-   * Umsortieren: mit dem NACHBARN tauschen, nicht an eine Stelle springen.
+   * Umsortieren mit den Knöpfen: mit dem NACHBARN tauschen, nicht an eine Stelle springen.
    *
    * Getauscht wird mit dem nächsten Geschwister — also der nächsten Zeile im
    * selben Behälter (oder im selben Gepäck). Ohne diese Einschränkung würde ein
@@ -151,7 +200,7 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
    */
   const siblingsOf = (row: (typeof character.inventory)[number]) => {
     const parent = parentOf(row);
-    return character.inventory.filter(
+    return inOrder.filter(
       (other) => parentOf(other) === parent && (parent !== undefined || other.slot === "none"),
     );
   };
@@ -278,8 +327,18 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
     // die RK sich beim Ablegen ändert. Jetzt auch bei Waffen (Schaden, Kritisch).
     // Ohne Preis und Gewicht: die Zeile führt ihr eigenes Gewicht mal der Menge.
     const wirkung = itemSummary(entity, { money: false });
+    const wirdGezogen = drag.dragging === row.id;
     return (
-      <li key={row.id} className="py-1.5 text-sm">
+      /*
+        `data-drag-id` ist die Spur, an der der Zug die Zeile unter dem Finger erkennt
+        (`elementFromPoint` → `closest`). Sie steht am `li` und nicht am Anfasser: gesucht
+        ist die ZEILE, über der der Finger schwebt, nicht deren Griff.
+      */
+      <li
+        key={row.id}
+        data-drag-id={row.id}
+        className={`py-1.5 text-sm ${wirdGezogen ? "rounded-lg bg-amber-950/40 ring-1 ring-amber-700/60" : ""}`}
+      >
         <div className="flex items-center gap-2">
         <EquipMark slot={row.slot} onClick={() => cycleSlot(row.id)} />
         {/*
@@ -449,6 +508,32 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               ↑ ↓ stehen HIER und nicht oben in der Zeile — dieselbe Lehre wie bei
               der Marke: die obere Zeile ist bei 390 px voll. Diese Reihe umbricht.
             */}
+            {/*
+              Der ANFASSER. Er ist bewusst kein `<button>`: erstens ist „der erste Knopf
+              einer Gepäckzeile ist die Anlege-Marke" eine Regel, an der mehrere
+              Teststrecken hängen, und zweitens ist ein Griff kein Knopf — ein Tap darauf
+              tut nichts. Die Tastatur kommt über die ↑↓-Chips daneben zum Ziel, die
+              genau dafür bleiben.
+
+              `touch-action: none` steht NUR hier (aus dem Hook): dadurch scrollt die
+              Liste überall sonst weiter, und die Wischgeste für den Reiterwechsel bleibt
+              unberührt. Das war der Grund, warum diese Runde vorher Knöpfe hatte.
+            */}
+            {canMove && (
+              <span
+                {...drag.handleProps(row.id)}
+                aria-hidden="true"
+                title={S.sheet.container.drag}
+                /*
+                  Etwas größer als ein Chip: der Griff ist das einzige Ziel, das man
+                  TREFFEN muss, bevor man zieht — mit dem Daumen am Tisch. Gefunden hat
+                  das der Blick aufs Bild (26×22 px waren knapp), nicht eine Prüfung.
+                */
+                className="cursor-grab select-none rounded-full border border-slate-600 px-3 py-1.5 text-sm leading-none text-slate-400 active:cursor-grabbing"
+              >
+                ⠿
+              </span>
+            )}
             {canMove && (
               <>
                 <Chip

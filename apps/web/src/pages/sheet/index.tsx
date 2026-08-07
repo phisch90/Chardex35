@@ -296,10 +296,29 @@ export function CharacterSheetPage() {
           </Link>
         </div>
       )}
-      {/* Porträt bildschirmbreit mit Name darüber — der Bogen soll nach dem
-          Charakter aussehen, nicht nach einer Tabelle. */}
+      {/*
+        Porträt bildschirmbreit mit Name darüber — der Bogen soll nach dem Charakter
+        aussehen, nicht nach einer Tabelle.
+
+        WIRKLICH bis an den Rand, sein Wort dazu: „Gerne bis an den Rand." Vorher waren
+        es 373 von 390 px, und die 17 fehlenden sind nachgerechnet und nicht geraten:
+        `-mx-3` hebt nur das Polster der Karte auf (0,75rem), darunter liegen noch die
+        Einrückung des Blatts und sein Rahmen — `.blatt` in `styles.css` steht auf
+        `width: calc(100% - 0.8rem)` plus `border: 2px`, also 0,4rem + 2px je Seite.
+        Zusammen 0,75rem + 0,4rem + 2px.
+
+        Der Rahmen der KARTE steckt nicht mit drin, und das ist der Fund der Messung:
+        meine erste Fassung zog ihn mit ab und machte das Bild 394 statt 390 px breit —
+        vier Pixel zu viel, links und rechts je zwei aus dem Bild heraus. Eine gerechnete
+        Marge ist eine Behauptung, bis sie gemessen ist.
+
+        Die Rundung oben fällt dafür weg (`rounded-t-none` an der Karte wäre falsch — die
+        Karte behält sie, das BILD deckt sie ab): ein Bild, das an den Rand läuft, hat
+        oben keine Ecken mehr. Geprüft wird die Breite im gebauten Bogen, weil eine
+        gerechnete Marge in einer anderen Breite anders ausfallen kann.
+      */}
       {character.portrait && (
-        <div className="-mx-3 -mt-3 relative h-40 overflow-hidden sm:h-52">
+        <div className="-mx-[calc(0.75rem+0.4rem+2px)] -mt-3 relative h-40 overflow-hidden sm:h-52">
           <img src={character.portrait} alt="" className="h-full w-full object-cover object-top" />
           <button
             onClick={() => setActionsOpen(true)}
