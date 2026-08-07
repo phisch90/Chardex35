@@ -1,5 +1,6 @@
 import type { EquipSlot } from "../schema/character.js";
 import type { Ability, BonusType, Size } from "../schema/common.js";
+import type { ContainerLoad } from "./carry.js";
 import type { DyingZone } from "./dying.js";
 
 /** Ein Beitrag zu einem Wert — bleibt IMMER erhalten (Breakdown-UI). */
@@ -136,6 +137,14 @@ export interface EncumbranceBlock {
   mediumMaxLb: number;
   heavyMaxLb: number;
   level: "light" | "medium" | "heavy" | "overloaded";
+  /** Nur die Gegenstände — ohne Münzen, ohne den Inhalt magischer Behälter. */
+  itemsLb: number;
+  /** Was die Münzen wiegen. 0, solange die Hausregel aus ist. */
+  coinLb: number;
+  /** Was magische Behälter der Traglast abnehmen — zum Ansagen, nicht zum Rechnen. */
+  weightlessLb: number;
+  /** Je Behälter im Gepäck: was darin liegt. */
+  containers: ContainerLoad[];
 }
 
 /** Ein angelegtes Rüstungs- oder Schildstück mit seinen eigenen Zahlen. */

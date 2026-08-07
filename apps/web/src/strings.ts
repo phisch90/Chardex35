@@ -126,7 +126,39 @@ export const S = {
     melee: "Nahkampf",
     ranged: "Fernkampf",
     equipped: "Angelegt",
-    stowed: "Rucksack",
+    /*
+      Hieß „Rucksack", und das ging nicht mehr: seit eine Zeile wirklich ein
+      Rucksack sein kann, stünde die Überschrift „Rucksack" über einem Abschnitt,
+      in dem ein Rucksack liegt. Ein Wort für zwei Sachen ist genau der Fehler, den
+      „Zauberplätze" gegen „Fertigkeitsränge" schon einmal vermieden hat.
+    */
+    stowed: "Im Gepäck",
+    /** Behälter im Gepäck: Rucksack, Gürteltasche, Sack der Bewahrung. */
+    container: {
+      /** Die Marke am Kopf einer Behälterzeile. */
+      mark: "Behälter",
+      /** Knopf im Bearbeiten-Modus: aus einer Zeile einen Behälter machen. */
+      make: "Als Behälter",
+      makeHint: "Andere Zeilen können darin liegen.",
+      /** Und zurück — der Inhalt bleibt, er liegt danach am Körper. */
+      unmake: "Kein Behälter",
+      unmakeHint: "Der Inhalt bleibt und liegt danach am Körper.",
+      /** Wohin eine Zeile gehört. „Am Körper" ist der Zustand ohne Behälter. */
+      onBody: "Am Körper",
+      putInto: "Einpacken:",
+      /** Was darin liegt — Menge und Gewicht. */
+      contents: (rows: number, lb: number) =>
+        `${rows} ${rows === 1 ? "Sache" : "Sachen"} · ${lb} lb Inhalt`,
+      empty: "leer",
+      /** Der Sack der Bewahrung: der Inhalt zählt nicht in die Traglast. */
+      weightless: "Inhalt wiegt nichts",
+      weightlessHint:
+        "Für den Sack der Bewahrung und den Praktischen Umhängebeutel: der Inhalt zählt nicht in die Traglast, der Beutel selbst schon.",
+      weightlessMark: "Inhalt zählt nicht",
+      /** Bewegen im Bearbeiten-Modus. */
+      up: "Nach oben",
+      down: "Nach unten",
+    },
     /** Gruppen in der Ausrüstung — nach Körperstelle, nicht alles in einem Topf. */
     slots2: {
       armor: "Rüstung",
@@ -261,6 +293,15 @@ export const S = {
     features: "Klassenfähigkeiten",
     miscMods: "Sonstige Modifikatoren",
     encumbrance: { light: "Leichte Last", medium: "Mittlere Last", heavy: "Schwere Last", overloaded: "Überladen!" } as Record<string, string>,
+    /*
+      Woraus die Last besteht. Vorher stand dort eine Zahl und sonst nichts — und
+      sobald die Münzen mitzählen oder ein Sack der Bewahrung etwas herausnimmt, ist
+      eine nackte Summe die Sorte Auskunft, die man nicht nachrechnen kann. Genau
+      dieselbe Frage wie bei der Rüstungskarte: nicht die Zahl, sondern ihr Preis.
+    */
+    loadParts: (itemsLb: number, coinLb: number) =>
+      coinLb > 0 ? `davon ${itemsLb} lb Gepäck und ${coinLb} lb Münzen` : "",
+    loadWeightless: (lb: number) => `${lb} lb liegen gewichtslos im Behälter`,
     slots: "Slots",
     dcBase: "SG-Basis",
     casterLevel: "Zauberstufe",
@@ -434,6 +475,9 @@ export const S = {
     diceEnabledHint: "Aus: keine Würfel-Knöpfe am Bogen und kein Würfel-Reiter.",
     encumbrance: "Gewicht & Traglast",
     encumbranceHint: "Aus: keine Gewichtsangaben, und die Last bremst weder Bewegung noch Geschicklichkeit.",
+    coinWeight: "Münzen wiegen etwas",
+    coinWeightHint:
+      "Regel des Buches: 50 Münzen sind ein Pfund, egal welche Sorte. Aus, bis du es einschaltest — an ist es sofort auf jedem Bogen zu sehen (500 gp sind 10 lb, und das kann eine leichte Last zur mittleren machen).",
     houseRules: "Hausregeln",
     fractional: "Fraktionale BAB/Saves (Unearthed Arcana)",
     maxHpL1: "Volle HP auf Stufe 1",

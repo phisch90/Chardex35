@@ -101,9 +101,74 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           .slice(0, 20)
       : [];
 
+  /*
+    Behälter: welche Zeile ist einer, und wer liegt in wem.
+
+    Die Verschachtelung folgt der ZEILE und nicht einem eigenen Abschnitt — ein
+    Behälter zeigt seinen Inhalt unter sich, wo er auch steht. Ein eigener Abschnitt
+    hätte den Rucksack von seinem Inhalt getrennt, sobald er selbst angelegt wird.
+  */
+  const containerIds = new Set(
+    character.inventory.filter((row) => row.container !== undefined).map((row) => row.id),
+  );
+  /**
+   * In welchem Behälter die Zeile liegt — oder `undefined` für „am Körper".
+   *
+   * Eine Kennung ins Leere gilt als „am Körper", genau wie in der Engine: der
+   * Behälter kann gelöscht worden sein, und dann darf sein Inhalt nicht mit
+   * verschwinden. Und ein Behälter liegt nie in einem anderen (kein Kreis möglich).
+   */
+  const parentOf = (row: (typeof character.inventory)[number]) =>
+    row.container === undefined && row.containerId !== undefined && containerIds.has(row.containerId)
+      ? row.containerId
+      : undefined;
+  const childrenOf = (id: string) => character.inventory.filter((row) => parentOf(row) === id);
+  /** Was der Behälter laut Engine trägt — gerechnet wird dort, nicht hier. */
+  const loadOf = (id: string) => sheet.encumbrance.containers.find((c) => c.id === id);
+
   // Angelegt zuerst, wie in Fight Club — was am Körper hängt, zählt im Kampf.
-  const equipped = character.inventory.filter((row) => row.slot !== "none");
-  const stowed = character.inventory.filter((row) => row.slot === "none");
+  // Wer in einem Behälter liegt, erscheint NUR dort: sonst stünde er zweimal da.
+  const equipped = character.inventory.filter(
+    (row) => row.slot !== "none" && parentOf(row) === undefined,
+  );
+  const stowed = character.inventory.filter(
+    (row) => row.slot === "none" && parentOf(row) === undefined,
+  );
+  /** Alle Behälter — für die Knopfreihe „Einpacken:" an jeder Zeile. */
+  const containers = character.inventory.filter((row) => row.container !== undefined);
+
+  /**
+   * Umsortieren: mit dem NACHBARN tauschen, nicht an eine Stelle springen.
+   *
+   * Getauscht wird mit dem nächsten Geschwister — also der nächsten Zeile im
+   * selben Behälter (oder im selben Gepäck). Ohne diese Einschränkung würde ein
+   * Tap auf ↓ am letzten Rucksack-Inhalt die Zeile aus dem Rucksack heraus in eine
+   * fremde Gruppe schieben, und das sieht wie ein Fehler aus.
+   *
+   * Geschoben wird über die Kennung und nie über den Listenindex: die angezeigten
+   * Listen sind gefiltert und gruppiert.
+   */
+  const siblingsOf = (row: (typeof character.inventory)[number]) => {
+    const parent = parentOf(row);
+    return character.inventory.filter(
+      (other) => parentOf(other) === parent && (parent !== undefined || other.slot === "none"),
+    );
+  };
+  const moveRow = (row: (typeof character.inventory)[number], direction: -1 | 1) => {
+    const siblings = siblingsOf(row);
+    const at = siblings.findIndex((other) => other.id === row.id);
+    const neighbour = siblings[at + direction];
+    if (neighbour === undefined) return;
+    save((c) => {
+      const here = c.inventory.findIndex((r) => r.id === row.id);
+      const there = c.inventory.findIndex((r) => r.id === neighbour.id);
+      const a = c.inventory[here];
+      const b = c.inventory[there];
+      if (a === undefined || b === undefined) return;
+      c.inventory[here] = b;
+      c.inventory[there] = a;
+    });
+  };
 
   const entityOf = (row: { itemId?: string | undefined }) => {
     const hit = row.itemId ? entities?.find((e) => e.id === row.itemId) : undefined;
@@ -173,6 +238,13 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
       );
       item.slot = target;
       if (target === "none") return;
+      /*
+        Angelegt heißt aus dem Behälter heraus. Aus einem geschlossenen Rucksack
+        kämpft niemand, und wichtiger: die Liste „Angelegt" treibt den Kampf-Reiter
+        — eine Zeile, die dort fehlt, weil sie im Rucksack steckt, wäre eine
+        Angriffszeile, die auf dem Bogen nicht auftaucht.
+      */
+      delete item.containerId;
       const verdrängt = conflictingEquipIds(
         c.inventory.map((r) => ({ id: r.id, slot: r.slot })),
         id,
@@ -188,6 +260,19 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
     const entity = entityOf(row);
     const name = itemLabel(row, entity);
     const weight = row.weightLbOverride ?? entity?.data.weightLb ?? 0;
+    const isContainer = row.container !== undefined;
+    const inside = isContainer ? childrenOf(row.id) : [];
+    const contents = isContainer ? loadOf(row.id) : undefined;
+    /*
+      Umsortieren nur, wo es eine Reihenfolge GIBT: im Gepäck und in einem
+      Behälter. Die angelegten Zeilen sind nach Körperstelle gruppiert — dort wäre
+      ein ↑ ein Knopf ohne Wirkung, und ein Knopf ohne Wirkung ist schlimmer als
+      keiner (dieselbe Lehre wie beim Neuladen-Knopf der Versionsmarke).
+    */
+    const hasOrder = parentOf(row) !== undefined || row.slot === "none";
+    const siblings = hasOrder ? siblingsOf(row) : [];
+    const at = siblings.findIndex((other) => other.id === row.id);
+    const canMove = editMode && siblings.length > 1;
     // Was das Stück bringt, gehört an das Stück — sonst muss man raten, warum
     // die RK sich beim Ablegen ändert. Jetzt auch bei Waffen (Schaden, Kritisch).
     // Ohne Preis und Gewicht: die Zeile führt ihr eigenes Gewicht mal der Menge.
@@ -214,11 +299,41 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               row.qty > 1 ? `×${row.qty}` : "",
               wirkung,
               !ignoreEncumbrance && weight ? `${weight * row.qty} lb` : "",
+              /*
+                Was im Behälter liegt, steht AM Behälter — sonst müsste man den
+                Inhalt selbst zusammenzählen, um zu wissen, was der Rucksack
+                kostet. Gerechnet hat das die Engine (`encumbrance.containers`).
+              */
+              contents !== undefined && !ignoreEncumbrance
+                ? contents.rows === 0
+                  ? S.sheet.container.empty
+                  : S.sheet.container.contents(contents.rows, contents.contentLb)
+                : "",
             ]
               .filter((p) => p !== "")
               .join(" · ")}
           </div>
         </button>
+        {/*
+          Die Marke „Behälter" steht auch OHNE Bearbeiten-Modus da: dass eine Zeile
+          etwas enthält, ist eine Eigenschaft des Bogens und keine Einstellung. Der
+          Sack der Bewahrung sagt dazu, warum sein Inhalt nicht wiegt — eine Zahl,
+          die anders ausfällt als erwartet, braucht ihren Grund daneben.
+
+          IM Bearbeiten-Modus steht sie NICHT hier, und das ist ein Fund vom Bild:
+          diese Zeile trägt dort schon Menge (−/1/+), ✎ und ✕, und mit Marke und ↑↓
+          dazu blieb bei 390 px vom Namen ein „T…" übrig — die Kleinzeile brach in
+          ein Wort pro Zeile, das ✕ stand halb außerhalb. Beim Bearbeiten sagen die
+          Knöpfe darunter ohnehin, dass es ein Behälter ist („Kein Behälter"), also
+          kostet die Auslassung keine Auskunft. Kein `check()` hätte das gemeldet.
+        */}
+        {isContainer && !editMode && (
+          <span className="shrink-0 rounded-full border border-slate-600 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-400">
+            {row.container?.weightless === true
+              ? S.sheet.container.weightlessMark
+              : S.sheet.container.mark}
+          </span>
+        )}
         {/*
           Die Menge stand hier als −/+ neben jeder Zeile und nahm den Platz von
           etwas Wichtigerem ein. Philipp: „dass man mehr als ein Kurzschwert dabei
@@ -316,6 +431,146 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               .map((e) => `${describeModifier(e.target, e.bonusType, skillName)} ${fmtMod(Number(e.value) || 0)}`)
               .join(" · ")}
           </div>
+        )}
+        {/*
+          Behälter-Bedienung, nur im Bearbeiten-Modus: aus einer Zeile einen
+          Behälter machen, ihn gewichtslos stellen, oder eine Zeile einpacken.
+
+          Die Ziele stehen als KNÖPFE da und nicht in einem Textfeld — die App
+          kennt ihre Behälter, und wer die Möglichkeiten kennt, lässt nicht
+          abtippen (die Lehre aus dem `prompt()` bei den Teilgebieten). Bei keinem
+          einzigen Behälter erscheint die Reihe gar nicht: eine Auswahl mit einer
+          Möglichkeit ist keine.
+        */}
+        {editMode && (
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            {/*
+              ↑ ↓ stehen HIER und nicht oben in der Zeile — dieselbe Lehre wie bei
+              der Marke: die obere Zeile ist bei 390 px voll. Diese Reihe umbricht.
+            */}
+            {canMove && (
+              <>
+                <Chip
+                  title={S.sheet.container.up}
+                  dimmed={at <= 0}
+                  onClick={() => moveRow(row, -1)}
+                >
+                  ↑
+                </Chip>
+                <Chip
+                  title={S.sheet.container.down}
+                  dimmed={at < 0 || at >= siblings.length - 1}
+                  onClick={() => moveRow(row, 1)}
+                >
+                  ↓
+                </Chip>
+              </>
+            )}
+            {isContainer ? (
+              <>
+                <Chip
+                  active={row.container?.weightless === true}
+                  title={S.sheet.container.weightlessHint}
+                  onClick={() =>
+                    save((c) => {
+                      const item = c.inventory.find((r) => r.id === row.id);
+                      if (item?.container === undefined) return;
+                      item.container.weightless = !item.container.weightless;
+                    })
+                  }
+                >
+                  {S.sheet.container.weightless}
+                </Chip>
+                <Chip
+                  title={S.sheet.container.unmakeHint}
+                  onClick={() =>
+                    save((c) => {
+                      const item = c.inventory.find((r) => r.id === row.id);
+                      if (item === undefined) return;
+                      delete item.container;
+                      /*
+                        Der Inhalt bleibt und liegt danach am Körper. Die Zeiger
+                        werden dabei WIRKLICH gelöscht und nicht bloß ins Leere
+                        zeigen gelassen: eine Kennung auf eine Zeile, die es noch
+                        gibt, aber kein Behälter mehr ist, wäre ein Widerspruch in
+                        den Daten — und aus Widersprüchen zwischen zwei Feldern hat
+                        dieses Projekt schon einmal einen Fehler bezahlt.
+                      */
+                      for (const other of c.inventory) {
+                        if (other.containerId === row.id) delete other.containerId;
+                      }
+                    })
+                  }
+                >
+                  {S.sheet.container.unmake}
+                </Chip>
+              </>
+            ) : (
+              <>
+                <Chip
+                  title={S.sheet.container.makeHint}
+                  onClick={() =>
+                    save((c) => {
+                      const item = c.inventory.find((r) => r.id === row.id);
+                      if (item === undefined) return;
+                      item.container = { weightless: false };
+                      // Ein Behälter liegt nie in einem anderen (siehe engine/carry.ts).
+                      delete item.containerId;
+                    })
+                  }
+                >
+                  {S.sheet.container.make}
+                </Chip>
+                {containers.length > 0 && (
+                  <>
+                    <span className="text-[11px] text-slate-500">{S.sheet.container.putInto}</span>
+                    <Chip
+                      active={parentOf(row) === undefined}
+                      onClick={() =>
+                        save((c) => {
+                          const item = c.inventory.find((r) => r.id === row.id);
+                          if (item !== undefined) delete item.containerId;
+                        })
+                      }
+                    >
+                      {S.sheet.container.onBody}
+                    </Chip>
+                    {containers.map((holder) => (
+                      <Chip
+                        key={holder.id}
+                        active={parentOf(row) === holder.id}
+                        onClick={() =>
+                          save((c) => {
+                            const item = c.inventory.find((r) => r.id === row.id);
+                            if (item === undefined) return;
+                            item.containerId = holder.id;
+                            // Was eingepackt ist, ist nicht angelegt — die
+                            // Gegenrichtung zu `cycleSlot`.
+                            item.slot = "none";
+                          })
+                        }
+                      >
+                        {itemLabel(holder, entityOf(holder))}
+                      </Chip>
+                    ))}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+        {/*
+          Der Inhalt steht UNTER seinem Behälter und eingerückt — die
+          Verschachtelung folgt der Zeile, nicht einem eigenen Abschnitt. So bleibt
+          der Rucksack bei seinem Inhalt, auch wenn er selbst getragen wird.
+        */}
+        {isContainer && (
+          <ul className="mt-1 divide-y divide-slate-800 border-l-2 border-slate-700 pl-2">
+            {inside.map(renderRow)}
+            {inside.length === 0 && (
+              <li className="py-1 text-xs text-slate-600">{S.sheet.container.empty}</li>
+            )}
+          </ul>
         )}
       </li>
     );
@@ -470,6 +725,22 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
               leicht bis {sheet.encumbrance.lightMaxLb} · mittel bis{" "}
               {sheet.encumbrance.mediumMaxLb} · schwer bis {sheet.encumbrance.heavyMaxLb}
             </span>
+            {/*
+              Woraus die Zahl besteht — aber nur, wenn es etwas zu erklären GIBT.
+              Ohne Münzgewicht und ohne magischen Behälter ist die Summe das
+              Gepäck, und ein Satz, der das wiederholt, ist genau der Satz, der
+              nicht gelesen wird.
+            */}
+            {sheet.encumbrance.coinLb > 0 && (
+              <span className="w-full text-slate-500">
+                {S.sheet.loadParts(sheet.encumbrance.itemsLb, sheet.encumbrance.coinLb)}
+              </span>
+            )}
+            {sheet.encumbrance.weightlessLb > 0 && (
+              <span className="w-full text-slate-500">
+                {S.sheet.loadWeightless(sheet.encumbrance.weightlessLb)}
+              </span>
+            )}
           </div>
         )}
       </Card>

@@ -213,6 +213,23 @@ export function SettingsPage() {
           checked={!houseRules.ignoreEncumbrance}
           onChange={(v) => setRule({ ignoreEncumbrance: !v })}
         />
+        {/*
+          Das Münzgewicht steht HIER und nicht unter „Hausregeln", weil es zum
+          Gewicht gehört — und es steht direkt unter dem Schalter, der das Gewicht
+          ganz abschaltet, weil es dann ohnehin nichts tut.
+
+          Standard AUS mit Absicht: die Regel verschiebt die Traglast JEDES
+          bestehenden Bogens, ohne dass jemand etwas angefasst hat. Deshalb nennt
+          der Kleintext auch die Zahl DIESES Bogens nicht — Einstellungen kennen
+          keinen Charakter; die Auskunft steht im Ausrüstungs-Reiter, sobald der
+          Schalter an ist.
+        */}
+        <Toggle
+          label={S.settings.coinWeight}
+          hint={S.settings.coinWeightHint}
+          checked={houseRules.coinWeight}
+          onChange={(v) => setRule({ coinWeight: v })}
+        />
       </Card>
 
       <Card>
