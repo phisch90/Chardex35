@@ -2012,15 +2012,35 @@ Dass es sich lohnt, sieht man an den Zahlen: `e2e-raenge` (15 Prüfungen) und
 `e2e-vergessen` (39) liefen monatelang gar nicht, `e2e-eigene` brach vor seinen letzten
 drei Prüfungen ab.
 
+### Und die vierte davon hat zwei weitere Anklagen gegen die App erhoben
+
+`e2e-featmods` lief nach der Wiederbelebung bis tief hinein und meldete dort zwei Fehler,
+die nach echten Fehlern aussahen: „Initiative auf dem Bogen um 3 höher — vorher null,
+nachher 2" und „Aufschlüsselung nennt das Talent als Herkunft — (keine Zeile gefunden)".
+Sein Wort dazu war „aktuell haben wir keine Modifikatoren, die wir von Hand eintragen" —
+also nichts, was am Tisch wehtut. Nachgesehen wurde trotzdem, und zwar aus einem Grund,
+der in dieser Datei überall steht: **ein Knopf, der etwas verspricht und nichts tut, ist
+schlimmer als kein Knopf.** Ob der „+ Modifikator" einer davon ist, ist keine
+Geschmacksfrage.
+
+Nachgemessen im gebauten Bogen (Talent Alertness, Modifikator „Initiative +3") war die App
+in beiden Punkten im Recht: die Aufschlüsselung sagt „Initiative +3 · DEX-Modifikator +0 ·
+**Talent: Alertness** +3" und der Würfel wirft `1d20+3`.
+
+Der Fehler saß in **`openTab`**, und er ist die neunte Falle in ihrer teuersten Form: die
+Hilfe klickte `button:visible` mit dem Wort, und der erste Treffer für `/Kampf/` ist bei
+390 px die Kachel „NAHKAMPF" oder der Kategorie-Chip „Kampf" im Talentfilter — **nie der
+Reiter**. Der Reiter wechselte also gar nicht, `tileValue` las die falsche Seite und
+bekam `null`, und die Prüfung danach zeigte auf die App. Geklickt wird jetzt in der
+REITERLEISTE (beide Formen, kurz und lang), und wenn nichts trifft, wird geworfen. Die
+Aufschlüsselung wird im `[role="dialog"]` gelesen und nicht im Body.
+
+Damit sind alle fünf Strecken grün, und der Fund ist die Regel selbst: **eine Sonde, die
+sich ihr Ziel über ein Wort sucht statt über den Ort, findet irgendwann das falsche — und
+meldet es als Fehler der App.**
+
 ## Noch offen
 
-- **`e2e-featmods` lebt wieder, ist aber nicht grün.** Die Strecke war doppelt tot (falscher
-  Port, dazu die Rückfrage des Assistenten) und läuft jetzt bis tief hinein. Zwei Prüfungen
-  darin fallen weiter durch, und beide sind einen eigenen Blick wert: „Initiative auf dem
-  Bogen um 3 höher" (der Vorher-Wert wurde gar nicht gelesen, also ist der Vergleich
-  selbst fraglich) und „Aufschlüsselung nennt das Talent als Herkunft" (die Zeile
-  „Talent: …" steht nicht in der Aufschlüsselung). Ob das die App oder die Sonde ist, ist
-  ungeklärt — beides ist bei einer monatelang toten Strecke gleich wahrscheinlich.
 - **Die volle Attacke ist beantwortet und steht damit nicht mehr hier.** „Wir spielen bei
   6bab mit zwei Angriffen" — die Reihe bleibt, wie sie war, und hat jetzt einen Test
   (`core/engine/iterativeAttacks.test.ts`). Dasselbe Schicksal wie der halbe
