@@ -183,6 +183,12 @@ export function FeatPicker(props: {
             aria-expanded={open}
           >
             <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+              {/*
+                Das Zeichen sagt, dass hier etwas aufgeht — dieselbe Sprache wie „Infos ▸"
+                an den Kacheln. Ohne es sieht die Zeile wie Text aus, und ein Knopf, den
+                man nicht als Knopf erkennt, ist keiner.
+              */}
+              <span className="text-[10px] text-slate-500">{open ? "▾" : "▸"}</span>
               <span className="text-sm font-medium">{displayName(feat)}</span>
               {already && (
                 <span className="text-[10px] uppercase tracking-wide text-amber-400/80">
@@ -319,6 +325,12 @@ export function FeatPicker(props: {
       )}
 
       {rows.length === 0 && <p className="py-4 text-center text-sm text-slate-500">{S.feats.noMatches}</p>}
+
+      {/*
+        Der Satz steht ÜBER der Liste und nur, wenn es etwas zu tippen gibt. Bei einer
+        leeren Liste wäre er eine Anleitung für nichts.
+      */}
+      {rows.length > 0 && <p className="text-[10px] text-slate-500">{S.feats.tapHint}</p>}
 
       {eligible.length > 0 && (
         <div>

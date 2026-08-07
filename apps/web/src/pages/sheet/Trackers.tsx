@@ -6,8 +6,11 @@ import {
   rollDice,
   suggestTrackers,
   trackerMaxNote,
+  categoryOf,
+  TRACKER_CATEGORIES,
   TRACKER_REFILL_KINDS,
   type Character,
+  type TrackerCategory,
   type TrackerRefillKind,
 } from "@codex35/core";
 import { S } from "../../strings.js";
@@ -27,17 +30,41 @@ type Tracker = Character["trackers"][number];
  * Die App wertet nichts davon aus — sie führt nur Buch, so wie es am Tisch
  * gebraucht wird.
  */
-export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
+export function TrackersCard({
+  character,
+  sheet,
+  editMode,
+  save,
+  category,
+}: Pick<TabProps, "character" | "sheet" | "editMode" | "save"> & {
+  category: TrackerCategory;
+}) {
   const { diceEnabled } = useAppSettings();
   const roll = useDiceStore((s) => s.roll);
   const undo = useUndo();
-  const trackers = character.trackers;
+  /*
+    Nur die Zähler DIESES Bereichs. Sein Befund war, dass alle auf der Werte-Seite
+    standen: „Turn Undead ist ja was für die Kampf Seite. Actionpoint dann wieder
+    nicht."
+  */
+  const trackers = character.trackers.filter((t) => categoryOf(t) === category);
 
-  // Was aus Klassen und Stufe folgt, muss niemand abtippen. Schon vorhandene
-  // Vorschläge fallen raus — auch wenn der Zähler umbenannt wurde.
-  const taken = new Set(trackers.map((t) => t.suggestedFrom ?? `name:${t.name.toLowerCase()}`));
+  /*
+    Was aus Klassen und Stufe folgt, muss niemand abtippen. Schon vorhandene
+    Vorschläge fallen raus — auch wenn der Zähler umbenannt wurde.
+
+    `taken` liest ALLE Zähler und nicht nur die dieses Bereichs: sonst würde ein
+    Zähler, der im Kampf liegt, auf der Werte-Seite erneut vorgeschlagen — und man
+    hätte ihn zweimal. Angeboten wird der Vorschlag dagegen nur in SEINEM Bereich.
+  */
+  const taken = new Set(
+    character.trackers.map((t) => t.suggestedFrom ?? `name:${t.name.toLowerCase()}`),
+  );
   const suggestions = suggestTrackers(sheet).filter(
-    (s) => !taken.has(s.key) && !taken.has(`name:${s.name.toLowerCase()}`),
+    (s) =>
+      (s.category ?? "general") === category &&
+      !taken.has(s.key) &&
+      !taken.has(`name:${s.name.toLowerCase()}`),
   );
 
   /**
@@ -62,6 +89,12 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
         kind: "counter",
         value: 0,
         maxManual: false,
+        /*
+          Der neue Zähler gehört in den Bereich, in dem er ENTSTEHT. Ohne das legt man
+          ihn im Kampf an und findet ihn auf der Werte-Seite wieder — die Familie
+          „etwas weiß es, und etwas anderes kann es nicht", diesmal beim Anlegen.
+        */
+        category,
       }),
     );
   };
@@ -212,6 +245,9 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
                         ...(suggestion.refill === undefined
                           ? {}
                           : { refill: [...suggestion.refill] }),
+                        // Und der Bereich, aus demselben Grund: der Vorschlag weiß,
+                        // wohin sein Zähler gehört.
+                        category: suggestion.category ?? "general",
                       }),
                     )
                   }
@@ -227,7 +263,7 @@ export function TrackersCard({ character, sheet, editMode, save }: TabProps) {
       <div className="mt-2">
         <GhostButton onClick={addTracker}>+ {S.trackers.add}</GhostButton>
         {trackers.length === 0 && (
-          <p className="mt-1.5 text-xs text-slate-500">{S.trackers.hint}</p>
+          <p className="mt-1.5 text-xs text-slate-500">{S.trackers.hint[category]}</p>
         )}
       </div>
     </Card>
@@ -300,6 +336,35 @@ function RefillRow({
         </Chip>
       </div>
       <p className="text-[10px] leading-snug text-slate-500">{S.trackers.resetToHint}</p>
+      {/*
+        WO der Zähler steht. Die Reihe sitzt in derselben Kiste wie „füllt sich bei"
+        und „zurück auf": das ist der Kasten, in dem ein Zähler EINGESTELLT wird, und
+        ein zweiter Ort für dieselbe Sorte Frage wäre einer zu viel.
+
+        Nach dem Umstellen verschwindet der Zähler aus diesem Reiter — deshalb sagt
+        die Zeile darunter, wohin er geht. Ohne den Satz sieht ein Tap aus wie ein
+        Löschen.
+      */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] uppercase tracking-wide text-slate-500">
+          {S.trackers.categoryTitle}
+        </span>
+        {TRACKER_CATEGORIES.map((kind) => (
+          <Chip
+            key={kind}
+            active={categoryOf(tracker) === kind}
+            onClick={() =>
+              save((c) => {
+                const target = c.trackers.find((t) => t.id === tracker.id);
+                if (target) target.category = kind;
+              })
+            }
+          >
+            {S.trackers.categories[kind] ?? kind}
+          </Chip>
+        ))}
+      </div>
+      <p className="text-[10px] leading-snug text-slate-500">{S.trackers.categoryHint}</p>
     </div>
   );
 }

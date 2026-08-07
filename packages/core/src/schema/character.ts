@@ -573,6 +573,36 @@ export const characterSchema = z.object({
          * steht das auch so in den Daten, statt nur im Kopf.
          */
         maxManual: z.boolean().default(false),
+        /**
+         * WO der Zähler am Bogen steht.
+         *
+         * Sein Befund: „die Zähler gehören nicht auf die Werte Seite. Turn Undead ist
+         * ja was für die Kampf Seite. Actionpoint dann wieder nicht." Gefragt, wie man
+         * das aufteilt, hat er die Kategorie je Zähler gewählt — mit allen vier
+         * Bereichen.
+         *
+         * Eine EINGABE und keine Ableitung. Aus dem Namen zu erraten („heißt es Turn
+         * Undead?") wäre dieselbe versteckte Regel, die schon bei den Behältern
+         * verworfen wurde: sie ginge bei jedem eigenen Zähler und bei jeder Umbenennung
+         * vorbei. Ein Zähler aus einem VORSCHLAG bringt seine Kategorie mit
+         * (`TrackerSuggestion.category`), ein von Hand angelegter bekommt die des
+         * Reiters, auf dem er entsteht.
+         *
+         * `undefined` heißt „nie gesagt" und wird als „general" gelesen
+         * (`categoryOf` in `engine/trackers.ts`) — also der Platz, an dem heute ALLE
+         * stehen. Damit verschwindet auf keinem gespeicherten Bogen ein Zähler, nur
+         * weil dieses Feld neu ist. Umsortiert wird von Hand, und das ist die einzige
+         * ehrliche Antwort: ein Standard, der RÄT, hätte „Untote vertreiben" beim
+         * nächsten Öffnen still in einen anderen Reiter geschoben.
+         *
+         * Optional und nicht `.default(…)`, und das ist eine Lehre aus der
+         * Fehlerfamilie dieses Projekts: ein `.default()` macht das Feld im
+         * Ausgabetyp PFLICHT, und dann muss jede Stelle, die einen Zähler als Literal
+         * baut (der Fight-Club-Import, ein Dutzend Tests), es mitschreiben. Genau
+         * daraus entstand einmal „fehlende Schema-Standardwerte, weil Parser Literale
+         * bauten". Dieselbe Bauart wie `refill` und `resetTo`: ein Leser entscheidet.
+         */
+        category: z.enum(["general", "combat", "spells", "gear"]).optional(),
       }),
     )
     .default([]),

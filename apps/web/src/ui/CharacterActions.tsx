@@ -63,6 +63,19 @@ export function CharacterActionsSheet(props: {
    * Liste würde ihn dann je Zeile aufziehen.
    */
   sheet?: DerivedSheet | undefined;
+  /**
+   * Der Bearbeiten-Schalter des Bogens — Zustand und Umschalter.
+   *
+   * Sein Auftrag: „den Button bearbeiten im Charakterbogen grundsätzlich in allen
+   * Bereichen immer hinter den drei Punkten." Vorher stand er als Chip über jedem
+   * Reiter und nahm dort dauerhaft eine Zeile weg, obwohl man ihn selten braucht.
+   *
+   * Wie `sheet` kommt er NUR vom Bogen herein: in der Charakterliste gibt es keinen
+   * Bearbeiten-Modus, also fehlt dort die Zeile — statt einen Schalter zu zeigen,
+   * der nichts schaltet.
+   */
+  editMode?: boolean | undefined;
+  onToggleEdit?: (() => void) | undefined;
 }) {
   const navigate = useNavigate();
   const entities = useAllEntities();
@@ -267,6 +280,27 @@ export function CharacterActionsSheet(props: {
               <GhostButton onClick={() => void undoTheRest()}>{S.rest.undo}</GhostButton>
             </div>
           </div>
+        )}
+        {/*
+          Bearbeiten. Sein Auftrag: „grundsätzlich in allen Bereichen immer hinter den
+          drei Punkten" — vorher stand der Chip über jedem Reiter und nahm dort eine
+          Zeile weg, für einen Handgriff, den man selten braucht.
+
+          Die Zeile steht in BEIDEN Zuständen da und sagt, was passiert. Sonst wäre
+          der Bearbeiten-Modus über das Menü erreichbar, aber nicht wieder
+          verlassbar — ein Zustand ohne Rückweg ist genau die Familie „etwas weiß es,
+          und etwas anderes kann es nicht".
+        */}
+        {props.onToggleEdit !== undefined && (
+          <ActionRow
+            mark="✎"
+            label={props.editMode === true ? S.sheet.editStop : S.actions.edit}
+            hint={props.editMode === true ? S.sheet.editStopHint : S.sheet.editHint}
+            onClick={() => {
+              props.onToggleEdit?.();
+              close();
+            }}
+          />
         )}
         {/*
           Die Kampagne. Von der Startseite aus ist das die erste Zeile im Blatt (die
@@ -514,6 +548,13 @@ function ActionRow(props: {
    * nie zur Laufzeit (siehe `campaignColors.ts`).
    */
   dot?: string | undefined;
+  /**
+   * Ein typografisches Zeichen anstelle des Symbols — für das ✎ der
+   * Bearbeiten-Zeile. Die 39 Zeichen in `icons.tsx` haben keines dafür, und eines
+   * dazuzuzeichnen wäre eine eigene Runde; ✎ gehört ohnehin zu den einfarbigen
+   * Zeichen, die `currentColor` nehmen und deshalb nie das Emoji-Problem hatten.
+   */
+  mark?: string | undefined;
   label: string;
   hint: string;
   onClick: () => void;
@@ -525,7 +566,11 @@ function ActionRow(props: {
       disabled={props.disabled}
       className="flex w-full items-start gap-3 rounded-lg border border-slate-700 p-3 text-left enabled:hover:bg-slate-800 disabled:opacity-40"
     >
-      {props.dot === undefined ? (
+      {props.mark !== undefined ? (
+        <span className="mt-0.5 w-[22px] shrink-0 text-center text-lg leading-none text-slate-300">
+          {props.mark}
+        </span>
+      ) : props.dot === undefined ? (
         <span className="mt-0.5 shrink-0 text-slate-300">
           {props.icon === undefined ? null : <Icon name={props.icon} size={22} />}
         </span>

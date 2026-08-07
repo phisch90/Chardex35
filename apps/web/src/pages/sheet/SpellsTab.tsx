@@ -12,6 +12,7 @@ import { Icon, IconInline } from "../../ui/icons.js";
 import { DomainPicker } from "../../ui/DomainPicker.js";
 import { useCompendium } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
+import { TrackersCard } from "./Trackers.js";
 import type { TabProps } from "./index.js";
 
 export function SpellsTab(props: TabProps) {
@@ -20,6 +21,11 @@ export function SpellsTab(props: TabProps) {
       {props.sheet.spellcasting.map((block) => (
         <CasterBlock key={block.classId} block={block} {...props} />
       ))}
+      {/*
+        Zähler mit Bereich „Zauber" — die Tiergestalt des Druiden etwa. Sie stehen unter
+        den Zaubergraden, weil man dort nachsieht, was heute noch geht.
+      */}
+      <TrackersCard {...props} category="spells" />
     </div>
   );
 }

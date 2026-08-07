@@ -454,23 +454,32 @@ export function CharacterSheetPage() {
       </div>
 
       {/*
-        DER Bearbeiten-Schalter für den ganzen Bogen — immer an derselben Stelle,
-        egal welcher Reiter. Er bleibt beim Wechseln an, damit man Ränge, Talente
-        und Ausrüstung in einem Durchgang nachtragen kann, und der Streifen sagt
-        deutlich, dass er noch an ist.
+        Der Bearbeiten-Modus gilt für den ganzen Bogen und bleibt beim Reiterwechsel
+        an, damit man Ränge, Talente und Ausrüstung in einem Durchgang nachträgt.
+
+        EINGESCHALTET wird er nur im ⋯-Blatt — sein Auftrag: „den Button bearbeiten
+        im Charakterbogen grundsätzlich in allen Bereichen immer hinter den drei
+        Punkten." Vorher stand hier ein Chip über jedem Reiter und nahm dauerhaft
+        eine Zeile weg.
+
+        Solange er AN ist, steht der Streifen da UND ist selbst der Rückweg: ein Tap
+        beendet das Bearbeiten. Das ist kein zweites Bedienelement neben dem Menü,
+        sondern der Hinweis selbst — und ohne ihn wäre der Zustand über das Menü
+        erreichbar, aber nur dort wieder verlassbar. Ist Bearbeiten aus, steht hier
+        NICHTS: kein leerer Streifen, keine Zeile Platz.
       */}
-      <div
-        className={`flex items-center gap-2 rounded-lg px-2 py-1 ${
-          editMode ? "border border-amber-800/60 bg-amber-950/30" : ""
-        }`}
-      >
-        <span className="min-w-0 flex-1 truncate text-xs text-amber-300/90">
-          {editMode ? S.sheet.editModeOn : ""}
-        </span>
-        <Chip active={editMode} onClick={() => setEditMode(!editMode)}>
-          ✎ {editMode ? S.actions.done : S.actions.edit}
-        </Chip>
-      </div>
+      {editMode && (
+        <button
+          type="button"
+          onClick={() => setEditMode(false)}
+          className="flex w-full items-center gap-2 rounded-lg border border-amber-800/60 bg-amber-950/30 px-2 py-1 text-left"
+        >
+          <span className="min-w-0 flex-1 truncate text-xs text-amber-300/90">
+            {S.sheet.editModeOn}
+          </span>
+          <span className="shrink-0 text-xs text-amber-300">✎ {S.actions.done}</span>
+        </button>
+      )}
 
       {/* Umbenennen gehört an den Anfang: was man ändern will, sieht man dabei —
           und mit Porträt liegt der Name im Bild, wo ein Eingabefeld nichts zu
@@ -606,6 +615,8 @@ export function CharacterSheetPage() {
         open={actionsOpen}
         onClose={() => setActionsOpen(false)}
         onDeleted={afterDelete}
+        editMode={editMode}
+        onToggleEdit={() => setEditMode(!editMode)}
       />
     </div>
   );

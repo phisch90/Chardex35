@@ -30,6 +30,7 @@ import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../.
 import { EquipMark } from "../../ui/EquipMark.js";
 import { ArmorCostCard } from "../../ui/ArmorCostCard.js";
 import { HandsCard } from "./Hands.js";
+import { TrackersCard } from "./Trackers.js";
 import { ItemName, ItemText } from "../../ui/ItemName.js";
 import { itemLabel, itemSummary } from "../../ui/itemSummary.js";
 import { ItemPicker } from "../../ui/ItemPicker.js";
@@ -752,6 +753,12 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
         Traglast eine Zeile darüber.
       */}
       <ArmorCostCard sheet={sheet} />
+
+      {/*
+        Zähler mit Bereich „Ausrüstung": Fackeln, Rationen, Ladungen eines Zauberstabs.
+        Verbrauch gehört zu dem, was man mit sich trägt.
+      */}
+      <TrackersCard {...{ character, sheet, editMode, save }} category="gear" />
 
       <Card>
         <SectionTitle>{S.actions.add}</SectionTitle>

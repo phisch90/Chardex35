@@ -11,10 +11,124 @@ import { TrackersCard } from "./Trackers.js";
 import { CombatOptionsCard } from "./CombatOptions.js";
 import type { TabProps } from "./index.js";
 
+/**
+ * „Auf einen Blick" — alle Zahlen, nach denen am Tisch gefragt wird, in EINER Karte.
+ *
+ * Sein Auftrag: „Auf der Seite Werte würde ich gerne komplett alle Werte stehen haben.
+ * Natürlich nicht die Skills, aber auf jeden Fall auch die Angriffswerte,
+ * Verteidigungswerte et cetera. Dass man einfach auf einen Blick hat, wenn der DM
+ * fragt, wie hoch der Rüstungswert ist, dass man das sofort sehen kann."
+ *
+ * Deshalb steht sie ganz OBEN und nicht unter den Attributen: „sofort" heißt ohne
+ * Scrollen. Und deshalb sind die Rettungswürfe hier drin und haben keine eigene Karte
+ * mehr — zweimal dieselbe Zahl auf einem Schirm ist die Doppelung, die diese App sonst
+ * überall vermeidet.
+ *
+ * Was NICHT hier steht: die HP. Sie stehen im Kopf JEDES Reiters, größer und mit dem
+ * Knopf zum Ändern; eine zweite HP-Zeile zwei Zentimeter darunter wäre genau diese
+ * Doppelung. Und die Fertigkeiten nicht — sein ausdrückliches Wort.
+ *
+ * Gerechnet wird hier nichts: jede Kachel liest einen fertigen Wert aus `sheet` und
+ * gibt beim Antippen dieselbe Aufschlüsselung wie im Kampf-Reiter.
+ */
+function GlanceCard({ sheet, openBreakdown }: Pick<TabProps, "sheet" | "openBreakdown">) {
+  const attackLine = (mode: "melee" | "ranged") => sheet.attacks.find((a) => a.key === mode);
+  return (
+    <Card>
+      <SectionTitle>{S.sheet.glance}</SectionTitle>
+      <div className="grid grid-cols-3 gap-2">
+        <StatButton
+          big
+          label={S.sheet.ac}
+          value={`${sheet.ac.total.total}`}
+          onClick={() =>
+            openBreakdown(S.sheet.ac, sheet.ac.total, { rollable: false, absolute: true })
+          }
+        />
+        <StatButton
+          label={S.sheet.touch}
+          value={`${sheet.ac.touch.total}`}
+          onClick={() =>
+            openBreakdown(S.sheet.touch, sheet.ac.touch, {
+              rollable: false,
+              absolute: true,
+              note: S.sheet.touchHint,
+            })
+          }
+        />
+        <StatButton
+          label={S.sheet.flatFooted}
+          value={`${sheet.ac.flatFooted.total}`}
+          onClick={() =>
+            openBreakdown(S.sheet.flatFooted, sheet.ac.flatFooted, {
+              rollable: false,
+              absolute: true,
+              note: S.sheet.flatFootedHint,
+            })
+          }
+        />
+
+        {(["fort", "ref", "will"] as const).map((save_) => (
+          <StatButton
+            key={save_}
+            label={S.saves[save_] ?? save_}
+            value={fmtMod(sheet.saves[save_].total)}
+            onClick={() => openBreakdown(`${S.saves[save_]}-Save`, sheet.saves[save_])}
+          />
+        ))}
+
+        <StatButton
+          label={S.sheet.init}
+          value={fmtMod(sheet.init.total)}
+          onClick={() => openBreakdown(S.sheet.init, sheet.init)}
+        />
+        {/* Der BAB ist eine reine Zahl ohne Beiträge — also kein Knopf, der nichts zeigt. */}
+        <StatButton label={S.sheet.bab} value={fmtMod(sheet.bab)} />
+        {/*
+          „30 ft" und nicht „30": genau so steht die Bewegung im Kampf-Reiter, und
+          dieselbe Zahl darf auf zwei Reitern nicht zwei Schreibweisen haben. Gefunden
+          hat das der Blick auf das Bild, keine Prüfung.
+        */}
+        <StatButton
+          label={S.sheet.speed}
+          value={`${sheet.speedFt.total} ft`}
+          onClick={() =>
+            openBreakdown(S.sheet.speed, sheet.speedFt, {
+              rollable: false,
+              absolute: true,
+              note: "Fuß pro Runde",
+            })
+          }
+        />
+
+        {(["melee", "ranged"] as const).map((mode) => {
+          const line = attackLine(mode);
+          if (!line) return null;
+          return (
+            <StatButton
+              key={mode}
+              label={S.sheet[mode]}
+              value={fmtMod(line.attack.total)}
+              onClick={() => openBreakdown(line.label, line.attack, { rollable: false })}
+            />
+          );
+        })}
+        <StatButton
+          label={S.sheet.grapple}
+          value={fmtMod(sheet.grapple.total)}
+          onClick={() => openBreakdown(S.sheet.grapple, sheet.grapple)}
+        />
+      </div>
+    </Card>
+  );
+}
+
 export function StatsTab(props: TabProps) {
   const { character, sheet, save } = props;
   return (
     <div className="space-y-3">
+      <GlanceCard sheet={sheet} openBreakdown={props.openBreakdown} />
+
       <Card>
         <SectionTitle>Attribute</SectionTitle>
         {/*
@@ -58,22 +172,19 @@ export function StatsTab(props: TabProps) {
         )}
       </Card>
 
-      <Card>
-        <SectionTitle>Rettungswürfe</SectionTitle>
-        <div className="grid grid-cols-3 gap-2">
-          {(["fort", "ref", "will"] as const).map((save_) => (
-            <StatButton
-              key={save_}
-              big
-              label={S.saves[save_] ?? save_}
-              value={fmtMod(sheet.saves[save_].total)}
-              onClick={() => props.openBreakdown(`${S.saves[save_]}-Save`, sheet.saves[save_])}
-            />
-          ))}
-        </div>
-      </Card>
+      {/*
+        Die eigene Rettungswürfe-Karte ist WEG: ihre drei Zahlen stehen jetzt in „Auf
+        einen Blick" ganz oben. Zweimal dieselbe Zahl auf einem Schirm wäre die
+        Doppelung, die diese App sonst überall vermeidet — und beim Suchen hätte man
+        nie gewusst, welche der beiden die aktuelle ist.
+      */}
 
-      <TrackersCard {...props} />
+      {/*
+        Zähler: hier nur die mit Kategorie „Allgemein" (Aktionspunkte, Heldenpunkte).
+        Sein Befund: „die Zähler gehören nicht auf die Werte Seite … Turn Undead ist ja
+        was für die Kampf Seite. Actionpoint dann wieder nicht."
+      */}
+      <TrackersCard {...props} category="general" />
 
       <Card>
         <SectionTitle>{S.sheet.xp}</SectionTitle>
@@ -315,6 +426,13 @@ export function CombatTab(props: TabProps) {
           ))}
         </ul>
       </Card>
+
+      {/*
+        Die Kampf-Zähler: Untote vertreiben, Raserei, Böses niederstrecken. Sie stehen
+        NACH den Angriffen und vor der Traglast — im Kampf greift man zuerst zur
+        Angriffszeile und dann zu dem, was man einmal pro Tag darf.
+      */}
+      <TrackersCard {...props} category="combat" />
 
       {!ignoreEncumbrance && (
       <Card>
