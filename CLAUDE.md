@@ -877,6 +877,81 @@ LESER entscheidet, wie bei `refillOf` und `resetToOf`.
   hätte „steht da" gemeldet, egal was im Blatt steht. Geklickt UND gelesen wird im
   `[role="dialog"]`-Kasten.
 
+## Gruppierte Kacheln, randloses Porträt, Ziehen — und drei Messungen
+
+Seine Antwort auf die Übersicht war dreiteilig: **„Nein, hab ich nicht mitten die
+Kachelreihe"** (die HP bleiben also draußen — bestätigt), **„die Kacheln aber bitte noch
+etwas klarer differenzieren, zum Beispiel die zusammen und nicht alles mehr oder weniger
+durcheinander"**, **„Gerne bis an den Rand"** und **„Umsortieren per Ziehen, gerne"**.
+
+### Die Kacheln stehen in vier Gruppen à drei
+
+Verteidigung (RK · berührt · flachfüßig) · Rettungswürfe · Angriff (BAB · Nahkampf ·
+Fernkampf) · Bewegung & Ringen (Initiative · Bewegung · Ringkampf). Jede mit einer kleinen
+Überschrift.
+
+**Dass jede Gruppe genau DREI trägt, ist der Grund für die Zuordnung des Ringkampfs.** Er
+gehört fachlich zum Angriff — dort wären es aber vier, und bei 390 px sind drei Kacheln je
+Reihe die Grenze, ab der „FERNKAMPF" noch lesbar ist. Eine Vierergruppe hätte 3 + 1
+ergeben, also wieder eine Reihe, die nur aus der Spaltenzahl entsteht: genau sein Einwand.
+Der Lauf prüft die Gruppen nicht am Text, sondern an der y-POSITION der Kacheln — eine
+Überschrift ohne echte Reihe darunter wäre eine Behauptung.
+
+### Das Porträt bis an den Rand — und was „der Rand" ist
+
+Vorher 373 von 390 px. Die 17 Pixel sind nachgerechnet: `-mx-3` hebt nur das Polster der
+Karte auf, darunter liegen die Einrückung des Blatts und sein Rahmen (`width: calc(100% -
+0.8rem)` plus `border: 2px` in `styles.css`). Die Marge ist deshalb
+`calc(0.75rem + 0.4rem + 2px)`.
+
+**Und zwei Messungen haben je einen Fehler gefunden, den kein Nachdenken gefunden hätte:**
+
+1. Meine erste Fassung zog den Rahmen der KARTE mit ab — das Bild war 394 statt 390 px
+   breit, also zwei Pixel je Seite aus dem Bild heraus. Eine gerechnete Marge ist eine
+   Behauptung, bis sie gemessen ist.
+2. Meine erste PRÜFUNG verglich mit der Fensterbreite und meldete auf beiden iPad-Größen
+   einen Fehler, den die App nicht hatte: ab `md` steht links die Seitenleiste, und der
+   Bogen ist zentriert und schmaler (768 von 1180). „Bis an den Rand" heißt bis an den Rand
+   des BOGENS — am Handy ist das der Bildschirmrand, auf dem iPad nicht. Dieselbe Familie
+   wie die fünfte Falle: wer ein Hüllenmaß einrechnet, muss prüfen, ob die Hülle in dieser
+   Breite dieselbe ist.
+
+### Drei Sondenfallen dieser Runde, und die erste ist neu und teuer
+
+- **`page.mouse` arbeitet in VIEWPORT-Koordinaten und scrollt nicht mit.** Der Anfasser
+  des Kurzschwerts lag bei y=1589 in einem 844 px hohen Fenster; ein `mouse.move` dorthin
+  landet auf dem `<html>`, `elementFromPoint` findet nichts, der Zug tut nichts — und die
+  Prüfung zeigt auf eine Funktion, die in Wirklichkeit läuft. `locator.click()` scrollt von
+  allein, `page.mouse` nicht. Gefunden hat es erst ein Mitschreiben der Pointer-Ereignisse
+  im Browser (`target=HTML`, `unter=-`).
+- **Seit es Behälter gibt, trägt JEDE Gepäckzeile den Namen des Behälters** — als Chip in
+  der Reihe „Einpacken: Am Körper · Rucksack (leer)". Meine Ablesung der Reihenfolge suchte
+  den Namen im ganzen `li` und las „ruck, ruck, ruck". Gelesen wird jetzt `data-drag-id`,
+  also die Kennung am `li`. Dieselbe Familie wie „Fertigkeiten" enthält „Fertig".
+- **Ein Zug auf ein verbotenes Ziel ist kein Fehler.** Meine Touch-Prüfung zog den
+  Rucksack auf das Seil, das zu diesem Zeitpunkt IN ihm liegt — `canSwap` verhindert das zu
+  Recht, und die Prüfung meldete trotzdem einen Fehlschlag. Wer eine Grenze baut, darf
+  nicht dagegen testen.
+
+### Und die Prüfung, auf die es wirklich ankommt: der FINGER
+
+Er spielt am Handy. Ein Zug, den nur die Maus schafft, ist für ihn wertlos — deshalb fährt
+die Strecke denselben Zug zusätzlich über echte Touch-Ereignisse (CDP
+`Input.dispatchTouchEvent`, weil Playwright für einen gehaltenen Finger keine eigene
+Schnittstelle hat) und prüft dabei mit, dass die Liste NICHT weggescrollt ist. Genau das
+war der Grund, warum diese Runde vorher Knöpfe hatte.
+
+Dazu ein Fund vom BILD: der Griff war mit 26×22 px zu klein für einen Daumen — er ist das
+einzige Ziel, das man TREFFEN muss, bevor man zieht.
+
+### Was diese Runde in einer ALTEN Strecke gefunden hat
+
+`e2e-behaelter` lief nicht mehr durch — nicht wegen dieser Runde, sondern wegen der
+VORIGEN: seit „Bearbeiten" hinter den drei Punkten steht, gibt es den ✎-Chip über dem
+Reiter nicht mehr, und die Strecke klickte ihn. Ich hatte sie damals nicht mitgezogen.
+**Wer ein Bedienelement verschiebt, muss die Sonden mitzählen** — dieselbe Lehre wie bei
+der Rückfrage im Assistenten, die sechs Strecken gebrochen hat.
+
 ## Behälter im Gepäck — und was ein Löschen NICHT mitnehmen darf
 
 Der letzte große Punkt seiner eigenen Liste: „Behälter (Inventar/Geldbeutel,
@@ -943,18 +1018,33 @@ Münzen", „10 lb liegen gewichtslos im Behälter") — aber nur, wenn es etwas
 GIBT. Ohne Münzgewicht und ohne magischen Behälter ist die Summe das Gepäck, und ein
 Satz, der das wiederholt, ist genau der Satz, der nicht gelesen wird.
 
-### Umsortieren: ↑↓ statt Ziehen — die eine Stelle, an der ich von seinem Wort abweiche
+### Umsortieren: erst ↑↓, dann ZIEHEN — und beides bleibt
 
-Er hat „Umsortieren per ZIEHEN" geschrieben. Gebaut sind **↑↓ im Bearbeiten-Modus**,
-und der Grund ist nicht Bequemlichkeit: dieser Bogen benutzt die Wischgeste schon
-zweimal — waagerecht zum Reiterwechsel (`e2e-wischen`) und senkrecht zum Scrollen im
-`main` mit `overflow-y-auto`. Ein Ziehen aus einer Liste heraus müsste sich gegen
-beides durchsetzen, und was dabei herauskommt, ist eine Liste, die manchmal scrollt,
-manchmal den Reiter wechselt und manchmal sortiert. Getauscht wird mit dem NACHBARN
-und nur innerhalb desselben Behälters: ohne das schiebt ein Tap auf ↓ am letzten
-Rucksack-Inhalt die Zeile aus dem Rucksack heraus, und das sieht wie ein Fehler aus.
-**Wenn er das Ziehen trotzdem will, ist es eine eigene Runde** — dann mit einem
-Anfasser, der die Geste vom Scrollen trennt.
+Zuerst waren es nur **↑↓ im Bearbeiten-Modus**, obwohl er „Umsortieren per ZIEHEN"
+geschrieben hatte. Der Grund war nicht Bequemlichkeit: dieser Bogen benutzt die
+Wischgeste schon zweimal — waagerecht zum Reiterwechsel (`e2e-wischen`) und senkrecht
+zum Scrollen im `main` mit `overflow-y-auto`. Ein Ziehen müsste sich gegen beides
+durchsetzen, und heraus kommt eine Liste, die manchmal scrollt, manchmal den Reiter
+wechselt und manchmal sortiert.
+
+**Auf die Frage hat er es trotzdem bestellt („Umsortieren per Ziehen, gerne"), und
+damit ist es gebaut** — mit genau dem Anfasser, der damals als Bedingung notiert war
+(`ui/useDragSort.ts`, das ⠿ in der Knopfreihe). Die Geste wird an der Wurzel getrennt:
+`touch-action: none` steht NUR am Griff, überall sonst bleibt Scrollen und Wischen, wie
+es war. **Die ↑↓-Knöpfe bleiben** — mit einer Maus oder einem Vorleseprogramm ist ein
+Zug kein Ersatz für einen Knopf, und sie kosten keine eigene Zeile.
+
+Vier Entscheidungen stecken im Hook:
+
+- **Vorschau lokal, geschrieben wird EINMAL beim Loslassen.** Ein Zug über fünf Zeilen
+  wären sonst fünf Schreibvorgänge, fünf `rev`-Erhöhungen und fünf Abgleich-Einträge.
+- **Die Reihenfolge liegt während des Zugs auch in einem `ref`**, nicht nur im State:
+  der nächste `pointermove` kommt, bevor React neu gerendert hat, und würde sonst auf
+  einer veralteten Liste rechnen — der Zug überspringt bei schneller Bewegung Zeilen.
+- **Nur unter Geschwistern** (`canSwap`): gleicher Behälter, und beide abgelegt. Ohne
+  das schiebt ein Zug die Zeile aus ihrem Rucksack heraus.
+- **Ein Hook, nicht einer je Behälter.** Hooks dürfen nicht in einer Schleife stehen,
+  also bekommt er ALLE Kennungen und die Gruppengrenze als Funktion.
 
 ### Was der BLICK gefunden hat, und drei Prüfungen nicht
 
@@ -1855,10 +1945,10 @@ in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`d
   `ui/itemDraft.ts`, Erzeuger in `core/compendium/homebrewItem.ts`), und der Assistent
   benutzt denselben Blätterer wie der Bogen. Offen bleibt hier nur noch die
   Übersetzung der 97 epischen Erklärungen (weiter unten).
-- **Behälter und Münzgewicht sind gebaut** (eigener Abschnitt weiter unten). Offen bleibt
-  davon genau eine Sache, und sie ist eine Geschmacksfrage: er hat „Umsortieren per
-  ZIEHEN" geschrieben, gebaut sind ↑↓-Knöpfe im Bearbeiten-Modus. Der Grund steht unten;
-  wenn er das Ziehen trotzdem will, ist es eine eigene Runde.
+- **Behälter, Münzgewicht und Umsortieren sind gebaut** (eigener Abschnitt weiter unten) —
+  das Ziehen inzwischen auch, auf seinen Wunsch („Umsortieren per Ziehen, gerne"), mit
+  Anfasser und mit einer Prüfung über echte Touch-Ereignisse. Die ↑↓-Knöpfe bleiben
+  daneben.
 - **97 Gegenstände tragen noch keine deutsche ERKLÄRUNG** — Name haben alle 1866. Die 97
   sind ausnahmslos episch (Stufe 21+, im Blätterer standardmäßig ausgeblendet) oder
   Artefakte; der Test in `core/compendium/itemGerman.test.ts` hält genau das fest, damit

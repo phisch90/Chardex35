@@ -74,6 +74,17 @@ export const S = {
       dass man das sofort sehen kann."
     */
     glance: "Auf einen Blick",
+    /*
+      Die vier Gruppen der Übersicht. Sein Einwand nach der ersten Fassung: „die Kacheln
+      aber bitte noch etwas klarer differenzieren, zum Beispiel die zusammen und nicht
+      alles mehr oder weniger durcheinander."
+    */
+    glanceGroups: {
+      defense: "Verteidigung",
+      saves: "Rettungswürfe",
+      attack: "Angriff",
+      moves: "Bewegung & Ringen",
+    },
     /**
      * BAB und nicht GAB. Sein Wort: „Wir spielen bei 6bab mit zwei Angriffen. Bitte auch
      * immer bab nennen." Damit ist die Abkürzung entschieden — und sie war ohnehin die
@@ -162,6 +173,7 @@ export const S = {
         "Für den Sack der Bewahrung und den Praktischen Umhängebeutel: der Inhalt zählt nicht in die Traglast, der Beutel selbst schon.",
       weightlessMark: "Inhalt zählt nicht",
       /** Bewegen im Bearbeiten-Modus. */
+      drag: "Ziehen zum Umsortieren",
       up: "Nach oben",
       down: "Nach unten",
     },

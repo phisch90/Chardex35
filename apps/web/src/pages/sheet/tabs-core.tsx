@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ABILITIES, iterativeAttacks, stepRank } from "@codex35/core";
 import { Link } from "@tanstack/react-router";
 import { S } from "../../strings.js";
@@ -10,6 +10,32 @@ import { SubtypePicker } from "../../ui/SubtypePicker.js";
 import { TrackersCard } from "./Trackers.js";
 import { CombatOptionsCard } from "./CombatOptions.js";
 import type { TabProps } from "./index.js";
+
+/**
+ * Eine Gruppe der Übersicht: kleine Überschrift, darunter genau DREI Kacheln.
+ *
+ * Sein Einwand nach der ersten Fassung: „die Kacheln aber bitte noch etwas klarer
+ * differenzieren, zum Beispiel die zusammen und nicht alles mehr oder weniger
+ * durcheinander." Vorher lagen alle zwölf in einem Raster — die Reihen ergaben sich aus
+ * der Spaltenzahl, nicht aus der Bedeutung, und bei drei Spalten sah es aus wie eine
+ * Zahlenwand.
+ *
+ * Dass jede Gruppe DREI trägt, ist kein Zufall, sondern der Grund für die Zuordnung des
+ * Ringkampfs: 12 Werte auf 4 Gruppen à 3 gehen genau auf, und bei 390 px sind drei
+ * Kacheln je Reihe die Grenze, ab der die Beschriftung („FERNKAMPF") noch lesbar bleibt.
+ * Eine Gruppe mit vier Werten hätte 3 + 1 ergeben — also wieder eine Reihe, die nichts
+ * bedeutet.
+ */
+function GlanceGroup(props: { title: string; children: ReactNode }) {
+  return (
+    <div>
+      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        {props.title}
+      </div>
+      <div className="grid grid-cols-3 gap-2">{props.children}</div>
+    </div>
+  );
+}
 
 /**
  * „Auf einen Blick" — alle Zahlen, nach denen am Tisch gefragt wird, in EINER Karte.
@@ -36,7 +62,8 @@ function GlanceCard({ sheet, openBreakdown }: Pick<TabProps, "sheet" | "openBrea
   return (
     <Card>
       <SectionTitle>{S.sheet.glance}</SectionTitle>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="space-y-2.5">
+        <GlanceGroup title={S.sheet.glanceGroups.defense}>
         <StatButton
           big
           label={S.sheet.ac}
@@ -67,7 +94,9 @@ function GlanceCard({ sheet, openBreakdown }: Pick<TabProps, "sheet" | "openBrea
             })
           }
         />
+        </GlanceGroup>
 
+        <GlanceGroup title={S.sheet.glanceGroups.saves}>
         {(["fort", "ref", "will"] as const).map((save_) => (
           <StatButton
             key={save_}
@@ -76,14 +105,37 @@ function GlanceCard({ sheet, openBreakdown }: Pick<TabProps, "sheet" | "openBrea
             onClick={() => openBreakdown(`${S.saves[save_]}-Save`, sheet.saves[save_])}
           />
         ))}
+        </GlanceGroup>
 
+        <GlanceGroup title={S.sheet.glanceGroups.attack}>
+        {/* Der BAB ist eine reine Zahl ohne Beiträge — also kein Knopf, der nichts zeigt. */}
+        <StatButton label={S.sheet.bab} value={fmtMod(sheet.bab)} />
+        {(["melee", "ranged"] as const).map((mode) => {
+          const line = attackLine(mode);
+          if (!line) return null;
+          return (
+            <StatButton
+              key={mode}
+              label={S.sheet[mode]}
+              value={fmtMod(line.attack.total)}
+              onClick={() => openBreakdown(line.label, line.attack, { rollable: false })}
+            />
+          );
+        })}
+        </GlanceGroup>
+
+        {/*
+          Initiative, Bewegung und Ringkampf zusammen: was man im Kampf tut, das kein
+          Angriff und keine Verteidigung ist. Der Ringkampf steht hier und nicht bei
+          „Angriff", weil vier Werte dort eine Reihe 3 + 1 ergeben hätten — und eine
+          Reihe, die nur aus der Spaltenzahl entsteht, war genau sein Einwand.
+        */}
+        <GlanceGroup title={S.sheet.glanceGroups.moves}>
         <StatButton
           label={S.sheet.init}
           value={fmtMod(sheet.init.total)}
           onClick={() => openBreakdown(S.sheet.init, sheet.init)}
         />
-        {/* Der BAB ist eine reine Zahl ohne Beiträge — also kein Knopf, der nichts zeigt. */}
-        <StatButton label={S.sheet.bab} value={fmtMod(sheet.bab)} />
         {/*
           „30 ft" und nicht „30": genau so steht die Bewegung im Kampf-Reiter, und
           dieselbe Zahl darf auf zwei Reitern nicht zwei Schreibweisen haben. Gefunden
@@ -100,24 +152,12 @@ function GlanceCard({ sheet, openBreakdown }: Pick<TabProps, "sheet" | "openBrea
             })
           }
         />
-
-        {(["melee", "ranged"] as const).map((mode) => {
-          const line = attackLine(mode);
-          if (!line) return null;
-          return (
-            <StatButton
-              key={mode}
-              label={S.sheet[mode]}
-              value={fmtMod(line.attack.total)}
-              onClick={() => openBreakdown(line.label, line.attack, { rollable: false })}
-            />
-          );
-        })}
         <StatButton
           label={S.sheet.grapple}
           value={fmtMod(sheet.grapple.total)}
           onClick={() => openBreakdown(S.sheet.grapple, sheet.grapple)}
         />
+        </GlanceGroup>
       </div>
     </Card>
   );
