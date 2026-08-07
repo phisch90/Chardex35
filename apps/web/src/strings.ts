@@ -68,6 +68,12 @@ export const S = {
     flatFootedHint: "Überrascht, vor der ersten Aktion: kein DEX-Bonus, kein Ausweichen.",
     init: "Initiative",
     speed: "Bewegung",
+    /*
+      Die Überschrift der Übersicht ganz oben im Werte-Reiter. Sein Auftrag: „Dass man
+      einfach auf einen Blick hat, wenn der DM fragt, wie hoch der Rüstungswert ist,
+      dass man das sofort sehen kann."
+    */
+    glance: "Auf einen Blick",
     /**
      * BAB und nicht GAB. Sein Wort: „Wir spielen bei 6bab mit zwei Angriffen. Bitte auch
      * immer bab nennen." Damit ist die Abkürzung entschieden — und sie war ohnehin die
@@ -311,6 +317,10 @@ export const S = {
     abilityDotHint: "• = da kommt etwas dazu (Volk, Talent, Gegenstand) — antippen zeigt, was.",
     abilityHasBonus: "Grundwert plus alles, was darauf wirkt.",
     editModeOn: "Bearbeiten: Name, Ränge, Talente, Ausrüstung, Zähler",
+    /* Die zwei Zeilen im ⋯-Blatt — dort wird ein- UND ausgeschaltet. */
+    editHint: "Name, Ränge, Talente, Ausrüstung und Zähler ändern.",
+    editStop: "Bearbeiten beenden",
+    editStopHint: "Zurück zum Lesen — am Tisch ändert dann kein Fehlgriff etwas.",
     identity: "Name und Spieler:in",
     characterName: "Name des Charakters",
     playerPlaceholder: "wer spielt ihn?",
@@ -673,6 +683,15 @@ export const S = {
     overrideNote: "Der Bogen weist danach weiter darauf hin — gewollt.",
     showEpic: "Epische zeigen",
     epicHint: "Epische Talente gibt es ab Stufe 21.",
+    /*
+      Dass ein Tap den Text aufklappt, wusste bisher nur die App. Der Knopf umfasst die
+      ganze Zeile („das Ziel ist groß, weil am Tisch mit dem Daumen getippt wird"), aber
+      ohne ein Zeichen daran sieht eine Zeile aus wie Text und nicht wie ein Knopf —
+      Philipps Wort dazu: es „sollte klar sein, dass beim Tippen auf ein Talent die
+      Textbeschreibung ausgeklappt wird". Der Satz steht deshalb über der Liste UND jede
+      Zeile trägt das ▸, das sich beim Aufklappen dreht.
+    */
+    tapHint: "Tippe auf ein Talent — darunter steht, was es tut.",
     allTypes: "Alle",
     noMatches: "Kein Talent passt dazu.",
     /** Talentarten — englisch aus den Daten, deutsch beschriftet. */
@@ -1221,7 +1240,19 @@ export const S = {
   trackers: {
     title: "Zähler",
     add: "Zähler anlegen",
-    hint: "Für eigene Mechaniken: Aktionspunkte, Untote vertreiben, Schicksalspunkte …",
+    /*
+      Die Beispiele stehen JE BEREICH, und das ist kein Schmuck: der alte Satz nannte
+      „Untote vertreiben" — und stand nach der Aufteilung auch im Werte-Reiter, wo dieser
+      Zähler ausdrücklich NICHT hingehört. Ein Beispiel, das im falschen Reiter steht,
+      ist ein Text, der der Sache neben sich widerspricht, und davon hat diese App schon
+      einen bezahlt (der Erklärtext zu Power Attack mit leichter Waffe).
+    */
+    hint: {
+      general: "Für eigene Mechaniken: Aktionspunkte, Schicksalspunkte, Glückswürfel …",
+      combat: "Für den Kampf: Untote vertreiben, Wutanfälle, Böses niederstrecken, Pfeile …",
+      spells: "Für Zauberkram: Tiergestalt, spontane Umwandlungen, Metamagie-Anwendungen …",
+      gear: "Für Verbrauch: Fackeln, Rationen, Wasserschläuche, Ladungen eines Stabs …",
+    } as Record<string, string>,
     name: "Name",
     kind: "Art",
     kinds: { counter: "Zähler", value: "Fester Wert", roll: "Würfelwurf" } as Record<string, string>,
@@ -1229,7 +1260,8 @@ export const S = {
     max: "Maximum (optional)",
     formula: "Würfelformel (z.B. 1d6+2)",
     reset: "Zurücksetzen",
-    empty: "Noch keine Zähler. Leg einen an für Aktionspunkte & Co.",
+    // Neutral: dieselbe Karte steht in vier Reitern, und die Beispiele hängen am Bereich.
+    empty: "Noch keine Zähler in diesem Bereich.",
     suggestHint: "Aus deinen Klassen ergeben sich diese Zähler:",
     suggestAdd: "anlegen",
     /*
@@ -1268,6 +1300,20 @@ export const S = {
     resetToKinds: { max: "voll", zero: "0" } as Record<string, string>,
     resetToHint:
       "„voll“ ist richtig für Zähler, die du herunterzählst (7 von 7 Versuchen). „0“ für die, die du hochzählst — verbrauchte Aktionspunkte etwa.",
+    /*
+      Der Bereich. Sein Befund: „die Zähler gehören nicht auf die Werte Seite. Turn
+      Undead ist ja was für die Kampf Seite. Actionpoint dann wieder nicht." Die Namen
+      sind die der REITER, damit man nicht übersetzen muss, was wo landet.
+    */
+    categoryTitle: "steht bei:",
+    categories: {
+      general: "Werte",
+      combat: "Kampf",
+      spells: "Zauber",
+      gear: "Ausrüstung",
+    } as Record<string, string>,
+    categoryHint:
+      "Der Zähler steht nur in diesem einen Reiter. Nach dem Umstellen ist er hier weg und dort zu finden — gelöscht wird nichts.",
   },
 
   /*

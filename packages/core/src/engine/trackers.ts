@@ -31,6 +31,76 @@ export interface TrackerSuggestion {
    * ausdrücklich an den Zähler. Am Zähler ist es dann eine Eingabe, keine Ableitung.
    */
   refill?: readonly TrackerRefillKind[];
+  /**
+   * In welchen Reiter der Zähler gehört. Gesetzt wird das nicht am Vorschlag, sondern
+   * aus `SUGGESTION_CATEGORY` (siehe dort) — hier steht nur das Ergebnis.
+   *
+   * Wer aus einem Vorschlag einen Zähler macht, schreibt es ausdrücklich an den
+   * Zähler; dort ist es dann eine Eingabe. Ohne Angabe gilt „general". Geraten wird
+   * nie aus dem NAMEN — das wäre die versteckte Regel, die bei jedem eigenen Zähler
+   * vorbeigeht.
+   */
+  category?: TrackerCategory;
+}
+
+/**
+ * Wo ein Zähler am Bogen steht — die vier Bereiche, die er gewählt hat.
+ *
+ * Die Reihenfolge hier IST die Reihenfolge der Knöpfe in der Oberfläche, und die Werte
+ * sind die des Charakter-Schemas: eine zweite Liste in der Anzeige wären zwei
+ * Wahrheiten, und ein fünfter Bereich müsste dann an zwei Stellen dazu.
+ */
+export const TRACKER_CATEGORIES = ["general", "combat", "spells", "gear"] as const;
+export type TrackerCategory = (typeof TRACKER_CATEGORIES)[number];
+
+/**
+ * Welcher Vorschlag in welchen Bereich gehört — die eine Wahrheit dazu.
+ *
+ * Sie steht als Tabelle und nicht als `category:` an jedem Vorschlag, weil sie ZWEI
+ * Leser hat: die Vorschläge selbst und der Rückfall in `categoryOf` für Zähler, die
+ * aus einem Vorschlag entstanden sind, bevor es dieses Feld gab (der Fight-Club-Import
+ * schreibt genau solche). Zwei Listen wären zwei Wahrheiten, und die eine würde beim
+ * nächsten neuen Vorschlag vergessen.
+ *
+ * Was hier NICHT steht, ist „general" — der Rückfall. Ein Eintrag „action-points:
+ * general" wäre Lärm.
+ */
+const SUGGESTION_CATEGORY: Readonly<Record<string, TrackerCategory>> = {
+  "turn-undead": "combat",
+  "smite-evil": "combat",
+  "bardic-music": "combat",
+  rage: "combat",
+  "stunning-fist": "combat",
+  "wild-shape": "spells",
+};
+
+/**
+ * In welchem Bereich der Zähler steht. `undefined` heißt „nie gesagt".
+ *
+ * Der Leser statt eines Schema-Standardwerts, aus demselben Grund wie bei `refillOf`:
+ * so bleibt das Feld optional, und keine Stelle, die einen Zähler als Literal baut,
+ * muss es kennen. Und der Rückfall ist der Platz, an dem bisher ALLE Zähler standen —
+ * damit verschiebt dieses Feld auf einem gespeicherten Bogen nichts.
+ */
+export function categoryOf(tracker: {
+  category?: TrackerCategory | undefined;
+  suggestedFrom?: string | undefined;
+}): TrackerCategory {
+  if (tracker.category !== undefined) return tracker.category;
+  /*
+    Nie gesagt, aber aus einem Vorschlag entstanden? Dann weiß die App den Bereich —
+    dieselbe Bauart wie der Rückfall in `refillOf`. Das ist kein Raten am NAMEN:
+    `suggestedFrom` ist eine harte Herkunft und übersteht jede Umbenennung.
+
+    Damit landet auch ein Zähler aus dem Fight-Club-Import im richtigen Reiter, ohne
+    dass jemand ihn umstellt — und genau das war der Auftrag: „Turn Undead ist ja was
+    für die Kampf Seite."
+  */
+  if (tracker.suggestedFrom !== undefined) {
+    const known = SUGGESTION_CATEGORY[tracker.suggestedFrom];
+    if (known !== undefined) return known;
+  }
+  return "general";
 }
 
 const CLASS_IDS = {
@@ -171,6 +241,14 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
    * Extra Turning mit und ein Homebrew-Talent nicht.
    */
   const push = (suggestion: TrackerSuggestion) => {
+    // Der Bereich kommt aus der Tabelle oben — nicht an jedem Vorschlag wiederholt.
+    const withCategory: TrackerSuggestion = {
+      ...suggestion,
+      ...(SUGGESTION_CATEGORY[suggestion.key] === undefined
+        ? {}
+        : { category: SUGGESTION_CATEGORY[suggestion.key] }),
+    };
+    suggestion = withCategory;
     const extra = sheet.extraUses[suggestion.key] ?? 0;
     if (extra === 0) {
       out.push(suggestion);

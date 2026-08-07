@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { displayName, type Entity } from "@codex35/core";
 import { S } from "../strings.js";
 import { Icon, type IconName } from "./icons.js";
@@ -17,10 +17,18 @@ import { Icon, type IconName } from "./icons.js";
  *
  * Zwei Entscheidungen stecken in der Form:
  *
- *  - **Das Infofeld steht in VOLLER BREITE unter dem Raster**, nicht in der Kachel.
- *    `RaceInfo` und `ClassInfo` sind dichte Faktentabellen (Attribute, Rettungswürfe,
- *    Zaubergrade); in 170 px wären sie unlesbar. Dafür trägt es eine Überschrift mit dem
- *    Namen — losgelöst von der Zeile muss es selbst sagen, wovon es redet.
+ *  - **Das Infofeld steht in voller Breite, aber DIREKT UNTER SEINER KACHEL** — nicht
+ *    unter dem ganzen Raster. Beides zusammen geht, weil ein `col-span-full` im Raster
+ *    von allein in die nächste Zeile rutscht: es bricht die Reihe der gewählten Kachel
+ *    auf und ist trotzdem so breit wie die Seite. `RaceInfo` und `ClassInfo` sind dichte
+ *    Faktentabellen (Attribute, Rettungswürfe, Zaubergrade) und in 170 px unlesbar, die
+ *    Breite ist also nicht verhandelbar.
+ *
+ *    Zuerst stand es ganz unten, und Philipps Einwand war der richtige: „wenn man bei den
+ *    oberen dann die Infos abrufen will, denkt man, dass nichts angezeigt wird." Bei elf
+ *    Klassen liegt das Feld dann vier Reihen tiefer, außerhalb des Bildes — ein Tap, der
+ *    scheinbar nichts tut. Die Überschrift mit dem Namen BLEIBT trotzdem: bei drei
+ *    Spalten sagt sie, zu welcher der drei Kacheln der Reihe das Feld gehört.
  *  - **Beim Auswählen klappt es von allein auf** (dieselbe Regel wie in der Liste vorher:
  *    man soll die Werte sehen, sobald man sich festlegt) und lässt sich für jeden anderen
  *    Eintrag zum Nachlesen aufziehen, BEVOR man sich festlegt.
@@ -43,7 +51,6 @@ export function PickTiles(props: {
   info?: (entity: Entity) => ReactNode;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const openEntity = props.items.find((entity) => entity.id === openId);
 
   return (
     <div>
@@ -60,7 +67,8 @@ export function PickTiles(props: {
           const chosen = props.selectedId === entity.id;
           const open = openId === entity.id;
           return (
-            <li key={entity.id} className="flex">
+            <Fragment key={entity.id}>
+            <li className="flex">
               <div
                 className={`flex w-full flex-col rounded-xl border ${
                   chosen ? "border-amber-500 bg-amber-600/10" : "border-slate-700 bg-slate-900/60"
@@ -101,25 +109,33 @@ export function PickTiles(props: {
                 )}
               </div>
             </li>
+            {/*
+              Das Infofeld als eigene Rasterzelle über alle Spalten, gleich hinter seiner
+              Kachel. Es steht damit unter der REIHE, in der die Kachel sitzt — nicht in
+              ihr (dort wäre die Tabelle 170 px breit) und nicht unter allen (dort findet
+              man es nicht).
+            */}
+            {props.info && open && (
+              <li className="col-span-full">
+                <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-3">
+                  <div className="mb-1 flex items-baseline justify-between gap-2">
+                    <span className="text-sm font-semibold">{displayName(entity)}</span>
+                    <button
+                      type="button"
+                      onClick={() => setOpenId(null)}
+                      className="text-[11px] text-slate-400 underline decoration-dotted hover:text-amber-300"
+                    >
+                      Infos ausblenden ▾
+                    </button>
+                  </div>
+                  {props.info(entity)}
+                </div>
+              </li>
+            )}
+            </Fragment>
           );
         })}
       </ul>
-
-      {props.info && openEntity && (
-        <div className="mt-2 rounded-xl border border-slate-700 bg-slate-900/60 p-3">
-          <div className="mb-1 flex items-baseline justify-between gap-2">
-            <span className="text-sm font-semibold">{displayName(openEntity)}</span>
-            <button
-              type="button"
-              onClick={() => setOpenId(null)}
-              className="text-[11px] text-slate-400 underline decoration-dotted hover:text-amber-300"
-            >
-              Infos ausblenden ▾
-            </button>
-          </div>
-          {props.info(openEntity)}
-        </div>
-      )}
     </div>
   );
 }

@@ -754,6 +754,129 @@ zuerst genauso wie die alten (`pointsLeft`), und in einem Objektliteral gewinnt 
 spätere Schlüssel. Sie heißen jetzt `abilityPoints…`; der Bereich gehört in den Namen,
 wo ein Wort zweimal vorkommt.
 
+## Fünf Punkte von seiner Liste — und wo eine Sache hingehört
+
+Fünf Sätze in einer Runde, und vier davon beantworten dieselbe Frage: **wo gehört das
+hin?**
+
+### 1. Das Infofeld klappt unter SEINER Kachel auf
+
+Sein Einwand, wörtlich: „Beim Charakter erstellen sollten die Informationen zum Volk oder
+zur Klasse aufklappen direkt unter dem Volk oder der Klasse, nicht unter allen Völkern und
+allen Klassen, ganz unten. Denn wenn die oberen dann die Infos abrufen will, denkt man,
+dass nichts angezeigt wird."
+
+Er hat recht, und **das war ausdrücklich meine Entscheidung von vorher** (sie stand als
+Begründung in der Kacheln-Runde: die Faktentabelle ist in 170 px unlesbar, also volle
+Breite unter dem Raster). Der Grund war richtig, die Folge falsch: bei elf Klassen liegt
+das Feld vier Reihen tiefer, außerhalb des Bildes — ein Tap, der scheinbar nichts tut.
+
+Beides geht zusammen, und der Trick ist eine Zeile CSS: ein `col-span-full` im Raster
+rutscht von allein in die nächste Zeile. Das Feld bricht damit die Reihe der geklickten
+Kachel auf und ist trotzdem so breit wie die Seite. **Gemessen** im gebauten Bogen: der
+Abstand zur Kachel liegt unter 60 px (vorher: eine ganze Kachelreihe), die Breite über dem
+1,6-fachen einer Kachel. Die Überschrift mit dem Namen bleibt — bei drei Spalten sagt sie,
+zu welcher der drei Kacheln das Feld gehört.
+
+### 2. Ein Knopf, den man nicht als Knopf erkennt, ist keiner
+
+„Beim Talente aufnehmen sollte klar sein, dass beim Tippen auf ein Talent die
+Textbeschreibung ausgeklappt wird." Der Tap gab es längst — die ganze Zeile ist ein Knopf
+(„das Ziel ist groß, weil am Tisch mit dem Daumen getippt wird") —, aber nichts sagte es.
+
+Jetzt zweierlei: ein **▸ an jeder Zeile**, das sich beim Aufklappen zu ▾ dreht (dieselbe
+Sprache wie „Infos ▸" an den Kacheln), und **ein Satz über der Liste**. Der Satz steht nur
+da, wenn die Liste etwas enthält — eine Anleitung für nichts ist Lärm.
+
+### 3. Bearbeiten wohnt hinter den drei Punkten
+
+„Den Button bearbeiten im Charakterbogen grundsätzlich in allen Bereichen immer hinter den
+drei Punkten." Vorher stand der Chip über JEDEM Reiter und nahm dort dauerhaft eine Zeile
+weg — für einen Handgriff, den man selten braucht.
+
+**Und die eine Entscheidung, die dazugehört: der Rückweg.** Ein Zustand, den man über das
+Menü erreicht, aber nur dort verlassen kann, ist die Familie „etwas weiß es, und etwas
+anderes kann es nicht". Also ist der amber Streifen „Bearbeiten: Name, Ränge …" jetzt
+SELBST der Ausschalter — kein zweites Bedienelement, sondern der Hinweis, der schon dastand.
+Ist Bearbeiten aus, steht dort nichts: kein leerer Streifen, keine Zeile Platz. Im ⋯-Blatt
+steht die Zeile in beiden Zuständen („Bearbeiten" / „Bearbeiten beenden").
+
+### 4. „Auf einen Blick" — ganz oben, weil „sofort" ohne Scrollen heißt
+
+„Auf der Seite Werte würde ich gerne komplett alle Werte stehen haben … dass man einfach
+auf einen Blick hat, wenn der DM fragt, wie hoch der Rüstungswert ist, dass man das sofort
+sehen kann."
+
+Zwölf Kacheln in einer Karte, ganz oben: RK · berührt · flachfüßig · Fort · Ref · Will ·
+Initiative · BAB · Bewegung · Nahkampf · Fernkampf · Ringkampf. Jede antippbar mit
+derselben Aufschlüsselung wie im Kampf-Reiter; gerechnet wird nichts, alles kommt fertig
+aus `sheet`.
+
+Zwei Auslassungen sind Absicht:
+
+- **Die eigene Rettungswürfe-Karte ist weg.** Ihre drei Zahlen stehen jetzt oben; zweimal
+  dieselbe Zahl auf EINEM Schirm ist die Doppelung, die diese App überall vermeidet — und
+  beim Suchen hätte niemand gewusst, welche die aktuelle ist. Der Lauf prüft die Abwesenheit.
+- **Die HP nicht.** Sie stehen im Kopf JEDES Reiters, größer und mit dem Knopf zum Ändern.
+  Eine zweite HP-Zeile zwei Zentimeter darunter wäre genau diese Doppelung.
+
+Und ein Fund vom BILD, den keine Prüfung gemeldet hätte: die Bewegung stand als „30", im
+Kampf-Reiter aber als „30 ft". **Dieselbe Zahl darf auf zwei Reitern nicht zwei
+Schreibweisen haben.**
+
+### 5. Zähler haben einen Bereich — seine Frage, und die Antwort
+
+Sein Befund: „die Zähler gehören nicht auf die Werte Seite. Da bin ich mir allerdings nicht
+so sicher wo sie hingehören. Turn Undead ist ja was für die Kampf Seite. Actionpoint dann
+wieder nicht. Hast Du eine Idee, wie man das aufteilen kann?"
+
+Gefragt und entschieden: **eine Kategorie je Zähler**, mit allen vier Bereichen — Werte ·
+Kampf · Zauber · Ausrüstung. Ein Zähler steht in genau EINEM Reiter, umgestellt wird mit
+einer Knopfreihe in demselben Kasten, in dem auch „füllt sich bei" und „zurück auf" stehen.
+
+Vier Entscheidungen daran sind eine Notiz wert:
+
+- **Die Kategorie ist eine EINGABE, kein Raten am Namen.** „Heißt es Turn Undead?" wäre
+  dieselbe versteckte Regel, die schon bei den Behältern verworfen wurde: sie ginge bei
+  jedem eigenen Zähler und bei jeder Umbenennung vorbei.
+- **Aber es gibt eine harte Herkunft, und die wird benutzt.** Ein Zähler aus einem
+  Vorschlag trägt `suggestedFrom`, und `categoryOf` liest daraus den Bereich — deshalb
+  landet auch der FIGHT-CLUB-importierte „Untote vertreiben" von allein im Kampf, ohne
+  dass jemand ihn umstellt. Genau das ist sein Bogen Hike. Die Zuordnung steht als EINE
+  Tabelle (`SUGGESTION_CATEGORY`), aus der sich beide Leser speisen: die Vorschläge und
+  der Rückfall. Zwei Listen wären zwei Wahrheiten, und die eine würde beim nächsten
+  Vorschlag vergessen.
+- **Ein neuer Zähler gehört in den Bereich, in dem er ENTSTEHT.** Ohne das legt man ihn im
+  Kampf an und findet ihn auf der Werte-Seite wieder.
+- **Und die Beispieltexte hängen jetzt am Bereich.** Der alte Satz nannte „Untote
+  vertreiben" — und stand nach der Aufteilung auch im Werte-Reiter, wo dieser Zähler
+  ausdrücklich nicht hingehört. Ein Beispiel im falschen Reiter ist ein Text, der der
+  Sache neben sich widerspricht; davon hat diese App schon einen bezahlt (der Erklärtext
+  zu Power Attack mit leichter Waffe).
+
+**Das Feld ist `optional` und nicht `.default("general")`, und das ist die Lehre der
+Fehlerfamilie 1 von vorn bedacht:** ein `.default()` macht das Feld im AUSGABE-Typ Pflicht,
+und dann muss jede Stelle, die einen Zähler als Literal baut, es mitschreiben — `tsc`
+meldete auf Anhieb 13 solche Stellen (der Fight-Club-Import und ein Dutzend Tests). Genau
+daraus entstand einmal „fehlende Schema-Standardwerte, weil Parser Literale bauten". Ein
+LESER entscheidet, wie bei `refillOf` und `resetToOf`.
+
+### Drei Sondenfallen dieser Runde, und die dritte ist neu
+
+- **Ein Locator mit Filter ist eine SUCHE, keine Referenz.** `filter({hasText:/▸/}).first()`
+  nach dem Klick neu ausgewertet trifft die NÄCHSTE noch zugeklappte Zeile — meine Prüfung
+  meldete „immer noch ▸", während die App richtig aufgeklappt hatte. Festgehalten wird am
+  NAMEN.
+- **`hasText` mit einem regulären Ausdruck prüft `textContent`, und das verkettet ohne
+  Trennzeichen.** Die Zeilen im ⋯-Blatt tragen Beschriftung und Hinweis in einem Knopf; im
+  DOM steht „✎BearbeitenName, Ränge, …", obwohl das Auge drei Teile sieht. Weder
+  `^Bearbeiten$` noch `^Bearbeiten\s` trifft. Die Verwandte der `uppercase`-Falle: was man
+  liest, ist nicht, was der Ausdruck sieht.
+- **Und `.slice(0, 200)` auf dem Body ist keine Prüfung.** Das ⋯-Blatt steht im DOM WEIT
+  hinten (hinter dem ganzen Bogen); meine erste Fassung las die ersten 200 Zeichen und
+  hätte „steht da" gemeldet, egal was im Blatt steht. Geklickt UND gelesen wird im
+  `[role="dialog"]`-Kasten.
+
 ## Behälter im Gepäck — und was ein Löschen NICHT mitnehmen darf
 
 Der letzte große Punkt seiner eigenen Liste: „Behälter (Inventar/Geldbeutel,

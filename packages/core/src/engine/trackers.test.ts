@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import { characterSchema, houseRulesSchema } from "../schema/character.js";
 import { entitySchema, resolveCompendium, type ClassLevelRow } from "../schema/entities.js";
 import { deriveSheet } from "./index.js";
-import { effectiveTrackerMax, suggestTrackers, trackerMaxNote } from "./trackers.js";
+import {
+  TRACKER_CATEGORIES,
+  categoryOf,
+  effectiveTrackerMax,
+  suggestTrackers,
+  trackerMaxNote,
+} from "./trackers.js";
 
 /**
  * Die Formeln hier sind der Grund für diese Tests: sie stehen im Regelwerk, nicht
@@ -372,5 +378,63 @@ describe("Obergrenze eines Zählers folgt dem Vorschlag", () => {
     const sheet = klerikerMitExtraTurning();
     expect(effectiveTrackerMax({ max: 3, maxManual: false }, sheet)).toBe(3);
     expect(effectiveTrackerMax({ maxManual: false }, sheet)).toBeUndefined();
+  });
+});
+
+describe("Wo ein Zähler steht", () => {
+  /*
+    Seine Frage war „Hast Du eine Idee, wie man das aufteilen kann?", und die Antwort ist
+    eine Kategorie je Zähler. Zwei der drei Regeln hier sind RÜCKFÄLLE, und Rückfälle
+    verrotten still — deshalb stehen sie als Prüfung da und nicht nur als Kommentar.
+  */
+
+  it("ohne Angabe steht ein Zähler bei den Werten", () => {
+    // Der Platz, an dem bisher ALLE standen: dieses Feld verschiebt auf einem
+    // gespeicherten Bogen nichts, solange niemand es anfasst.
+    expect(categoryOf({})).toBe("general");
+    expect(categoryOf({ category: undefined })).toBe("general");
+  });
+
+  it("die eigene Angabe gewinnt immer", () => {
+    expect(categoryOf({ category: "gear" })).toBe("gear");
+    // Auch gegen die Herkunft: wer umstellt, meint es so.
+    expect(categoryOf({ category: "general", suggestedFrom: "turn-undead" })).toBe("general");
+  });
+
+  it("ein Zähler aus einem Vorschlag kennt seinen Bereich auch ohne Feld", () => {
+    /*
+      Genau der Fall seines Bogens: Hike kommt aus dem Fight-Club-Import, und dessen
+      Zähler tragen `suggestedFrom`, aber kein `category`. Ohne diesen Rückfall stünde
+      „Untote vertreiben" weiter auf der Werte-Seite — und genau das wollte er nicht.
+    */
+    expect(categoryOf({ suggestedFrom: "turn-undead" })).toBe("combat");
+    expect(categoryOf({ suggestedFrom: "rage" })).toBe("combat");
+    expect(categoryOf({ suggestedFrom: "wild-shape" })).toBe("spells");
+    // Die Aktionspunkte sind der Gegenfall: sie sind ausdrücklich KEIN Kampfhandgriff.
+    expect(categoryOf({ suggestedFrom: "action-points" })).toBe("general");
+    // Und ein unbekannter Schlüssel darf nicht raten.
+    expect(categoryOf({ suggestedFrom: "feature:irgendwas" })).toBe("general");
+  });
+
+  it("die Vorschläge geben den Bereich mit", () => {
+    expect(suggestionFor("srd:class:cleric", 1, "turn-undead")?.category).toBe("combat");
+    expect(suggestionFor("srd:class:barbarian", 1, "rage")?.category).toBe("combat");
+    expect(suggestionFor("srd:class:druid", 5, "wild-shape")?.category).toBe("spells");
+    // Aktionspunkte gibt es an jedem Bogen — und sie bleiben bei den Werten.
+    const punkte = suggestionFor("srd:class:cleric", 1, "action-points");
+    expect(punkte).toBeDefined();
+    expect(punkte?.category).toBeUndefined();
+    expect(categoryOf({ suggestedFrom: "action-points" })).toBe("general");
+  });
+
+  it("jeder Bereich eines Vorschlags ist ein echter Bereich", () => {
+    // Ein Tippfehler in der Tabelle würde den Zähler sonst unsichtbar machen: kein
+    // Reiter fragt nach „combatt", und die Karte wäre einfach leer.
+    for (const classId of ["srd:class:cleric", "srd:class:druid", "srd:class:barbarian"]) {
+      for (const suggestion of suggestTrackers(sheetFor(classId, 10, 14))) {
+        if (suggestion.category === undefined) continue;
+        expect(TRACKER_CATEGORIES).toContain(suggestion.category);
+      }
+    }
   });
 });
