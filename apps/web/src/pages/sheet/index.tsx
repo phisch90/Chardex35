@@ -13,6 +13,7 @@ import { useAppSettings, useCharacter, useCompendium, useSheet } from "../../lib
 import { useDiceStore } from "../../lib/diceStore.js";
 import { rememberSheet } from "../../lib/lastSheet.js";
 import { reportSaveFailure } from "../../lib/saveError.js";
+import { useEditModeStore } from "../../lib/editMode.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
 import { Chip, GhostButton, OpenDot, d20Roll, fmtMod } from "../../ui/bits.js";
@@ -113,6 +114,7 @@ export function CharacterSheetPage() {
     note?: string | undefined;
   } | null>(null);
   const roll = useDiceStore((s) => s.roll);
+  const setEditModeActive = useEditModeStore((s) => s.set);
   const { diceEnabled, classAccent } = useAppSettings();
 
   /*
@@ -153,6 +155,21 @@ export function CharacterSheetPage() {
     else root.setAttribute("data-accent", key);
     return () => root.removeAttribute("data-accent");
   }, [character, classAccent]);
+
+  /*
+    Der Bearbeiten-Modus in den Store, damit die HÜLLE ihre Hauptnavigation ausblenden kann
+    (`ui/Layout.tsx`). Zurückgesetzt wird im Aufräumen und nicht in einem Klick: ein Klick
+    kann übersprungen werden (Zurück-Wischen, Adresszeile, ein Link im ⋯-Blatt), das
+    Aufräumen nicht. Bliebe er stehen, wäre die Navigation auf der Startseite weg — ein
+    Zustand, aus dem man nicht mehr herausfindet.
+
+    Der Hook steht VOR den frühen `return`s: ein Hook hinter einer Bedingung ist kein Hook
+    (zehnte Falle, „Minified React error #310").
+  */
+  useEffect(() => {
+    setEditModeActive(editMode);
+    return () => setEditModeActive(false);
+  }, [editMode]);
 
   if (character === undefined) return <p className="text-slate-400">{S.misc.loading}</p>;
   if (character === null) return <p className="text-slate-400">Charakter nicht gefunden.</p>;
@@ -233,8 +250,13 @@ export function CharacterSheetPage() {
   const afterDelete = () => void navigate({ to: "/" });
 
   return (
-    // Extra Platz unten, damit die mobile Reiter-Leiste nichts überdeckt.
-    <div className="relative space-y-3 pb-14 md:pb-0">
+    /*
+      Extra Platz unten, damit die Reiter-Leiste nichts überdeckt — und ab `md` nur dann,
+      wenn es die Leiste dort überhaupt GIBT. Sie steht dort seit dieser Runde im
+      Bearbeiten-Modus; ein Polster für eine Leiste, die es nicht gibt, ist die fünfte
+      Falle, ein fehlendes für eine, die es gibt, deren Kehrseite.
+    */
+    <div className={`relative space-y-3 pb-14 ${editMode ? "" : "md:pb-0"}`}>
       {/*
         Das WASSERZEICHEN — sein Auftrag: „evtl. ein passendes Symbol welches wie ein
         Wasserzeichen an manchen Stellen vorkommt."
@@ -443,8 +465,15 @@ export function CharacterSheetPage() {
         )}
       </header>
 
-      {/* Auf Desktop bleiben die Reiter oben; mobil sitzen sie unten am Daumen. */}
-      <div className="relative hidden flex-wrap gap-1 md:flex">
+      {/*
+        Auf Desktop bleiben die Reiter oben; mobil sitzen sie unten am Daumen.
+
+        IM BEARBEITEN-MODUS ist diese Reihe weg — dort trägt die rote Leiste unten die
+        Reiter, in JEDER Breite (seine Wahl: „Rote Leiste TRÄGT die Reiter"). Stünden
+        beide da, gäbe es zwei Reiterleisten für dieselbe Frage, und die obere wäre
+        genau die „Kopfleiste", die verschwinden sollte.
+      */}
+      <div className={`relative flex-wrap gap-1 ${editMode ? "hidden" : "hidden md:flex"}`}>
         {tabs.map((key) => (
           <Chip key={key} active={active === key} onClick={() => goTab(key)}>
             {/*
@@ -473,32 +502,18 @@ export function CharacterSheetPage() {
       </div>
 
       {/*
-        Der Bearbeiten-Modus gilt für den ganzen Bogen und bleibt beim Reiterwechsel
-        an, damit man Ränge, Talente und Ausrüstung in einem Durchgang nachträgt.
+        Der Bearbeiten-Modus gilt für den ganzen Bogen und bleibt beim Reiterwechsel an,
+        damit man Ränge, Talente und Ausrüstung in einem Durchgang nachträgt.
 
-        EINGESCHALTET wird er nur im ⋯-Blatt — sein Auftrag: „den Button bearbeiten
-        im Charakterbogen grundsätzlich in allen Bereichen immer hinter den drei
-        Punkten." Vorher stand hier ein Chip über jedem Reiter und nahm dauerhaft
-        eine Zeile weg.
+        HIER steht dazu nichts mehr. Der Streifen saß oben über dem Inhalt; sein Auftrag
+        war: „dann möchte ich bitte, dass Kopf- und Fußleisten verschwinden und dafür die
+        Warnung, dass ich im Bearbeitungsmodus bin, klar erkennbar … rötlich am unteren
+        Bildrand." Die Warnung IST jetzt die Reiterleiste unten — sie wird rot und trägt
+        „Bearbeiten beenden" links neben den Reitern.
 
-        Solange er AN ist, steht der Streifen da UND ist selbst der Rückweg: ein Tap
-        beendet das Bearbeiten. Das ist kein zweites Bedienelement neben dem Menü,
-        sondern der Hinweis selbst — und ohne ihn wäre der Zustand über das Menü
-        erreichbar, aber nur dort wieder verlassbar. Ist Bearbeiten aus, steht hier
-        NICHTS: kein leerer Streifen, keine Zeile Platz.
+        Damit gewinnt der Inhalt oben eine Zeile, und die Warnung steht dort, wo der Daumen
+        ohnehin liegt. Eingeschaltet wird weiter nur im ⋯-Blatt.
       */}
-      {editMode && (
-        <button
-          type="button"
-          onClick={() => setEditMode(false)}
-          className="flex w-full items-center gap-2 rounded-lg border border-amber-800/60 bg-amber-950/30 px-2 py-1 text-left"
-        >
-          <span className="min-w-0 flex-1 truncate text-xs text-amber-300/90">
-            {S.sheet.editModeOn}
-          </span>
-          <span className="shrink-0 text-xs text-amber-300">✎ {S.actions.done}</span>
-        </button>
-      )}
 
       {/* Umbenennen gehört an den Anfang: was man ändern will, sieht man dabei —
           und mit Porträt liegt der Name im Bild, wo ein Eingabefeld nichts zu
@@ -534,13 +549,67 @@ export function CharacterSheetPage() {
         ein Band, das über dem Rand schwebt. Dafür braucht sie das Polster für den unteren
         Geräte-Rand, das vorher die Navigation getragen hat.
       */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-slate-800 bg-slate-900/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      {/*
+        Im BEARBEITEN-Modus wird dieselbe Leiste rot und trägt links den Ausgang — seine
+        Wahl auf die Frage, wie man dann noch die Seite wechselt: „Rote Leiste TRÄGT die
+        Reiter." Damit bleibt der Wechsel dort, wo der Daumen ihn kennt, der Modus ist
+        dauerhaft sichtbar (er wollte ihn „klar erkennbar … rötlich am unteren Bildrand"),
+        und man bleibt beim Wechseln im Modus.
+
+        `rose` und nicht `red`: rot ist in diesem Bogen die GEFAHRENfarbe (Löschen), und
+        eine Warnung, die wie ein Löschknopf aussieht, ist die elfte Falle in neuer Gestalt.
+        Rosé ist seit dieser Runde die Farbe für „hier ist etwas offen" — und das ist der
+        Bearbeiten-Modus: ein Zustand, der auf sein Ende wartet.
+
+        **Und das `md:hidden` gilt nur AUSSERHALB des Modus.** Gewöhnlich ist diese Leiste
+        die Handy-Fassung der Reiter und ab `md` überflüssig — im Bearbeiten-Modus ist sie
+        die WARNUNG und der einzige Ausgang, und beides darf nicht an einer Bildschirmbreite
+        hängen. Sein Wort „Leiste mit Hover Effekt" sagt es selbst: ein Daumen fährt nicht
+        darüber, gemeint ist also gerade die große Fassung. Ab `md` rückt sie hinter die
+        Seitenleiste (`md:left-52`), damit sie nichts überdeckt, was daneben steht.
+      */}
+      <nav
+        className={`fixed inset-x-0 bottom-0 z-30 flex border-t pb-[env(safe-area-inset-bottom)] backdrop-blur ${
+          editMode
+            ? "border-rose-700 bg-rose-950/95 md:left-52"
+            : "border-slate-800 bg-slate-900/95 md:hidden"
+        }`}
+      >
+        {/*
+          Die Knöpfe laufen bis `max-w-3xl` und dann mittig — dieselbe Breite wie das Blatt
+          darüber. Am Handy ändert das nichts (dort ist der Bildschirm schmaler); ab `md`
+          stünden sieben Reiter sonst über die ganze Breite verteilt und hätten mit dem
+          Bogen darüber nichts mehr zu tun.
+        */}
+        <div className="mx-auto flex w-full max-w-3xl">
+        {editMode && (
+          /*
+            Der Ausgang ganz links, vor den Reitern: er ist der einzige Knopf hier, der
+            etwas ÄNDERT, und beim Nachtragen tippt man ihn zuletzt. `hover` für die Maus,
+            `active` für den Daumen — am Handy gibt es kein Darüberfahren, also muss der
+            Druck selbst antworten.
+          */
+          <button
+            type="button"
+            onClick={() => setEditMode(false)}
+            className="flex shrink-0 flex-col items-center justify-center gap-0.5 border-r border-rose-800 px-2.5 py-1.5 text-[9px] font-semibold leading-none text-rose-200 hover:bg-rose-900/60 active:bg-rose-900"
+          >
+            <span className="text-base leading-none">✎</span>
+            {S.sheet.editStopShort}
+          </button>
+        )}
         {tabs.map((key) => (
           <button
             key={key}
             onClick={() => goTab(key)}
             className={`relative flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[9px] font-medium leading-none ${
-              active === key ? "text-amber-400" : "text-slate-400"
+              active === key
+                ? editMode
+                  ? "text-rose-100"
+                  : "text-amber-400"
+                : editMode
+                  ? "text-rose-300/70"
+                  : "text-slate-400"
             }`}
             {...(issueTabs.has(key)
               ? { "aria-label": `${S.sheet.tabs[key]}: ${S.open.tabDot(issueTabs.get(key) ?? 0)}` }
@@ -561,9 +630,14 @@ export function CharacterSheetPage() {
             */}
             {issueTabs.has(key) && <OpenDot className="absolute right-[22%] top-1" />}
             {S.sheet.tabsShort[key]}
-            {active === key && <span className="mt-0.5 h-0.5 w-6 rounded-full bg-amber-400" />}
+            {active === key && (
+              <span
+                className={`mt-0.5 h-0.5 w-6 rounded-full ${editMode ? "bg-rose-200" : "bg-amber-400"}`}
+              />
+            )}
           </button>
         ))}
+        </div>
       </nav>
 
       <HpPad

@@ -3,6 +3,7 @@ import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { S } from "../strings.js";
 import { ensureSeeded, requestPersistentStorage } from "../db/seed.js";
 import { useAppSettings } from "../lib/hooks.js";
+import { useEditModeActive } from "../lib/editMode.js";
 import { useScrollMemory } from "../lib/scrollMemory.js";
 import { Icon, type IconName } from "./icons.js";
 import { DiceResultSheet } from "./DiceSheet.js";
@@ -37,6 +38,12 @@ export function Layout() {
   const mainRef = useRef<HTMLElement | null>(null);
   useScrollMemory(mainRef, pathname + searchStr);
   const { diceEnabled, material } = useAppSettings();
+  /*
+    Läuft gerade ein Bogen im Bearbeiten-Modus? Dann fällt die Hauptnavigation weg (siehe
+    unten). Gelesen und nie gesetzt — die Hülle darf den Modus nicht ändern, sonst gäbe es
+    zwei Stellen, die ihn kennen.
+  */
+  const bearbeiten = useEditModeActive();
   // Würfeln abgeschaltet → der Reiter verschwindet ganz aus der Navigation.
   const visibleNav = NAV.filter((item) => diceEnabled || item.to !== "/wuerfel");
 
@@ -102,9 +109,17 @@ export function Layout() {
         und der Weiter-Balken des Assistenten sitzen jetzt selbst auf `bottom-0` und halten
         sich ihren Platz mit eigenem Polster frei.
       */}
+      {/*
+        Im Bearbeiten-Modus fällt das obere Polster mit der Leiste zusammen weg — sonst
+        klafft dort die Höhe einer Leiste, die es gerade nicht gibt. Das ist die fünfte
+        Falle wörtlich: wer eine Höhe aus der Hülle einrechnet, muss sie zurückstellen,
+        sobald die Hülle sie nicht mehr hat.
+      */}
       <main
         ref={mainRef}
-        className="flex-1 overflow-y-auto pt-[calc(3.5rem+env(safe-area-inset-top))] pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:pt-0 md:pb-4"
+        className={`flex-1 overflow-y-auto pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:pt-0 md:pb-4 ${
+          bearbeiten ? "pt-[env(safe-area-inset-top)]" : "pt-[calc(3.5rem+env(safe-area-inset-top))]"
+        }`}
       >
         {seedMessage && (
           <div className="bg-amber-900/40 px-4 py-2 text-center text-xs text-amber-200">
@@ -138,6 +153,20 @@ export function Layout() {
         eine Höhe aus der Hülle einrechnet, muss sie auch zurückstellen — das ist die
         fünfte Falle, diesmal in der anderen Richtung.
       */}
+      {/*
+        Im Bearbeiten-Modus ist die Hauptnavigation WEG — sein Auftrag: „dann möchte ich
+        bitte, dass Kopf- und Fußleisten verschwinden und dafür die Warnung, dass ich im
+        Bearbeitungsmodus bin, klar erkennbar … rötlich am unteren Bildrand."
+
+        Weg und nicht bloß gedämpft: wer beim Nachtragen versehentlich auf „Kompendium"
+        tippt, verliert den Modus und die Stelle in der Liste. Der Weg hinaus steht unten in
+        der roten Leiste, und die trägt auch die Reiter — seine Wahl, damit der Wechsel dort
+        bleibt, wo der Daumen ihn kennt.
+
+        Ab `md` ändert sich nichts: dort ist die Navigation die Seitenleiste links, die
+        keinem Inhalt Platz wegnimmt.
+      */}
+      {!bearbeiten && (
       <nav className="fixed inset-x-0 top-0 z-40 flex h-[calc(3.5rem+env(safe-area-inset-top))] border-b border-slate-800 bg-slate-950/95 pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
         {visibleNav.map((item) => (
           <Link
@@ -152,6 +181,7 @@ export function Layout() {
           </Link>
         ))}
       </nav>
+      )}
 
       {diceEnabled && <DiceResultSheet />}
       {/* Löst den Geräte-Abgleich beim Start aus; zeigt selbst nichts an. Während einer

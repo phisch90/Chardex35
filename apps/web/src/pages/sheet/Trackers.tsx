@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   effectiveTrackerMax,
   parseDice,
@@ -18,12 +19,23 @@ import { Icon } from "../../ui/icons.js";
 import { cryptoRng } from "../../lib/rng.js";
 import { useAppSettings } from "../../lib/hooks.js";
 import { useDiceStore } from "../../lib/diceStore.js";
-import { Card, Chip, GhostButton, SectionTitle } from "../../ui/bits.js";
+import { Card, Chip, GhostButton, SectionTitle, inputClass } from "../../ui/bits.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
 import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import type { TabProps } from "./index.js";
 
 type Tracker = Character["trackers"][number];
+
+/**
+ * Was das Formular anfasst — nicht mehr.
+ *
+ * `value`, `id` und `suggestedFrom` stehen bewusst NICHT drin: der Stand eines Zählers ist
+ * Spielzustand und gehört an die ±-Knöpfe am Tisch, die Kennung gehört der App, und die
+ * Herkunft ist eine Tatsache und keine Einstellung. Ein Formular, das alles anfassen darf,
+ * lädt dazu ein, genau das kaputtzumachen.
+ */
+type TrackerDraft = Pick<Tracker, "name" | "kind"> &
+  Partial<Pick<Tracker, "max" | "maxManual" | "formula" | "refill" | "resetTo" | "category">>;
 
 /**
  * Freie Zähler für Hausregel-Mechaniken (Aktionspunkte, Untote vertreiben …).
@@ -79,24 +91,46 @@ export function TrackersCard({
       if (target) fn(target);
     });
 
-  const addTracker = () => {
-    const name = prompt(S.trackers.name + "?");
-    if (!name) return;
+  /*
+    Ein neuer Zähler entsteht mit ALLEN Optionen sichtbar — sein Auftrag: „bitte sofort
+    haben, sobald ich ihn anlege, nicht einfach nur den Namen anlegen … Wer das nicht weiß,
+    findet das niemals."
+
+    Vorher war es ein `prompt()` für den Namen, und alles andere lag hinter einem ✎ am
+    fertigen Zähler. `null` heißt „kein Formular offen"; ein Entwurf ist nötig, weil der
+    Zähler noch nicht existiert und es nichts zum Durchschreiben gibt.
+
+    Der Bereich ist vorbelegt mit DIESEM Reiter: ein neuer Zähler gehört dorthin, wo er
+    entsteht — sonst legt man ihn im Kampf an und findet ihn bei den Werten wieder.
+  */
+  const [draft, setDraft] = useState<TrackerDraft | null>(null);
+  const startDraft = () =>
+    setDraft({ name: "", kind: "counter", category, maxManual: false });
+  const commitDraft = () => {
+    if (draft === null) return;
+    const name = draft.name.trim();
+    if (name === "") return;
     save((c) =>
       void c.trackers.push({
-        id: crypto.randomUUID(),
+        ...draft,
         name,
-        kind: "counter",
-        value: 0,
-        maxManual: false,
+        id: crypto.randomUUID(),
         /*
-          Der neue Zähler gehört in den Bereich, in dem er ENTSTEHT. Ohne das legt man
-          ihn im Kampf an und findet ihn auf der Werte-Seite wieder — die Familie
-          „etwas weiß es, und etwas anderes kann es nicht", diesmal beim Anlegen.
+          `maxManual` ist im Zähler PFLICHT (das Schema hat dafür ein `.default`), im
+          Entwurf aber nicht — also hier ausdrücklich. Genau diese Lücke hat `tsc`
+          gefunden und kein Test: ein fehlender Standardwert am Literal ist die erste
+          Fehlerfamilie dieses Projekts.
         */
-        category,
+        maxManual: draft.maxManual ?? false,
+        /*
+          Ein neuer Zähler startet VOLL, wenn er ein Maximum hat: eine neue Figur hat ihre
+          Tagesfähigkeiten noch nicht verbraucht. Genau das war beim Assistenten schon
+          einmal falsch („Untote vertreiben 0 von 3" an einem frischen Kleriker).
+        */
+        value: draft.kind === "counter" && draft.max !== undefined ? draft.max : 0,
       }),
     );
+    setDraft(null);
   };
 
   return (
@@ -188,8 +222,26 @@ export function TrackersCard({
               ab drei rät man, welcher als nächstes kommt, und mehrere zugleich
               („lange Rast ODER Stufenaufstieg") gehen damit gar nicht.
             */}
-            {editMode && tracker.kind === "counter" && (
-              <RefillRow tracker={tracker} save={save} />
+            {/*
+              Der Optionen-Kasten für JEDE Art, nicht mehr nur für echte Zähler: die Art
+              selbst steht darin, und wer einen festen Wert in einen Zähler umstellen will,
+              muss den Kasten sehen können. Vorher lag der Umschalter oben in der Zeile als
+              Knopf mit einem Buchstaben.
+            */}
+            {editMode && (
+              <TrackerFields
+                value={tracker}
+                liveMax={maxOf(tracker)}
+                suggestionMax={
+                  suggestTrackers(sheet).find((v) => v.key === tracker.suggestedFrom)?.max
+                }
+                onChange={(patch) =>
+                  mutate(tracker.id, (t) => {
+                    // Durchschreiben, nicht zwischenspeichern (zweite Falle in CLAUDE.md).
+                    Object.assign(t, patch);
+                  })
+                }
+              />
             )}
 
             {editMode && (
@@ -261,8 +313,33 @@ export function TrackersCard({
       )}
 
       <div className="mt-2">
-        <GhostButton onClick={addTracker}>+ {S.trackers.add}</GhostButton>
-        {trackers.length === 0 && (
+        {draft === null ? (
+          <GhostButton onClick={startDraft}>+ {S.trackers.add}</GhostButton>
+        ) : (
+          <div>
+            <TrackerFields value={draft} onChange={(patch) => setDraft({ ...draft, ...patch })} />
+            <div className="mt-2 flex gap-2">
+              {/*
+                „Anlegen" bleibt gesperrt, solange kein Name dasteht — ein Zähler ohne Namen
+                ist am Tisch nicht zu unterscheiden. Gesperrt und nicht stillschweigend
+                wirkungslos: ein Knopf, der nichts tut, verspricht etwas.
+              */}
+              <GhostButton onClick={commitDraft} disabled={draft.name.trim() === ""}>
+                {S.actions.create}
+              </GhostButton>
+              <GhostButton onClick={() => setDraft(null)}>{S.actions.cancel}</GhostButton>
+            </div>
+          </div>
+        )}
+        {/*
+          Der Satz sagt, was in DIESEN Bereich gehört — er wirbt für den Knopf darüber und
+          ist erledigt, sobald das Formular offen ist. Stehen bleibt er dort nicht bloß
+          überflüssig: er rutscht unter „Anlegen / Abbrechen" und liest sich wie deren
+          Erklärung. Genau das war beim Verteilen-Knopf im Punktekauf schon einmal der
+          Fund, den nur der BLICK gebracht hat — ein Satz neben der falschen Sache ist
+          schlimmer als keiner.
+        */}
+        {trackers.length === 0 && draft === null && (
           <p className="mt-1.5 text-xs text-slate-500">{S.trackers.hint[category]}</p>
         )}
       </div>
@@ -271,80 +348,179 @@ export function TrackersCard({
 }
 
 /**
- * Wann füllt sich dieser Zähler, und worauf zurück?
+ * ALLE Optionen eines Zählers an einer Stelle — beim Anlegen und beim Bearbeiten dieselben.
  *
- * Geschrieben wird IMMER die ganze Menge, auch wenn sie derselben entspricht, die
- * `refillOf` ohnehin geraten hätte: ab dem ersten Tap ist es seine Entscheidung und
- * keine Ableitung mehr, und sie soll auch dann stehen bleiben, wenn der Zähler
- * später seinen Vorschlag verliert.
+ * Sein Auftrag, wörtlich: „Wenn ich einen neuen Zähler anlege, dann möchte ich bitte ganz
+ * klar direkt dort nicht nur über den einzelnen Buchstaben, also erst mal möchte ich die
+ * kompletten Optionen, die ich dann bei dem Zähler habe, also wann er sich wieder auffüllt
+ * et cetera et cetera, bitte sofort haben, sobald ich ihn anlege, nicht einfach nur den
+ * Namen anlegen. Jetzt aktuell muss ich dann immer erst über Bearbeiten gehen und dann den
+ * Zähler bearbeiten. Wer das nicht weiß, findet das niemals."
+ *
+ * Vorher war es dreierlei an drei Orten: ein `prompt()` für den Namen beim Anlegen, ein
+ * Knopf mit EINEM BUCHSTABEN für die Art, und drei weitere `prompt()`-Dialoge hinter einem
+ * ✎. Zusammen also ein Weg, den man kennen musste — und die App wusste ihn, ohne ihn zu
+ * zeigen. Das ist die Fehlerfamilie „etwas weiß es, und etwas anderes kann es nicht", nur
+ * in ihrer Bedienform.
+ *
+ * **Ein Bauteil für beide Fälle**, weil sonst die Hälfte der Felder beim Anlegen fehlt und
+ * beim Bearbeiten eine andere Hälfte — genau der Zustand, aus dem er kommt. Der Unterschied
+ * steckt nur im `onChange`:
+ *
+ * - **Bearbeiten:** jedes Feld schreibt SOFORT durch (`onChange` → `save`). Ein Feld, das
+ *   seinen Wert in eine eigene Kopie zieht und erst beim Verlassen speichert, verliert
+ *   Tippen — das steht als zweite Falle in CLAUDE.md.
+ * - **Anlegen:** der Zähler existiert noch nicht, also führt der Aufrufer einen Entwurf im
+ *   State und legt am Ende EINMAL an.
  */
-function RefillRow({
-  tracker,
-  save,
+function TrackerFields({
+  value,
+  onChange,
+  /** Die wirkliche Grenze aus dem Vorschlag — nur beim Bearbeiten bekannt. */
+  liveMax,
+  suggestionMax,
 }: {
-  tracker: Tracker;
-  save: TabProps["save"];
+  value: TrackerDraft;
+  onChange: (patch: Partial<TrackerDraft>) => void;
+  liveMax?: number | undefined;
+  suggestionMax?: number | undefined;
 }) {
-  const active = refillOf(tracker);
-  const toggle = (kind: TrackerRefillKind) => {
+  const active = refillOf(value);
+  const toggleRefill = (kind: TrackerRefillKind) => {
     const next = new Set(active);
     if (next.has(kind)) next.delete(kind);
     else next.add(kind);
     /*
-      „Lange Rast" abwählen, während „Kurze Pause" an ist, wäre ein Zustand, den es
-      nicht gibt (`refillOf` folgert ihn ohnehin zurück). Dann geht die kurze Pause
-      mit — sonst tippt er auf einen Knopf, und es passiert nichts.
+      „Lange Rast" abwählen, während „Kurze Pause" an ist, wäre ein Zustand, den es nicht
+      gibt (`refillOf` folgert ihn ohnehin zurück). Dann geht die kurze Pause mit — sonst
+      tippt er auf einen Knopf, und es passiert nichts.
     */
     if (kind === "long" && !next.has("long")) next.delete("short");
-    save((c) => {
-      const target = c.trackers.find((t) => t.id === tracker.id);
-      if (target) target.refill = TRACKER_REFILL_KINDS.filter((k) => next.has(k));
-    });
+    onChange({ refill: TRACKER_REFILL_KINDS.filter((k) => next.has(k)) });
   };
 
-  const to = resetToOf(tracker);
-  const setTo = (value: "max" | "zero") =>
-    save((c) => {
-      const target = c.trackers.find((t) => t.id === tracker.id);
-      if (target) target.resetTo = value;
-    });
-
   return (
-    <div className="mt-1.5 space-y-1 rounded-lg border border-slate-800 bg-slate-900/40 p-2">
+    <div className="mt-1.5 space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-2">
+      {/* Der Name als FELD und nicht als Dialog — durchschreibend, siehe oben. */}
+      <label className="block">
+        <span className="mb-0.5 block text-[10px] uppercase tracking-wide text-slate-500">
+          {S.trackers.name}
+        </span>
+        <input
+          type="text"
+          value={value.name}
+          onChange={(e) => onChange({ name: e.target.value })}
+          placeholder={S.trackers.namePlaceholder}
+          className={inputClass}
+        />
+      </label>
+
+      {/*
+        Die ART als drei Knöpfe mit ihren ganzen Namen. Vorher ein Knopf, der durchschaltete
+        und dabei „Z" zeigte — sein „komischer ZFW Button".
+      */}
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[10px] uppercase tracking-wide text-slate-500">
-          {S.trackers.refillTitle}
+          {S.trackers.kindTitle}
         </span>
-        {TRACKER_REFILL_KINDS.map((kind) => (
-          <Chip key={kind} active={active.has(kind)} onClick={() => toggle(kind)}>
-            {S.trackers.refillKinds[kind] ?? kind}
+        {(["counter", "value", "roll"] as const).map((kind) => (
+          <Chip key={kind} active={value.kind === kind} onClick={() => onChange({ kind })}>
+            {S.trackers.kinds[kind] ?? kind}
           </Chip>
         ))}
       </div>
-      {active.has("short") && (
-        <p className="text-[10px] leading-snug text-slate-500">{S.trackers.refillShortImplies}</p>
-      )}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[10px] uppercase tracking-wide text-slate-500">
-          {S.trackers.resetToTitle}
-        </span>
-        <Chip active={to === "max"} onClick={() => setTo("max")}>
-          {S.trackers.resetToKinds["max"]}
-        </Chip>
-        <Chip active={to === "zero"} onClick={() => setTo("zero")}>
-          {S.trackers.resetToKinds["zero"]}
-        </Chip>
-      </div>
-      <p className="text-[10px] leading-snug text-slate-500">{S.trackers.resetToHint}</p>
-      {/*
-        WO der Zähler steht. Die Reihe sitzt in derselben Kiste wie „füllt sich bei"
-        und „zurück auf": das ist der Kasten, in dem ein Zähler EINGESTELLT wird, und
-        ein zweiter Ort für dieselbe Sorte Frage wäre einer zu viel.
+      <p className="text-[10px] leading-snug text-slate-500">
+        {S.trackers.kindHints[value.kind] ?? ""}
+      </p>
 
-        Nach dem Umstellen verschwindet der Zähler aus diesem Reiter — deshalb sagt
-        die Zeile darunter, wohin er geht. Ohne den Satz sieht ein Tap aus wie ein
-        Löschen.
+      {/* Das Maximum nur beim echten Zähler: ein fester Wert und ein Wurf haben keins. */}
+      {value.kind === "counter" && (
+        <label className="block">
+          <span className="mb-0.5 block text-[10px] uppercase tracking-wide text-slate-500">
+            {S.trackers.max}
+          </span>
+          <input
+            type="number"
+            inputMode="numeric"
+            value={value.max ?? ""}
+            placeholder={liveMax !== undefined ? String(liveMax) : S.trackers.maxFree}
+            onChange={(e) => {
+              const zahl = e.target.value.trim() === "" ? undefined : Number(e.target.value);
+              const gültig = zahl !== undefined && Number.isFinite(zahl);
+              /*
+                Von Hand gesetzt heißt von Hand gesetzt: ab jetzt gewinnt der eigene Wert
+                und der Zähler folgt dem Vorschlag nicht mehr. Leer geräumt bedeutet
+                umgekehrt „wieder dem Vorschlag folgen" — deshalb wird `maxManual` hier
+                mitgeschrieben und nicht geraten.
+              */
+              onChange({
+                max: gültig ? zahl : undefined,
+                maxManual: gültig && zahl !== suggestionMax,
+              });
+            }}
+            className={inputClass}
+          />
+        </label>
+      )}
+
+      {/* Die Formel nur beim Wurf. */}
+      {value.kind === "roll" && (
+        <label className="block">
+          <span className="mb-0.5 block text-[10px] uppercase tracking-wide text-slate-500">
+            {S.trackers.formula}
+          </span>
+          <input
+            type="text"
+            value={value.formula ?? ""}
+            placeholder="1d6+2"
+            onChange={(e) =>
+              onChange({ formula: e.target.value.trim() === "" ? undefined : e.target.value })
+            }
+            className={inputClass}
+          />
+        </label>
+      )}
+
+      {/*
+        Auffüllen und Richtung ebenfalls nur beim Zähler — ein fester Wert füllt sich
+        nicht, und ein Würfelwurf hat nichts, was zurückgehen könnte.
       */}
+      {value.kind === "counter" && (
+        <>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] uppercase tracking-wide text-slate-500">
+              {S.trackers.refillTitle}
+            </span>
+            {TRACKER_REFILL_KINDS.map((kind) => (
+              <Chip key={kind} active={active.has(kind)} onClick={() => toggleRefill(kind)}>
+                {S.trackers.refillKinds[kind] ?? kind}
+              </Chip>
+            ))}
+          </div>
+          {active.has("short") && (
+            <p className="text-[10px] leading-snug text-slate-500">
+              {S.trackers.refillShortImplies}
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] uppercase tracking-wide text-slate-500">
+              {S.trackers.resetToTitle}
+            </span>
+            <Chip active={resetToOf(value) === "max"} onClick={() => onChange({ resetTo: "max" })}>
+              {S.trackers.resetToKinds["max"]}
+            </Chip>
+            <Chip
+              active={resetToOf(value) === "zero"}
+              onClick={() => onChange({ resetTo: "zero" })}
+            >
+              {S.trackers.resetToKinds["zero"]}
+            </Chip>
+          </div>
+          <p className="text-[10px] leading-snug text-slate-500">{S.trackers.resetToHint}</p>
+        </>
+      )}
+
+      {/* WO er steht — für jede Art, denn auch ein fester Wert gehört irgendwohin. */}
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[10px] uppercase tracking-wide text-slate-500">
           {S.trackers.categoryTitle}
@@ -352,13 +528,8 @@ function RefillRow({
         {TRACKER_CATEGORIES.map((kind) => (
           <Chip
             key={kind}
-            active={categoryOf(tracker) === kind}
-            onClick={() =>
-              save((c) => {
-                const target = c.trackers.find((t) => t.id === tracker.id);
-                if (target) target.category = kind;
-              })
-            }
+            active={categoryOf(value) === kind}
+            onClick={() => onChange({ category: kind })}
           >
             {S.trackers.categories[kind] ?? kind}
           </Chip>
@@ -392,49 +563,25 @@ function TrackerEditor({
   save: TabProps["save"];
   onDeleted: (label: string, restore: () => void) => void;
 }) {
-  const cycleKind = () => {
-    const order: Tracker["kind"][] = ["counter", "value", "roll"];
-    const next = order[(order.indexOf(tracker.kind) + 1) % order.length]!;
-    save((c) => {
-      const target = c.trackers.find((t) => t.id === tracker.id);
-      if (target) target.kind = next;
-    });
-  };
+  /*
+    Hier standen zwei Dinge, die beide weg mussten — sein Wort dazu: „diese komische ZFW
+    Button, das soll ausgeschrieben sein, dass son son Buttons nebeneinander sein und nicht
+    einer mit am einen Buchstaben nur der dann wechselt, sondern das soll halt einfach
+    komplett in den Optionen klar sein."
 
+    1. Ein Knopf, der die ART durchschaltete und dabei nur DEREN ERSTEN BUCHSTABEN zeigte
+       („Z" · „F" · „W"). Dasselbe Muster wie die ⟳-Schleife bei den Rast-Bedingungen, die
+       aus demselben Grund schon einmal ersetzt wurde: bei drei Werten rät man, welcher als
+       nächstes kommt.
+    2. Ein ✎, das drei `prompt()`-Dialoge hintereinander aufmachte — die siebte Falle
+       wörtlich: „ein `prompt()` ist keine Auswahl". Und ein Weg, den man kennen muss:
+       „Wer das nicht weiß, findet das niemals."
+
+    Beides steht jetzt ausgeschrieben im Optionen-Kasten unter dem Zähler
+    (`TrackerFields`). Übrig bleibt hier das Löschen.
+  */
   return (
     <div className="flex shrink-0 gap-1">
-      <GhostButton onClick={cycleKind}>{S.trackers.kinds[tracker.kind]?.[0] ?? "?"}</GhostButton>
-      <GhostButton
-        onClick={() => {
-          const name = prompt(S.trackers.name, tracker.name);
-          if (name === null) return;
-          const max = prompt(S.trackers.max, effectiveTrackerMax(tracker, sheet)?.toString() ?? "");
-          const formula =
-            tracker.kind === "roll"
-              ? prompt(S.trackers.formula, tracker.formula ?? "")
-              : tracker.formula ?? null;
-          save((c) => {
-            const target = c.trackers.find((t) => t.id === tracker.id);
-            if (!target) return;
-            if (name.trim()) target.name = name.trim();
-            /*
-              Von Hand gesetzt heißt von Hand gesetzt: ab jetzt gewinnt der eigene
-              Wert und der Zähler folgt dem Vorschlag nicht mehr. Leer geräumt
-              bedeutet umgekehrt „wieder dem Vorschlag folgen".
-            */
-            const parsedMax = max === null || max.trim() === "" ? undefined : Number(max);
-            const gültig = parsedMax !== undefined && Number.isFinite(parsedMax);
-            target.max = gültig ? parsedMax : undefined;
-            const ausVorschlag = suggestTrackers(sheet).find(
-              (v) => v.key === tracker.suggestedFrom,
-            )?.max;
-            target.maxManual = gültig && parsedMax !== ausVorschlag;
-            target.formula = formula && formula.trim() !== "" ? formula.trim() : undefined;
-          });
-        }}
-      >
-        ✎
-      </GhostButton>
       <ConfirmDeleteButton
         label={tracker.name}
         onConfirm={() => {
