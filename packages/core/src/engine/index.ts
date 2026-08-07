@@ -44,6 +44,7 @@ export * from "./dying.js";
 export * from "./accent.js";
 export * from "./prereqs.js";
 export * from "./advice.js";
+export * from "./pointBuy.js";
 export * from "./classFeatures.js";
 export * from "./domains.js";
 export * from "./issues.js";

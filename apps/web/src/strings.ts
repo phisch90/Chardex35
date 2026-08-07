@@ -363,6 +363,34 @@ export const S = {
       Bildchen mitten im Satz.
     */
     rollAll: "Alle würfeln (4W6, niedrigster fällt)",
+    /*
+      Punktekauf im Attributs-Schritt — nur sichtbar, wenn in den Einstellungen ein
+      Budget steht. Ohne Budget steht hier gar nichts, das ist seine Entscheidung.
+
+      Drei Sätze für drei Zustände, und dass es DREI sind, ist der Kern: „passt" ist
+      genauso eine Auskunft wie „zu viel" und „übrig". Wer nur überzogen meldet,
+      lässt liegengebliebene Punkte unbemerkt — dieselbe Falle wie einst bei den
+      Fertigkeitspunkten und den Talent-Slots.
+    */
+    /*
+      ACHTUNG, zwei Sorten Punkte in einem Assistenten: `pointsLeft` weiter oben sind die
+      FERTIGKEITSpunkte, diese hier sind die ATTRIBUTSpunkte. Deshalb tragen sie den
+      Bereich im Namen — der erste Anlauf hieß auch `pointsLeft` und kollidierte still
+      im Objekt, weil ein Literal mit zwei gleichen Schlüsseln der spätere gewinnt.
+      Gefunden hat das `tsc`, nicht der Test.
+    */
+    abilityPointsUsed: (spent: number, budget: number) => `Punkte: ${spent} von ${budget}`,
+    abilityPointsFits: "passt genau",
+    abilityPointsLeft: (left: number) =>
+      left === 1 ? "1 Punkt übrig" : `${left} Punkte übrig`,
+    abilityPointsOver: (over: number) =>
+      over === 1 ? "1 Punkt zu viel" : `${over} Punkte zu viel`,
+    /** Der Preis am einzelnen Feld — damit man sieht, was der nächste Punkt kostet. */
+    abilityPointsCost: (cost: number) => (cost === 1 ? "1 Punkt" : `${cost} Punkte`),
+    abilityPointsSpread: "Auf Budget verteilen",
+    /** Was der Knopf tut — und was er NICHT tut. */
+    abilityPointsSpreadHint:
+      "Verteilt das Budget nach der Empfehlung für deine Klasse. Er kauft nur, was den Modifikator wirklich verbessert; ein Restpunkt bleibt deshalb manchmal stehen.",
     /** NPC-Klassen sind kein Spielerfutter — aber erreichbar, für Gefolge und NSCs. */
     showNpcClasses: "auch NPC-Klassen",
   },
@@ -409,11 +437,24 @@ export const S = {
     houseRules: "Hausregeln",
     fractional: "Fraktionale BAB/Saves (Unearthed Arcana)",
     maxHpL1: "Volle HP auf Stufe 1",
-    xpPenalty: "Multiclass-EP-Strafe (RAW)",
     deathAtNegCon: "Tod erst beim negativen CON-Wert",
     deathAtNegConHint:
       "Eure Hausregel: bei CON 14 ist die Figur erst bei −14 HP tot. Zwischen 0 und dem negativen CON-Modifikator stabilisiert eine Fortitude-Probe gegen SG 10.",
     deathAtMinus10Hint: "Regel des Buches: tot bei −10 HP, egal wie zäh die Figur ist.",
+    /*
+      Punktekauf für die Attribute. Der Text sagt bewusst, WO gezählt wird — im
+      Assistenten und nicht am Bogen: eure bestehenden Bögen sind gewürfelt, und eine
+      Warnung dort wäre eine Meldung für eine Regel, unter der sie nie entstanden sind.
+    */
+    pointBuy: "Punktekauf für die Attribute",
+    pointBuyHint:
+      "Statt zu würfeln bekommt jeder dasselbe Budget und kauft seine Grundwerte: 8 ist gratis, 14 kostet 6, 18 kostet 16 Punkte.",
+    pointBuyOff: "Aus",
+    pointBuyOwn: "eigenes",
+    pointBuyOffHint:
+      "Es wird gewürfelt — die App zählt keine Punkte und sagt dazu nichts. Bestehende Bögen bleiben unangetastet.",
+    pointBuyOnHint: (budget: number) =>
+      `Der Assistent zählt beim Attributs-Schritt mit und meldet beide Richtungen: zu viel ausgegeben und noch übrig. Gewarnt, nicht gesperrt — ${budget} Punkte sind eure Vorgabe, nicht die des Programms. Fertige Bögen fasst das nicht an.`,
     /*
       „Leichte Waffe" ist absichtlich im Namen: der Schalter ist sonst nicht auffindbar,
       wenn man ihn braucht — und man braucht ihn genau dann, wenn man mit Kurzschwert oder

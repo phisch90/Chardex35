@@ -674,20 +674,85 @@ sagt „Zauberränge". Umbenennen ginge, kollidiert aber mit den Fertigkeits-RÄ
 Ränge in Spellcraft" neben „3 Zauberränge Grad 1" wären zwei Bedeutungen für ein Wort.
 Deshalb bleibt „Platz" stehen, bis er etwas anderes sagt.
 
-**Beim Zusammentragen aufgefallen: drei Hausregel-Felder haben keine Wirkung.**
-`houseRulesSchema` hat sechs Felder; drei rechnen (`fractionalBabAndSaves`,
-`maxHpFirstLevel` — Standard AN —, `ignoreEncumbrance`), und drei tun nichts:
-`multiclassXpPenalty` **hat einen Schalter in den Einstellungen, den niemand liest**
-(sein eigener Kommentar sagt „Warn-only", aber es gibt keine Warnung), `deathAt` und
-`pointBuyBudget` haben nicht einmal eine Oberfläche. Das ist die Familie „etwas weiß es,
+**Die drei Hausregel-Felder ohne Wirkung — alle drei erledigt.**
+`houseRulesSchema` hatte sechs Felder; drei rechneten (`fractionalBabAndSaves`,
+`maxHpFirstLevel` — Standard AN —, `ignoreEncumbrance`), und drei taten nichts:
+`multiclassXpPenalty` **hatte einen Schalter in den Einstellungen, den niemand las**
+(sein eigener Kommentar sagte „Warn-only", aber es gab keine Warnung), `deathAt` und
+`pointBuyBudget` hatten nicht einmal eine Oberfläche. Das war die Familie „etwas weiß es,
 und etwas anderes kann es nicht" in ihrer schlichtesten Form: ein Schalter, der etwas
-verspricht und nichts tut, ist schlimmer als kein Schalter. Alle drei sind Tischregeln,
-also stehen sie in `FRAGEN-AN-DEN-DM.md` — jede mit einer fertigen Hälfte dahinter. Von
-den drei ist `deathAt` inzwischen beantwortet und gebaut (Martins Regel 6); die anderen
-zwei stehen dort unter „Zwei Regeln, für die schon ein Fach existiert". **Auf eine
-Abschnittsnummer wird hier absichtlich nicht mehr verwiesen** — die Nummern verschieben
-sich, sobald eine Frage beantwortet ist und nach Teil 1 wandert, und ein Verweis auf
-„Frage 9.1" zeigte dann ins Leere.
+verspricht und nichts tut, ist schlimmer als kein Schalter.
+
+Der Weg heraus war für jedes ein anderer, und die drei Wege zusammen sind die Lehre:
+
+- **`deathAt`: beantwortet und gerechnet** (Martins Regel 6, `engine/dying.ts`).
+- **`multiclassXpPenalty`: ENTFERNT.** Sein Wort: „Ep Strafe kannste aber ganz weg
+  lassen. Spielen wir nicht." Feld, Schalter und Text sind weg. Dass das gefahrlos ging,
+  ist keine Vermutung: der Standardwert war `false` und niemand las ihn, ein gespeichertes
+  `true` hätte also nie etwas bewirkt — und Zod streift beim Lesen unbekannte Schlüssel
+  ohnehin ab. **Ein Schalter für eine Regel, die niemand spielt, ist nicht neutral,
+  sondern Lärm** — und einer, der etwas verspricht und nichts tut, ist der Anfang eines
+  Fehlerberichts.
+- **`pointBuyBudget`: gebaut** (eigener Abschnitt weiter unten).
+
+**Auf eine Abschnittsnummer in `FRAGEN-AN-DEN-DM.md` wird hier absichtlich nicht
+verwiesen** — die Nummern verschieben sich, sobald eine Frage beantwortet ist und nach
+Teil 1 wandert, und ein Verweis auf „Frage 9.1" zeigte dann ins Leere.
+
+## Punktekauf für die Attribute — ein Angebot, keine Regel
+
+Sein Auftrag war „setzt mal 1 um", gemeint war die Runde gegen die toten Schalter. Beim
+Punktebudget hat er die drei Fragen entschieden: **Budget standardmäßig AUS** · **gezählt
+wird nur im Assistenten** · **Preis je Feld plus ein Knopf „Auf Budget verteilen"**.
+
+**Die wichtigste der drei ist die zweite, und ihr Grund ist Hike.** Eure Bögen sind
+gewürfelt — sein Satz dazu steht weiter oben: „Anfangs haben wir auch gewürfelt, deswegen
+passt hikes TP nicht ganz." Hikes Attribute treffen also kein Budget. Eine Warnung am
+BOGEN hätte ab sofort an jedem bestehenden Charakter geklebt, für eine Regel, unter der
+er nie gebaut wurde — genau der Fehler, den die Runde eigentlich bekämpft: ein Satz, der
+immer dasteht, wird nicht gelesen. Deshalb liest `deriveSheet` das Budget NICHT, und die
+Prüfung im gebauten Bogen hält das als Abwesenheit fest.
+
+Gerechnet wird in `core/engine/pointBuy.ts` — Tabelle des Regelwerks (8 gratis, 14 kostet
+6, 18 kostet 16), `pointBuySpent` als Summe, `pointBuyState` mit **einer** Zahl für beide
+Richtungen (`left`, negativ heißt überzogen). Die zwei Zahlen daneben zu führen wäre die
+zweite Fehlerfamilie: „3 zu viel" und „3 übrig" dürfen nie zusammen dastehen.
+
+Drei Entscheidungen im Kleinen sind eine Notiz wert:
+
+- **Die Tabelle hört bei 8 und 18 auf, die App darf das nicht.** Wer eine 6 oder eine 19
+  tippt, bekommt trotzdem einen Preis (unter 8 gibt jeder Punkt einen zurück, über 18
+  wachsen die Schritte weiter) — sonst stünde ein Strich, wo eine Auskunft hingehört.
+  Die Fortsetzung ist ausdrücklich die des Programms und steht als solche im Kommentar.
+- **Der Verteilen-Knopf kauft nur, was den MODIFIKATOR verbessert.** In 3.5 zählt der
+  gerade Wert: 8 und 9 geben beide −1. Der erste Entwurf gab den letzten Punkt in ein
+  STR 9 und sah damit aus wie ein Tippfehler statt wie eine Entscheidung. **Gefunden hat
+  das ein Blatt mit allen Vorschlägen in vier Budgets, kein Test** — und der Test war
+  sogar schuld: er verlangte „nichts bleibt liegen", und das war das falsche Ziel.
+  Richtig ist „nichts wird verschwendet"; ein Restpunkt darf stehen bleiben und wird als
+  „1 Punkt übrig" angesagt.
+- **Billigster Schritt zuerst, nicht wichtigster.** So holt das Budget die meisten
+  Modifikatorpunkte heraus: STR 16 + CON 16 schlägt STR 18 + CON 12, weil die 17 und die
+  18 drei Punkte je Stufe kosten. Die Reihenfolge der Empfehlung entscheidet bei gleichem
+  Preis — und sie kommt aus `Advice.abilities`, derselben Quelle wie die Sterne an den
+  Feldern. Eine zweite Liste im Knopf wären zwei Wahrheiten.
+
+Zwei Sachen hat der Lauf im gebauten Bogen gefunden, und beide waren MEINE Sonde: die
+Punkte-Zeile stand nicht in dem `div`, das ich mit `.last()` erraten hatte (sie sitzt als
+Geschwister über der Knopfreihe — zwölfte Falle, wieder), und der Attributs-Schritt ist
+GESPERRT, bis Volk und Klasse stehen („Erst Volk und Klasse wählen"). Beim zweiten hat die
+Regel gehalten, dass eine Navigationshilfe nicht still scheitern darf: sie warf, und der
+Fehler zeigte sofort auf die richtige Stelle statt auf die App.
+
+Und einen Fund hat nur der BLICK gebracht: der Hinweis zum Verteilen-Knopf stand zuerst
+oben im Punkte-Kasten und erklärte dort scheinbar die Summe, während der Knopf darunter
+lag. Ein Satz neben der falschen Sache ist schlimmer als keiner.
+
+Und eine Namensfalle, die `tsc` gefangen hat und kein Test: im Assistenten gibt es
+**zwei Sorten Punkte** — Fertigkeitspunkte und Attributspunkte. Meine neuen Texte hießen
+zuerst genauso wie die alten (`pointsLeft`), und in einem Objektliteral gewinnt still der
+spätere Schlüssel. Sie heißen jetzt `abilityPoints…`; der Bereich gehört in den Namen,
+wo ein Wort zweimal vorkommt.
 
 ## Was deine Rüstung kostet — eine Karte für vier verstreute Zahlen
 
