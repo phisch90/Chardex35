@@ -147,30 +147,26 @@ Grad-0-Regel hätte keine Wirkung mehr.
 
 ---
 
-## 2. Zwei Regeln, für die schon ein Fach existiert
+## 2. Die drei Felder ohne Wirkung — erledigt
 
-Die App hat für diese Tischregeln ein Feld, aber keins davon tut etwas. Billige Fragen
-mit einer fertigen Hälfte dahinter. (Die dritte aus dieser Reihe — die Todesgrenze — ist
-mit Martins Antwort erledigt.)
+Hier standen drei Tischregeln, für die die App ein Feld hatte, das nichts tat. Alle drei
+sind inzwischen beantwortet, und keine muss noch an Martin:
 
-### 2.1 Erfahrungspunkte-Strafe beim Mischen von Klassen?
+- **Todesgrenze** — Martins Regel 6, gebaut (`engine/dying.ts`, Schalter in den
+  Einstellungen).
+- **Erfahrungspunkte-Strafe beim Mischen von Klassen** — Philipps Wort: „Ep Strafe
+  kannste aber ganz weg lassen. Spielen wir nicht." Der Schalter ist **entfernt**, das
+  Feld auch. Ein Schalter, der etwas verspricht und nichts tut, ist schlimmer als kein
+  Schalter; einer für eine Regel, die niemand spielt, ist bloß Lärm.
+- **Wie die Attributswerte entstehen** — gewürfelt, wie bisher („Anfangs haben wir auch
+  gewürfelt"). Der Punktekauf ist trotzdem gebaut, als ABSCHALTBARES Angebot: in den
+  Einstellungen lässt sich ein Budget setzen (22 · 25 · 28 · 32 oder eine eigene Zahl),
+  und dann zählt der Assistent beim Attributs-Schritt mit — Preis je Feld, Summe oben,
+  beide Richtungen, dazu ein Knopf „Auf Budget verteilen". Standard ist **aus**.
 
-Die Regel im Buch: liegen die Klassenstufen einer Figur mehr als eine Stufe auseinander,
-gibt es weniger Erfahrungspunkte.
-
-- [ ] spielen wir nicht → der Schalter kann verschwinden
-- [ ] spielen wir → dann soll der Bogen es melden
-
-*Heute:* der Schalter steht in den Einstellungen und lässt sich umlegen, aber **keine
-Zeile der App liest ihn**.
-
-### 2.2 Wie entstehen die Attributswerte?
-
-- [ ] gewürfelt
-- [ ] mit einem Punktebudget gekauft, und zwar ______ Punkte
-- [ ] der Spielleiter gibt sie vor
-
-*Heute:* der Assistent nimmt sechs Zahlen und prüft nichts.
+  Die eine Frage, die dazu offen BLEIBT, ist deshalb keine Programmfrage mehr, sondern
+  eine für den Tisch: **wenn ihr irgendwann kaufen wollt — mit welchem Budget?** Bis
+  dahin passiert nichts.
 
 ---
 

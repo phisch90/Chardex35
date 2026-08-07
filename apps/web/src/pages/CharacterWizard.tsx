@@ -4,6 +4,9 @@ import {
   ABILITIES,
   ABILITY_BASE_SOURCE,
   abilityAdviceFor,
+  pointBuyCost,
+  pointBuyState,
+  suggestPointBuy,
   adviceFor,
   characterSchema,
   classCategory,
@@ -382,6 +385,18 @@ export function CharacterWizardPage() {
   const advice = adviceFor(chosenClass, chosenRace);
 
   /*
+    Der Stand des Punktekaufs — `null`, solange in den Einstellungen kein Budget steht.
+    Dann zählt die App nichts und sagt nichts (seine Entscheidung: „aus, bis ich es
+    setze"), und jede Stelle unten prüft genau diese EINE Zahl.
+
+    Gerechnet wird auf `draft.base`, also den Werten VOR den Volks-Modifikatoren: gekauft
+    wird vor dem Volk, und ein Zwerg zahlt für seine +2 CON keine Punkte. Auch das ist
+    kein Memo — sechs Tabellenzugriffe, und der Aufruf steht hinter demselben frühen
+    `return` wie die Empfehlung darüber.
+  */
+  const punkte = pointBuyState(draft.base, houseRules.pointBuyBudget);
+
+  /*
     Welche Schritte gibt es für DIESE Klasse? Der Zauberschritt fällt weg, wenn die Klasse
     sich nicht festlegen muss — ein Kämpfer klickt keinen leeren Schirm durch. Zähler gibt
     es dagegen immer: einen eigenen darf man auch als Kämpfer anlegen.
@@ -566,6 +581,40 @@ export function CharacterWizardPage() {
 
       {step === "abilities" && (
         <Card>
+          {/*
+            Der Punktekauf. Er erscheint NUR, wenn in den Einstellungen ein Budget
+            steht — ohne Budget zählt die App nichts und sagt nichts (seine
+            Entscheidung: „aus, bis ich es setze").
+
+            Die Summe steht ÜBER den Feldern, wie die Empfehlung: sie soll gelesen
+            werden, bevor getippt wird. Und sie nennt beide Richtungen — „3 zu viel"
+            und „2 übrig" —, weil das Liegenbleiben genauso ein offener Punkt ist wie
+            das Überziehen. Genau daran ist `validate.ts` jahrelang vorbeigelaufen.
+          */}
+          {punkte !== null && (
+            <div className="mb-3 rounded-lg border border-slate-700 bg-slate-900/60 px-2.5 py-2">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <span className="text-sm font-semibold tabular-nums">
+                  {S.wizard.abilityPointsUsed(punkte.spent, punkte.budget)}
+                </span>
+                <span
+                  className={`text-xs font-medium ${
+                    punkte.left === 0
+                      ? "text-emerald-300"
+                      : punkte.left < 0
+                        ? "text-rose-300"
+                        : "text-amber-300"
+                  }`}
+                >
+                  {punkte.left === 0
+                    ? S.wizard.abilityPointsFits
+                    : punkte.left < 0
+                      ? S.wizard.abilityPointsOver(-punkte.left)
+                      : S.wizard.abilityPointsLeft(punkte.left)}
+                </span>
+              </div>
+            </div>
+          )}
           <div className="mb-3 flex flex-wrap gap-2">
             <Chip
               onClick={() =>
@@ -601,7 +650,33 @@ export function CharacterWizardPage() {
               <IconInline name="dice" size={14} />
               {S.wizard.rollAll}
             </Chip>
+            {/*
+              Verteilen — nur mit Budget, sonst gibt es nichts zu verteilen. Die
+              Reihenfolge kommt aus derselben Empfehlung wie die Sterne an den Feldern
+              (`suggestPointBuy` liest `advice`), damit Stern und Knopf nicht
+              verschiedene Dinge raten.
+            */}
+            {punkte !== null && (
+              <Chip
+                onClick={() =>
+                  setDraft({ ...draft, base: suggestPointBuy(punkte.budget, advice) })
+                }
+              >
+                {S.wizard.abilityPointsSpread}
+              </Chip>
+            )}
           </div>
+          {/*
+            Der Hinweis steht am KNOPF und nicht oben im Punkte-Kasten. Dort stand er
+            zuerst — und erklärte damit scheinbar die Summe, während der Knopf, um den es
+            geht, darunter liegt. Gefunden hat das der Blick auf das Bild: ein Satz neben
+            der falschen Sache ist schlimmer als keiner.
+          */}
+          {punkte !== null && (
+            <p className="-mt-1 mb-3 text-[11px] leading-snug text-slate-500">
+              {S.wizard.abilityPointsSpreadHint}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {ABILITIES.map((ability) => {
               const hint = advice === undefined ? undefined : abilityAdviceFor(advice, ability);
@@ -638,6 +713,12 @@ export function CharacterWizardPage() {
                       block={sheet.abilities[ability]}
                       {...(hint?.min !== undefined ? { min: hint.min } : {})}
                     />
+                  )}
+                  {/* Was dieser Wert kostet. Ohne Budget steht hier nichts. */}
+                  {punkte !== null && (
+                    <span className="text-[11px] tabular-nums text-slate-500">
+                      {S.wizard.abilityPointsCost(pointBuyCost(draft.base[ability]))}
+                    </span>
                   )}
                 </label>
               );

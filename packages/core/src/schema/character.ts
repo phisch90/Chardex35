@@ -22,8 +22,6 @@ export const houseRulesSchema = z.object({
   fractionalBabAndSaves: z.boolean().default(false),
   /** RAW: volle TP auf Stufe 1. */
   maxHpFirstLevel: z.boolean().default(true),
-  /** RAW-Regel, die kaum ein Tisch spielt — Default aus. Warn-only. */
-  multiclassXpPenalty: z.boolean().default(false),
   /**
    * Wo der Tod steht. Martins Antwort für diesen Tisch: „Tod erst bei HP gleich
    * negativem CON Wert."
@@ -53,7 +51,21 @@ export const houseRulesSchema = z.object({
    * eine Stelle. Schalter: die Hausregel-Karte in den Einstellungen.
    */
   powerAttackLightWeapons: z.boolean().default(true),
-  pointBuyBudget: z.number().int().optional(),
+  /**
+   * Punktekauf für die Attribute: das Budget, oder `undefined` für „aus".
+   *
+   * Das Feld gab es lange, aber weder Leser noch Bedienelement — die schlimmste
+   * Kombination, und dieselbe wie einst bei `deathAt`. Jetzt rechnet es
+   * (`engine/pointBuy.ts`) und steht im Assistenten, wo die Werte vergeben werden.
+   *
+   * Seine Entscheidung dazu: **aus, bis er es setzt.** Kein Standardwert, weil eure
+   * bestehenden Bögen GEWÜRFELT sind („Anfangs haben wir auch gewürfelt") — eine Zahl
+   * hier würde jedem alten Bogen ein Budget unterstellen, unter dem er nie entstand.
+   *
+   * Und deshalb wird das Budget NUR im Assistenten gelesen, nicht in der Ableitung:
+   * am fertigen Bogen wäre es eine Warnung für eine Regel, die dort nie galt.
+   */
+  pointBuyBudget: z.number().int().positive().optional(),
   /**
    * Traglast komplett ignorieren („wir spielen ohne Gewicht"): keine
    * Bewegungsreduktion, kein Max-GE und kein Rüstungsmalus AUS DER LAST.

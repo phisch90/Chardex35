@@ -10,7 +10,7 @@ import { LIGHT_MATERIALS, MATERIAL_HINTS, MATERIAL_LABELS } from "../ui/material
 import { useAppSettings, useCharacter, useHouseRules } from "../lib/hooks.js";
 import { lastSheetId } from "../lib/lastSheet.js";
 import { buildExport, downloadExport, importEnvelope, type ImportResult } from "../lib/transfer.js";
-import { Card, GhostButton, PrimaryButton, SectionTitle } from "../ui/bits.js";
+import { Card, Chip, GhostButton, PrimaryButton, SectionTitle } from "../ui/bits.js";
 import { SyncCard } from "./SyncCard.js";
 import { GroupCard } from "../group/GroupCard.js";
 import { VersionBadge } from "../ui/VersionBadge.js";
@@ -227,11 +227,6 @@ export function SettingsPage() {
           checked={houseRules.fractionalBabAndSaves}
           onChange={(v) => setRule({ fractionalBabAndSaves: v })}
         />
-        <Toggle
-          label={S.settings.xpPenalty}
-          checked={houseRules.multiclassXpPenalty}
-          onChange={(v) => setRule({ multiclassXpPenalty: v })}
-        />
         {/*
           Die Todesgrenze. Das Feld gab es schon lange, aber ohne Wirkung UND ohne
           Bedienelement — die schlimmste Kombination: eine gespeicherte Einstellung, die
@@ -273,6 +268,70 @@ export function SettingsPage() {
             {houseRules.powerAttackLightWeapons
               ? S.settings.powerAttackLightOnHint
               : S.settings.powerAttackLightOffHint}
+          </p>
+        </div>
+
+        {/*
+          Punktekauf für die Attribute. Das Feld `pointBuyBudget` lag lange da, ohne
+          Leser und ohne Bedienelement — dieselbe Lage wie einst bei der Todesgrenze.
+
+          Die bekannten Stufen als KNÖPFE, das Freifeld daneben: dieselbe Regel wie bei
+          den Teilgebieten („wo die App die Möglichkeiten kennt, gehört jede einzelne
+          als Knopf hin"), und die Liste ist nicht abschließend — ein Tisch darf 30
+          spielen.
+
+          „Aus" ist ausdrücklich ein eigener Knopf und der Standard: eure Bögen sind
+          gewürfelt, ein voreingestelltes Budget würde ihnen eine Regel unterstellen,
+          unter der sie nie entstanden sind.
+        */}
+        <div className="mt-3 border-t border-slate-800 pt-3">
+          <div className="text-sm">{S.settings.pointBuy}</div>
+          <p className="mt-0.5 text-[11px] leading-snug text-slate-500">
+            {S.settings.pointBuyHint}
+          </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <Chip
+              active={houseRules.pointBuyBudget === undefined}
+              onClick={() => setRule({ pointBuyBudget: undefined })}
+            >
+              {S.settings.pointBuyOff}
+            </Chip>
+            {POINT_BUY_STEPS.map((step) => (
+              <Chip
+                key={step.value}
+                active={houseRules.pointBuyBudget === step.value}
+                onClick={() => setRule({ pointBuyBudget: step.value })}
+              >
+                {step.value} · {step.label}
+              </Chip>
+            ))}
+            <label className="flex items-center gap-1.5">
+              <span className="text-[11px] uppercase tracking-wide text-slate-500">
+                {S.settings.pointBuyOwn}
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={200}
+                value={houseRules.pointBuyBudget ?? ""}
+                onChange={(e) => {
+                  const value = e.target.valueAsNumber;
+                  // Leer oder Unsinn heißt AUS und nicht „Budget 0" — sonst stünde im
+                  // Assistenten „0 von 0" statt gar nichts.
+                  setRule({
+                    pointBuyBudget: Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined,
+                  });
+                }}
+                className="w-16 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-right text-sm tabular-nums"
+              />
+            </label>
+          </div>
+          {/* Die Folge in Zahlen, wie bei der Todesgrenze: erst der Wert, dann was er bedeutet. */}
+          <p className="mt-1 text-[11px] leading-snug text-slate-500">
+            {houseRules.pointBuyBudget === undefined
+              ? S.settings.pointBuyOffHint
+              : S.settings.pointBuyOnHint(houseRules.pointBuyBudget)}
           </p>
         </div>
       </Card>
@@ -377,6 +436,20 @@ export function SettingsPage() {
     </div>
   );
 }
+
+/**
+ * Die Budget-Stufen des Regelwerks, als Knöpfe.
+ *
+ * Die Zahlen und ihre Namen stehen im DMG; 25 ist die übliche Vorgabe und zugleich
+ * genau die Summe der „Standardwerte" im Assistenten (15/14/13/12/10/8) — das prüft
+ * `pointBuy.test.ts`, damit die Behauptung nicht bloß hier steht.
+ */
+const POINT_BUY_STEPS = [
+  { value: 22, label: "ruhig" },
+  { value: 25, label: "Standard" },
+  { value: 28, label: "hart" },
+  { value: 32, label: "heldenhaft" },
+] as const;
 
 function Toggle(props: {
   label: string;
