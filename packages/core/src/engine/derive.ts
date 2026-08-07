@@ -14,6 +14,7 @@ import {
   type TwoWeaponSetup,
   type WieldContext,
 } from "./combatOptions.js";
+import { carriedWeight } from "./carry.js";
 import { dyingStatus } from "./dying.js";
 import { isNaturalOrUnarmed } from "./equipment.js";
 import type { ActiveEffect, ResolvedCharacter, TimelineResult } from "./internal.js";
@@ -240,11 +241,24 @@ export function deriveSheetValues(
   };
 
   // --- Traglast ------------------------------------------------------------
-  let loadLb = 0;
-  for (const { instance, entity } of resolved.items) {
-    const weight = instance.weightLbOverride ?? entity?.data.weightLb ?? 0;
-    loadLb += weight * instance.qty;
-  }
+  /*
+    Gerechnet wird in `carry.ts` und nicht hier: seit es Behälter gibt, ist die
+    Traglast keine Summe mehr, sondern eine Frage je Zeile — und die Münzen sind
+    eine zweite Quelle, die gar nicht im Gepäck steht. Was die Anzeige darüber
+    sagen kann, kommt aus derselben Rechnung.
+  */
+  const carried = carriedWeight(
+    resolved.items.map(({ instance, entity }) => ({
+      id: instance.id,
+      weightLb: instance.weightLbOverride ?? entity?.data.weightLb ?? 0,
+      qty: instance.qty,
+      containerId: instance.containerId,
+      container: instance.container,
+    })),
+    character.money,
+    { countCoins: houseRules.coinWeight },
+  );
+  const loadLb = carried.loadLb;
   const capacity = carryingCapacity(abilities.str.score.total, size);
   const loadLevel: DerivedSheet["encumbrance"]["level"] =
     loadLb <= capacity.lightMaxLb
@@ -254,7 +268,15 @@ export function deriveSheetValues(
         : loadLb <= capacity.heavyMaxLb
           ? "heavy"
           : "overloaded";
-  const encumbrance = { loadLb, ...capacity, level: loadLevel };
+  const encumbrance = {
+    loadLb,
+    ...capacity,
+    level: loadLevel,
+    itemsLb: carried.itemsLb,
+    coinLb: carried.coinLb,
+    weightlessLb: carried.weightlessLb,
+    containers: carried.containers,
+  };
 
   // --- Max-GE und Rüstungsmalus (Rüstung vs. Last: der schlechtere Wert) ---
   let armorMaxDex: number | null = null;

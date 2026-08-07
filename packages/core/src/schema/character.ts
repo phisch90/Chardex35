@@ -72,6 +72,20 @@ export const houseRulesSchema = z.object({
    * Die Rüstung selbst wirkt unverändert weiter.
    */
   ignoreEncumbrance: z.boolean().default(false),
+  /**
+   * Zählen die Münzen im Geldbeutel als Gewicht? 50 Münzen = 1 lb (PHB).
+   *
+   * Standard AUS, und das ist die vorsichtige Seite mit Absicht: die Regel würde
+   * die Traglast JEDES bestehenden Bogens sofort verschieben, ohne dass jemand
+   * etwas angefasst hat — bei 500 gp um zehn Pfund, und das kann eine leichte Last
+   * zur mittleren machen (Max-DEX 3, Rüstungsmalus −3, 10 ft weniger). Zahlen an
+   * bestehenden Bögen wandern in diesem Projekt nur auf ausdrückliches Wort.
+   *
+   * Wirkung: `carriedWeight` in `engine/carry.ts` — genau eine Stelle. Und sie ist
+   * unabhängig von `ignoreEncumbrance`: wer ohne Gewicht spielt, sieht die Zahl
+   * ohnehin nicht.
+   */
+  coinWeight: z.boolean().default(false),
 });
 export type HouseRules = z.infer<typeof houseRulesSchema>;
 export const DEFAULT_HOUSE_RULES: HouseRules = houseRulesSchema.parse({});
@@ -124,6 +138,34 @@ export const inventoryItemSchema = z.preprocess(
     /** z.B. das +1 des individuellen Schwertes. */
     extraEffects: z.array(effectSchema).default([]),
     notes: z.string().optional(),
+    /**
+     * In welchem Behälter diese Zeile liegt — die Kennung einer ANDEREN Zeile.
+     *
+     * Eine Kennung und kein Name: der Rucksack ist selbst ein Gegenstand mit
+     * eigenem Gewicht, und ein freies Textfeld hätte ihn nur beschrieben statt
+     * ihn anzuschließen. Zeigt die Kennung ins Leere (der Behälter wurde
+     * gelöscht), gilt die Zeile als am Körper getragen — bewusst so, damit ein
+     * Löschen keine Zeile mitnimmt und eine Rücknahme den Inhalt zurückbringt.
+     */
+    containerId: z.string().optional(),
+    /**
+     * Gesetzt heißt: diese Zeile IST ein Behälter, andere dürfen darin liegen.
+     *
+     * Ein Feld und keine Ableitung aus dem Namen. „Backpack (empty)" zu erkennen
+     * wäre eine versteckte Regel, die bei „Handy Haversack" und bei jedem eigenen
+     * Gegenstand vorbeigeht — und ein Behälter muss ein Behälter sein, BEVOR
+     * etwas darin liegen kann.
+     *
+     * `weightless` ist der Sack der Bewahrung: der INHALT zählt nicht in die
+     * Traglast, der Beutel selbst schon. Auch das ein Schalter und keine
+     * Namenserkennung — die Packdaten sagen nichts darüber, und geraten wäre es
+     * eine Zahl, die niemand nachvollziehen kann.
+     */
+    container: z
+      .object({
+        weightless: z.boolean().default(false),
+      })
+      .optional(),
   }),
 );
 export type InventoryItem = z.infer<typeof inventoryItemSchema>;

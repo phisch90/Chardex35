@@ -754,6 +754,131 @@ zuerst genauso wie die alten (`pointsLeft`), und in einem Objektliteral gewinnt 
 spätere Schlüssel. Sie heißen jetzt `abilityPoints…`; der Bereich gehört in den Namen,
 wo ein Wort zweimal vorkommt.
 
+## Behälter im Gepäck — und was ein Löschen NICHT mitnehmen darf
+
+Der letzte große Punkt seiner eigenen Liste: „Behälter (Inventar/Geldbeutel,
+Münzgewicht) und Umsortieren". Gebaut ist alles davon, mit einer bewusst anderen
+Antwort beim Umsortieren (unten).
+
+**JEDE Zeile kann ein Behälter sein** — es gibt keine Liste erlaubter Behälter. Der
+Grund ist derselbe wie bei den Klassenfarben: eine Namenserkennung („heißt es
+Backpack?") wäre eine versteckte Regel, die beim Handy Haversack und bei jedem
+eigenen Gegenstand vorbeigeht. `container` am Datensatz ist deshalb ein FELD und
+keine Ableitung, und `containerId` zeigt auf die KENNUNG einer anderen Zeile statt
+auf einen Namen: der Rucksack ist selbst ein Gegenstand mit eigenem Gewicht, ein
+Textfeld hätte ihn nur beschrieben statt ihn anzuschließen.
+
+Fünf Entscheidungen daran sind eine Notiz wert:
+
+- **Ein Behälter liegt nie in einem anderen.** Damit kann kein Kreis entstehen
+  (Rucksack im Beutel im Rucksack), und `carriedWeight` braucht keine Tiefensuche
+  mit Zykluswächter — die Rechnung terminiert von allein. Beide Seiten halten sich
+  daran: die Oberfläche bietet Behälter nicht zum Einpacken an, und die Funktion
+  ignoriert ein `containerId` an einem Behälter. Der Test prüft genau den bösen Fall
+  (zwei Behälter, die aufeinander zeigen).
+- **Eine Kennung ins Leere heißt „am Körper" — und das ist eine Schutzregel, keine
+  Nachlässigkeit.** Wird der Rucksack gelöscht, zeigt sein Inhalt noch auf ihn. Würde
+  der Inhalt dann verschwinden (oder sein Gewicht), wäre ein Bogen durch ein Löschen
+  leichter geworden. So bleibt alles stehen, und eine RÜCKNAHME bringt den Behälter
+  samt Inhalt zurück — genau deshalb löscht das Löschen die Zeiger der Kinder NICHT.
+  Beim Umstellen auf „kein Behälter" dagegen werden sie geräumt: dort gibt es die
+  Zeile ja weiterhin, und ein Zeiger auf etwas, das kein Behälter mehr ist, wäre ein
+  Widerspruch zwischen zwei Feldern — die Fehlerfamilie, die diese App schon einmal
+  bezahlt hat.
+- **Angelegt heißt aus dem Behälter heraus** (und Einpacken heißt abgelegt). Nicht aus
+  Regeltreue, sondern weil die Liste „Angelegt" den Kampf-Reiter treibt: eine Waffe,
+  die dort fehlt, weil sie im Rucksack steckt, wäre eine Angriffszeile, die auf dem
+  Bogen nicht auftaucht.
+- **Der Sack der Bewahrung nimmt den INHALT heraus, sich selbst nicht.** 15 lb bleiben
+  15 lb. Wer das verwechselt, verschenkt am Tisch ein paar Pfund und merkt es nie —
+  deshalb steht es als eigene Prüfung da („nicht 6 lb"). Auch das ein Schalter je
+  Behälter und keine Namenserkennung: die Packdaten sagen nichts darüber.
+- **Der Abschnitt heißt jetzt „Im Gepäck".** Er hieß „Rucksack", und das ging nicht
+  mehr: seit eine Zeile wirklich ein Rucksack sein kann, stand die Überschrift
+  „Rucksack" über einem Abschnitt, in dem ein Rucksack liegt. Dieselbe Regel wie bei
+  „Zauberplätze" gegen „Fertigkeitsränge" — ein Wort für zwei Sachen.
+
+### Münzgewicht: Standard AUS, und der Standardwert ist die Entscheidung
+
+50 Münzen = 1 lb (PHB), gerechnet in `carriedWeight`, geschaltet in den Einstellungen
+unter „Gewicht & Traglast". **Aus, bis er es einschaltet** — und diesmal ist der
+Standardwert das Gegenteil von `deathAt` und `powerAttackLightWeapons`: die Regel
+würde die Traglast JEDES bestehenden Bogens sofort verschieben, ohne dass jemand etwas
+angefasst hat. Bei 500 gp sind das zehn Pfund, und das kann eine leichte Last zur
+mittleren machen (Max-DEX 3, Rüstungsmalus −3, 10 ft weniger). Zahlen an bestehenden
+Bögen wandern in diesem Projekt nur auf ausdrückliches Wort — die Prüfung im gebauten
+Bogen hält deshalb eine ABWESENHEIT fest: mit 500 gp im Beutel stehen 18 lb da und
+nicht 28.
+
+**Aufgerundet, nicht abgeschnitten.** 56 Münzen sind mehr als ein Pfund; wer auf 1 lb
+abschneidet, gibt Gewicht her, das der DM gleich wieder dazurechnet — und an einer
+Lastgrenze ist genau diese Richtung die Frage. Eine App, die warnt statt zu sperren,
+darf nicht schmeicheln.
+
+**Und die Traglast sagt jetzt, woraus sie besteht** („davon 18 lb Gepäck und 10 lb
+Münzen", „10 lb liegen gewichtslos im Behälter") — aber nur, wenn es etwas zu erklären
+GIBT. Ohne Münzgewicht und ohne magischen Behälter ist die Summe das Gepäck, und ein
+Satz, der das wiederholt, ist genau der Satz, der nicht gelesen wird.
+
+### Umsortieren: ↑↓ statt Ziehen — die eine Stelle, an der ich von seinem Wort abweiche
+
+Er hat „Umsortieren per ZIEHEN" geschrieben. Gebaut sind **↑↓ im Bearbeiten-Modus**,
+und der Grund ist nicht Bequemlichkeit: dieser Bogen benutzt die Wischgeste schon
+zweimal — waagerecht zum Reiterwechsel (`e2e-wischen`) und senkrecht zum Scrollen im
+`main` mit `overflow-y-auto`. Ein Ziehen aus einer Liste heraus müsste sich gegen
+beides durchsetzen, und was dabei herauskommt, ist eine Liste, die manchmal scrollt,
+manchmal den Reiter wechselt und manchmal sortiert. Getauscht wird mit dem NACHBARN
+und nur innerhalb desselben Behälters: ohne das schiebt ein Tap auf ↓ am letzten
+Rucksack-Inhalt die Zeile aus dem Rucksack heraus, und das sieht wie ein Fehler aus.
+**Wenn er das Ziehen trotzdem will, ist es eine eigene Runde** — dann mit einem
+Anfasser, der die Geste vom Scrollen trennt.
+
+### Was der BLICK gefunden hat, und drei Prüfungen nicht
+
+- **Eine Zeile, die schon voll ist, verträgt keinen vierten Knopf.** Im
+  Bearbeiten-Modus trägt eine Gepäckzeile Marke, Name, Menge (−/1/+), ✎ und ✕. Mit
+  Behälter-Marke und ↑↓ dazu blieb bei 390 px vom Namen ein **„T…"** übrig, die
+  Kleinzeile brach in ein Wort pro Zeile, und das ✕ stand halb außerhalb der Karte.
+  Alle 93 Prüfungen waren dabei grün — sie lesen `innerText`, und der stimmte.
+  Behoben, indem ↑↓ in die Knopfreihe DARUNTER wandern (sie umbricht) und die Marke im
+  Bearbeiten-Modus wegfällt: dort sagen die Knöpfe ohnehin, dass es ein Behälter ist.
+  Die Marke selbst bleibt für den Tisch, wo sie hingehört — ohne Bearbeiten-Modus.
+- **Und die Prüfung dazu musste umziehen, nicht weichen.** Meine erste Fassung
+  verlangte die Marke im Bearbeiten-Modus und meldete danach die App als falsch. Sie
+  prüft jetzt den Zustand OHNE Bearbeiten — dort steht sie, dort liest er sie.
+
+### Zwei Sondenfallen, und beide sind alte Bekannte
+
+- **„Fertigkeiten" enthält „Fertig".** Der Bearbeiten-Schalter heißt „✎ Bearbeiten" /
+  „✎ Fertig"; mein `/bearbeiten|fertig/i` traf ab `md` den FERTIGKEITEN-Reiter, und
+  die Prüfung danach meldete eine fehlende Gepäckzeile — der Fehler zeigte auf die
+  App, die recht hatte. Erkannt wird der Schalter jetzt am **✎**, das in beiden
+  Zuständen dasteht. Dieselbe Familie wie „Ausrüstung" gegen „Ausr.": ein Wort, das in
+  einem anderen steckt.
+- **Mit Verschachtelung trifft der äußere `li` den inneren Text.** Der Inhalt steht als
+  `ul` IM `li` des Behälters, also findet `li.filter({hasText:/Hanfseil/}).first()` den
+  RUCKSACK. Ich habe damit einmal die Pfeile des Rucksacks gemessen und sie dem Seil
+  zugeschrieben. Gesucht ist das INNERSTE Treffer-`li` (das ohne weiteren Treffer
+  darin) — zwölfte Falle, und diesmal von innen.
+
+### Der stillste Fund der Runde: eine Prüfung, die seit Monaten nie lief
+
+`e2e-portrait` klickte `button:has-text('Rucksack')`, um einen Gegenstand umzulegen —
+**einen solchen Knopf gab es nie** (die Überschrift ist ein `div`). Die Strecke lief
+dort seit Monaten in einen Timeout, und alles DANACH wurde nie geprüft. Nachgemessen
+gegen einen Build ohne diese Runde: derselbe Timeout, also ein alter Sondenfehler und
+keine Folge der Umbenennung. Geklickt wird jetzt die Anlege-Marke der ersten Zeile
+(der ERSTE Knopf einer Gepäckzeile IST die Marke), und die Prüfung beweist endlich
+etwas: „Angelegt: 1 → 2".
+
+**Und was danach sichtbar wurde, ist ein offener Punkt und kein Fehler dieser Runde:**
+die erste erreichbare Prüfung dahinter verlangt, dass das Porträt 380 von 390 px füllt
+— es sind 373, weil die Karte ihr Polster hat. Eine Schwelle, die nie gegen die
+Wirklichkeit gelaufen ist, ist eine Behauptung; ob das Porträt bis an den Rand gehen
+soll, ist seine Geschmacksfrage. **Lehre: eine Strecke, die früh abbricht, meldet
+nicht „grün" — sie meldet gar nichts, und das sieht man nur, wenn man die Zahl der
+Prüfungen ansieht.**
+
 ## Was deine Rüstung kostet — eine Karte für vier verstreute Zahlen
 
 Sein Auftrag war ein Wort: „Rüstung". Gemeint war die Werte-Karte, die aus der
@@ -1607,7 +1732,10 @@ in einem deutschen Satz. Eine Zahl in einem deutschen Satz bekommt ein Komma (`d
   `ui/itemDraft.ts`, Erzeuger in `core/compendium/homebrewItem.ts`), und der Assistent
   benutzt denselben Blätterer wie der Bogen. Offen bleibt hier nur noch die
   Übersetzung der 97 epischen Erklärungen (weiter unten).
-- **Behälter** (Inventar/Geldbeutel, Münzgewicht) und Umsortieren per Ziehen.
+- **Behälter und Münzgewicht sind gebaut** (eigener Abschnitt weiter unten). Offen bleibt
+  davon genau eine Sache, und sie ist eine Geschmacksfrage: er hat „Umsortieren per
+  ZIEHEN" geschrieben, gebaut sind ↑↓-Knöpfe im Bearbeiten-Modus. Der Grund steht unten;
+  wenn er das Ziehen trotzdem will, ist es eine eigene Runde.
 - **97 Gegenstände tragen noch keine deutsche ERKLÄRUNG** — Name haben alle 1866. Die 97
   sind ausnahmslos episch (Stufe 21+, im Blätterer standardmäßig ausgeblendet) oder
   Artefakte; der Test in `core/compendium/itemGerman.test.ts` hält genau das fest, damit
