@@ -1,6 +1,7 @@
 import { COMBAT_EXPERTISE_MAX } from "@codex35/core";
 import { S } from "../../strings.js";
 import { Card, Chip, GhostButton, NumberStepper, SectionTitle } from "../../ui/bits.js";
+import { RuleHint } from "../../ui/RuleHint.js";
 import { useHouseRules } from "../../lib/hooks.js";
 import type { TabProps } from "./index.js";
 
@@ -61,18 +62,63 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
 
       <div className="space-y-2">
         {has("srd:feat:power-attack") && (
-          <NumberStepper
-            label={S.combat.powerAttack}
-            hint={S.combat.powerAttackHint(sheet.bab, houseRules.powerAttackLightWeapons)}
-            value={options.powerAttack}
-            max={sheet.bab}
-            onChange={(v) => set({ powerAttack: v })}
-          />
+          <div>
+            <NumberStepper
+              label={S.combat.powerAttack}
+              hint={
+                <RuleHint label={S.combat.powerAttack}>
+                  {S.combat.powerAttackHint(sheet.bab, houseRules.powerAttackLightWeapons)}
+                </RuleHint>
+              }
+              value={options.powerAttack}
+              max={sheet.bab}
+              onChange={(v) => set({ powerAttack: v })}
+            />
+            {/*
+              Und darunter der ZUSTAND — sein Auftrag: „ob es mit der geführten waffe
+              anwendbar ist."
+
+              Er steht als gewöhnlicher Absatz und nicht in einem `RuleHint`: eine
+              Erklärung kann man auswendig können, diese Auskunft nicht. Sie hängt an dem,
+              was gerade in der Hand liegt, und wechselt mit jedem Waffenwechsel. Genau
+              dieses Schweigen hat ihn einmal einen Rechenfehler suchen lassen, den es
+              nicht gab.
+
+              Gerechnet wird nichts: `powerAttackWeapons` kommt fertig aus der Engine.
+            */}
+            <div className="mt-1 text-[11px] leading-snug text-slate-400">
+              {sheet.powerAttackWeapons.length === 0 ? (
+                S.combat.powerAttackNoWeapon
+              ) : (
+                <>
+                  <span className="text-slate-500">{S.combat.powerAttackWeaponsTitle} </span>
+                  {sheet.powerAttackWeapons.map((w) => (
+                    <span
+                      key={w.label}
+                      /*
+                        Bringt sie nichts, ist die Zeile rosé — dieselbe Farbe wie „hier ist
+                        noch etwas offen" und ausdrücklich NICHT Amber. Amber ist in diesem
+                        Bogen die Bedienfarbe, und eine Warnung in der Farbe jedes Knopfes
+                        ist keine Warnung (elfte Falle).
+                      */
+                      className={`mr-2 inline-block ${w.factor === 0 ? "text-rose-300" : ""}`}
+                    >
+                      {S.combat.powerAttackWeapon(w.label, w.factor, w.byHouseRule)}
+                    </span>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
         )}
         {has("srd:feat:combat-expertise") && (
           <NumberStepper
             label={S.combat.combatExpertise}
-            hint={S.combat.combatExpertiseHint(Math.min(COMBAT_EXPERTISE_MAX, sheet.bab))}
+            hint={
+              <RuleHint label={S.combat.combatExpertise}>
+                {S.combat.combatExpertiseHint(Math.min(COMBAT_EXPERTISE_MAX, sheet.bab))}
+              </RuleHint>
+            }
             value={options.combatExpertise}
             max={Math.min(COMBAT_EXPERTISE_MAX, sheet.bab)}
             onChange={(v) => set({ combatExpertise: v })}
@@ -116,7 +162,7 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
             >
               {S.combat.twoWeapon}
             </Chip>
-            <span className="text-[11px] text-slate-500">{S.combat.twoWeaponHint}</span>
+            <RuleHint label={S.combat.twoWeapon}>{S.combat.twoWeaponHint}</RuleHint>
           </div>
         )}
 

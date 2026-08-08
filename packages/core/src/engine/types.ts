@@ -66,6 +66,28 @@ export interface AttackLine {
   slot?: EquipSlot;
 }
 
+/**
+ * Eine geführte Nahkampfwaffe und das, was Power Attack ihr gibt.
+ *
+ * Hier steht ZUSTAND, kein Satz: welchen Faktor die Waffe bekommt und ob sie ihn nur der
+ * Hausregel verdankt. Die Formulierung steht in `strings.ts` — die Engine soll keine
+ * deutschen Sätze bauen, sonst gäbe es Regeltexte an zwei Orten.
+ */
+export interface PowerAttackWeapon {
+  /** Der Name, wie er auch an der Angriffszeile steht. */
+  label: string;
+  /** 0 = kein Schadensbonus · 1 = einfach · 2 = doppelt (zweihändig geführt). */
+  factor: 0 | 1 | 2;
+  /**
+   * Gäbe es die Hausregel nicht, wäre der Faktor 0?
+   *
+   * Genau das ist der Fall, den er gemeldet hat (leichte Waffe). Ohne diese Angabe
+   * stünde am Kurzschwert dasselbe wie am Langschwert, und die Auskunft wäre wertlos:
+   * er will ja gerade wissen, ob es an SEINER Waffe hängt.
+   */
+  byHouseRule: boolean;
+}
+
 export interface SkillLine {
   /** ID der Fertigkeits-Entity — bei Teilgebieten die der Grundfertigkeit. */
   skillId: string;
@@ -331,6 +353,24 @@ export interface DerivedSheet {
    * keine Handhabung, mit der man das erraten könnte.
    */
   twoWeaponPossible: boolean;
+  /**
+   * Was Power Attack mit den Waffen macht, die WIRKLICH in der Hand liegen.
+   *
+   * Sein Auftrag: „dennoch würde ich gerne bei powerattack eine Anzeige haben, ob es mit
+   * der geführten waffe anwendbar ist." Der Anlass steht weiter oben in dieser Datei:
+   * sein Bogen kämpft mit Kurzschwert und Schild, und nach dem Buch bringt Power Attack
+   * dort gar nichts — die App wusste das und schwieg, solange die Hausregel an war.
+   *
+   * Das ist ein ZUSTAND und keine Erklärung, und der Unterschied ist in dieser Runde
+   * wichtig geworden: der Schalter „Kurzbeschreibungen" blendet Regel-Erklärungen aus,
+   * diese Zeile aber nie. Eine Erklärung sagt, wie eine Regel funktioniert; ein Zustand
+   * sagt, was gerade an DIESEM Bogen gilt. Wer den Zustand mitversteckt, baut die
+   * Fehlerfamilie „etwas weiß es, und etwas anderes kann es nicht" neu auf.
+   *
+   * Nur Nahkampfwaffen in einer Hand — eine Waffe im Rucksack führt man nicht, und
+   * Fernkampf kennt Power Attack gar nicht. Leer heißt: nichts in der Hand.
+   */
+  powerAttackWeapons: PowerAttackWeapon[];
   xp: { current: number; nextLevelAt: number | null };
   features: FeatureLine[];
   issues: DerivedIssue[];

@@ -191,6 +191,24 @@ export function SettingsPage() {
           />
         </div>
 
+        {/*
+          Sein Auftrag: „Kurzbeschreibungen optional machen … denn ich kenne die
+          Fähigkeiten meines Charakters."
+
+          Der Hinweis am Schalter sagt AUSDRÜCKLICH zu, dass nichts verlorengeht — und
+          weil er das zusagt, prüft der Lauf im gebauten Bogen es mit. Eine Zusage ohne
+          Prüfung ist in dieser App schon einmal eine Anzeige gewesen, die etwas wusste,
+          und ein Knopf, der es nicht konnte.
+        */}
+        <div className="mt-3 border-t border-slate-800 pt-3">
+          <Toggle
+            label="Kurzbeschreibungen"
+            hint="Aus: die Erklärtexte zu Kampfoptionen und Klassenfähigkeiten stehen nicht mehr von allein da — ein Tipp auf ▸ klappt sie auf. Was am Bogen gerade GILT (etwa welche Waffe Power Attack bekommt), bleibt stehen."
+            checked={appSettings.ruleHints}
+            onChange={(v) => void AppSettingsRepo.set({ ...appSettings, ruleHints: v })}
+          />
+        </div>
+
         <p className="mt-2 text-[11px] leading-snug text-slate-500">
           Das Papier bestimmt Untergrund, Schrift, Linien und Kästen. Die FARBE im Bogen
           kommt von der Klasse — der Druide ist grün, der Paladin königsblau; am einzelnen

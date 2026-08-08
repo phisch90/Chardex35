@@ -52,6 +52,18 @@ const VERBOTEN: Array<{ kuerzel: string; statt: string; re: RegExp }> = [
     heißt, dass der Bogen zwei Namen für dieselbe Zahl hat.
   */
   { kuerzel: "TP", statt: "HP", re: /\bTP\b/ },
+  /*
+    „Ringkampf in EN lassen." Der dritte Fall derselben Familie nach GAB → BAB und
+    TP → HP.
+
+    Und hier steckt eine Falle, die den ganzen Unterschied macht: verboten ist
+    „Ringkampf", NICHT „Ringen". Das deutsche Wort „Ringen" kommt in den
+    Gegenstandstexten vor und meint dort etwas völlig anderes — „ein Hemd aus Ringen"
+    ist das Kettenhemd. Eine Schranke, die zu weit greift, meldet dann eine Stelle, die
+    mit der Regel nichts zu tun hat, und man baut den Text kaputt, um den Test grün zu
+    bekommen.
+  */
+  { kuerzel: "Ringkampf", statt: "Grapple", re: /\bRingkampf/ },
   { kuerzel: "GE", statt: "DEX", re: /\bGE[- ](?:Mod|Bonus)/ },
   { kuerzel: "KO", statt: "CON", re: /\bKO[- ](?:Mod|Bonus)/ },
   { kuerzel: "WE", statt: "WIS", re: /\bWE[- ](?:Mod|Bonus)/ },

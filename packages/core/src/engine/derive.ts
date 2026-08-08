@@ -10,6 +10,7 @@ import {
 } from "../schema/entities.js";
 import {
   applyCombatOptions,
+  powerAttackDamageFactor,
   type Hand,
   type TwoWeaponSetup,
   type WieldContext,
@@ -54,6 +55,7 @@ import type {
   DerivedIssue,
   DerivedSheet,
   FeatureLine,
+  PowerAttackWeapon,
   SkillLine,
   SlotInfo,
   SpellcastingBlock,
@@ -439,7 +441,7 @@ export function deriveSheetValues(
   const grapple = stackPaths(buckets, ["grapple"], [
     baseContribution("BAB", timeline.bab),
     baseContribution("STR-Modifikator", mod("str")),
-    baseContribution("Größe (Ringkampf)", GRAPPLE_SIZE_MODIFIER[size]),
+    baseContribution("Größe (Grapple)", GRAPPLE_SIZE_MODIFIER[size]),
   ]);
 
   // --- Bewegung -------------------------------------------------------------
@@ -538,6 +540,13 @@ export function deriveSheetValues(
   // --- Angriffe ---------------------------------------------------------------
   const weaponFinesse = flagSet(buckets, "flag:weaponFinesse");
   const attacks: AttackLine[] = [];
+  /*
+    Was Power Attack an den GEFÜHRTEN Waffen tut — gesammelt im selben Durchlauf, der die
+    Angriffszeilen baut. Eine zweite Schleife über die Ausrüstung wäre eine zweite
+    Wahrheit darüber, was „in der Hand" heißt (der Platz kennt drei Werte, und `worn` ist
+    keine Hand).
+  */
+  const powerAttackWeapons: PowerAttackWeapon[] = [];
 
   const buildAttackLine = (
     key: string,
@@ -574,6 +583,26 @@ export function deriveSheetValues(
       wieldedInTwoHands,
       naturalOrUnarmed: isNaturalOrUnarmed(weapon?.entity),
     };
+    /*
+      Nur was wirklich in einer Hand liegt, und nur im Nahkampf.
+
+      Gerechnet wird ZWEIMAL — einmal nach dem Buch und einmal mit seiner Hausregel —,
+      und die Differenz ist die Auskunft, um die es ihm geht: „gäbe es die Hausregel
+      nicht, brächte Power Attack an dieser Waffe nichts". Die Alternative wäre gewesen,
+      die Leichte-Waffen-Bedingung hier noch einmal auszuschreiben; genau davon hatte
+      dieses Projekt schon zwei Kopien.
+    */
+    if (mode === "melee" && hand !== "none") {
+      const factor = powerAttackDamageFactor(wield, {
+        powerAttackLightWeapons: houseRules.powerAttackLightWeapons,
+      });
+      powerAttackWeapons.push({
+        label,
+        factor,
+        byHouseRule:
+          factor > 0 && powerAttackDamageFactor(wield, { powerAttackLightWeapons: false }) === 0,
+      });
+    }
     const abilityLabel = useDex ? "DEX-Modifikator" : "STR-Modifikator";
     const abilityValue = useDex ? dexMod : mod("str");
 
@@ -697,13 +726,20 @@ export function deriveSheetValues(
         Satz nur, wenn jemand sie abschaltet. Ohne ihn wäre die Rückkehr zur Buchregel
         wieder stumm.
       */
+      /*
+        Die Bedingung stand hier ausgeschrieben und damit ein ZWEITES Mal — die erste
+        Fassung lebte als `lightBlocked` in `combatOptions.ts`. Zwei Kopien einer Regel
+        sind zwei Wahrheiten: wer die Hausregel an einer der beiden Stellen vergisst,
+        bekommt einen Satz, dem die Zahl daneben widerspricht. Beide lesen jetzt aus
+        `powerAttackDamageFactor`.
+      */
       if (
         !ranged &&
         character.combatOptions.powerAttack > 0 &&
         featIdSet.has("srd:feat:power-attack") &&
-        wield.handedness === "light" &&
-        !wield.naturalOrUnarmed &&
-        houseRules.powerAttackLightWeapons !== true
+        powerAttackDamageFactor(wield, {
+          powerAttackLightWeapons: houseRules.powerAttackLightWeapons,
+        }) === 0
       ) {
         notes.push(
           "Leichte Waffe: Power Attack gibt hier keinen Schaden — der Angriffsmalus gilt trotzdem.",
@@ -1108,6 +1144,7 @@ export function deriveSheetValues(
     encumbrance,
     armorCost,
     twoWeaponPossible: twoWeaponSetup !== null,
+    powerAttackWeapons,
     xp: {
       current: character.xp,
       nextLevelAt: totalLevel >= 20 ? null : xpForLevel(totalLevel + 1),

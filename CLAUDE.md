@@ -2039,8 +2039,154 @@ Damit sind alle fünf Strecken grün, und der Fund ist die Regel selbst: **eine 
 sich ihr Ziel über ein Wort sucht statt über den Ort, findet irgendwann das falsche — und
 meldet es als Fehler der App.**
 
+## Erklärung, Zustand, Bedienung — die Grenze, die diese Runde gezogen hat
+
+Vier Punkte, und der zweite hat eine Unterscheidung erzwungen, die es vorher nicht gab.
+
+### 1. Ringkampf heißt Grapple
+
+Sein Wort: **„Ringkampf in EN lassen."** Der dritte Fall derselben Familie nach GAB → BAB
+und TP → HP, und wie dort steht die Entscheidung jetzt als Schranke in `strings.test.ts`
+und nicht als Prosa.
+
+**Die Gruppen-Überschrift musste mit**: „Bewegung & Ringen" über einer Kachel „GRAPPLE"
+wären zwei Namen für einen Wert auf EINEM Schirm — genau der Fehler, den GAB gekostet hat.
+Sie heißt jetzt „Bewegung & Grapple"; dass sie halb deutsch bleibt, ist die Regel dieser
+App und kein Bruch (deutsche Oberfläche, englische Regelbegriffe mittendrin).
+
+**Und die Schranke greift ABSICHTLICH nicht auf „Ringen".** Das deutsche Wort steht in den
+Gegenstandstexten und meint dort etwas völlig anderes: „ein Hemd aus Ringen" ist das
+Kettenhemd. Eine Prüfung, die zu weit greift, meldet eine Stelle, die mit der Regel nichts
+zu tun hat — und man baut den Text kaputt, um sie grün zu bekommen.
+
+### 2. Kurzbeschreibungen abschaltbar — und was das NICHT heißt
+
+Sein Auftrag: **„Kurzbeschreibungen optional machen. Ich würde es für mich zum Beispiel
+deaktivieren, denn ich kenne die Fähigkeiten meines Charakters … Alle Beschreibungen sollen
+aber über antippen und ausklappen weiterhin nachlesbar sein."** Gefragt und entschieden:
+**nur Regel-Erklärungen.**
+
+Daraus folgt eine Grenze, die diese App vorher nicht ausgesprochen hatte — **drei Sorten
+Kleinschrift, und nur eine davon darf weg:**
+
+| Sorte | Beispiel | verschwindet? |
+|---|---|---|
+| **Erklärung** — wie die REGEL funktioniert | „Vom Angriff auf den Schaden, höchstens 6" | ja |
+| **Zustand** — was an DIESEM Bogen gilt | „Kurzschwert: zählt einfach — eure Hausregel" | **nie** |
+| **Bedienung** — was ein KNOPF anrichtet | „Gilt für diese Runde" | **nie** |
+
+Eine Erklärung kann man auswendig können, einen Zustand nicht — er wechselt mit jedem
+Waffenwechsel. Wer ihn mitversteckt, baut die Familie „etwas weiß es, und etwas anderes
+kann es nicht" neu auf. Und wer den Bedienhinweis versteckt, macht aus jedem Knopf ein
+Rätsel.
+
+Gebaut als EIN Bauteil (`ui/RuleHint.tsx`) und nicht als `if` je Stelle: sonst steht die
+Frage „darf das hier weg?" an jeder Stelle noch einmal und wird beim nächsten neuen Text
+vergessen. Ausgeblendet bleibt ein ▸ mit dem NAMEN der Sache stehen — bei vier
+Kampfoptionen untereinander wäre viermal „Erklärung ▸" nicht zu unterscheiden.
+
+### 3. Was Power Attack mit der geführten Waffe macht
+
+Sein Auftrag: **„dennoch würde ich gerne bei powerattack eine Anzeige haben, ob es mit der
+geführten waffe anwendbar ist."** Der Anlass steht weiter oben in dieser Datei — sein Bogen
+kämpft mit Kurzschwert und Schild, und nach dem Buch bringt Power Attack dort nichts.
+
+**Der eigentliche Fund war eine doppelte Regel.** Die Bedingung „leichte Waffe bekommt
+keinen Schaden" stand ZWEIMAL ausgeschrieben: als `lightBlocked` in `combatOptions.ts` und
+noch einmal in `derive.ts` als Bedingung für den Hinweis an der Angriffszeile. Mit dieser
+Anzeige wäre es die dritte Kopie geworden. Jetzt gibt es `powerAttackDamageFactor` (0 · 1 ·
+2), und alle drei lesen von dort. Zwei Kopien einer Regel sind zwei Wahrheiten — es hätte
+gereicht, die Hausregel an einer Stelle zu vergessen, und der Bogen hätte einen Satz
+gezeigt, dem seine eigene Zahl widerspricht.
+
+Gerechnet wird **zweimal** — nach dem Buch und mit seiner Hausregel —, und die Differenz
+IST die Auskunft: `byHouseRule` sagt „ohne eure Regel brächte es hier nichts". Die
+Alternative wäre gewesen, die Bedingung ein drittes Mal hinzuschreiben.
+
+Gezählt wird nur, was **in einer Hand** liegt. Eine Waffe im Rucksack bekommt eine
+Angriffszeile (das ist richtig und bleibt), aber „die geführte Waffe" ist sie nicht.
+
+### 4. „Wirken" — Schritt für Schritt durch eine Tagesfähigkeit
+
+Sein Auftrag: **„bei Turn undead hätte ich gerne einen Button der sagt ‚wirken' dann öffnet
+sich eine infobox, die die Fähigkeit Schritt für Schritt durch geht. Ich glaub Ziele
+auswählen, würfeln, schaden etc. ka. So dass ich das korrekt ausführe."** Gefragt und
+entschieden: **auch Niederstrecken, Wut und Bardenmusik**, und **der Zähler geht am Ende
+mit ab, mit Ansage.**
+
+Die Anleitung steht im KERN (`engine/abilityGuide.ts`), weil jeder Schritt echte Zahlen
+dieses Bogens trägt: die Probe ist `1d20+3`, weil sein CHA +3 ist, der Vertreibungsschaden
+`2d6+9`, weil er Kleriker 6 mit CHA +3 ist. Eine Anleitung mit Platzhaltern wäre eine
+Bedienungsanleitung; eine mit seinen Zahlen ist ein Handgriff. Und was Zahlen rechnet,
+gehört an die Stelle, die geprüft wird.
+
+Vier Entscheidungen sind eine Notiz wert:
+
+- **Die Vertreibungsstufe ist die KLERIKERstufe**, nicht die Gesamtstufe (ein Paladin ab 4
+  rechnet mit Paladinstufe − 3). Ein Kleriker 3 / Kämpfer 5 vertreibt wie ein Kleriker 3 —
+  wer hier die Gesamtstufe nimmt, verschenkt fünf Stufen, und es fällt nicht auf, weil die
+  Zahl plausibel aussieht.
+- **Die Dauer der Wut rechnet mit dem ERHÖHTEN CON-Modifikator.** Aus CON 14 (+2) wird in
+  der Wut CON 18 (+4), also 3 + 4 = 7 Runden. Das ist die Stelle, an der man sich am Tisch
+  verzählt.
+- **Die Turning-Tabelle steht als Rechnung, nicht als neun Zeilen** — dafür prüft der Test
+  jede Stufe der Treppe von BEIDEN Seiten. Ein Punkt zu viel ist am Tisch ein Untoter zu
+  viel.
+- **Gebucht wird am Ende, nie beim Öffnen.** Wer nur nachlesen will, schließt das Blatt und
+  hat nichts verbraucht; der Knopf sagt vorher „1 Versuch weg (6 → 5)". Dieselbe Trennung
+  wie zwischen `planRest` und `applyRest`, und die Rücknahme steht daneben — der DM
+  entscheidet manchmal, dass ein Versuch nicht zählt.
+
+**Die Prüfung, auf die es ankommt, ist die STRECKE:** jeder Würfelausdruck der Anleitung
+muss durch `parseDice` gehen. Genau hier ist schon einmal ein toter Würfelknopf entstanden
+(aus einem halben Fertigkeitsrang wurde „1d20+4.5", `parseDice` gab `null`, der Knopf tat
+wortlos nichts). Ein Test auf die Zeichenkette hätte das durchgelassen — und der Test zählt
+mit, WIE VIELE Würfe er geprüft hat, sonst könnte er grün melden, ohne etwas gemessen zu
+haben.
+
+### Was der BLICK gefunden hat, und 81 grüne Prüfungen nicht
+
+Der Wirken-Knopf stand zuerst oben in der Zählerzeile, zwischen der Zahl und dem Minus. Bei
+390 px blieb vom Namen **„Untote vertre…"** übrig, und die Kleinzeile brach in sechs Zeilen
+um. Alle 81 Prüfungen waren dabei grün — sie lesen `innerText`, und der stimmte.
+
+Das ist WÖRTLICH derselbe Fund wie bei den Behältern: **eine Zeile, die schon voll ist,
+verträgt keinen vierten Knopf.** Behoben wie damals — der Knopf wandert in eine eigene
+Zeile darunter und ist dort nebenbei ein größeres Daumenziel.
+
+### Und die Anführungszeichen zum SECHSTEN Mal
+
+`describe("… die Tabelle „Turning Undead"", …)` — esbuild meldete „Unterminated string
+literal", und die Suche ging wieder an die falsche Stelle. In `CLAUDE.md` steht seit der
+Zeichen-Runde, in Prüfdateien gar keine `„…"` zu benutzen. Es hilft offenbar nicht, es
+aufzuschreiben; es steht jetzt zusätzlich im Kopf der neuen Teststrecke.
+
+### Was diese Runde in ALTEN Strecken gefunden hat
+
+Acht Strecken zeigten auf **Port 5202**, den es nicht mehr gibt — sie liefen seit Monaten
+gar nicht. Fünf davon sind nach dem Umstellen sofort grün; drei brauchten mehr, und was sie
+meldeten, ist jedes Mal dieselbe Lehre: **eine tote Sonde meldet nicht „ich komme nicht
+hin", sie meldet einen Fehler an der Stelle, an der sie danach zufällig hinschaut.**
+
+- `e2e-fcimport` klagte „Rucksack-Waffen sind als solche markiert" an — der Abschnitt heißt
+  seit der Behälter-Runde „Im Gepäck". Und die Angriffszeilen suchte sie auf ENGLISCH
+  („Sword, short"), obwohl die Ausrüstung seit seiner Übersetzungs-Runde deutsch heißt.
+- `e2e-equip` blieb im Assistenten stehen (die Rückfrage am Ende, inzwischen die ACHTE
+  Strecke mit dieser Ursache) und hielt `/charaktere/neu` für einen Bogen. Danach meldete
+  sie zehn Fehler — **gegen einen Build OHNE diese Runde nachgemessen: dieselben zehn.**
+  Sie bleiben offen und stehen unten.
+- `e2e-version` wartet auf einen Update-Knopf, den es nur mit zwei echten Ständen gibt;
+  dafür ist `e2e-update` da.
+
 ## Noch offen
 
+- **`e2e-equip` meldet zehn Fehler, und sie sind ALT.** Die Strecke war doppelt tot
+  (falscher Port, dazu die Rückfrage des Assistenten) und läuft seit dieser Runde wieder
+  durch. Nachgemessen gegen einen Build ohne diese Runde: dieselben zehn. Es geht um die
+  Slot-Marken (eine zweite Rüstung verdrängt die erste, ein Zweihänder verdrängt Schild und
+  Langschwert, ein Bogen wird 2H) und darum, dass der Power-Attack-Regler in DIESER Strecke
+  nicht gefunden wird. Ob App oder Sonde, ist ungeklärt — bei einer monatelang toten Strecke
+  ist beides gleich wahrscheinlich, und die Slot-Regeln haben eigene Tests im Kern.
 - **Die volle Attacke ist beantwortet und steht damit nicht mehr hier.** „Wir spielen bei
   6bab mit zwei Angriffen" — die Reihe bleibt, wie sie war, und hat jetzt einen Test
   (`core/engine/iterativeAttacks.test.ts`). Dasselbe Schicksal wie der halbe

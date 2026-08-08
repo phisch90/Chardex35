@@ -7,6 +7,7 @@ import {
   rollDice,
   suggestTrackers,
   trackerMaxNote,
+  abilityGuide,
   categoryOf,
   TRACKER_CATEGORIES,
   TRACKER_REFILL_KINDS,
@@ -15,6 +16,7 @@ import {
   type TrackerRefillKind,
 } from "@codex35/core";
 import { S } from "../../strings.js";
+import { AbilityGuideSheet } from "../../ui/AbilityGuideSheet.js";
 import { Icon } from "../../ui/icons.js";
 import { cryptoRng } from "../../lib/rng.js";
 import { useAppSettings } from "../../lib/hooks.js";
@@ -54,6 +56,13 @@ export function TrackersCard({
   const { diceEnabled } = useAppSettings();
   const roll = useDiceStore((s) => s.roll);
   const undo = useUndo();
+  /*
+    Welcher Zähler gerade seine Anleitung offen hat — die KENNUNG und nicht das Objekt.
+    Ein festgehaltenes Objekt wäre der Stand von damals; nach dem Abziehen zeigt die
+    Anleitung sonst weiter „7 übrig". Dieselbe Lehre wie überall in diesem Projekt: ein
+    abgeleiteter Wert wird nicht gespeichert.
+  */
+  const [guideFor, setGuideFor] = useState<string | null>(null);
   /*
     Nur die Zähler DIESES Bereichs. Sein Befund war, dass alle auf der Werte-Seite
     standen: „Turn Undead ist ja was für die Kampf Seite. Actionpoint dann wieder
@@ -215,6 +224,28 @@ export function TrackersCard({
 
             </div>
 
+            {/*
+              Der Wirken-Knopf in EIGENER Zeile — und das ist ein Fund vom BILD, nicht aus
+              einer Prüfung.
+
+              Zuerst stand er oben zwischen der Zahl und dem Minus. Alle 81 Prüfungen waren
+              grün (sie lesen `innerText`, und der stimmte), aber bei 390 px blieb vom Namen
+              „Untote vertre…" übrig, und die Kleinzeile brach in sechs Zeilen um. Dieselbe
+              Lehre wie bei den Behältern, wörtlich: eine Zeile, die schon voll ist, verträgt
+              keinen vierten Knopf.
+
+              Nebenbei ist er hier ein größeres Daumenziel — und er steht nur an Zählern, für
+              die es wirklich eine Anleitung gibt (`abilityGuide` gibt sonst `undefined`).
+            */}
+            {tracker.kind === "counter" &&
+              abilityGuide(tracker.suggestedFrom ?? "", sheet) !== undefined && (
+                <div className="mt-1.5">
+                  <GhostButton onClick={() => setGuideFor(tracker.id)}>
+                    {S.trackers.guide}
+                  </GhostButton>
+                </div>
+              )}
+
             {/* Bearbeiten-Knöpfe in eigener Zeile — der Name soll nicht abgeschnitten werden. */}
             {/*
               Die Bedingungen als KNOPFREIHE, in eigener Zeile über den
@@ -260,6 +291,37 @@ export function TrackersCard({
       </ul>
 
       <UndoBar pending={undo.pending} onUndo={undo.undo} onDismiss={undo.dismiss} />
+
+      {/*
+        Die Anleitung — gebaut aus dem FRISCHEN Zähler, nicht aus einem festgehaltenen
+        Objekt. Nach dem Abziehen zeigt sie deshalb sofort die neue Zahl.
+
+        Gebucht wird EINMAL beim Abschließen, mit Rücknahme: der Zähler ist Spielstand,
+        und ein Fehlgriff mitten im Kampf darf keinen Einsatz kosten. Der DM entscheidet
+        außerdem manchmal, dass ein Versuch nicht zählt — dafür ist der Rückweg da.
+      */}
+      {(() => {
+        const tracker = trackers.find((t) => t.id === guideFor);
+        if (tracker === undefined) return null;
+        const guide = abilityGuide(tracker.suggestedFrom ?? "", sheet);
+        if (guide === undefined) return null;
+        return (
+          <AbilityGuideSheet
+            guide={guide}
+            left={tracker.value}
+            characterName={character.name}
+            onClose={() => setGuideFor(null)}
+            onSpend={() => {
+              const vorher = tracker.value;
+              mutate(tracker.id, (t) => void (t.value = Math.max(0, t.value - 1)));
+              undo.offer(`${guide.title}: ${guide.cost}`, () =>
+                mutate(tracker.id, (t) => void (t.value = vorher)),
+              );
+              setGuideFor(null);
+            }}
+          />
+        );
+      })()}
 
       {suggestions.length > 0 && (
         <div className="mt-2 rounded-lg border border-slate-800 bg-slate-900/40 p-2">

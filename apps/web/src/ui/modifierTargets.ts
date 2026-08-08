@@ -71,7 +71,7 @@ export const MODIFIER_TARGETS: ModifierTarget[] = [
   { key: "init", label: "Initiative", path: "init", bonusType: "untyped", group: G.other },
   { key: "hp.max", label: "Max. Trefferpunkte", path: "hp.max", bonusType: "untyped", group: G.other },
   { key: "speed.land", label: "Bewegung", path: "speed.land", bonusType: "untyped", group: G.other },
-  { key: "grapple", label: "Ringkampf", path: "grapple", bonusType: "untyped", group: G.other },
+  { key: "grapple", label: "Grapple", path: "grapple", bonusType: "untyped", group: G.other },
   { key: "dc.spells", label: "Zauber-SG", path: "dc.spells", bonusType: "untyped", group: G.other },
   { key: "cl", label: "Zauberstufe", path: "cl", bonusType: "untyped", group: G.other },
   { key: "feats.slots", label: "Talent-Plätze", path: "feats.slots", bonusType: "untyped", group: G.other },

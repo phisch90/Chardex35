@@ -83,7 +83,14 @@ export const S = {
       defense: "Verteidigung",
       saves: "Rettungswürfe",
       attack: "Angriff",
-      moves: "Bewegung & Ringen",
+      /*
+        „Bewegung & Grapple" und nicht „Bewegung & Ringen": seit der Wert unten Grapple
+        heißt, stünde über ihm sonst das deutsche Wort für dieselbe Sache — ein Wert mit
+        zwei Namen, genau wie damals GAB gegen BAB. Dass die Überschrift dabei halb
+        deutsch bleibt, ist kein Bruch, sondern die Regel dieser App: deutsche
+        Oberfläche, englische Regelbegriffe mittendrin („Volle Attacke aus BAB +6").
+      */
+      moves: "Bewegung & Grapple",
     },
     /**
      * BAB und nicht GAB. Sein Wort: „Wir spielen bei 6bab mit zwei Angriffen. Bitte auch
@@ -94,7 +101,13 @@ export const S = {
      * zwei Namen, und keiner der beiden war überall.
      */
     bab: "BAB",
-    grapple: "Ringkampf",
+    /*
+      Grapple und nicht Ringkampf — sein Wort: „Ringkampf in EN lassen." Dieselbe
+      Entscheidung wie GAB → BAB und TP → HP, und aus demselben Grund: Regelbegriffe
+      bleiben englisch, weil sie so in seinen Büchern, in der Gruppen-Excel und in Fight
+      Club stehen. Die Schranke dazu steht in `strings.test.ts`.
+    */
+    grapple: "Grapple",
     level: "Stufe",
     xp: "EP",
     nextLevel: "nächste Stufe",
@@ -807,6 +820,31 @@ export const S = {
     twoWeapon: "Mit beiden Waffen angreifen",
     twoWeaponHint:
       "Malus auf beide Hände — wie hoch, hängt daran, ob die Waffe in der zweiten Hand leicht ist und ob du das Talent hast. Steht an den Waffenzeilen.",
+    /*
+      Was Power Attack mit der WIRKLICH geführten Waffe tut — sein Auftrag: „dennoch würde
+      ich gerne bei powerattack eine Anzeige haben, ob es mit der geführten waffe anwendbar
+      ist."
+
+      Das ist ein ZUSTAND und keine Erklärung: er sagt nicht, wie die Regel funktioniert,
+      sondern was an DIESEM Bogen gerade gilt. Deshalb läuft er NICHT durch `RuleHint` und
+      verschwindet auch nicht, wenn er die Kurzbeschreibungen abschaltet. Genau diese
+      Auskunft hat ihm einmal gefehlt und wie ein Rechenfehler ausgesehen.
+
+      Die Zahlen kommen fertig aus der Engine (`sheet.powerAttackWeapons`); hier steht nur
+      die Formulierung. Eine Regel in einem deutschen Satz wäre eine zweite Wahrheit.
+    */
+    powerAttackWeapon: (name: string, factor: 0 | 1 | 2, byHouseRule: boolean) =>
+      factor === 0
+        ? `${name}: bringt keinen Schaden — leichte Waffe. Der Angriffsmalus gilt trotzdem.`
+        : factor === 2
+          ? `${name}: zählt doppelt (zweihändig geführt).`
+          : byHouseRule
+            ? `${name}: zählt einfach — leichte Waffe, erlaubt durch eure Hausregel.`
+            : `${name}: zählt einfach.`,
+    /** Steht davor, damit die Zeile ohne Vorwissen lesbar ist. */
+    powerAttackWeaponsTitle: "Mit dem, was du führst:",
+    /** Nichts in der Hand — dann ist die Frage nicht zu beantworten, und das sagt sie. */
+    powerAttackNoWeapon: "Nichts in der Hand — leg eine Waffe an, dann steht hier, was sie bekommt.",
   },
 
   /*
@@ -1283,6 +1321,21 @@ export const S = {
       roll: "Ein Würfelausdruck. Der Knopf am Bogen würfelt ihn, und das Ergebnis bleibt stehen.",
     } as Record<string, string>,
     namePlaceholder: "z.B. Aktionspunkte",
+    /*
+      Der Wirken-Knopf und sein Blatt. Sein Auftrag: „bei Turn undead hätte ich gerne
+      einen Button der sagt ‚wirken' dann öffnet sich eine infobox, die die Fähigkeit
+      Schritt für Schritt durch geht … So dass ich das korrekt ausführe."
+
+      Der Knopf steht nur an Zählern, für die es wirklich eine Anleitung gibt
+      (`abilityGuide` gibt sonst `undefined`) — ein Knopf, der eine leere Box öffnet, wäre
+      die Fehlerfamilie „verspricht etwas und tut nichts".
+    */
+    guide: "Wirken",
+    guideSpend: "Fertig",
+    /** Sagt die ZAHLEN vorher, wie bei der Rast — nicht bloß „zieht 1 ab". */
+    guideSpendHint: (cost: string, left: number) =>
+      `Beim Abschließen: ${cost} weg (${left} → ${left - 1}).`,
+    guideEmpty: "Nichts mehr übrig — der Zähler steht auf 0.",
     /** Steht im leeren Maximum-Feld, wenn es keine Grenze gibt. */
     maxFree: "keine Grenze",
     value: "Wert",

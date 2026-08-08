@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { applyCombatOptions, canAttackThisRound, type CombatOptionContext } from "./combatOptions.js";
+import {
+  applyCombatOptions,
+  canAttackThisRound,
+  powerAttackDamageFactor,
+  type CombatOptionContext,
+} from "./combatOptions.js";
 import type { CombatOptions } from "../schema/character.js";
 
 const options = (patch: Partial<CombatOptions> = {}): CombatOptions => ({
@@ -283,6 +288,56 @@ describe("Zusammenspiel", () => {
     const out = applyCombatOptions(options({ totalDefense: true, combatExpertise: 4 }), context());
     expect(sum(out.ac)).toBe(4); // nicht 8
     expect(out.meleeAttack).toEqual([]);
+  });
+
+  /*
+    Der Faktor als EIGENE Funktion — und deshalb auch mit eigenen Prüfungen.
+
+    Sie ist seit dieser Runde die einzige Stelle, die „bekommt diese Waffe den Bonus?"
+    beantwortet: die Rechnung liest sie, der Hinweis an der Angriffszeile liest sie, und
+    die neue Anzeige bei den Kampfoptionen („gilt für deine geführte Waffe", sein Auftrag)
+    liest sie auch. Vorher stand die Bedingung zweimal ausgeschrieben — in `meleeDamage`
+    und in `derive.ts` —, und die dritte Kopie wäre mit dieser Runde dazugekommen.
+  */
+  it(`der Faktor sagt 0, 1 oder 2 — und die Hausregel hebt nur die 0 auf`, () => {
+    const buch = { powerAttackLightWeapons: false };
+    const tisch = { powerAttackLightWeapons: true };
+
+    // Einhändig: einfach, in beiden Fassungen.
+    expect(powerAttackDamageFactor({ handedness: "one", hand: "main" }, buch)).toBe(1);
+    expect(powerAttackDamageFactor({ handedness: "one", hand: "main" }, tisch)).toBe(1);
+
+    // Zweihändig geführt: doppelt, in beiden Fassungen.
+    expect(powerAttackDamageFactor({ handedness: "two", hand: "both" }, buch)).toBe(2);
+    expect(
+      powerAttackDamageFactor(
+        { handedness: "one", wieldedInTwoHands: true, hand: "both" },
+        buch,
+      ),
+    ).toBe(2);
+
+    // Leicht: das ist sein Kurzschwert, und nur hier ändert die Hausregel etwas.
+    expect(powerAttackDamageFactor({ handedness: "light", hand: "main" }, buch)).toBe(0);
+    expect(powerAttackDamageFactor({ handedness: "light", hand: "main" }, tisch)).toBe(1);
+
+    // …aber nie das Doppelte, auch nicht im Platz „beide Hände".
+    expect(
+      powerAttackDamageFactor(
+        { handedness: "light", wieldedInTwoHands: true, hand: "main" },
+        tisch,
+      ),
+    ).toBe(1);
+
+    // Buchausnahme: unbewaffnet bekommt den Bonus OHNE Hausregel.
+    expect(
+      powerAttackDamageFactor(
+        { handedness: "light", naturalOrUnarmed: true, hand: "main" },
+        buch,
+      ),
+    ).toBe(1);
+
+    // Fernkampf kennt Power Attack gar nicht.
+    expect(powerAttackDamageFactor({ handedness: "ranged", hand: "main" }, tisch)).toBe(0);
   });
 
   it(`nichts eingestellt heißt: kein einziger Beitrag und keine Meldung`, () => {

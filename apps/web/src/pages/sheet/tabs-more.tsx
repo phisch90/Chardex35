@@ -33,6 +33,7 @@ import { ArmorCostCard } from "../../ui/ArmorCostCard.js";
 import { HandsCard } from "./Hands.js";
 import { TrackersCard } from "./Trackers.js";
 import { ItemName, ItemText } from "../../ui/ItemName.js";
+import { RuleHint } from "../../ui/RuleHint.js";
 import { itemLabel, itemSummary } from "../../ui/itemSummary.js";
 import { ItemPicker } from "../../ui/ItemPicker.js";
 import { ItemEditor } from "../../ui/ItemEditor.js";
@@ -1141,8 +1142,16 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
                   </Chip>
                 )}
               </div>
+              {/*
+                Die Klassenfähigkeit erklärt sich — und genau das ist der Text, den er
+                nicht immer lesen will („ich kenne die Fähigkeiten meines Charakters").
+                Ausgeblendet steht ein ▸ mit dem NAMEN der Fähigkeit da; ohne den Namen
+                stünde bei zwölf Fähigkeiten zwölfmal dasselbe Zeichen untereinander.
+              */}
               {feature.description && (
-                <p className="mt-0.5 text-xs text-slate-500">{feature.description}</p>
+                <RuleHint label={feature.name} className="mt-0.5">
+                  {feature.description}
+                </RuleHint>
               )}
             </li>
           ))}

@@ -285,7 +285,13 @@ export function SelectField(props: {
  */
 export function NumberStepper(props: {
   label: string;
-  hint?: string;
+  /*
+    `ReactNode` und nicht `string`: seit die Regel-Erklärungen abschaltbar sind, kommt
+    hier ein `<RuleHint>` herein und keine Zeichenkette mehr. Der Kasten darum bleibt —
+    er hält den Platz —, aber die Schrift-Klassen sind weg: sonst stünden sie zweimal,
+    und wer später am Bauteil dreht, ändert die Hälfte der Stellen nicht mit.
+  */
+  hint?: ReactNode;
   value: number;
   min?: number;
   max: number;
@@ -300,9 +306,12 @@ export function NumberStepper(props: {
     <div className="flex items-center gap-2">
       <div className="min-w-0 flex-1">
         <div className="text-sm">{props.label}</div>
-        {props.hint !== undefined && (
-          <div className="text-[11px] leading-snug text-slate-500">{props.hint}</div>
-        )}
+        {props.hint !== undefined &&
+          (typeof props.hint === "string" ? (
+            <div className="text-[11px] leading-snug text-slate-500">{props.hint}</div>
+          ) : (
+            props.hint
+          ))}
       </div>
       {/*
         Die Knöpfe bekommen einen Klartext-Namen. Ein „−" allein ist für die
