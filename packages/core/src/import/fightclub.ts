@@ -993,7 +993,7 @@ export function mapFightClubPc(
 
   // Aus den Klassentabellen abgeleitet — hier wäre ein Ausgleich Selbstbetrug.
   report("BAB", pc.bab, sheet.bab, { always: true });
-  report("Ringkampf", pc.grapple, sheet.grapple.total, { always: true });
+  report("Grapple", pc.grapple, sheet.grapple.total, { always: true });
   report("Initiative", pc.init, sheet.init.total, {
     always: true,
     hint: `Die App zählt Talent-Boni wie „Improved Initiative" mit; Fight Club listet hier oft nur den DEX-Modifikator.`,

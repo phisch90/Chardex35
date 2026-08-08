@@ -48,6 +48,26 @@ export interface AppSettings {
    * verschwinden mit.
    */
   classAccent: boolean;
+  /**
+   * Stehen die Regel-ERKLÄRUNGEN ohne Tap da?
+   *
+   * Sein Auftrag: „Kurzbeschreibungen optional machen. Ich würde es für mich zum Beispiel
+   * deaktivieren, denn ich kenne die Fähigkeiten meines Charakters. Beispiel: ich muss
+   * nicht immer die Erklärung für Power Attacken lesen. Alle Beschreibungen sollen aber
+   * über antippen und ausklappen weiterhin nachlesbar sein."
+   *
+   * **Die Grenze, um die es geht, ist ERKLÄRUNG gegen ZUSTAND**, und gefragt hat er sie
+   * selbst mitentschieden („Nur Regel-Erklärungen"). Weg darf, was sagt, wie eine Regel
+   * FUNKTIONIERT — „Vom Angriff auf den Schaden, höchstens 6". Bleiben muss, was sagt,
+   * was an DIESEM Bogen gerade gilt („gilt für dein Kurzschwert") und was ein Knopf
+   * ANRICHTET („Gilt für diese Runde"). Wer den Zustand mitversteckt, baut die
+   * Fehlerfamilie „etwas weiß es, und etwas anderes kann es nicht" neu auf; wer den
+   * Bedienhinweis mitversteckt, macht aus jedem Knopf ein Rätsel.
+   *
+   * Und nichts verschwindet ganz: jede ausgeblendete Erklärung bekommt ein ▸ und ist
+   * einen Tap entfernt. Ein Text, den man nicht mehr erreichen kann, wäre gelöscht.
+   */
+  ruleHints: boolean;
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -57,6 +77,12 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   // AN als Standard: die Klassenfarben sind der Stand, den er gerade abgenommen hat. Wer
   // sie nicht will, schaltet sie ab — nicht umgekehrt.
   classAccent: true,
+  /*
+    AN als Standard, und zwar aus demselben Grund wie bei `classAccent`: das ist der
+    Zustand, den er kennt. Wer die Erklärungen nicht will, schaltet sie ab — der Weg
+    andersherum wäre eine App, die nach dem Update stumm dasteht.
+  */
+  ruleHints: true,
 };
 
 export const APP_SETTINGS_KEY = "appSettings";
@@ -84,6 +110,13 @@ export function parseAppSettings(value: unknown): AppSettings {
     */
     classAccent:
       typeof raw.classAccent === "boolean" ? raw.classAccent : DEFAULT_APP_SETTINGS.classAccent,
+    /*
+      Auch hier: ein fehlendes Feld heißt AN. Auf seinem Gerät liegt es noch gar nicht,
+      und ein Bogen, dem nach dem Update plötzlich alle Erklärungen fehlen, sieht kaputt
+      aus statt eingestellt.
+    */
+    ruleHints:
+      typeof raw.ruleHints === "boolean" ? raw.ruleHints : DEFAULT_APP_SETTINGS.ruleHints,
   };
 }
 

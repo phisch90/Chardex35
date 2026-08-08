@@ -105,6 +105,60 @@ export interface WieldContext {
   hand: Hand;
 }
 
+/**
+ * Was Power Attack mit DIESER Waffe macht: 0 · 1 · 2 Punkte Schaden je Punkt Angriff.
+ *
+ * Es gibt genau EINE Stelle, die das entscheidet, und das ist der Grund, warum diese
+ * Funktion hier steht statt in `meleeDamage` eingebacken zu sein. Die Bedingung stand
+ * nämlich schon ZWEIMAL: einmal als `lightBlocked` in der Rechnung und einmal in
+ * `derive.ts` als Bedingung für den Hinweis „Leichte Waffe: Power Attack gibt hier keinen
+ * Schaden". Zwei Kopien einer Regel sind zwei Wahrheiten — es hätte gereicht, die
+ * Hausregel an einer der beiden Stellen zu vergessen, und der Bogen hätte einen Satz
+ * gezeigt, dem seine eigene Zahl widerspricht. Genau diesen Fehler hat dieses Projekt bei
+ * Power Attack schon einmal bezahlt.
+ *
+ * Mit der Anzeige „gilt für deine geführte Waffe" (sein Auftrag) wäre es die DRITTE Kopie
+ * geworden. Jetzt lesen alle drei von hier.
+ *
+ * Die drei Fälle stehen wörtlich im SRD: „If you attack with a two-handed weapon, or with
+ * a one-handed weapon wielded in two hands, instead add twice the number subtracted from
+ * your attack rolls. You can't add the bonus from Power Attack to the damage dealt with a
+ * light weapon (except with unarmed strikes or natural weapon attacks)."
+ */
+export function powerAttackDamageFactor(
+  weapon: WieldContext,
+  /*
+    `| undefined` ausdrücklich dazu, nicht bloß `?`: bei `exactOptionalPropertyTypes` ist
+    „das Feld fehlt" nicht dasselbe wie „das Feld ist undefined", und die Hausregel kommt
+    als `boolean | undefined` herein. Ohne das lehnt `tsc` jeden Aufrufer ab — gefunden
+    hat es der Typprüfer, die 27 Tests dieser Datei waren grün.
+  */
+  options: { powerAttackLightWeapons?: boolean | undefined },
+): 0 | 1 | 2 {
+  if (weapon.handedness === "ranged") return 0;
+  /*
+    Leichte Waffe: kein Schadensbonus — es sei denn, es ist ein Faustschlag oder eine
+    natürliche Waffe (Buchausnahme, gilt immer), oder sein Tisch hat die Hausregel an.
+  */
+  const lightBlocked =
+    weapon.handedness === "light" &&
+    weapon.naturalOrUnarmed !== true &&
+    options.powerAttackLightWeapons !== true;
+  if (lightBlocked) return 0;
+  /*
+    Eine LEICHTE Waffe bekommt nie das Doppelte, auch mit Hausregel nicht. Die Regel für
+    ×2 verlangt eine zweihändige Waffe oder eine einhändige in zwei Händen; ein
+    Kurzschwert in beiden Händen ist nach dem Buch gar nicht vorgesehen. Die Hausregel
+    sagt „Power Attack zählt auch mit leichter Waffe" — nicht „eine leichte Waffe ist ein
+    Zweihänder". Ohne diese Zeile käme aus einem Kurzschwert im Platz „beide Hände" still
+    der doppelte Bonus.
+  */
+  const twoHanded =
+    weapon.handedness === "two" ||
+    (weapon.wieldedInTwoHands === true && weapon.handedness !== "light");
+  return twoHanded ? 2 : 1;
+}
+
 export interface CombatOptionOutcome {
   /**
    * Auf JEDEN Angriffswurf, egal ob Nah- oder Fernkampf (immer ≤ 0).
@@ -317,53 +371,17 @@ export function applyCombatOptions(
           : [0];
 
   const meleeDamage: CombatOptionOutcome["meleeDamage"] = (weapon) => {
-    if (powerAttack === 0 || weapon.handedness === "ranged") return [];
+    if (powerAttack === 0) return [];
     /*
-      SRD, wörtlich: „If you attack with a two-handed weapon, or with a
-      one-handed weapon wielded in two hands, instead add twice the number
-      subtracted from your attack rolls. You can't add the bonus from Power
-      Attack to the damage dealt with a light weapon (except with unarmed strikes
-      or natural weapon attacks)."
-
-      Daraus drei Fälle, und alle drei waren vorher falsch oder nicht
-      ausdrückbar:
-
-       1. zweihändig GEFÜHRT zählt doppelt — nicht nur „die Waffe ist
-          zweihändig". Ein Langschwert in beiden Händen ist der häufigste Fall am
-          Tisch und ergab vorher +4 statt +8.
-       2. leichte Waffe: kein Schadensbonus, der Angriffsmalus bleibt.
-       3. AUSNAHME zu 2: unbewaffnet und natürliche Waffen bekommen den Bonus,
-          obwohl sie als „light" geführt sind. Ohne diese Ausnahme kassiert ein
-          waffenloser Mönch den Malus und bekommt nichts dafür.
+      Die REGEL steht in `powerAttackDamageFactor` und nicht hier — sie wird an drei
+      Stellen gebraucht (diese Rechnung, der Hinweis an der Angriffszeile, und die
+      Anzeige „gilt für deine geführte Waffe" bei den Kampfoptionen). Sie hier
+      auszuschreiben hieße, sie dreimal zu haben.
     */
-    /*
-      Die HAUSREGEL hebt Fall 2 auf, und sie ist der Grund, warum Philipp das gemeldet
-      hat: sein Bogen kämpft mit Kurzschwert und Schild. Nach dem Buch kostet Power
-      Attack ihn dort Trefferchance und bringt ihm nichts — der Malus kommt an, der
-      Schaden nicht. Seine Entscheidung, gefragt und beantwortet: „Bei uns zählt sie
-      trotzdem."
-
-      Die Ausnahme für unbewaffnet/natürliche Waffen bleibt trotzdem stehen: sie gilt
-      auch nach dem Buch, und wer die Hausregel abschaltet, soll den Mönch nicht
-      mitverlieren.
-    */
-    const lightBlocked =
-      weapon.handedness === "light" &&
-      weapon.naturalOrUnarmed !== true &&
-      context.powerAttackLightWeapons !== true;
-    if (lightBlocked) return [];
-    /*
-      Eine LEICHTE Waffe bekommt nie das Doppelte, auch mit Hausregel nicht. Die Regel für
-      ×2 verlangt eine zweihändige Waffe oder eine einhändige in zwei Händen; ein
-      Kurzschwert in beiden Händen ist nach dem Buch gar nicht vorgesehen. Die Hausregel
-      sagt „Power Attack zählt auch mit leichter Waffe" — nicht „eine leichte Waffe ist ein
-      Zweihänder". Ohne diese Zeile käme aus einem Kurzschwert im Platz „beide Hände"
-      still der doppelte Bonus.
-    */
-    const twoHanded =
-      weapon.handedness === "two" ||
-      (weapon.wieldedInTwoHands === true && weapon.handedness !== "light");
-    const factor = twoHanded ? 2 : 1;
+    const factor = powerAttackDamageFactor(weapon, {
+      powerAttackLightWeapons: context.powerAttackLightWeapons,
+    });
+    if (factor === 0) return [];
     return [
       {
         source: factor === 2 ? "Power Attack (×2 zweihändig geführt)" : "Power Attack",

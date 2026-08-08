@@ -696,6 +696,49 @@ describe("deriveSheet — Hand und Schildhand", () => {
     expect(dolch!.damageText).not.toBe("—");
   });
 
+  /*
+    Was Power Attack an der GEFÜHRTEN Waffe tut — sein Auftrag: „dennoch würde ich gerne
+    bei powerattack eine Anzeige haben, ob es mit der geführten waffe anwendbar ist."
+
+    Geprüft wird hier der ganze Weg bis an den Bogen, nicht bloß die Regel: die steht in
+    `powerAttackDamageFactor` und hat dort eigene Prüfungen. Was hier schiefgehen könnte,
+    ist etwas anderes — dass die Auskunft die Angriffszeile gar nicht erst verlässt.
+  */
+  it("sagt am Bogen, ob Power Attack mit der geführten Waffe etwas bringt", () => {
+    const buch = houseRulesSchema.parse({ powerAttackLightWeapons: false });
+    const tisch = houseRulesSchema.parse({ powerAttackLightWeapons: true });
+
+    // Langschwert in der Hand, Dolch (leicht) in der zweiten — sein Aufbau in klein.
+    const c = zweiWaffen(["mainHand", "offHand"]);
+
+    const nachBuch = deriveSheet(c, COMPENDIUM, buch).powerAttackWeapons;
+    const langschwert = nachBuch.find((w) => w.label === "Longsword");
+    const dolch = nachBuch.find((w) => w.label === "Dagger");
+    expect(langschwert).toEqual({ label: "Longsword", factor: 1, byHouseRule: false });
+    // Nach dem Buch bringt die leichte Waffe nichts — genau sein gemeldeter Fall.
+    expect(dolch).toEqual({ label: "Dagger", factor: 0, byHouseRule: false });
+
+    // Mit seiner Tischregel bekommt sie den Bonus, und die Anzeige sagt WOHER er kommt.
+    const nachTisch = deriveSheet(c, COMPENDIUM, tisch).powerAttackWeapons;
+    expect(nachTisch.find((w) => w.label === "Dagger")).toEqual({
+      label: "Dagger",
+      factor: 1,
+      byHouseRule: true,
+    });
+    // Am Langschwert ändert die Hausregel nichts — auch nicht an der Herkunft.
+    expect(nachTisch.find((w) => w.label === "Longsword")?.byHouseRule).toBe(false);
+  });
+
+  it("zählt nur, was wirklich in der Hand liegt", () => {
+    /*
+      Die Gegenprobe. Eine Waffe im Rucksack bekommt eine ANGRIFFSZEILE (die Prüfung
+      darüber hält das fest) — aber „die geführte Waffe" ist sie nicht, und eine Anzeige,
+      die sie mitzählt, beantwortet eine andere Frage als die gestellte.
+    */
+    const sheet = deriveSheet(zweiWaffen(["mainHand", "none"]), COMPENDIUM, HOUSE);
+    expect(sheet.powerAttackWeapons.map((w) => w.label)).toEqual(["Longsword"]);
+  });
+
   it("Rüstung zählt dagegen NUR angelegt", () => {
     const ohne = deriveSheet(
       fighterDwarf4({ inventory: [{ id: "a1", itemId: "test:item:chain-shirt", slot: "none" }] }),
