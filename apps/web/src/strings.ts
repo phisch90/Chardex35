@@ -793,6 +793,43 @@ export const S = {
       craft: "Herstellen",
       special: "Besonderes",
     } as Record<string, string>,
+
+    /*
+      Die Waffenwahl am Talent — sein Auftrag: „bei den Weapon Fokus sollte man nicht
+      einfach im Bogen die Waffe ändern können, sondern das muss man einmal machen,
+      wenn man das Talent auswählt."
+    */
+    chooseWeaponFor: (feat: string) => (feat === "" ? "Für welche Waffe?" : `${feat}: für welche Waffe?`),
+    chooseWeaponHint:
+      "Gewählt wird die Waffenart, nicht das einzelne Stück — du darfst sie also auch nehmen, bevor du sie besitzt. Später ändern geht nur im Bearbeiten-Modus.",
+    weaponsCarried: "Im Gepäck",
+    weaponsAll: "Alle Waffen",
+    weaponPick: "Wählen",
+    /** Steht an einer Waffe, die auch oben im Gepäck-Abschnitt steht. */
+    weaponPickCarried: "Wählen (im Gepäck)",
+    weaponPicked: "✓ gewählt",
+    noWeaponMatches: "Keine Waffe passt dazu.",
+    /** Der Knopf an einem Talent, dem die Waffe fehlt oder das sie wechseln soll. */
+    changeWeapon: "Waffe ändern",
+    /*
+      Die Liste zum Hinzufügen — sein Auftrag: „Erst mal nur die Talente anzeigen, die
+      man auch hat. Die Liste von weiteren Talenten sollte unten dann aufklappbar sein
+      und nicht direkt drunter angeflanscht."
+    */
+    addOpen: "Talent hinzufügen",
+    slotsFree: (n: number) => `${n} ${n === 1 ? "Talent" : "Talente"} frei`,
+    /*
+      Kein Platz mehr — und die App sagt WARUM, statt den Abschnitt stumm verschwinden
+      zu lassen. Ein Abschnitt, der ohne Wort weg ist, sieht wie ein Fehler aus; das ist
+      die Familie „etwas weiß es, und etwas anderes kann es nicht" in ihrer leisen Form.
+    */
+    noSlots: (used: number, available: number) =>
+      `Kein Talent frei — ${used} von ${available} gewählt. Tauschen geht im Bearbeiten-Modus.`,
+    /** Im Bearbeiten-Modus darf man auch ohne freien Platz etwas dazunehmen. */
+    editUnlocked: "Bearbeiten-Modus: du kannst tauschen.",
+    /** Der freie Text an einem Talent ohne Waffenbezug (Skill Focus, eigene Talente). */
+    choiceLabel: "Auswahl",
+    choicePlaceholder: "z.B. Spot",
   },
 
   campaign: {

@@ -4,7 +4,9 @@ import {
   allowedSlots,
   conflictingEquipIds,
   displayName,
+  featNeedsWeaponChoice,
   isStatPath,
+  isWeaponEntity,
   equipTap,
   itemKind,
   proficiencyFor,
@@ -20,6 +22,7 @@ import { Icon } from "../../ui/icons.js";
 import { toPortraitDataUrl } from "../../lib/image.js";
 import { FeatText } from "../../ui/FeatText.js";
 import { FeatPicker } from "../../ui/FeatPicker.js";
+import { FeatWeaponPicker } from "../../ui/FeatWeaponPicker.js";
 import { FeatModifiers } from "../../ui/FeatModifiers.js";
 import { describeModifier } from "../../ui/modifierTargets.js";
 import { UndoBar, useUndo } from "../../ui/UndoBar.js";
@@ -1063,6 +1066,38 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
   // Talente sind Stufenaufstiege in Papierform — die dürfen nicht auf einen Tap
   // verschwinden. Ändern und Löschen nur im Bearbeiten-Modus.
   const undo = useUndo();
+  /** Der Reihenindex des Talents, dessen Waffe gerade gewechselt wird. */
+  const [weaponForIndex, setWeaponForIndex] = useState<number | null>(null);
+  /*
+    Die Liste weiterer Talente ist ZU, bis er sie aufmacht — sein Auftrag: „Erst mal
+    nur die Talente anzeigen, die man auch hat. Die Liste von weiteren Talenten sollte
+    unten dann aufklappbar sein und nicht direkt drunter angeflanscht."
+  */
+  const [addOpen, setAddOpen] = useState(false);
+
+  /*
+    Die Waffen, die dieser Charakter wirklich trägt. Der Name kommt aus der ZEILE
+    (eine eigene Waffe heißt am Bogen anders als im Kompendium), die Kennung aus dem
+    Kompendium — der Bonus gilt für den Waffen-TYP.
+  */
+  const ownWeapons = character.inventory
+    .map((row) => {
+      const item = row.itemId ? entities?.find((e) => e.id === row.itemId) : undefined;
+      return isWeaponEntity(item) && item !== undefined
+        ? { id: item.id, name: row.customName ?? displayName(item) }
+        : null;
+    })
+    .filter((entry): entry is { id: string; name: string } => entry !== null);
+
+  /*
+    Hinzufügen nur, wenn auch ein Punkt dafür da ist — sein Auftrag: „dass man nur was
+    hinzufügen kann, wenn man auch einen Punkt dafür frei hat oder über bearbeiten wenn
+    man was wechseln darf". Ein Talent-Slot aus einem eigenen Buch zählt dabei von
+    allein mit: `featSlots.available` summiert JEDE Quelle von `feats.slots`, auch die
+    aus Homebrew-Klassen.
+  */
+  const slotsLeft = sheet.featSlots.available - sheet.featSlots.used;
+  const mayAdd = slotsLeft > 0 || editMode;
 
   return (
     <div className="space-y-3">
@@ -1071,13 +1106,19 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
           {S.sheet.tabs.feats} ({sheet.featSlots.used}/{sheet.featSlots.available})
         </SectionTitle>
         <UndoBar pending={undo.pending} onUndo={undo.undo} onDismiss={undo.dismiss} />
-        <ul className="divide-y divide-slate-800">
+        {/*
+          Kräftigere Linie und mehr Luft — sein Auftrag: „Die Talente in der Talente
+          Seite bitte deutlicher voneinander trennen mit 'ner leichten Trennlinie oder
+          so oder etwas mehr Abstand." Beides, denn jedes Talent trägt inzwischen
+          Erklärtext, Marken und im Bearbeiten-Modus eine Knopfreihe; bei `py-2` und
+          `slate-800` liefen zwei Talente optisch ineinander.
+        */}
+        <ul className="divide-y divide-slate-700">
           {character.feats.map((feat, index) => {
             const entity = entities?.find((e) => e.id === feat.featId);
             // Talente wie Weapon Focus wirken nur mit einer bestimmten Waffe.
             // Ohne Zuordnung liegt der Bonus brach, also hier sichtbar machen.
-            const needsItem =
-              entity?.kind === "feat" && entity.effects.some((e) => e.scope === "chosenItem");
+            const needsItem = featNeedsWeaponChoice(entity);
             const chosen = feat.choiceRef
               ? entities?.find((e) => e.id === feat.choiceRef)
               : undefined;
@@ -1086,7 +1127,7 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
               (entity ? displayName(entity) : feat.featId) +
               (feat.choice ? ` (${feat.choice})` : "");
             return (
-              <li key={index} className="flex items-start justify-between gap-2 py-2 text-sm">
+              <li key={index} className="flex items-start justify-between gap-2 py-3 text-sm">
                 <div className="min-w-0 flex-1">
                   <span className="font-medium">{entity ? displayName(entity) : feat.featId}</span>
                   {feat.choice && <span className="text-slate-400"> ({feat.choice})</span>}
@@ -1123,66 +1164,45 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
                       })
                     }
                   />
-                </div>
-                <div className="flex gap-1">
-                  {needsItem && (
-                    <GhostButton
-                      title="Waffe zuordnen"
-                      onClick={() => {
-                        // Nur was im Inventar liegt — der Bonus gilt für eine
-                        // Waffe, die der Charakter auch führt.
-                        const options = character.inventory
-                          .map((row) => {
-                            const item = row.itemId
-                              ? entities?.find((e) => e.id === row.itemId)
-                              : undefined;
-                            return item?.kind === "item" && item.data.weapon
-                              ? { id: item.id, name: row.customName ?? displayName(item) }
-                              : null;
-                          })
-                          .filter((o): o is { id: string; name: string } => o !== null);
-                        if (options.length === 0) {
-                          alert("Keine Waffe im Inventar, die zugeordnet werden könnte.");
-                          return;
-                        }
-                        const list = options.map((o, i) => `${i + 1}. ${o.name}`).join("\n");
-                        const answer = prompt(
-                          `Für welche Waffe gilt ${entity ? displayName(entity) : "das Talent"}?\n\n${list}\n\n(Nummer eingeben, leer = keine)`,
-                          options.findIndex((o) => o.id === feat.choiceRef) >= 0
-                            ? String(options.findIndex((o) => o.id === feat.choiceRef) + 1)
-                            : "",
-                        );
-                        if (answer === null) return;
-                        const pick = options[Number(answer.trim()) - 1];
-                        save((c) => {
-                          const f = c.feats[index];
-                          if (!f) return;
-                          if (pick) {
-                            f.choiceRef = pick.id;
-                            if (!f.choice) f.choice = pick.name;
-                          } else {
-                            delete f.choiceRef;
-                          }
-                        });
-                      }}
-                    >
-                      <Icon name="combat" size={17} />
-                    </GhostButton>
-                  )}
-                  {editMode && (
-                    <GhostButton
-                      title="Auswahl ändern"
-                      onClick={() => {
-                        const choice = prompt("Auswahl (z.B. Langschwert)?", feat.choice ?? "");
-                        if (choice !== null) {
+                  {/*
+                    Der freie Text steht NUR an Talenten ohne Waffenbezug (Skill Focus,
+                    eigene Talente aus seinen Büchern) — dort kennt die App die
+                    Möglichkeiten nicht. Er schreibt DURCH und speichert nicht erst beim
+                    Verlassen: ein Feld, das seinen Wert zwischenlagert, verliert Tippen.
+                  */}
+                  {editMode && !needsItem && (
+                    <label className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-400">
+                      {S.feats.choiceLabel}
+                      <input
+                        value={feat.choice ?? ""}
+                        placeholder={S.feats.choicePlaceholder}
+                        onChange={(e) => {
+                          const next = e.target.value;
                           save((c) => {
                             const f = c.feats[index];
-                            if (f) f.choice = choice || undefined;
+                            if (f) f.choice = next === "" ? undefined : next;
                           });
-                        }
-                      }}
+                        }}
+                        className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
+                      />
+                    </label>
+                  )}
+                </div>
+                <div className="flex gap-1">
+                  {/*
+                    Die Waffe wechselt man nur im Bearbeiten-Modus — sein Auftrag:
+                    „man [soll] nicht einfach im Bogen die Waffe ändern können, sondern
+                    das muss man einmal machen, wenn man das Talent auswählt. Und
+                    ansonsten kann man es nur ändern, wenn man im Bearbeiten Modus ist."
+                    Gewählt wird beim Hinzufügen (im `FeatPicker`); hier steht der
+                    Rückweg, nicht der Hauptweg.
+                  */}
+                  {needsItem && editMode && (
+                    <GhostButton
+                      title={S.feats.changeWeapon}
+                      onClick={() => setWeaponForIndex(index)}
                     >
-                      ✎
+                      <Icon name="combat" size={17} />
                     </GhostButton>
                   )}
                   {editMode && (
@@ -1201,23 +1221,92 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
           })}
           {character.feats.length === 0 && <li className="py-2 text-sm text-slate-500">Keine.</li>}
         </ul>
-        {/*
-          Derselbe Blätterer wie im Assistenten und im Stufenaufstieg.
+      </Card>
 
-          Hier stand eine Suche, die erst ab zwei getippten Zeichen etwas zeigte und
-          dann 20 Treffer — blättern war gar nicht vorgesehen. Genau das hat er bei
-          der Ausrüstung schon einmal beanstandet, und dazu fehlte jedes Wort über
-          die Voraussetzungen.
-        */}
-        {compendium !== undefined && (
-          <FeatPicker
-            compendium={compendium}
-            sheet={sheet}
-            chosen={character.feats.map((f) => f.featId)}
-            onPick={(feat) => save((c) => void c.feats.push({ featId: feat.id, extraEffects: [] }))}
-          />
+      {/*
+        WEITERE Talente stehen in einer EIGENEN Karte und zugeklappt — sein Auftrag:
+        „Erst mal nur die Talente anzeigen, die man auch hat. Die Liste von weiteren
+        Talenten sollte unten dann aufklappbar sein und nicht direkt drunter
+        angeflanscht." Vorher hing der ganze Blätterer (Suche, sieben Marken, zwei
+        Abschnitte, 196 Zeilen) unmittelbar unter seinen sechs eigenen Talenten in
+        derselben Karte — man scrollte an der eigenen Liste vorbei, ohne es zu merken.
+      */}
+      <Card>
+        {mayAdd ? (
+          <>
+            <GhostButton onClick={() => setAddOpen(!addOpen)}>
+              {addOpen ? "▾" : "▸"} {S.feats.addOpen}
+              {slotsLeft > 0 ? ` (${S.feats.slotsFree(slotsLeft)})` : ""}
+            </GhostButton>
+            {/*
+              Im Bearbeiten-Modus darf man auch ohne freien Platz etwas dazunehmen —
+              dann steht dabei, WARUM es geht. Sonst sieht ein Knopf, der eigentlich
+              gesperrt sein müsste, nach einem Fehler aus.
+            */}
+            {slotsLeft <= 0 && (
+              <p className="mt-1.5 text-xs text-slate-500">{S.feats.editUnlocked}</p>
+            )}
+            {addOpen && compendium !== undefined && (
+              <div className="mt-2">
+                {/*
+                  Derselbe Blätterer wie im Assistenten und im Stufenaufstieg — samt
+                  Waffenfrage bei Weapon Focus, die dort im Picker sitzt und nicht in
+                  dieser Ansicht.
+                */}
+                <FeatPicker
+                  compendium={compendium}
+                  sheet={sheet}
+                  chosen={character.feats.map((f) => f.featId)}
+                  ownWeapons={ownWeapons}
+                  onPick={(feat, choice) =>
+                    save((c) =>
+                      void c.feats.push({
+                        featId: feat.id,
+                        extraEffects: [],
+                        ...(choice ? { choiceRef: choice.choiceRef, choice: choice.choice } : {}),
+                      }),
+                    )
+                  }
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          /*
+            Kein Platz — und die App sagt es, statt den Abschnitt stumm verschwinden zu
+            lassen. Seine Wahl; der Grund ist die Fehlerfamilie „etwas weiß es, und
+            etwas anderes kann es nicht": ein Weg, der ohne Wort fehlt, sieht wie ein
+            Defekt aus.
+          */
+          <p className="text-xs text-slate-500">
+            {S.feats.noSlots(sheet.featSlots.used, sheet.featSlots.available)}
+          </p>
         )}
       </Card>
+
+      {/*
+        Die Waffe eines schon gewählten Talents wechseln — nur aus dem
+        Bearbeiten-Modus heraus erreichbar (der Knopf steht dort).
+      */}
+      {weaponForIndex !== null && compendium !== undefined && (
+        <FeatWeaponPicker
+          feat={entities?.find((e) => e.id === character.feats[weaponForIndex]?.featId)}
+          compendium={compendium}
+          own={ownWeapons}
+          current={character.feats[weaponForIndex]?.choiceRef}
+          onPick={(choiceRef, name) => {
+            const at = weaponForIndex;
+            save((c) => {
+              const f = c.feats[at];
+              if (!f) return;
+              f.choiceRef = choiceRef;
+              f.choice = name;
+            });
+            setWeaponForIndex(null);
+          }}
+          onClose={() => setWeaponForIndex(null)}
+        />
+      )}
 
       <Card>
         <SectionTitle>{S.sheet.features}</SectionTitle>

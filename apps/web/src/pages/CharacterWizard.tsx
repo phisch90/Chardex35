@@ -14,6 +14,7 @@ import {
   cycleEquipSlot,
   deriveSheet,
   displayName,
+  isWeaponEntity,
   maxRanks,
   openBuildWork,
   proficiencyFor,
@@ -76,7 +77,12 @@ interface Draft {
   classId: string | null;
   skillRanks: Record<string, number>;
   skillSubtypes: { skillId: string; subtype: string }[];
-  featIds: { featId: string; choice?: string }[];
+  /*
+    Die WAHL gehört zum Talent und wird beim Auswählen getroffen — „Weapon Focus"
+    ohne Waffe ist ein Eintrag, der nichts tut. `choiceRef` ist die Kennung des
+    Waffentyps, `choice` der Name für die Anzeige.
+  */
+  featIds: { featId: string; choice?: string; choiceRef?: string }[];
   inventory: { id: string; itemId: string; qty: number; slot: EquipSlot }[];
   /** Gewählte Zauber je Klasse — nur für Klassen, die sich festlegen MÜSSEN. */
   known: string[];
@@ -1260,7 +1266,8 @@ function FeatStep(props: {
                   })
                 }
               >
-                {feat ? displayName(feat) : entry.featId} ✕
+                {feat ? displayName(feat) : entry.featId}
+                {entry.choice ? ` (${entry.choice})` : ""} ✕
               </Chip>
             );
           })}
@@ -1271,7 +1278,28 @@ function FeatStep(props: {
         compendium={props.compendium}
         sheet={props.sheet}
         chosen={draft.featIds.map((f) => f.featId)}
-        onPick={(feat) => setDraft({ ...draft, featIds: [...draft.featIds, { featId: feat.id }] })}
+        /*
+          Auch im Assistenten kommt die Waffenfrage MIT der Wahl. Angeboten wird, was
+          im Entwurf schon im Gepäck liegt — der Ausrüstungsschritt kommt später, also
+          ist die Liste oft leer, und dann blättert man die vollständige durch.
+        */
+        ownWeapons={draft.inventory
+          .map((row) => {
+            const item = row.itemId ? props.compendium.get(row.itemId) : undefined;
+            return isWeaponEntity(item) && item !== undefined
+              ? { id: item.id, name: displayName(item) }
+              : null;
+          })
+          .filter((entry): entry is { id: string; name: string } => entry !== null)}
+        onPick={(feat, choice) =>
+          setDraft({
+            ...draft,
+            featIds: [
+              ...draft.featIds,
+              { featId: feat.id, ...(choice ? { choiceRef: choice.choiceRef, choice: choice.choice } : {}) },
+            ],
+          })
+        }
       />
     </Card>
   );

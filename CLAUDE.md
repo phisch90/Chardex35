@@ -2262,6 +2262,100 @@ Hände-Kastens an. Ohne ihn wäre sie nie angelegt worden, und die Prüfung hät
 gemeldet und wie ein Rechenfehler ausgesehen. Angelegt wird jetzt über die Marke — was
 nebenbei beweist, dass der neue Weg auch für Rüstung durchgeht.
 
+## Der Talente-Reiter: wann darf man wählen, und wer besitzt die Waffe
+
+Vier Sätze, und drei davon beantworten dieselbe Frage: **wann ist eine Wahl dran?**
+
+### 1. Trennung: Linie UND Luft
+
+Sein Auftrag: „Die Talente in der Talente Seite bitte deutlicher voneinander trennen mit
+'ner leichten Trennlinie oder so oder etwas mehr Abstand." Gefragt und entschieden:
+**beides** — `divide-slate-700` statt `-800` und `py-3` statt `py-2`. Der Grund für beides
+statt einem: seit jedes Talent Erklärtext, Marken und im Bearbeiten-Modus eine Knopfreihe
+trägt, liefen zwei Talente bei acht Pixeln Luft optisch ineinander.
+
+**Gemessen wird die UNTERE Kante.** Tailwind 4 zeichnet `divide-y` als `border-bottom` an
+alle Kinder außer dem letzten. Meine Sonde las zweimal `border-top` — erst an der ersten
+Zeile (dort steht keine Linie, dort steht die Überschrift), dann an der zweiten — und
+bekam beide Male 0px. Beide Male zeigte die Prüfung auf die App, und beide Male hatte die
+App recht. **Wer eine Linie misst, muss die Kante messen, die sie wirklich benutzt.**
+
+### 2. Die Waffe gehört zur WAHL, nicht zum Bogen
+
+Sein Auftrag: „bei den Weapon Fokus sollte man nicht einfach im Bogen die Waffe ändern
+können, sondern das muss man einmal machen, wenn man das Talent auswählt. Und ansonsten
+kann man es nur ändern, wenn man im Bearbeiten Modus ist."
+
+Vorher hing die Waffe an einem Knopf, der IMMER dastand — und dahinter ein `prompt()`, das
+die Waffen des Gepäcks nummeriert aufzählte und ein leeres Feld zum Abschreiben
+danebenstellte. Das ist wörtlich die siebte Falle, die bei den Fertigkeits-Teilgebieten
+schon einmal bezahlt wurde. Dazu ein `alert()` („Keine Waffe im Inventar"), also eine
+Sackgasse: ein Talent darf man auch für eine Waffe nehmen, die man erst noch kauft.
+
+Gebaut als `ui/FeatWeaponPicker.tsx` — **Gepäck zuerst, darunter alle Waffen mit Suche**
+(seine Wahl). Drei Entscheidungen sind eine Notiz wert:
+
+- **Die Frage sitzt im BLÄTTERER, nicht in der Ansicht.** `FeatPicker` fragt selbst, bevor
+  er `onPick` ruft — damit gilt es im Assistenten, im Stufenaufstieg und am Bogen, ohne
+  dass drei Stellen dieselbe Regel tragen. Die Eigenschaft `ownWeapons` ist deshalb
+  **Pflicht und nicht optional**: eine neue Aufrufstelle soll die Frage nicht still
+  überspringen können. Der Typ stellt die Frage, nicht mein Gedächtnis.
+- **Wer abbricht, bekommt kein halbes Talent.** Das Talent wird erst nach der Waffenwahl
+  hinzugefügt. Die Gegenprobe steht als eigene Prüfung („Abbrechen legt KEIN halbes Talent
+  an"), weil sonst genau der Zustand entstünde, den die Warnung am Bogen meldet.
+- **Welche Talente die Frage auslösen, steht im KERN** (`compendium/featChoice.ts`,
+  `featNeedsWeaponChoice`). Die Bedingung stand vorher zweimal ausgeschrieben — im
+  Talente-Reiter und im Fight-Club-Import. Gefragt wird die WIRKUNG (`scope: "chosenItem"`)
+  und nicht der Name: „heißt es Weapon Focus?" ginge bei jedem Talent aus einem eigenen
+  Buch vorbei, dieselbe Entscheidung wie bei den Behältern.
+
+Der freie Text (`choice`) bleibt für Talente OHNE Waffenbezug — dort kennt die App die
+Möglichkeiten nicht. Er ist jetzt ein Feld, das DURCHSCHREIBT, und kein `prompt()`; damit
+ist der Talente-Reiter frei von Browser-Dialogen, und die Strecke prüft das hart.
+
+### 3. Hinzufügen nur, wenn ein Punkt frei ist
+
+Sein Auftrag: „dass man nur was hinzufügen kann, wenn man auch einen Punkt dafür frei hat
+oder über bearbeiten wenn man was wechseln darf bzw. Wenn man bei HB noch was wählen darf."
+
+Gelesen als **zwei** Bedingungen, nicht drei: `featSlots.available` summiert JEDE Quelle
+von `feats.slots` — auch die aus einer eigenen Klasse. Ein Talentplatz aus Hausgemachtem
+zählt also von allein mit, und es bleibt `frei > 0 ODER Bearbeiten-Modus`.
+
+**Ist nichts frei, sagt die App warum** (seine Wahl): „Kein Talent frei — 8 von 8 gewählt.
+Tauschen geht im Bearbeiten-Modus." Ein Abschnitt, der stumm verschwindet, sieht wie ein
+Defekt aus — dieselbe Familie wie „etwas weiß es, und etwas anderes kann es nicht". Und im
+Bearbeiten-Modus steht umgekehrt dabei, warum es trotzdem geht.
+
+### 4. Erst die eigenen Talente
+
+Sein Auftrag: „Erst mal nur die Talente anzeigen, die man auch hat. Die Liste von weiteren
+Talenten sollte unten dann aufklappbar sein und nicht direkt drunter angeflanscht."
+
+Der Blätterer (Suche, sieben Marken, zwei Abschnitte) hing unmittelbar unter seinen
+Talenten in DERSELBEN Karte — man scrollte an der eigenen Liste vorbei, ohne es zu merken.
+Jetzt eine eigene Karte darunter, zugeklappt, mit der Zahl am Knopf („1 Talent frei").
+
+### Was der BLICK gefunden hat, und 78 grüne Prüfungen nicht
+
+Auf dem Bild des Reiters steht im Erklärtext von Dodge **„GE-Bonus"** und in dem von
+Weapon Focus **„Ringkampf"** — beides Wörter, die er ausdrücklich abgeschafft hat (DEX
+statt GE, Grapple statt Ringkampf). Die Schranke in `strings.test.ts` liest `apps/web/src`
+und `packages/core/src`; diese Texte liegen in den PACKS und kommen aus
+`tools/etl/src/data/feats-de.ts` (dazu `manual/conditions.ts`). Zusammen 10 Fundstellen.
+**Eine Schranke, die die halbe Wahrheit abdeckt, meldet grün, während die App das alte
+Wort zeigt** — dieselbe Lehre wie bei TP → HP, wo die Prüfung erst beide Pakete lesen
+musste. Steht als offener Punkt unten; es braucht eine `srdRev`-Erhöhung und ist deshalb
+eine eigene Runde.
+
+### Und drei tote Strecken, keine davon von hier
+
+`e2e-talente` und `e2e-talentfilter` laufen nicht durch, `e2e-kacheln` meldet 3 Fehler.
+**Gegen einen Build OHNE diese Runde nachgemessen: identisch** — dieselbe Stelle, dieselbe
+Zahl. Die ersten zwei hängen an der Rückfrage am Ende des Assistenten (das ist jetzt die
+neunte und zehnte Strecke mit dieser Ursache), die dritte an der Position des Infofelds in
+den Kacheln.
+
 ## Noch offen
 
 - **`e2e-equip` meldet zehn Fehler, und sie sind ALT.** Die Strecke war doppelt tot
@@ -2294,6 +2388,13 @@ nebenbei beweist, dass der neue Weg auch für Rüstung durchgeht.
   das Ziehen inzwischen auch, auf seinen Wunsch („Umsortieren per Ziehen, gerne"), mit
   Anfasser und mit einer Prüfung über echte Touch-Ereignisse. Die ↑↓-Knöpfe bleiben
   daneben.
+- **In den PACKS stehen noch deutsche Kürzel und „Ringkampf".** 10 Fundstellen in
+  `tools/etl/src/data/feats-de.ts` (5× „GE-Bonus", 5× „Ringkampf") plus
+  `tools/etl/src/manual/conditions.ts`. Seine Entscheidungen dazu sind längst gefallen
+  (DEX statt GE, Grapple statt Ringkampf); die Schranke in `strings.test.ts` reicht nur
+  nicht bis in die Packs. Wer das angeht, ändert die ETL-Quelle, erzeugt die Packs neu und
+  erhöht `srdRev` — sonst kommt es auf seinem Gerät nie an. Und die Schranke sollte
+  danach die Packs mitlesen, sonst kommt es beim nächsten Text zurück.
 - **97 Gegenstände tragen noch keine deutsche ERKLÄRUNG** — Name haben alle 1866. Die 97
   sind ausnahmslos episch (Stufe 21+, im Blätterer standardmäßig ausgeblendet) oder
   Artefakte; der Test in `core/compendium/itemGerman.test.ts` hält genau das fest, damit
