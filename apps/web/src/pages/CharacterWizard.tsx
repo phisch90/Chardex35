@@ -144,7 +144,12 @@ function draftToCharacter(
     levels: draft.classId ? [{ classId: draft.classId, hpRoll: "max" }] : [],
     skillRanks: draft.skillRanks,
     skillSubtypes: draft.skillSubtypes,
-    feats: draft.featIds,
+    /*
+      Jede Wahl trägt ihre Herkunft — sein Auftrag: „die Talente [sollen] die Info
+      zeigen woher sie kommen … in welchem Level ich sie dazu genommen hab." Im
+      Assistenten ist das immer Stufe 1.
+    */
+    feats: draft.featIds.map((entry) => ({ ...entry, origin: { level: 1 } })),
     inventory: draft.inventory,
     /*
       Gewählte Zauber gehören zur Klasse, nicht an den Charakter global: ein

@@ -55,6 +55,14 @@ export const ENTITY_KINDS = [
   "monster",
   "condition",
   "spelllist",
+  /*
+    Gottheiten sind HOMEBREW-ONLY: die Namen der D&D-Goetter (Pelor, Heironeous,
+    St. Cuthbert ...) sind Product Identity von Wizards und stehen NICHT im freien
+    SRD — die App liefert deshalb keine einzige mit, nur das Fach. Sein Tisch traegt
+    seine eigenen ein (private Nutzung seiner Buecher, liegt nur in seiner Datenbank
+    und seinen Sicherungen, nie im Repo).
+  */
+  "deity",
 ] as const;
 export const entityKindSchema = z.enum(ENTITY_KINDS);
 export type EntityKind = z.infer<typeof entityKindSchema>;
@@ -387,6 +395,24 @@ export const monsterEntitySchema = entityBase.extend({ kind: z.literal("monster"
 export const conditionEntitySchema = entityBase.extend({ kind: z.literal("condition"), data: conditionDataSchema });
 export const spellListEntitySchema = entityBase.extend({ kind: z.literal("spelllist"), data: spellListDataSchema });
 
+/**
+ * Eine Gottheit — das, was ein Kleriker fuer seine Domaenenwahl braucht.
+ *
+ * `domainIds` zeigen auf die Domaenen-Zauberlisten (`srd:spelllist:domain-*`),
+ * nicht auf Namen: die 32 Domaenen sind SRD und stabil verweisbar. Die
+ * Lieblingswaffe ist ein GEGENSTANDS-Verweis plus Anzeigename (dasselbe Paar wie
+ * `choice`/`choiceRef` am Talent) — die War-Domaene gewaehrt Weapon Focus mit
+ * genau dieser Waffe, und dafuer muss die Kennung stimmen, nicht der Text.
+ */
+export const deityDataSchema = z.object({
+  domainIds: z.array(z.string()).default([]),
+  favoredWeaponId: z.string().optional(),
+  favoredWeaponName: z.string().optional(),
+  alignment: z.string().optional(),
+});
+
+export const deityEntitySchema = entityBase.extend({ kind: z.literal("deity"), data: deityDataSchema });
+
 export const entitySchema = z.discriminatedUnion("kind", [
   raceEntitySchema,
   classEntitySchema,
@@ -397,6 +423,7 @@ export const entitySchema = z.discriminatedUnion("kind", [
   monsterEntitySchema,
   conditionEntitySchema,
   spellListEntitySchema,
+  deityEntitySchema,
 ]);
 
 export type Entity = z.infer<typeof entitySchema>;
@@ -418,6 +445,7 @@ export type SpellEntity = z.infer<typeof spellEntitySchema>;
 export type ItemEntity = z.infer<typeof itemEntitySchema>;
 export type MonsterEntity = z.infer<typeof monsterEntitySchema>;
 export type ConditionEntity = z.infer<typeof conditionEntitySchema>;
+export type DeityEntity = z.infer<typeof deityEntitySchema>;
 export type SpellListEntity = z.infer<typeof spellListEntitySchema>;
 
 /** Anzeigename mit deutschem Overlay, falls vorhanden. */

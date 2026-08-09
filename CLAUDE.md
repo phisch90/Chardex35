@@ -2491,6 +2491,72 @@ einer Teststrecke: `„Charakter-Datei (JSON)"` in einer doppelt gequoteten Zeic
 nur in Prüfdateien: **wer deutsche Anführungszeichen in einen Text schreibt, nimmt
 Backticks.**
 
+## Götter und die Herkunft der Talente
+
+Sein Auftrag, zwei Hälften: **„Ich möchte auch gerne die Götter mit reinbringen, sodass wir
+die Domains des clerics korrekt verwenden können."** und **„die Talente [sollen] die Info
+zeigen woher sie kommen. Also ob die als Bonus fest gewählt wurden oder in welchem Level ich
+sie dazu genommen hab."** Sein Beispiel dazu ist der Kern der Runde: „ob ich den Bonus fest
+von der war Domain schon hab oder ob ich den vergessen hab und den zweiten weapon Focus
+versehentlich als Krieger gewählt hab."
+
+Gefragt und entschieden: **eigener Bereich im Kompendium** (nicht bloß ein Feld am Bogen) und
+**Hinweis mit Knopf** für den festen Weapon Focus der War-Domäne — die Zahl wandert erst auf
+seinen Tipp.
+
+### Die Götter — und warum die App KEINE mitliefert
+
+**Die Namen der D&D-Götter sind Product Identity und stehen nicht im freien SRD** — nur die
+32 Domänen tun das. Die App liefert deshalb das FACH (Name, Domänen, Lieblingswaffe,
+Gesinnung — `deityEntitySchema`, nur Homebrew), und sein Tisch legt seine eigenen an:
+Kompendium → Götter → „+ Eigene Gottheit" (`ui/DeityEditor.tsx`). Der leere Bereich SAGT das
+(„Die App liefert keine Götter mit …") — eine erklärte Leere ist kein Fehler. Ihm so gesagt,
+er hat es angenommen; nicht neu fragen, ob man „die bekannten Götter" einbauen könnte.
+
+Fünf Entscheidungen sind eine Notiz wert:
+
+- **Der Bogen speichert den VERWEIS** (`deityRef`), der Name daneben (`deity`) ist Anzeige —
+  dasselbe Paar wie `choiceRef`/`choice` am Talent. `deityOf` löst nur über die Kennung auf,
+  nie über den Namen; der Referenz-Sammler in `sync/refs.ts` sammelt stumpf alle Kennungen,
+  also reist die Gottheit beim Teilen eines Charakters von allein mit.
+- **Der Editor verlangt mindestens EINE Domäne**, mit Grund am gesperrten Knopf. Eine
+  Gottheit ohne Domänen wäre falsch herum wirksam: `domainsOutsideDeity` hielte dann JEDE
+  gewählte Domäne für fremd.
+- **Fremde Domänen werden GEMELDET, nie gesperrt** (`domain-not-deity` in `validate.ts`, mit
+  „passt so"): der DM hat Recht. Im Auswähler stehen die Domänen der Gottheit oben und
+  tragen ihre Marke mit NAMEN („✓ Kord") — damit klar ist, wer hier etwas anbietet.
+- **`warFocusStatus` wird GERECHNET und nirgends gespeichert** — ein gespeichertes „hat den
+  Bonus schon" wäre die Fehlerfamilie 1. Verglichen wird die KENNUNG der Waffe, mit
+  `basedOn`-Ausweichen wie in `derive.ts`: die eigene Variante desselben Typs zählt mit.
+- **Das Löschen einer Gottheit nimmt dem Bogen nichts weg**: `deityRef` bleibt stehen, eine
+  Kennung ins Leere heißt „keine Gottheit" — nur die Prüfung fällt weg. Dieselbe Schutzregel
+  wie bei den Behältern; der Editor nennt beim Löschen die betroffenen Bögen namentlich.
+
+### Die Herkunft am Talent
+
+`origin` an der Talent-Zeile: `{ level?, source? }` — **optional ohne `.default()`**
+(Fehlerfamilie 1: ein `.default()` zwänge jede Stelle, die Talente als Literal baut, das
+Feld mitzuschreiben; bestehende Bögen tragen ohnehin nichts). Der Assistent schreibt
+`{ level: 1 }`, der Stufenaufstieg die NEUE Gesamtstufe, der War-Knopf
+`{ source: "War Domain (Kord)" }` — und **die Quelle gewinnt in der Anzeige vor der Stufe**,
+weil „War Domain (Kord)" genau seine Frage beantwortet und „Stufe 1" nicht. Altbestand
+zeigt NICHTS (keine erfundene Herkunft) und wird im Bearbeiten-Modus nachgetragen — zwei
+durchschreibende Felder, sind beide leer, fällt `origin` ganz weg.
+
+### Drei Fallen dieser Runde
+
+- **Die zwölfte Falle, wörtlich wie notiert:** „Dodge: Voraussetzung nicht erfüllt (DEX 13)"
+  ist selbst ein `li` (IssueCard), und `filter({hasText:/Dodge/}).first()` traf die WARNUNG
+  statt der Talent-Zeile — die Prüfung „trägt keine Herkunft" war grün am falschen Kasten.
+  Die Talent-Zeile ist die mit dem fett gesetzten Namen (`has: span.font-medium`).
+- **Die deutschen Anführungszeichen zum ACHTEN Mal**, diesmal in `strings.ts`
+  (`deityNoneYet` mit „Götter" im Satz). Backticks, wie die Regel sagt — sie stand da und
+  wurde trotzdem erst nach dem `tsc`-Lauf befolgt.
+- **„Alles hier kommt aus dem SRD" wäre bei den Göttern gelogen** — dort ist alles Homebrew.
+  Der Satz, der bei leeren Quellen-Filtern erklärt, warum die Knöpfe nichts trennen, ist für
+  diesen Bereich abgeschaltet: ein Erklärsatz, der die falsche Sache erklärt, ist schlimmer
+  als keiner.
+
 ## Noch offen
 
 - **`e2e-equip` meldet zehn Fehler, und sie sind ALT.** Die Strecke war doppelt tot

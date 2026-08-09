@@ -1107,6 +1107,11 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
         </SectionTitle>
         <UndoBar pending={undo.pending} onUndo={undo.undo} onDismiss={undo.dismiss} />
         {/*
+          EINMAL über der Liste statt an jeder Zeile: bei sieben Talenten wäre der
+          Satz siebenmal da, und ein Satz, der immer dasteht, wird nicht gelesen.
+        */}
+        {editMode && <p className="mb-1 text-[11px] leading-snug text-slate-500">{S.feats.originHint}</p>}
+        {/*
           Kräftigere Linie und mehr Luft — sein Auftrag: „Die Talente in der Talente
           Seite bitte deutlicher voneinander trennen mit 'ner leichten Trennlinie oder
           so oder etwas mehr Abstand." Beides, denn jedes Talent trägt inzwischen
@@ -1126,11 +1131,25 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
             const label =
               (entity ? displayName(entity) : feat.featId) +
               (feat.choice ? ` (${feat.choice})` : "");
+            /*
+              Die Herkunft — sein Auftrag: „die Talente [sollen] die Info zeigen woher
+              sie kommen." Eine QUELLE gewinnt vor der Stufe: „War Domain (Kord)" sagt
+              mehr als „Stufe 1", und genau die Unterscheidung wollte er (Bonus fest
+              gegen selbst gewählt).
+            */
+            const originLabel =
+              feat.origin?.source ??
+              (feat.origin?.level !== undefined ? S.feats.originLevel(feat.origin.level) : undefined);
             return (
               <li key={index} className="flex items-start justify-between gap-2 py-3 text-sm">
                 <div className="min-w-0 flex-1">
                   <span className="font-medium">{entity ? displayName(entity) : feat.featId}</span>
                   {feat.choice && <span className="text-slate-400"> ({feat.choice})</span>}
+                  {originLabel !== undefined && (
+                    <span className="ml-1.5 whitespace-nowrap rounded bg-slate-800 px-1.5 py-0.5 align-middle text-[10px] text-slate-400">
+                      {originLabel}
+                    </span>
+                  )}
                   {/* Erklärung direkt am Talent, vollständig — nicht erst nach
                       einem Sprung ins Kompendium. */}
                   <FeatText entity={entity} />
@@ -1186,6 +1205,62 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
                         className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
                       />
                     </label>
+                  )}
+                  {/*
+                    Herkunft nachtragen — bestehende Bögen tragen nichts (Fehlerfamilie 1:
+                    ein gespeicherter Datensatz ist nie auf dem Stand des Schemas). Beide
+                    Felder schreiben DURCH; sind beide leer, fällt das Feld ganz weg — ein
+                    leeres Objekt wäre eine Herkunft, die nichts sagt.
+                  */}
+                  {editMode && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
+                      {S.feats.originTitle}
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        value={feat.origin?.level ?? ""}
+                        aria-label={S.feats.originLevelLabel}
+                        placeholder={S.feats.originLevelLabel}
+                        onChange={(e) => {
+                          const v = e.target.valueAsNumber;
+                          save((c) => {
+                            const f = c.feats[index];
+                            if (!f) return;
+                            const origin = { ...f.origin };
+                            if (Number.isFinite(v) && v >= 1) origin.level = Math.floor(v);
+                            else delete origin.level;
+                            if (origin.level === undefined && (origin.source ?? "") === "") {
+                              delete f.origin;
+                            } else {
+                              f.origin = origin;
+                            }
+                          });
+                        }}
+                        className="w-16 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
+                      />
+                      {S.feats.originSourceLabel}
+                      <input
+                        value={feat.origin?.source ?? ""}
+                        placeholder={S.feats.originSourcePlaceholder}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          save((c) => {
+                            const f = c.feats[index];
+                            if (!f) return;
+                            const origin = { ...f.origin };
+                            if (next === "") delete origin.source;
+                            else origin.source = next;
+                            if (origin.level === undefined && origin.source === undefined) {
+                              delete f.origin;
+                            } else {
+                              f.origin = origin;
+                            }
+                          });
+                        }}
+                        className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
+                      />
+                    </div>
                   )}
                 </div>
                 <div className="flex gap-1">

@@ -3,11 +3,15 @@ import { Link } from "@tanstack/react-router";
 import {
   applyHpChange,
   applySpellcraftCast,
+  deityEntities,
+  deityOf,
   displayName,
   spellcraftCastPlan,
   spellcraftExhaustionOf,
   spellsForCaster,
+  warFocusStatus,
   type Character,
+  type DeityEntity,
   type SpellEntity,
   type SpellcastingBlock,
 } from "@codex35/core";
@@ -132,6 +136,55 @@ function CasterBlock({
     );
     setCraftLevel(null);
   };
+  /*
+    Die Gottheit — sein Auftrag: „Ich möchte auch gerne die Götter mit reinbringen,
+    sodass wir die Domains des clerics korrekt verwenden können." Gespeichert wird
+    der VERWEIS (`deityRef`), der Name daneben ist die Anzeige für Bögen ohne
+    aufgelösten Eintrag (z.B. Gottheit auf diesem Gerät gelöscht).
+  */
+  const deity = compendium !== undefined ? deityOf(character, compendium) : undefined;
+  const allDeities = compendium !== undefined ? deityEntities(compendium) : [];
+  const war =
+    compendium !== undefined
+      ? warFocusStatus(character, compendium)
+      : { applies: false as const, granted: false as const };
+
+  const setDeity = (next: DeityEntity | null) =>
+    save((c) => {
+      if (next === null) {
+        delete c.deityRef;
+        delete c.deity;
+      } else {
+        c.deityRef = next.id;
+        c.deity = next.name;
+      }
+    });
+
+  /*
+    Der feste Bonus der War-Domäne — „Hinweis mit Knopf", seine Wahl: die Zahl am
+    Bogen wandert erst auf seinen Tipp, nie von allein. Das Talent trägt seine
+    HERKUNFT mit, damit genau seine Frage beantwortet ist: „ob ich den Bonus fest
+    von der war Domain schon hab oder ob ich den vergessen hab."
+  */
+  const addWarFocus = () => {
+    if (!war.applies || war.weaponId === undefined) return;
+    const weaponName = war.weaponName ?? war.weaponId;
+    const label = `Weapon Focus (${weaponName})`;
+    const before = structuredClone(character.feats);
+    save((c) => {
+      c.feats.push({
+        featId: "srd:feat:weapon-focus",
+        choice: weaponName,
+        choiceRef: war.weaponId,
+        extraEffects: [],
+        // `deity` ist hier immer aufgelöst (war.applies verlangt es) — der
+        // Rückfall ist nur für den Typ.
+        origin: { source: deity !== undefined ? `War Domain (${deity.name})` : "War Domain" },
+      });
+    });
+    undo.offer(label, () => save((c) => void (c.feats = before)), "eingetragen");
+  };
+
   const foldKey = `${character.id}.${block.classId}`;
   const [folded, setFolded] = useState<Set<number>>(() => readFolded(foldKey));
   const toggleFold = (level: number) => {
@@ -368,6 +421,83 @@ function CasterBlock({
               </span>
             )}
           </div>
+
+          {/*
+            Die Gottheit unter den Domänen: sie entscheidet, welche Domänen „richtig"
+            sind. Gewählt wird aus dem Kompendium (Bereich „Götter") — die App liefert
+            keine mit, die Namen gehören nicht zum freien SRD.
+          */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-slate-400">{S.spells.deity}:</span>
+            {deity !== undefined ? (
+              <span className="font-medium text-slate-200">
+                {deity.name}
+                {deity.data.favoredWeaponName !== undefined && (
+                  <span className="ml-1 font-normal text-slate-500">
+                    ({S.compendium.deity.favoredWeapon}: {deity.data.favoredWeaponName})
+                  </span>
+                )}
+              </span>
+            ) : character.deity !== undefined && character.deity !== "" ? (
+              /* Nur der NAME (frei getippt oder Gottheit gelöscht) — ohne Verweis
+                 gibt es nichts zu prüfen, aber der Name gehört ihm. */
+              <span className="font-medium text-slate-200">{character.deity}</span>
+            ) : (
+              <span className="text-slate-500">{S.spells.deityNone}</span>
+            )}
+            {editMode && (deity !== undefined || character.deityRef !== undefined) && (
+              <button
+                onClick={() => setDeity(null)}
+                title={S.spells.deityRemove}
+                className="text-slate-500 hover:text-rose-300"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          {editMode &&
+            (allDeities.length > 0 ? (
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {allDeities.map((d) => (
+                  <Chip key={d.id} active={character.deityRef === d.id} onClick={() => setDeity(d)}>
+                    {d.name}
+                  </Chip>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-1 text-[11px] leading-snug text-slate-500">
+                {S.spells.deityNoneYet}{" "}
+                <Link
+                  to="/kompendium/$kind"
+                  params={{ kind: "deity" }}
+                  className="underline decoration-slate-600 hover:text-amber-300"
+                >
+                  {S.spells.deityGo}
+                </Link>
+              </p>
+            ))}
+
+          {/*
+            Der feste Bonus der War-Domäne — Hinweis MIT Knopf (seine Wahl), in jeder
+            Betriebsart sichtbar: die Erinnerung gehört an den Tisch, nicht in den
+            Bearbeiten-Modus. Steht das Talent schon da, sagt die Zeile das — ein
+            Zustand ohne Satz ist ein Fehler, den man in der Zahl sucht.
+          */}
+          {war.applies && !war.granted && (
+            <div className="mt-1.5 rounded-lg border border-amber-700/60 bg-amber-950/30 px-2.5 py-2">
+              <p className="text-xs leading-snug text-amber-200">
+                {S.spells.warHint(war.weaponName ?? "")}
+              </p>
+              <div className="mt-1.5">
+                <GhostButton onClick={addWarFocus}>{S.spells.warAdd}</GhostButton>
+              </div>
+            </div>
+          )}
+          {war.applies && war.granted && (
+            <p className="mt-1.5 text-[11px] text-emerald-500">
+              ✓ {S.spells.warGranted(war.weaponName ?? "")}
+            </p>
+          )}
           {/*
             Vorher stand hier ein `<select>` mit 36 Namen. Ein Name allein sagt
             nicht, was die Domäne GEWÄHRT — und genau das ist der Grund, aus dem man
@@ -380,6 +510,11 @@ function CasterBlock({
                 compendium={compendium}
                 picked={block.domains.map((d) => d.spellListId)}
                 pick={block.domainPick}
+                deity={
+                  deity !== undefined
+                    ? { name: deity.name, domainIds: deity.data.domainIds }
+                    : undefined
+                }
                 onAdd={addDomain}
                 onRemove={removeDomain}
               />

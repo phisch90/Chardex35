@@ -254,7 +254,15 @@ export const characterSchema = z.object({
   /** Data-URL (Porträts der Gruppe sind PNGs). */
   portrait: z.string().optional(),
   alignment: z.string().optional(),
+  /** Der NAME der Gottheit — Freitext, auch ohne Kompendium-Eintrag gueltig. */
   deity: z.string().optional(),
+  /**
+   * Verweis auf den Gottheits-Eintrag im Kompendium (`hb:deity:...`). Dasselbe
+   * Paar wie `choice`/`choiceRef` am Talent: der Text zeigt an, die Kennung
+   * verbindet — nur mit ihr kann die App die Domaenenwahl gegen die Domaenen der
+   * Gottheit halten und die Lieblingswaffe der War-Domaene kennen.
+   */
+  deityRef: z.string().optional(),
 
   abilities: z.object({
     method: z.enum(["rolled", "pointbuy"]).default("rolled"),
@@ -311,6 +319,24 @@ export const characterSchema = z.object({
          * für `srd:item:sword-short`).
          */
         choiceRef: z.string().optional(),
+        /**
+         * WOHER das Talent kommt — sein Auftrag: "die Talente die Info zeigen
+         * woher sie kommen. Also ob die als Bonus fest gewaehlt wurden oder in
+         * welchem Level ich sie dazu genommen hab."
+         *
+         * `level` heisst: bei diesem Stufenaufstieg dazugenommen (der Assistent
+         * schreibt 1, der Aufstieg die neue Gesamtstufe). `source` heisst: fest
+         * gewaehrt — "War Domain", "Kämpfer-Bonustalent", "Mensch". Beides
+         * optional, denn bestehende Boegen tragen nichts davon (Fehlerfamilie 1:
+         * ein gespeicherter Datensatz ist nie auf dem Stand des Schemas); dort
+         * traegt er die Herkunft im Bearbeiten-Modus nach.
+         */
+        origin: z
+          .object({
+            level: z.number().int().positive().optional(),
+            source: z.string().optional(),
+          })
+          .optional(),
         /**
          * EIGENE Modifikatoren an diesem Talent — das, was Fight Club unter
          * „Modifiers" anbietet.
