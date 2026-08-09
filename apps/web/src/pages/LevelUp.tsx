@@ -100,7 +100,14 @@ export function LevelUpPage() {
     }
     copy.skillRanks = { ...ranks };
     copy.skillSubtypes = [...copy.skillSubtypes, ...newSubtypes];
-    copy.feats = [...copy.feats, ...newFeats.map((entry) => ({ ...entry, extraEffects: [] }))];
+    /*
+      `origin` ist die Herkunft am Talent — beim Aufstieg die NEUE Gesamtstufe.
+      Sein Auftrag: „in welchem Level ich sie dazu genommen hab."
+    */
+    copy.feats = [
+      ...copy.feats,
+      ...newFeats.map((entry) => ({ ...entry, extraEffects: [], origin: { level: newTotal } })),
+    ];
     if (newKnown.length > 0) {
       const state = (copy.spellState[classId] ??= { known: [], prepared: [], usedSlots: [], favorites: [] });
       state.known = [...state.known, ...newKnown.filter((id) => !state.known.includes(id))];

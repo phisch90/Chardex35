@@ -6,19 +6,35 @@ import {
   isEpicClass,
   type ClassCategory,
   type ClassEntity,
+  type DeityEntity,
   type Entity,
   type EntityKind,
   type SpellEntity,
 } from "@codex35/core";
 import { S } from "../strings.js";
-import { useAllEntities, useCompendium } from "../lib/hooks.js";
+import { useAllEntities, useCharacters, useCompendium } from "../lib/hooks.js";
 import { reportSaveFailure } from "../lib/saveError.js";
 import { CompendiumRepo } from "../db/repo.js";
 import { BackButton } from "../ui/BackButton.js";
 import { BackToSheet } from "../ui/BackToSheet.js";
-import { Card, Chip, SearchInput, fmtMod } from "../ui/bits.js";
+import { DeityEditor } from "../ui/DeityEditor.js";
+import { Card, Chip, GhostButton, SearchInput, fmtMod } from "../ui/bits.js";
 
-const BROWSABLE: EntityKind[] = ["class", "race", "feat", "spell", "item", "skill", "condition"];
+const BROWSABLE: EntityKind[] = [
+  "class",
+  "race",
+  "feat",
+  "spell",
+  "item",
+  "skill",
+  "condition",
+  /*
+    Götter — nur Homebrew, sein Auftrag: „Ich möchte auch gerne die Götter mit
+    reinbringen." Die App liefert keine mit (deren Namen sind nicht Teil des freien
+    SRD), also ist der Bereich leer, bis sein Tisch seine anlegt.
+  */
+  "deity",
+];
 
 /** Wie viele Zeilen die Liste höchstens rendert (Zauber und Gegenstände sind zu viele). */
 const LIST_LIMIT = 300;
@@ -36,6 +52,9 @@ export function CompendiumPage() {
     dasselbe wie Löschen, und selbstgebaute Gegenstände sind Arbeit.
   */
   const [showDeleted, setShowDeleted] = useState(false);
+  /** Der Editor für eine eigene Gottheit — nur im Bereich „Götter". */
+  const [deityOpen, setDeityOpen] = useState(false);
+  const compendium = useCompendium();
 
   const deletedCount =
     entities?.filter((e) => e.kind === kind && e.deletedAt !== undefined).length ?? 0;
@@ -135,13 +154,39 @@ export function CompendiumPage() {
       )}
 
       {/* Solange es kein eigenes Homebrew gibt, trennen die Knöpfe nichts. Das
-          gehört dahin geschrieben, statt es als wirkungslosen Tap zu erleben. */}
-      {matching !== undefined && homebrewCount === 0 && (
+          gehört dahin geschrieben, statt es als wirkungslosen Tap zu erleben.
+          (Nicht bei den Göttern: dort ist ALLES Homebrew, der Satz wäre falsch.) */}
+      {matching !== undefined && homebrewCount === 0 && kind !== "deity" && (
         <p className="text-xs text-slate-500">{S.compendium.allSrd}</p>
       )}
 
+      {/*
+        Eigene Götter anlegen — direkt in der Liste, denn hier landet man, wenn der
+        Bogen sagt „Noch keine Götter im Kompendium". Der lange Erklärsatz steht nur,
+        solange es keine gibt: er erklärt die Leere, und eine erklärte Leere ist kein
+        Fehler mehr.
+      */}
+      {kind === "deity" && (
+        <div className="space-y-2">
+          <GhostButton onClick={() => setDeityOpen(true)}>{S.compendium.deity.addOwn}</GhostButton>
+          {matching !== undefined && matching.length === 0 && !onlyDeleted && (
+            <p className="text-xs leading-relaxed text-slate-400">{S.compendium.deity.emptyHint}</p>
+          )}
+        </div>
+      )}
+      {deityOpen && compendium !== undefined && (
+        <DeityEditor
+          compendium={compendium}
+          onClose={() => setDeityOpen(false)}
+          onSave={(entity) => {
+            const write = () => CompendiumRepo.createHomebrew(entity);
+            void write().catch((error: unknown) => reportSaveFailure(entity.name, error, write));
+          }}
+        />
+      )}
+
       {list === undefined && <p className="text-slate-400">{S.misc.loading}</p>}
-      {list?.length === 0 && (
+      {list?.length === 0 && kind !== "deity" && (
         <p className="py-8 text-center text-slate-400">
           {source === "homebrew" ? S.compendium.emptyHomebrew : S.compendium.empty}
         </p>
@@ -259,6 +304,12 @@ function shortInfo(entity: Entity): string {
       return entity.data.featType;
     case "condition":
       return entity.data.summary ?? "";
+    case "deity": {
+      const n = entity.data.domainIds.length;
+      const bits = [`${n} ${n === 1 ? "Domäne" : "Domänen"}`];
+      if (entity.data.favoredWeaponName !== undefined) bits.push(entity.data.favoredWeaponName);
+      return bits.join(" · ");
+    }
     default:
       return "";
   }
@@ -320,6 +371,7 @@ export function EntityDetailPage() {
 
       {entity.kind === "spell" && <SpellHeader entity={entity} />}
       {entity.kind === "class" && <ClassTable entity={entity} />}
+      {entity.kind === "deity" && <DeityDetails entity={entity} compendium={compendium} />}
 
       {entity.localized?.de?.summary && (
         <Card className="text-sm text-amber-100/90">{entity.localized.de.summary}</Card>
@@ -347,6 +399,96 @@ export function EntityDetailPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+/**
+ * Die Gottheit im Detail: Gesinnung, Lieblingswaffe, Domänen als Sprungziele.
+ *
+ * Alles hier ist Homebrew (die App liefert keine Götter mit), deshalb stehen
+ * Bearbeiten und Löschen direkt daneben — derselbe Editor wie beim Anlegen.
+ * Das Löschen nennt die Bögen, die auf diese Gottheit ZEIGEN: ihr `deityRef`
+ * bleibt stehen (eine Kennung ins Leere heißt „keine Gottheit", wie bei den
+ * Behältern), nur die Domänen-Prüfung fällt weg.
+ */
+function DeityDetails({
+  entity,
+  compendium,
+}: {
+  entity: DeityEntity;
+  compendium: Map<string, Entity>;
+}) {
+  const navigate = useNavigate();
+  const characters = useCharacters();
+  const [editorOpen, setEditorOpen] = useState(false);
+  const usedByNames = (characters ?? [])
+    .filter((c) => c.deityRef === entity.id)
+    .map((c) => c.name);
+  const weapon =
+    entity.data.favoredWeaponId !== undefined
+      ? compendium.get(entity.data.favoredWeaponId)
+      : undefined;
+
+  return (
+    <Card>
+      <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-sm">
+        {entity.data.alignment !== undefined && (
+          <div className="contents">
+            <dt className="text-slate-400">{S.compendium.deity.alignment}</dt>
+            <dd>{entity.data.alignment}</dd>
+          </div>
+        )}
+        <div className="contents">
+          <dt className="text-slate-400">{S.compendium.deity.favoredWeapon}</dt>
+          <dd>
+            {weapon !== undefined ? (
+              <Link
+                to="/kompendium/$kind/$entityId"
+                params={{ kind: "item", entityId: weapon.id }}
+                className="underline decoration-slate-600 hover:text-amber-300"
+              >
+                {displayName(weapon)}
+              </Link>
+            ) : (
+              (entity.data.favoredWeaponName ?? S.compendium.deity.favoredWeaponNone)
+            )}
+          </dd>
+        </div>
+        <div className="contents">
+          <dt className="text-slate-400">{S.compendium.deity.domains}</dt>
+          <dd className="flex flex-wrap gap-1.5">
+            {entity.data.domainIds.map((id) => {
+              const domain = compendium.get(id);
+              return (
+                <Link key={id} to="/kompendium/$kind/$entityId" params={{ kind: "spelllist", entityId: id }}>
+                  <Chip>{(domain?.name ?? id).replace(/ Domain$/, "")}</Chip>
+                </Link>
+              );
+            })}
+          </dd>
+        </div>
+      </dl>
+      <div className="mt-3">
+        <GhostButton onClick={() => setEditorOpen(true)}>{S.compendium.deity.edit}</GhostButton>
+      </div>
+      {editorOpen && (
+        <DeityEditor
+          compendium={compendium}
+          existing={entity}
+          usedByNames={usedByNames}
+          onClose={() => setEditorOpen(false)}
+          onSave={(next) => {
+            const write = () => CompendiumRepo.saveHomebrew(next);
+            void write().catch((error: unknown) => reportSaveFailure(next.name, error, write));
+          }}
+          onRemove={() => {
+            const write = () => CompendiumRepo.remove(entity);
+            void write().catch((error: unknown) => reportSaveFailure(entity.name, error, write));
+            void navigate({ to: "/kompendium/$kind", params: { kind: "deity" } });
+          }}
+        />
+      )}
+    </Card>
   );
 }
 

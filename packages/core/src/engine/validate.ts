@@ -1,6 +1,7 @@
 import type { Entity } from "../schema/entities.js";
 import { displayName } from "../schema/entities.js";
 import type { ResolvedCharacter } from "./internal.js";
+import { domainsOutsideDeity, warFocusStatus } from "../compendium/deity.js";
 import { featEligibility } from "./prereqs.js";
 import type { DerivedSheet } from "./types.js";
 
@@ -201,6 +202,47 @@ export function validate(
         muteKey: `domains-missing:${block.classId}`,
         open: Math.abs(block.domainPick - block.domains.length),
       });
+    }
+
+    /*
+      Die Domaenenwahl gegen die GOTTHEIT halten — sein Auftrag: "sodass wir die
+      Domains des clerics korrekt verwenden koennen." Gewarnt, nie gesperrt: der
+      DM hat Recht, und ohne Gottheits-Verweis gibt es nichts zu pruefen.
+    */
+    if (block.domainPick > 0 && compendium !== undefined) {
+      const fremd = domainsOutsideDeity(character, compendium);
+      if (fremd.length > 0) {
+        const namen = fremd.map((id) => {
+          const e = compendium.get(id);
+          return e !== undefined ? e.name.replace(/ Domain$/, "") : id;
+        });
+        issues.push({
+          severity: "warning",
+          code: "domain-not-deity",
+          message: `${character.deity ?? "Deine Gottheit"} bietet ${namen.join(" und ")} nicht an — am Tisch entscheidet der DM.`,
+          ref: block.classId,
+          tab: "spells",
+          muteKey: `domain-not-deity:${block.classId}`,
+        });
+      }
+
+      /*
+        Der feste Bonus der War-Domaene: Weapon Focus mit der Lieblingswaffe der
+        Gottheit. Genau seine Sorge: "ob ich den Bonus fest von der war Domain
+        schon hab oder ob ich den vergessen hab." Eingetragen wird er nur auf
+        seinen Tipp (Knopf im Zauber-Reiter) — hier steht die Erinnerung.
+      */
+      const war = warFocusStatus(character, compendium);
+      if (war.applies && !war.granted) {
+        issues.push({
+          severity: "warning",
+          code: "war-focus-missing",
+          message: `Die War-Domäne gewährt dir Weapon Focus (${war.weaponName ?? "Lieblingswaffe"}) — es steht noch nicht am Bogen. Eintragen: im Zauber-Reiter bei den Domänen.`,
+          ref: block.classId,
+          tab: "spells",
+          muteKey: `war-focus-missing:${block.classId}`,
+        });
+      }
     }
 
     const prepared = character.spellState[block.classId]?.prepared ?? [];

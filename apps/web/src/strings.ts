@@ -836,6 +836,19 @@ export const S = {
     /** Der freie Text an einem Talent ohne Waffenbezug (Skill Focus, eigene Talente). */
     choiceLabel: "Auswahl",
     choicePlaceholder: "z.B. Spot",
+    /*
+      Die HERKUNFT eines Talents — sein Auftrag: „die Talente [sollen] die Info zeigen
+      woher sie kommen. Also ob die als Bonus fest gewählt wurden oder in welchem Level
+      ich sie dazu genommen hab." Neue Wahlen tragen die Stufe von allein; bestehende
+      Bögen tragen nichts (Fehlerfamilie 1) und werden im Bearbeiten-Modus nachgetragen.
+    */
+    originLevel: (n: number) => `Stufe ${n}`,
+    originTitle: "Herkunft",
+    originLevelLabel: "Stufe",
+    originSourceLabel: "oder Quelle",
+    originSourcePlaceholder: "z.B. Bonus (Mensch)",
+    originHint:
+      "In welcher Stufe das Talent gewählt wurde — oder seine feste Quelle (Bonus-Talent von Volk, Klasse, Domäne). Steht eine Quelle da, zeigt der Bogen sie.",
   },
 
   campaign: {
@@ -1264,6 +1277,7 @@ export const S = {
       monster: "Monster",
       condition: "Zustände",
       spelllist: "Zauberlisten",
+      deity: "Götter",
     } as Record<string, string>,
     sourceSrd: "SRD",
     sourceHomebrew: "Homebrew",
@@ -1293,6 +1307,42 @@ export const S = {
       prestige: "Einstieg erst mit erfüllten Voraussetzungen.",
     } as Record<string, string>,
     epic: "episch",
+
+    /*
+      Götter — sein Auftrag: „Ich möchte auch gerne die Götter mit reinbringen, sodass
+      wir die Domains des clerics korrekt verwenden können." Die App liefert KEINE mit:
+      die bekannten Götternamen gehören nicht zum freien SRD (nur die Domänen tun das).
+      Sein Tisch legt seine eigenen an — deshalb ist der Bereich von Haus aus leer und
+      sagt warum, statt leer auszusehen wie ein Fehler.
+    */
+    deity: {
+      addOwn: "+ Eigene Gottheit",
+      titleNew: "Eigene Gottheit",
+      titleEdit: "Gottheit bearbeiten",
+      emptyHint:
+        "Die App liefert keine Götter mit — deren Namen gehören nicht zum freien SRD, nur die Domänen. Legt die Götter eures Tischs hier an: Name, Domänen, Lieblingswaffe. Kleriker wählen dann am Bogen ihre Gottheit, und die App weiß, welche Domänen dazu passen.",
+      name: "Name",
+      namePlaceholder: "z.B. Der Schmied",
+      alignment: "Gesinnung",
+      alignmentPlaceholder: "z.B. LG",
+      domains: "Domänen",
+      domainsHint: "Welche Domänen diese Gottheit anbietet — daraus wählen ihre Kleriker.",
+      domainsCount: (n: number) => `${n} gewählt`,
+      favoredWeapon: "Lieblingswaffe",
+      favoredWeaponHint:
+        "Wichtig für die War-Domäne: ihr Weapon Focus gilt für genau diese Waffe.",
+      favoredWeaponNone: "keine",
+      clearWeapon: "entfernen",
+      create: "Anlegen",
+      saveChanges: "Übernehmen",
+      /** Warum der Anlegen-Knopf noch gesperrt ist — statt eines stummen Knopfs. */
+      needName: "Es fehlt noch: der Name.",
+      needDomains: "Es fehlt noch: mindestens eine Domäne.",
+      edit: "Bearbeiten",
+      /** Was ein Löschen für Bögen heißt, die auf diese Gottheit zeigen. */
+      removeNote: (names: string[]) =>
+        `${names.join(" und ")} ${names.length === 1 ? "zeigt" : "zeigen"} auf diese Gottheit — der Bogen behält seine Domänen, nur die Prüfung dagegen fällt weg.`,
+    },
   },
 
   dice: {
@@ -1634,6 +1684,31 @@ export const S = {
     domainStepTitle: (className: string) => `Domänen für deinen ${className}`,
     domainStepHint:
       "Jede Domäne bringt eine Fähigkeit und ihre neun Zauber mit, dazu je Zaubergrad einen zusätzlichen Platz. Ein Tipp auf den Namen zeigt die Zauber.",
+
+    /*
+      Die Gottheit am Bogen — sein Auftrag: „Ich möchte auch gerne die Götter mit
+      reinbringen, sodass wir die Domains des clerics korrekt verwenden können."
+      Gewählt wird aus dem Kompendium (eigener Bereich „Götter"), gespeichert als
+      Verweis; fremde Domänen bleiben wählbar — gewarnt, nie gesperrt.
+    */
+    deity: "Gottheit",
+    deityNone: "keine gewählt",
+    deityRemove: "Gottheit entfernen",
+    // Backticks wegen der deutschen Anführungszeichen — die Regel steht in CLAUDE.md.
+    deityNoneYet: `Noch keine Götter im Kompendium — dort anlegen (Bereich „Götter"), dann kannst du hier wählen.`,
+    deityGo: "Zum Kompendium",
+    /** Die Marke an einer Domäne, die die gewählte Gottheit anbietet. */
+    deityOffers: (name: string) => `✓ ${name}`,
+    /*
+      Der feste Bonus der War-Domäne — genau seine Sorge: „ob ich den Bonus fest von
+      der war Domain schon hab oder ob ich den vergessen hab." Hinweis mit Knopf,
+      seine Wahl: die Zahl wandert erst auf seinen Tipp.
+    */
+    warHint: (weapon: string) =>
+      `Die War-Domäne gewährt dir Weapon Focus (${weapon}) als festen Bonus — es steht noch nicht am Bogen.`,
+    warAdd: "Weapon Focus eintragen",
+    warGranted: (weapon: string) =>
+      `Weapon Focus (${weapon}) steht am Bogen — der feste Bonus der War-Domäne.`,
   },
 
   import: {

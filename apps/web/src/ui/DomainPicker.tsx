@@ -22,6 +22,7 @@ export function DomainPicker({
   compendium,
   picked,
   pick,
+  deity,
   onAdd,
   onRemove,
 }: {
@@ -30,6 +31,12 @@ export function DomainPicker({
   picked: string[];
   /** Wie viele Domänen die Klasse hergibt. */
   pick: number;
+  /**
+   * Die Gottheit des Bogens, wenn eine gewählt ist: ihre Domänen stehen oben und
+   * tragen eine Marke. Fremde bleiben wählbar — gewarnt, nie gesperrt; der DM hat
+   * Recht. Optional, weil der Assistent (noch) ohne Gottheit arbeitet.
+   */
+  deity?: { name: string; domainIds: string[] } | undefined;
   onAdd: (spellListId: string) => void;
   onRemove: (spellListId: string) => void;
 }) {
@@ -48,13 +55,24 @@ export function DomainPicker({
     Gesucht wird im Namen UND in der gewährten Fähigkeit: „waffentalent" oder
     „weapon focus" soll die War-Domäne finden, ohne dass man den Namen kennt.
   */
-  const shown = all.filter(
+  const filtered = all.filter(
     (domain) =>
       q === "" ||
       domain.name.toLowerCase().includes(q) ||
       (domain.grantedPower ?? "").toLowerCase().includes(q) ||
       domain.spells.some((s) => s.name.toLowerCase().includes(q)),
   );
+  /*
+    Mit Gottheit stehen IHRE Domänen oben — stabil sortiert, darunter bleibt die
+    alphabetische Ordnung. Dieselbe Bauform wie die Favoriten im Zauber-Reiter.
+  */
+  const deitySet = new Set(deity?.domainIds ?? []);
+  const shown =
+    deity === undefined
+      ? filtered
+      : [...filtered].sort(
+          (a, b) => (deitySet.has(b.id) ? 1 : 0) - (deitySet.has(a.id) ? 1 : 0),
+        );
 
   return (
     <div className="space-y-2">
@@ -86,7 +104,16 @@ export function DomainPicker({
                   onClick={() => setOpenId(open ? null : domain.id)}
                   className="min-w-0 flex-1 text-left"
                 >
-                  <div className={`text-sm ${already ? "text-violet-300" : ""}`}>{domain.name}</div>
+                  <div className={`text-sm ${already ? "text-violet-300" : ""}`}>
+                    {domain.name}
+                    {/* Die Marke der Gottheit — sie trägt den NAMEN, damit klar
+                        ist, wer hier etwas anbietet, nicht die App. */}
+                    {deitySet.has(domain.id) && (
+                      <span className="ml-1.5 rounded bg-violet-950/70 px-1.5 py-0.5 text-[10px] text-violet-300">
+                        {S.spells.deityOffers(deity?.name ?? "")}
+                      </span>
+                    )}
+                  </div>
                   {/*
                     Die gewährte Fähigkeit ist der Grund, aus dem man wählt — sie steht
                     zugeklappt in EINER Zeile, aufgeklappt vollständig. Abschneiden mit
