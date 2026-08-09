@@ -2370,6 +2370,10 @@ Grad zurück · kritisch ab 20 minus Bonus-Plätze des Grads (Blatt-Beispiel: 2
 Bonus-Grad-1-Plätze → 18–20), mit Wahl aus drei Boni · Grad 0 zählt als Grad 1
 (Ermüdung, Schaden), Crit-Grundlage dafür 19–20.
 
+**Und die eine Auslegung, die das Blatt offenließ, ist bestätigt:** welche Bonus-Plätze
+bei Grad-0-Zaubern die Crit-Reichweite weiten. Gerechnet wird mit den GRAD-1-Plätzen
+(weil Grad 0 „als Grad 1 zählt"), und sein Wort dazu: „Ja korrekt so." Nicht neu fragen.
+
 Gefragt und entschieden (Geschmack): **ein Knopf je Zaubergrad** im Grad-Kopf (die
 Zeilen der Zauber bleiben unberührt — eine volle Zeile verträgt keinen vierten Knopf,
 zweimal bezahlt), und **der Patzer bucht den Schaden mit**, mit Ansage und Rücknahme.
