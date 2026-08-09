@@ -22,10 +22,16 @@ describe("packs/srd", () => {
       soll sie kein Versehen sein. Ein fester Wert erzwingt beides: wer ein Pack anfasst,
       sieht diese Zeile im Diff.
 
+      Stand 11: die alten Wörter sind aus den deutschen Texten (GE/ST/KO/WE/CH →
+      DEX/STR/CON/WIS/CHA, Ringkampf → Grapple) — 19 Stellen in `feats-1.json`,
+      `feats-2.json` und `conditions.json`. Und die Zahl kommt seither wieder aus
+      dem ERZEUGER: bei Stand 10 wurde nur das Manifest von Hand erhöht und
+      `build.ts` vergessen — ein Neu-Erzeugen hätte die Version zurückgedreht.
+
       Stand 10: die deutschen Texte sagen „HP" statt „TP" (vier Stellen in
       `conditions.json` und `feats-1.json`).
     */
-    expect(manifest.srdRev).toBe(10);
+    expect(manifest.srdRev).toBe(11);
     expect(manifest.files.length).toBeGreaterThan(0);
     expect([...manifest.files].sort()).toEqual(manifest.files);
     expect(manifest.files).not.toContain("manifest.json");

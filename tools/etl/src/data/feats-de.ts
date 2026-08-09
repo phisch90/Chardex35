@@ -54,7 +54,7 @@ export const FEATS_DE: Record<string, string> = {
 
   // --- Angriff und Verteidigung im Nahkampf -------------------------------
   dodge:
-    "Du bestimmst zu Beginn deiner Aktion einen Gegner und erhältst gegen dessen Angriffe +1 Ausweich-Bonus auf die RK. Das Ziel darfst du in jeder Aktion neu wählen. Verlierst du deinen GE-Bonus auf die RK (z.B. auf dem falschen Fuß), fällt auch dieser Bonus weg.",
+    "Du bestimmst zu Beginn deiner Aktion einen Gegner und erhältst gegen dessen Angriffe +1 Ausweich-Bonus auf die RK. Das Ziel darfst du in jeder Aktion neu wählen. Verlierst du deinen DEX-Bonus auf die RK (z.B. auf dem falschen Fuß), fällt auch dieser Bonus weg.",
   mobility:
     "+4 Ausweich-Bonus auf die RK gegen Gelegenheitsangriffe, die du dadurch auslöst, dass du aus einem bedrohten Feld herausgehst.",
   "spring-attack":
@@ -68,7 +68,7 @@ export const FEATS_DE: Record<string, string> = {
   "improved-trip":
     "Umwerfen löst keinen Gelegenheitsangriff aus, du erhältst +4 auf den Stärke-Vergleich, und nach einem gelungenen Umwerfen darfst du sofort einen weiteren Nahkampfangriff gegen dasselbe Ziel führen.",
   "combat-reflexes":
-    "Du darfst zusätzliche Gelegenheitsangriffe in Höhe deines GE-Bonus führen und auch dann, wenn du auf dem falschen Fuß stehst.",
+    "Du darfst zusätzliche Gelegenheitsangriffe in Höhe deines DEX-Bonus führen und auch dann, wenn du auf dem falschen Fuß stehst.",
   cleave:
     "Bringst du eine Kreatur mit einem Nahkampfangriff zu Fall, erhältst du sofort einen weiteren Nahkampfangriff gegen einen anderen Gegner in Reichweite. Höchstens einmal pro Runde.",
   "great-cleave": "Wie Cleave, aber ohne Begrenzung auf einmal pro Runde.",
@@ -81,7 +81,7 @@ export const FEATS_DE: Record<string, string> = {
   "improved-sunder":
     "Das Zerschlagen einer Waffe oder eines Schildes löst keinen Gelegenheitsangriff aus, und du erhältst +4 auf den vergleichenden Angriffswurf.",
   "improved-grapple":
-    "Ein Ringkampf-Versuch löst keinen Gelegenheitsangriff aus, und du erhältst +4 auf Ringkampf-Würfe.",
+    "Ein Grapple-Versuch löst keinen Gelegenheitsangriff aus, und du erhältst +4 auf Grapple-Würfe.",
   "improved-unarmed-strike":
     "Du gelt als immer bewaffnet: du löst mit unbewaffneten Angriffen keine Gelegenheitsangriffe aus und kannst selbst Gelegenheitsangriffe führen. Der Schaden gilt als nichttödlich, kann aber mit −4 auf den Angriff als tödlich erklärt werden.",
   "deflect-arrows":
@@ -93,16 +93,16 @@ export const FEATS_DE: Record<string, string> = {
   diehard:
     "Bei −1 bis −9 Trefferpunkten wirst du automatisch stabil und verlierst nicht jede Runde einen weiteren Trefferpunkt. Du darfst weiter handeln wie außer Gefecht (eine Standard- oder Bewegungsaktion pro Runde, anstrengende Handlungen kosten 1 HP).",
   endurance:
-    "+4 auf Würfe gegen Erschöpfung: Swim gegen nichttödlichen Schaden, KO-Würfe beim Rennen und Gewaltmarsch, Hunger, Durst, Hitze und Kälte, sowie gegen Ersticken. Du darfst außerdem in Rüstung schlafen, ohne müde zu werden.",
+    "+4 auf Würfe gegen Erschöpfung: Swim gegen nichttödlichen Schaden, CON-Würfe beim Rennen und Gewaltmarsch, Hunger, Durst, Hitze und Kälte, sowie gegen Ersticken. Du darfst außerdem in Rüstung schlafen, ohne müde zu werden.",
   toughness: "+3 Trefferpunkte. Das Talent lässt sich mehrfach nehmen.",
   "great-fortitude": "+2 auf alle Fortitude-Rettungswürfe.",
   "iron-will": "+2 auf alle Will-Rettungswürfe.",
   "lightning-reflexes": "+2 auf alle Reflex-Rettungswürfe.",
   "improved-initiative": "+4 auf Initiative.",
   run:
-    "Du rennst mit fünffacher statt vierfacher Geschwindigkeit (in schwerer Rüstung vierfach statt dreifach) und behältst beim Rennen deinen GE-Bonus auf die RK. Beim Weitsprung mit Anlauf erhältst du +4 auf Jump.",
+    "Du rennst mit fünffacher statt vierfacher Geschwindigkeit (in schwerer Rüstung vierfach statt dreifach) und behältst beim Rennen deinen DEX-Bonus auf die RK. Beim Weitsprung mit Anlauf erhältst du +4 auf Jump.",
   "eyes-in-the-back-of-your-head":
-    "Angreifer erhalten den üblichen Flankier-Bonus von +2 nicht gegen dich. Wirkt nicht, wenn du deinen GE-Bonus auf die RK ohnehin verlierst.",
+    "Angreifer erhalten den üblichen Flankier-Bonus von +2 nicht gegen dich. Wirkt nicht, wenn du deinen DEX-Bonus auf die RK ohnehin verlierst.",
   "fleet-of-foot":
     "Beim Rennen oder Ansturm darfst du eine einzige Richtungsänderung von bis zu 90 Grad machen. Nicht in mittelschwerer oder schwerer Rüstung und nicht bei mittlerer oder schwerer Last.",
 
@@ -112,7 +112,7 @@ export const FEATS_DE: Record<string, string> = {
   "precise-shot":
     "Du kannst ohne den üblichen Malus von −4 in einen Nahkampf hineinschießen.",
   "improved-precise-shot":
-    "Deckung und Sichtschutz des Ziels durch Kreaturen im Weg werden ignoriert (totale Deckung und totaler Sichtschutz weiterhin nicht), und beim Schuss in einen Ringkampf triffst du immer den gewünschten Gegner.",
+    "Deckung und Sichtschutz des Ziels durch Kreaturen im Weg werden ignoriert (totale Deckung und totaler Sichtschutz weiterhin nicht), und beim Schuss in einen Grapple triffst du immer den gewünschten Gegner.",
   "rapid-shot":
     "Bei einer vollen Angriffsaktion mit einer Fernwaffe erhältst du einen zusätzlichen Angriff, dafür alle Fernangriffe in dieser Runde mit −2.",
   "manyshot":
@@ -136,7 +136,7 @@ export const FEATS_DE: Record<string, string> = {
 
   // --- Zauber-Handwerk (nicht Metamagie) ----------------------------------
   "combat-casting":
-    "+4 auf Concentration-Würfe, um in der Defensive, im Ringkampf oder festgehalten zu zaubern.",
+    "+4 auf Concentration-Würfe, um in der Defensive, im Grapple oder festgehalten zu zaubern.",
   "spell-penetration":
     "+2 auf Zauberstufen-Würfe, um Zauberresistenz zu überwinden.",
   "greater-spell-penetration": "Weitere +2 auf Würfe gegen Zauberresistenz (kumulativ mit Spell Penetration).",
@@ -156,7 +156,7 @@ export const FEATS_DE: Record<string, string> = {
     "Vier zusätzliche Versuche pro Tag, Untote zu vertreiben oder zu befehligen. Mehrfach nehmbar.",
   "extra-music": "Vier zusätzliche Einsätze der Bardenmusik pro Tag.",
   "divine-might":
-    "Als freie Aktion opferst du einen Versuch, Untote zu vertreiben, und legst für eine ganze Runde deinen CH-Bonus auf deinen Waffenschaden.",
+    "Als freie Aktion opferst du einen Versuch, Untote zu vertreiben, und legst für eine ganze Runde deinen CHA-Bonus auf deinen Waffenschaden.",
   "divine-vengeance":
     "Du opferst einen Vertreiben-Versuch und fügst deinen gelungenen Nahkampfangriffen gegen Untote bis zum Ende deiner nächsten Aktion je 2W6 heilige Energie zu.",
 
@@ -229,7 +229,7 @@ export const FEATS_DE: Record<string, string> = {
 
   // --- Waffen-Spezialisierung (die Kämpfer-Kette) ------------------------
   "weapon-focus":
-    "Wähle eine Waffenart (auch unbewaffneter Angriff, Ringkampf oder — als Zauberwirker — Strahl). Mit dieser Waffe erhältst du +1 auf alle Angriffswürfe. Das Talent gilt je Waffenart einmal.",
+    "Wähle eine Waffenart (auch unbewaffneter Angriff, Grapple oder — als Zauberwirker — Strahl). Mit dieser Waffe erhältst du +1 auf alle Angriffswürfe. Das Talent gilt je Waffenart einmal.",
   "greater-weapon-focus":
     "Weitere +1 auf Angriffswürfe mit einer Waffe, für die du schon Weapon Focus hast (zusammen also +2).",
   "weapon-specialization":
@@ -241,7 +241,7 @@ export const FEATS_DE: Record<string, string> = {
   "power-critical":
     "Mit der gewählten Waffe erhältst du +4 auf den Wurf, einen kritischen Treffer zu bestätigen.",
   "weapon-finesse":
-    "Mit einer leichten Waffe, einem Rapier, einer Peitsche oder einer Stachelkette darfst du deinen GE- statt deinen ST-Modifikator auf Angriffswürfe nehmen.",
+    "Mit einer leichten Waffe, einem Rapier, einer Peitsche oder einer Stachelkette darfst du deinen DEX- statt deinen STR-Modifikator auf Angriffswürfe nehmen.",
 
   // --- Zwei Waffen -------------------------------------------------------
   "two-weapon-fighting":
@@ -261,7 +261,7 @@ export const FEATS_DE: Record<string, string> = {
   "whirlwind-attack":
     "Bei einer vollen Angriffsaktion verzichtest du auf deine normalen Angriffe und führst statt dessen je einen Nahkampfangriff mit vollem Grundangriffsbonus gegen jeden Gegner in Reichweite.",
   "stunning-fist":
-    "Vor dem Angriffswurf angekündigt: ein von deinem unbewaffneten Angriff getroffener Gegner muss einen Fortitude-Rettungswurf (SG 10 + halbe Stufe + WE-Bonus) bestehen, sonst ist er eine Runde betäubt. Einsätze pro Tag begrenzt.",
+    "Vor dem Angriffswurf angekündigt: ein von deinem unbewaffneten Angriff getroffener Gegner muss einen Fortitude-Rettungswurf (SG 10 + halbe Stufe + WIS-Bonus) bestehen, sonst ist er eine Runde betäubt. Einsätze pro Tag begrenzt.",
   "knock-down":
     "Fügst du im Nahkampf 10 oder mehr Schaden zu, folgt als freie Aktion ein Umwerf-Versuch gegen dasselbe Ziel.",
   "hold-the-line":
@@ -302,7 +302,7 @@ export const FEATS_DE: Record<string, string> = {
   "improved-flyby-attack":
     "Ist die Standard-Aktion beim Flyby Attack ein Nahkampfangriff, löst das Verlassen der bedrohten Felder des Ziels keinen Gelegenheitsangriff aus.",
   snatch:
-    "Trifft die Kreatur mit Klaue oder Biss, darf sie damit einen Ringkampf beginnen, als hätte sie „improved grab“.",
+    "Trifft die Kreatur mit Klaue oder Biss, darf sie damit einen Grapple beginnen, als hätte sie „improved grab“.",
   "improved-multiweapon-fighting":
     "Für Kreaturen mit mehreren Armen: ein zweiter Angriff mit jeder zusätzlichen Waffe, dieser mit −5.",
   "greater-multiweapon-fighting":
@@ -333,9 +333,9 @@ export const FEATS_DE: Record<string, string> = {
   "mental-resistance":
     "Gegen psionische Angriffe ohne Energieart hast du Schadensreduzierung 3/−, und Attributsschaden aus psionischer Quelle wird gemindert.",
   "mind-over-body":
-    "Attributsschaden heilt schneller: pro Tag 1 + dein KO-Bonus an Attributspunkten.",
+    "Attributsschaden heilt schneller: pro Tag 1 + dein CON-Bonus an Attributspunkten.",
   "rapid-metabolism":
-    "Du heilst pro Tag deine normale Rate zuzüglich des doppelten KO-Bonus — auch ohne zu ruhen.",
+    "Du heilst pro Tag deine normale Rate zuzüglich des doppelten CON-Bonus — auch ohne zu ruhen.",
   "hostile-mind":
     "Wirkt jemand eine Telepathie-Kraft auf dich, erleidet er selbst Schaden.",
   "psionic-hole":

@@ -1145,7 +1145,7 @@
     "kind": "feat",
     "localized": {
       "de": {
-        "summary": "+4 auf Concentration-Würfe, um in der Defensive, im Ringkampf oder festgehalten zu zaubern."
+        "summary": "+4 auf Concentration-Würfe, um in der Defensive, im Grapple oder festgehalten zu zaubern."
       }
     },
     "name": "Combat Casting",
@@ -1209,7 +1209,7 @@
     "kind": "feat",
     "localized": {
       "de": {
-        "summary": "Du darfst zusätzliche Gelegenheitsangriffe in Höhe deines GE-Bonus führen und auch dann, wenn du auf dem falschen Fuß stehst."
+        "summary": "Du darfst zusätzliche Gelegenheitsangriffe in Höhe deines DEX-Bonus führen und auch dann, wenn du auf dem falschen Fuß stehst."
       }
     },
     "name": "Combat Reflexes",
@@ -2372,7 +2372,7 @@
     "kind": "feat",
     "localized": {
       "de": {
-        "summary": "Als freie Aktion opferst du einen Versuch, Untote zu vertreiben, und legst für eine ganze Runde deinen CH-Bonus auf deinen Waffenschaden."
+        "summary": "Als freie Aktion opferst du einen Versuch, Untote zu vertreiben, und legst für eine ganze Runde deinen CHA-Bonus auf deinen Waffenschaden."
       }
     },
     "name": "Divine Might",
@@ -2450,7 +2450,7 @@
     "kind": "feat",
     "localized": {
       "de": {
-        "summary": "Du bestimmst zu Beginn deiner Aktion einen Gegner und erhältst gegen dessen Angriffe +1 Ausweich-Bonus auf die RK. Das Ziel darfst du in jeder Aktion neu wählen. Verlierst du deinen GE-Bonus auf die RK (z.B. auf dem falschen Fuß), fällt auch dieser Bonus weg."
+        "summary": "Du bestimmst zu Beginn deiner Aktion einen Gegner und erhältst gegen dessen Angriffe +1 Ausweich-Bonus auf die RK. Das Ziel darfst du in jeder Aktion neu wählen. Verlierst du deinen DEX-Bonus auf die RK (z.B. auf dem falschen Fuß), fällt auch dieser Bonus weg."
       }
     },
     "name": "Dodge",
@@ -2616,7 +2616,7 @@
     "kind": "feat",
     "localized": {
       "de": {
-        "summary": "+4 auf Würfe gegen Erschöpfung: Swim gegen nichttödlichen Schaden, KO-Würfe beim Rennen und Gewaltmarsch, Hunger, Durst, Hitze und Kälte, sowie gegen Ersticken. Du darfst außerdem in Rüstung schlafen, ohne müde zu werden."
+        "summary": "+4 auf Würfe gegen Erschöpfung: Swim gegen nichttödlichen Schaden, CON-Würfe beim Rennen und Gewaltmarsch, Hunger, Durst, Hitze und Kälte, sowie gegen Ersticken. Du darfst außerdem in Rüstung schlafen, ohne müde zu werden."
       }
     },
     "name": "Endurance",
@@ -3531,7 +3531,7 @@
     "kind": "feat",
     "localized": {
       "de": {
-        "summary": "Angreifer erhalten den üblichen Flankier-Bonus von +2 nicht gegen dich. Wirkt nicht, wenn du deinen GE-Bonus auf die RK ohnehin verlierst."
+        "summary": "Angreifer erhalten den üblichen Flankier-Bonus von +2 nicht gegen dich. Wirkt nicht, wenn du deinen DEX-Bonus auf die RK ohnehin verlierst."
       }
     },
     "name": "Eyes in the Back of Your Head",
@@ -5364,7 +5364,7 @@
     "kind": "feat",
     "localized": {
       "de": {
-        "summary": "Ein Ringkampf-Versuch löst keinen Gelegenheitsangriff aus, und du erhältst +4 auf Ringkampf-Würfe."
+        "summary": "Ein Grapple-Versuch löst keinen Gelegenheitsangriff aus, und du erhältst +4 auf Grapple-Würfe."
       }
     },
     "name": "Improved Grapple",
@@ -5815,7 +5815,7 @@
     "kind": "feat",
     "localized": {
       "de": {
-        "summary": "Deckung und Sichtschutz des Ziels durch Kreaturen im Weg werden ignoriert (totale Deckung und totaler Sichtschutz weiterhin nicht), und beim Schuss in einen Ringkampf triffst du immer den gewünschten Gegner."
+        "summary": "Deckung und Sichtschutz des Ziels durch Kreaturen im Weg werden ignoriert (totale Deckung und totaler Sichtschutz weiterhin nicht), und beim Schuss in einen Grapple triffst du immer den gewünschten Gegner."
       }
     },
     "name": "Improved Precise Shot",

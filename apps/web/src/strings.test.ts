@@ -18,7 +18,7 @@
  * gerendert IST — ein Kürzel in einem Zweig, den er nicht aufschlägt, findet er nie.
  * Dieselbe Begründung wie bei der Emoji-Prüfung in `ui/icons.test.ts`.
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -158,6 +158,87 @@ describe("Regelkürzel bleiben englisch", () => {
     */
     expect(gelesen, "Quelldateien gefunden").toBeGreaterThan(100);
     expect(funde, `Deutsche Regelkürzel gefunden:\n${funde.join("\n")}`).toEqual([]);
+  });
+
+  /*
+    Und die PACKS. Genau diese Lücke hat der Blick auf den Talente-Reiter gefunden:
+    im Erklärtext von Dodge stand „GE-Bonus", bei Weapon Focus „Ringkampf" — beides
+    längst abgeschaffte Wörter, aber die Schranke las nur die Quelltexte, und diese
+    Texte liegen als Daten in `packs/srd` (Quelle: `tools/etl`). Eine Schranke, die
+    die halbe Wahrheit abdeckt, meldet grün, während die App das alte Wort zeigt —
+    dieselbe Lehre wie bei TP → HP, wo sie erst beide PAKETE lesen musste.
+
+    Gelesen werden die deutschen Texte der Packs: alles unter `localized.de` und die
+    `data.summary` der Zustände (dort steht das Deutsche direkt, ohne `localized`).
+    Die englischen Regeltexte bleiben außen vor — dort ist „ST" ein englisches Wort
+    in einem Namen und kein Kürzel.
+  */
+  it("kein deutsches Kürzel in den deutschen PACK-Texten", () => {
+    const packsDir = join(SRC, "../../../packs/srd");
+    // Läuft der Test in einer Umgebung ohne Packs (npm-Paket), ist nichts zu prüfen.
+    if (!existsSync(join(packsDir, "manifest.json"))) return;
+
+    /*
+      In den DATEN dürfen die Kürzel auch allein stehen („−4 GE, halbe Bewegung") —
+      im Quelltext wäre `\bGE\b` zu scharf (Bezeichner, englische Wörter), in einem
+      deutschen Datentext gibt es keinen zweiten Sinn für ein großgeschriebenes GE.
+    */
+    const verbotenInDaten = [
+      ...VERBOTEN,
+      { kuerzel: "GE", statt: "DEX", re: /\bGE\b/ },
+      { kuerzel: "ST", statt: "STR", re: /\bST\b/ },
+      { kuerzel: "KO", statt: "CON", re: /\bKO\b/ },
+      { kuerzel: "WE", statt: "WIS", re: /\bWE\b/ },
+    ];
+
+    /** Alle Zeichenketten unter einem Knoten einsammeln — rekursiv, mit Pfad. */
+    const collect = (node: unknown, path: string, out: Array<[string, string]>) => {
+      if (typeof node === "string") out.push([path, node]);
+      else if (Array.isArray(node)) node.forEach((v, i) => collect(v, `${path}[${i}]`, out));
+      else if (node !== null && typeof node === "object") {
+        for (const [key, value] of Object.entries(node)) collect(value, `${path}.${key}`, out);
+      }
+    };
+
+    const funde: string[] = [];
+    let geprueft = 0;
+    const manifest = JSON.parse(readFileSync(join(packsDir, "manifest.json"), "utf8")) as {
+      files: string[];
+    };
+    for (const file of manifest.files) {
+      if (!file.endsWith(".json") || file === "manifest.json") continue;
+      const entities = JSON.parse(readFileSync(join(packsDir, file), "utf8")) as Array<{
+        id: string;
+        kind: string;
+        localized?: { de?: unknown };
+        data?: { summary?: string };
+      }>;
+      for (const entity of entities) {
+        const texte: Array<[string, string]> = [];
+        if (entity.localized?.de !== undefined) collect(entity.localized.de, "de", texte);
+        if (entity.kind === "condition" && typeof entity.data?.summary === "string") {
+          texte.push(["summary", entity.data.summary]);
+        }
+        for (const [pfad, text] of texte) {
+          geprueft++;
+          for (const { kuerzel, statt, re } of verbotenInDaten) {
+            if (re.test(text)) {
+              funde.push(`${file} ${entity.id} (${pfad}) — „${kuerzel}" statt „${statt}": ${text}`);
+            }
+          }
+        }
+      }
+    }
+    /*
+      Wieder zuerst: wurde überhaupt etwas gelesen? In den Packs liegen 175
+      Talent-Erklärungen und 29 Zustände — die 1866 Gegenstandstexte NICHT, die
+      werden beim Einrichten aus `core/compendium/itemGerman.ts` übergelegt, und
+      diese Datei liest der Quelltext-Durchlauf oben schon. Meine erste Fassung
+      verlangte hier über 1000 und meldete damit die Packs als falsch, die recht
+      hatten — eine Schwelle muss die Wirklichkeit kennen, die sie prüft.
+    */
+    expect(geprueft, "deutsche Pack-Texte gefunden").toBeGreaterThan(150);
+    expect(funde, `Deutsche Regelkürzel in den Packs:\n${funde.join("\n")}`).toEqual([]);
   });
 
   it("die Attributskürzel selbst sind die englischen", () => {

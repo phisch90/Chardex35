@@ -7,7 +7,7 @@
  * - `data.summary` = deutsche Kurzfassung für Chips im Bogen/Tracker.
  * - `description` = englischer SRD-Regeltext (Markdown).
  * - Effects NUR für saubere, unbedingte numerische Mali (bonusType "untyped");
- *   alles Situative/Nichtnumerische (Verlust des GE-Bonus, halbe Bewegung,
+ *   alles Situative/Nichtnumerische (Verlust des DEX-Bonus, halbe Bewegung,
  *   Handlungsverbote, Fehlschlagschancen) bleibt reiner Text.
  * - `updatedAt: ""` und `rev: 1` halten die Packs deterministisch.
  */
@@ -58,7 +58,7 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "blinded",
     name: "Blinded",
-    summary: "−2 RK, verliert GE-Bonus, halbe Bewegung, sehbasierte Checks scheitern",
+    summary: "−2 RK, verliert DEX-Bonus, halbe Bewegung, sehbasierte Checks scheitern",
     description:
       "The character cannot see. He takes a –2 penalty to Armor Class, loses his Dexterity bonus to AC (if any), moves at half speed, and takes a –4 penalty on Search checks and on most Strength- and Dexterity-based skill checks. All checks and activities that rely on vision (such as reading and Spot checks) automatically fail. All opponents are considered to have total concealment (50% miss chance) to the blinded character.",
     effects: [fx("ac", -2)],
@@ -66,7 +66,7 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "cowering",
     name: "Cowering",
-    summary: "keine Aktionen, −2 RK, verliert GE-Bonus",
+    summary: "keine Aktionen, −2 RK, verliert DEX-Bonus",
     description:
       "The character is frozen in fear and can take no actions. A cowering character takes a –2 penalty to Armor Class and loses her Dexterity bonus (if any).",
     effects: [fx("ac", -2)],
@@ -115,7 +115,7 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "entangled",
     name: "Entangled",
-    summary: "−2 Angriffe, −4 GE, halbe Bewegung, kein Rennen/Ansturm",
+    summary: "−2 Angriffe, −4 DEX, halbe Bewegung, kein Rennen/Ansturm",
     description:
       "The character is ensnared. Being entangled impedes movement, but does not entirely prevent it unless the bonds are anchored to an immobile object or tethered by an opposing force. An entangled creature moves at half speed, cannot run or charge, and takes a –2 penalty on all attack rolls and a –4 penalty to Dexterity. An entangled character who attempts to cast a spell must make a Concentration check (DC 15 + the spell's level) or lose the spell.",
     effects: [fx("attack.all", -2), fx("ability.dex", -4)],
@@ -123,7 +123,7 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "exhausted",
     name: "Exhausted",
-    summary: "−6 ST und GE, halbe Bewegung",
+    summary: "−6 STR und DEX, halbe Bewegung",
     description:
       "An exhausted character moves at half speed and takes a –6 penalty to Strength and Dexterity. After 1 hour of complete rest, an exhausted character becomes fatigued. A fatigued character becomes exhausted by doing something else that would normally cause fatigue.",
     effects: [fx("ability.str", -6), fx("ability.dex", -6)],
@@ -131,7 +131,7 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "fatigued",
     name: "Fatigued",
-    summary: "−2 ST und GE, kein Rennen oder Ansturm",
+    summary: "−2 STR und DEX, kein Rennen oder Ansturm",
     description:
       "A fatigued character can neither run nor charge and takes a –2 penalty to Strength and Dexterity. Doing anything that would normally cause fatigue causes the fatigued character to become exhausted. After 8 hours of complete rest, fatigued characters are no longer fatigued.",
     effects: [fx("ability.str", -2), fx("ability.dex", -2)],
@@ -139,7 +139,7 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "flat-footed",
     name: "Flat-Footed",
-    summary: "verliert GE-Bonus auf RK, keine Gelegenheitsangriffe",
+    summary: "verliert DEX-Bonus auf RK, keine Gelegenheitsangriffe",
     description:
       "A character who has not yet acted during a combat is flat-footed, not yet reacting normally to the situation. A flat-footed character loses his Dexterity bonus to AC (if any) and cannot make attacks of opportunity.",
   }),
@@ -154,14 +154,14 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "grappling",
     name: "Grappling",
-    summary: "ringt: eingeschränkte Aktionen, bedroht keine Felder, kein GE-Bonus gegen Dritte",
+    summary: "ringt: eingeschränkte Aktionen, bedroht keine Felder, kein DEX-Bonus gegen Dritte",
     description:
       "Engaged in wrestling or some other form of hand-to-hand struggle with one or more attackers. A grappling character can undertake only a limited number of actions. He does not threaten any squares, and loses his Dexterity bonus to AC (if any) against opponents he isn't grappling.",
   }),
   condition({
     slug: "helpless",
     name: "Helpless",
-    summary: "GE effektiv 0; Nahkampf +4 gegen das Ziel; Coup de Grâce möglich",
+    summary: "DEX effektiv 0; Nahkampf +4 gegen das Ziel; Coup de Grâce möglich",
     description:
       "A helpless character is paralyzed, held, bound, sleeping, unconscious, or otherwise completely at an opponent's mercy. A helpless target is treated as having a Dexterity of 0 (–5 modifier). Melee attacks against a helpless target get a +4 bonus (equivalent to attacking a prone target). Ranged attacks get no special bonus against helpless targets. Rogues can sneak attack helpless targets. As a full-round action, an enemy can use a melee weapon to deliver a coup de grace to a helpless foe.",
   }),
@@ -175,7 +175,7 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "invisible",
     name: "Invisible",
-    summary: "+2 Angriff gegen Sehende, Ziel verliert GE-Bonus auf RK",
+    summary: "+2 Angriff gegen Sehende, Ziel verliert DEX-Bonus auf RK",
     description:
       "Visually undetectable. An invisible creature gains a +2 bonus on attack rolls against sighted opponents, and ignores its opponents' Dexterity bonuses to AC (if any).",
   }),
@@ -197,7 +197,7 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "paralyzed",
     name: "Paralyzed",
-    summary: "handlungsunfähig, ST und GE effektiv 0, hilflos",
+    summary: "handlungsunfähig, STR und DEX effektiv 0, hilflos",
     description:
       "A paralyzed character is frozen in place and unable to move or act. A paralyzed character has effective Dexterity and Strength scores of 0 and is helpless, but can take purely mental actions. A winged creature flying in the air at the time that it becomes paralyzed cannot flap its wings and falls. A paralyzed swimmer can't swim and may drown.",
   }),
@@ -211,7 +211,7 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "pinned",
     name: "Pinned",
-    summary: "im Ringkampf festgehalten und bewegungsunfähig (aber nicht hilflos)",
+    summary: "im Grapple festgehalten und bewegungsunfähig (aber nicht hilflos)",
     description: "Held immobile (but not helpless) in a grapple.",
   }),
   condition({
@@ -264,7 +264,7 @@ export const CONDITIONS: Entity[] = [
   condition({
     slug: "stunned",
     name: "Stunned",
-    summary: "keine Aktionen, lässt alles fallen, −2 RK, verliert GE-Bonus",
+    summary: "keine Aktionen, lässt alles fallen, −2 RK, verliert DEX-Bonus",
     description:
       "A stunned creature drops everything held, can't take actions, takes a –2 penalty to AC, and loses his Dexterity bonus to AC (if any).",
     effects: [fx("ac", -2)],
