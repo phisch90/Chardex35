@@ -107,6 +107,58 @@ export function cycleEquipSlot(
   return cycle[(start + 1) % cycle.length]!;
 }
 
+/**
+ * Was ein KURZER Tipp auf die Marke tut: anlegen — und was im Weg ist, wandert ins Gepäck.
+ *
+ * Sein Auftrag, wörtlich: „wenn ich 'ne Einhandwaffe und ein Schild führe und dann auf den
+ * Zweihänder drauftippe, dass er den automatisch dann ausrüstet und die anderen beiden
+ * Sachen dann halt wegpackt. Genauso, wenn ich 'n Einhandwaffe trage und eine andere
+ * Einhandwaffe antippe, dass die dann einfach nur tauschen, also dass ich nicht erst etwas
+ * ablegen muss, um etwas Neues anzulegen."
+ *
+ * **Das ist ausdrücklich das Gegenteil von `cycleEquipSlot`, und das ist Absicht.** Jene
+ * Funktion sucht den nächsten FREIEN Platz — sie kam aus seiner damaligen Bitte „erste und
+ * zweite Hand equippen, zum Beispiel Kurzschwert und Dolch", und dafür war sie richtig.
+ * Inzwischen will er den anderen Normalfall: einen Griff zum Wechseln. Beides zugleich geht
+ * nicht, also entscheidet der kurze Tipp für den häufigen Fall (wechseln), und der LANGE
+ * Druck öffnet die Plätze einzeln — seine Wahl auf die Frage, wie die zweite Hand
+ * erreichbar bleibt. Genau deshalb steht diese Funktion NEBEN `cycleEquipSlot` und ersetzt
+ * sie nicht: der Assistent führt weiter durch die Plätze.
+ *
+ * Angelegt heißt: ABLEGEN. Ein Tipp auf etwas, das man schon führt, kann nichts anderes
+ * sinnvoll bedeuten — und ohne diesen Weg wäre der kurze Tipp eine Einbahnstraße.
+ */
+export interface EquipTapResult {
+  /** Wohin der Gegenstand kommt — `none` heißt ablegen. */
+  slot: EquipSlot;
+  /**
+   * Wer dafür ins Gepäck muss (Kennungen, in der Reihenfolge der Liste).
+   *
+   * Die Oberfläche braucht sie doppelt: zum Schreiben und um es anzusagen. Ein Tipp, der
+   * still zwei andere Sachen ablegt, ist genau die Sorte Nebenwirkung, die man am Tisch
+   * erst drei Runden später bemerkt.
+   */
+  displaced: string[];
+}
+
+export function equipTap(
+  entity: ItemEntity | undefined | null,
+  items: EquipCandidate[],
+  id: string,
+): EquipTapResult {
+  const current = items.find((item) => item.id === id)?.slot ?? "none";
+  if (current !== "none") return { slot: "none", displaced: [] };
+  /*
+    Der ERSTE erlaubte Platz, nicht der erste freie. Für eine einhändige Waffe ist das die
+    Haupthand (also tauscht sie mit dem, was dort liegt), für einen Zweihänder „beide
+    Hände" (also verdrängt er Waffe UND Schild), für ein Schild die Schildhand, für eine
+    Rüstung der Rüstungsplatz. Alle drei Beispiele aus seinem Auftrag fallen damit auf
+    dieselbe eine Regel.
+  */
+  const target = allowedSlots(entity)[0] ?? "worn";
+  return { slot: target, displaced: conflictingEquipIds(items, id, target) };
+}
+
 /** Wie viele Hände belegt dieser Platz? */
 function handsUsed(slot: EquipSlot): number {
   if (slot === "mainHand" || slot === "offHand") return 1;

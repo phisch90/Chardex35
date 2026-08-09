@@ -5,7 +5,7 @@ import {
   conflictingEquipIds,
   displayName,
   isStatPath,
-  cycleEquipSlot,
+  equipTap,
   itemKind,
   proficiencyFor,
   weaponSuggestions,
@@ -27,10 +27,17 @@ import { useDragSort } from "../../ui/useDragSort.js";
 import { ConfirmDeleteButton } from "../../ui/ConfirmDelete.js";
 import { useAllEntities, useCompendium, useHouseRules } from "../../lib/hooks.js";
 import { reportSaveFailure } from "../../lib/saveError.js";
-import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
+import {
+  BottomSheet,
+  Card,
+  Chip,
+  GhostButton,
+  SearchInput,
+  SectionTitle,
+  fmtMod,
+} from "../../ui/bits.js";
 import { EquipMark } from "../../ui/EquipMark.js";
 import { ArmorCostCard } from "../../ui/ArmorCostCard.js";
-import { HandsCard } from "./Hands.js";
 import { TrackersCard } from "./Trackers.js";
 import { ItemName, ItemText } from "../../ui/ItemName.js";
 import { RuleHint } from "../../ui/RuleHint.js";
@@ -66,6 +73,15 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
     hier zu.
   */
   const [explainId, setExplainId] = useState<string | null>(null);
+  /*
+    Welche Zeile ihr Platz-Menue offen hat — der lange Druck auf die Marke.
+
+    Die KENNUNG und nicht die Zeile: nach dem Setzen soll das Menue die neue Marke zeigen
+    und nicht den Stand von damals. Dieselbe Regel wie ueberall in diesem Projekt.
+  */
+  const [slotMenu, setSlotMenu] = useState<string | null>(null);
+  /* Ist das Hinzufuegen-Blatt offen? Zu ist der Normalfall — man traegt oefter, als man kauft. */
+  const [addOpen, setAddOpen] = useState(false);
 
   /*
     Übung und Aufbau-Vorschläge auch HIER, nicht nur im Assistenten: nachgetragen
@@ -278,15 +294,48 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
    * nicht, und zwei Hände sind zwei Hände. Vorher waren Waffen unbegrenzt — fünf
    * angelegte Zweihänder ergaben fünf Angriffszeilen auf dem Bogen.
    */
-  const cycleSlot = (id: string) =>
+  /**
+   * EIN Griff — sein Auftrag: „dass ich nicht erst etwas ablegen muss, um etwas Neues
+   * anzulegen."
+   *
+   * Wohin und was dafuer weichen muss, entscheidet `equipTap` im Kern; hier wird nur
+   * geschrieben und ANGESAGT. Die Ansage ist kein Schmuck: ein Tipp, der still ein Schild
+   * ablegt, kostet RK, und das faellt am Tisch erst auf, wenn man getroffen wird. Die
+   * Ruecknahme steht in derselben Leiste wie beim Loeschen.
+   */
+  const legeAn = (id: string) => {
+    const row = character.inventory.find((r) => r.id === id);
+    if (row === undefined) return;
+    const vorher = character.inventory.map((r) => ({ id: r.id, slot: r.slot, containerId: r.containerId }));
+    const plan = equipTap(
+      entityOf(row),
+      character.inventory.map((r) => ({ id: r.id, slot: r.slot })),
+      id,
+    );
+    setzeSlot(id, plan.slot);
+    if (plan.displaced.length === 0) return;
+    const namen = plan.displaced.flatMap((otherId: string) => {
+      const other = character.inventory.find((r) => r.id === otherId);
+      return other === undefined ? [] : [itemLabel(other, entityOf(other))];
+    });
+    undo.offer(S.sheet.equipDisplaced(namen), () =>
+      save((c) => {
+        for (const alt of vorher) {
+          const jetzt = c.inventory.find((r) => r.id === alt.id);
+          if (jetzt === undefined) continue;
+          jetzt.slot = alt.slot;
+          if (alt.containerId === undefined) delete jetzt.containerId;
+          else jetzt.containerId = alt.containerId;
+        }
+      }),
+    );
+  };
+
+  /** Einen bestimmten Platz setzen — der Weg aus dem langen Druck. */
+  const setzeSlot = (id: string, target: EquipSlot) =>
     save((c) => {
       const item = c.inventory.find((r) => r.id === id);
       if (!item) return;
-      const target = cycleEquipSlot(
-        entityOf(item),
-        c.inventory.map((r) => ({ id: r.id, slot: r.slot })),
-        id,
-      );
       item.slot = target;
       if (target === "none") return;
       /*
@@ -341,7 +390,11 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
         className={`py-1.5 text-sm ${wirdGezogen ? "rounded-lg bg-amber-950/40 ring-1 ring-amber-700/60" : ""}`}
       >
         <div className="flex items-center gap-2">
-        <EquipMark slot={row.slot} onClick={() => cycleSlot(row.id)} />
+        <EquipMark
+          slot={row.slot}
+          onClick={() => legeAn(row.id)}
+          onLongPress={() => setSlotMenu(row.id)}
+        />
         {/*
           Der Name ist antippbar: darunter kommt die deutsche Erklärung. Vorher
           war die Zeile stumm — bei „Tanglefoot bag" stand nur „50 gp · 4 lb", und
@@ -632,7 +685,7 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
                             if (item === undefined) return;
                             item.containerId = holder.id;
                             // Was eingepackt ist, ist nicht angelegt — die
-                            // Gegenrichtung zu `cycleSlot`.
+                            // Gegenrichtung zu `legeAn`.
                             item.slot = "none";
                           })
                         }
@@ -665,38 +718,6 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
 
   return (
     <div className="space-y-3">
-      {/*
-        Geld GANZ OBEN. Vorher stand der Block unter der Gegenstandsliste und
-        unter „Hinzufügen" — bei einem Charakter mit 15 Zeilen war er außer Sicht,
-        und seit die Zeilen eine Marke und eine Wirkungszeile tragen, sind sie
-        deutlich höher. Philipp hat ihn schlicht nicht mehr gefunden.
-      */}
-      <Card>
-        <SectionTitle>{S.sheet.money}</SectionTitle>
-        {/*
-          Raster, keine Zeile: bei 390 px Breite lief das vierte Feld (CP) rechts
-          aus dem Bild. Vier gleich breite Spalten passen immer.
-        */}
-        <div className="grid grid-cols-4 gap-2">
-          {(["pp", "gp", "sp", "cp"] as const).map((coin) => (
-            <label key={coin} className="flex items-center gap-1">
-              <span className="w-5 shrink-0 text-[11px] uppercase text-slate-500">{coin}</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                value={character.money[coin]}
-                onChange={(e) =>
-                  save((c) => void (c.money[coin] = Math.max(0, e.target.valueAsNumber || 0)))
-                }
-                className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-1.5 py-1 text-right text-sm tabular-nums"
-              />
-            </label>
-          ))}
-        </div>
-      </Card>
-
-      {/* Wählen, was in welcher Hand liegt — statt sich durch Marken zu tippen. */}
-      <HandsCard character={character} save={save} entities={entities ?? []} />
 
       <Card>
         <SectionTitle>
@@ -846,8 +867,22 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
       */}
       <TrackersCard {...{ character, sheet, editMode, save }} category="gear" />
 
-      <Card>
-        <SectionTitle>{S.actions.add}</SectionTitle>
+      {/*
+        HINZUFUEGEN steckt hinter EINEM Knopf — sein Auftrag: „das kann man auf jeden Fall
+        schmaler machen, weil so oft fuegt man jetzt keine neuen Waffen hinzu … dass man
+        wirklich erst, wenn man den Button drueckt, die ganzen Optionen beziehungsweise die
+        Kategorien erst erscheinen. Das kann man ja auch quasi in soner Art Pop-up Menue
+        machen."
+
+        Vorher stand der ganze Blaetterer offen im Reiter: Suchfeld, neun aufklappbare
+        Kategorien und der Knopf fuer eigene Gegenstaende — jedes Mal, auch wenn man nur
+        nachsehen wollte, was man traegt. Geblieben ist eine Zeile.
+      */}
+      <Card padding="p-2">
+        <GhostButton onClick={() => setAddOpen(true)}>{S.actions.add}</GhostButton>
+      </Card>
+
+      <BottomSheet open={addOpen} onClose={() => setAddOpen(false)} title={S.actions.add}>
         {/*
           Blättern statt raten. Vorher stand hier eine reine Suche: erst ab zwei
           getippten Buchstaben, dann 20 unsortierte Treffer — und „armor" lieferte
@@ -887,8 +922,49 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           Zeilen (nur `customName`) funktionieren weiter; sie werden nur nicht mehr
           neu angeboten, damit es nicht zwei Wege für dieselbe Sache gibt.
         */}
-        <GhostButton onClick={() => setEditor({})}>{S.items.editor.addOwn}</GhostButton>
-      </Card>
+        <GhostButton
+          onClick={() => {
+            setAddOpen(false);
+            setEditor({});
+          }}
+        >
+          {S.items.editor.addOwn}
+        </GhostButton>
+      </BottomSheet>
+
+      {/*
+        Der lange Druck: die Plaetze einzeln — seine Wahl, seit der Haende-Kasten weg ist.
+
+        Gebaut aus der FRISCHEN Zeile, nicht aus einem festgehaltenen Objekt: nach dem
+        Setzen zeigt das Blatt sofort den neuen Stand. Und die Liste kommt aus
+        `allowedSlots` im Kern — waere sie hier ausgeschrieben, stuende die Regel
+        „ein Schild geht nur in die Schildhand" ein zweites Mal da.
+      */}
+      {(() => {
+        const row = character.inventory.find((r) => r.id === slotMenu);
+        if (row === undefined) return null;
+        const entity = entityOf(row);
+        const plaetze: EquipSlot[] = ["none", ...allowedSlots(entity)];
+        return (
+          <BottomSheet open onClose={() => setSlotMenu(null)} title={itemLabel(row, entity)}>
+            <p className="mb-2 text-xs text-slate-500">{S.sheet.equipMenuTitle}</p>
+            <div className="flex flex-wrap gap-2">
+              {plaetze.map((platz) => (
+                <Chip
+                  key={platz}
+                  active={row.slot === platz}
+                  onClick={() => {
+                    setzeSlot(row.id, platz);
+                    setSlotMenu(null);
+                  }}
+                >
+                  {S.sheet.equipSlot[platz] ?? platz}
+                </Chip>
+              ))}
+            </div>
+          </BottomSheet>
+        );
+      })()}
 
       {compendium !== undefined && (
         <ItemEditor
@@ -944,6 +1020,38 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
           }}
         />
       )}
+
+      {/*
+        Geld GANZ UNTEN — sein Wort: der Kasten kann nach unten geschoben werden.
+
+        Er stand einmal ganz OBEN, und der Grund dafuer steht noch im Aufschrieb: unter der
+        Gegenstandsliste hatte Philipp ihn nicht mehr gefunden. Inzwischen ist der Reiter ein
+        anderer — das Gepaeck ist geordnet, das Hinzufuegen steckt hinter einem Knopf, und was
+        oben Platz wegnimmt, faellt auf. Geld zaehlt man nach dem Abenteuer, nicht im Kampf.
+      */}
+      <Card>
+        <SectionTitle>{S.sheet.money}</SectionTitle>
+        {/*
+          Raster, keine Zeile: bei 390 px Breite lief das vierte Feld (CP) rechts
+          aus dem Bild. Vier gleich breite Spalten passen immer.
+        */}
+        <div className="grid grid-cols-4 gap-2">
+          {(["pp", "gp", "sp", "cp"] as const).map((coin) => (
+            <label key={coin} className="flex items-center gap-1">
+              <span className="w-5 shrink-0 text-[11px] uppercase text-slate-500">{coin}</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={character.money[coin]}
+                onChange={(e) =>
+                  save((c) => void (c.money[coin] = Math.max(0, e.target.valueAsNumber || 0)))
+                }
+                className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-1.5 py-1 text-right text-sm tabular-nums"
+              />
+            </label>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }
