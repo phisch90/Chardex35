@@ -879,10 +879,10 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
         nachsehen wollte, was man traegt. Geblieben ist eine Zeile.
       */}
       <Card padding="p-2">
-        <GhostButton onClick={() => setAddOpen(true)}>{S.actions.add}</GhostButton>
+        <GhostButton onClick={() => setAddOpen(true)}>{S.sheet.addGear}</GhostButton>
       </Card>
 
-      <BottomSheet open={addOpen} onClose={() => setAddOpen(false)} title={S.actions.add}>
+      <BottomSheet open={addOpen} onClose={() => setAddOpen(false)} title={S.sheet.addGear}>
         {/*
           Blättern statt raten. Vorher stand hier eine reine Suche: erst ab zwei
           getippten Buchstaben, dann 20 unsortierte Treffer — und „armor" lieferte
