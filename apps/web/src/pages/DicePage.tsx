@@ -4,6 +4,7 @@ import { S } from "../strings.js";
 import { IconInline } from "../ui/icons.js";
 import { useDiceStore } from "../lib/diceStore.js";
 import { Card, PrimaryButton, SectionTitle } from "../ui/bits.js";
+import { BackToSheet } from "../ui/BackToSheet.js";
 
 const QUICK = ["1d20", "1d20+5", "2d6", "1d8", "1d4", "1d100"];
 
@@ -14,6 +15,12 @@ export function DicePage() {
 
   return (
     <div className="space-y-4">
+      {/*
+        Derselbe Rückweg wie in Einstellungen und Kompendium — die Würfel-Seite ist
+        die dritte, die man mitten im Spiel besucht, und ohne den Knopf führt jeder
+        Heimweg über die Charakterliste.
+      */}
+      <BackToSheet />
       <h1 className="text-xl font-bold">{S.dice.title}</h1>
 
       <Card>

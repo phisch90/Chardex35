@@ -15,6 +15,7 @@ import { useAllEntities, useCompendium } from "../lib/hooks.js";
 import { reportSaveFailure } from "../lib/saveError.js";
 import { CompendiumRepo } from "../db/repo.js";
 import { BackButton } from "../ui/BackButton.js";
+import { BackToSheet } from "../ui/BackToSheet.js";
 import { Card, Chip, SearchInput, fmtMod } from "../ui/bits.js";
 
 const BROWSABLE: EntityKind[] = ["class", "race", "feat", "spell", "item", "skill", "condition"];
@@ -88,6 +89,13 @@ export function CompendiumPage() {
 
   return (
     <div className="space-y-3">
+      {/*
+        Sein Auftrag: „Ich möchte aus meinem Charakter ins Kompendium UND zurück
+        switchen können. Nicht nur ins Charakter Menü." Der Hinweg steht in der
+        Hauptnavigation; das hier ist der Rückweg, der nicht über die Liste führt —
+        dasselbe Bauteil wie in den Einstellungen, aus demselben Grund.
+      */}
+      <BackToSheet />
       <h1 className="text-xl font-bold">{S.nav.compendium}</h1>
       <div className="flex flex-wrap gap-2">
         {BROWSABLE.map((k) => (
@@ -290,7 +298,16 @@ export function EntityDetailPage() {
 
   return (
     <div className="space-y-3">
-      <BackButton fallback={list} />
+      {/*
+        Zwei Rückwege, zwei Bedeutungen: ← geht einen Schritt zurück (in die Liste,
+        aus der man kam), „Zurück zu Hike" springt in den Bogen. Wer aus dem Bogen
+        über die Hauptnavigation in einen Zauber blättert, braucht den zweiten —
+        sonst führt jeder Heimweg über die Charakterliste.
+      */}
+      <div className="flex flex-wrap items-center gap-2">
+        <BackButton fallback={list} />
+        <BackToSheet />
+      </div>
       <div>
         <h1 className="text-xl font-bold">{displayName(entity)}</h1>
         <p className="text-sm text-slate-400">

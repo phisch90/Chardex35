@@ -1528,6 +1528,14 @@ auf einen gelöschten Charakter zeigt, ist schlimmer als keiner. Deshalb löscht
 den Eintrag mit, UND die Anzeige prüft zusätzlich, ob der Bogen noch da ist — beides, weil
 ein Löschen auf dem anderen Gerät hier gar nicht vorbeikommt.
 
+**Später auf alle drei Seiten ausgeweitet** — sein Auftrag: „Ich möchte aus meinem
+Charakter ins Kompendium UND zurück switchen können. Nicht nur ins Charakter Menü." Der
+Knopf wohnt seither als geteiltes Bauteil in `ui/BackToSheet.tsx` (zwei Kopien wären zwei
+Wahrheiten) und steht in den Einstellungen, im Kompendium (Liste UND Detail — im Detail
+neben dem ←, der nur einen Schritt zurückgeht) und auf der Würfel-Seite. Der HINWEG war
+nie das Problem (Hauptnavigation); gefehlt hat der Rückweg, der nicht über die
+Charakterliste führt.
+
 #### „Kaum Unterschiede" — nachgemessen waren es zwei getrennte Ursachen
 
 **Erste Ursache: drei Paare lagen praktisch aufeinander.** Kleriker 240° gegen Kämpfer 245°
