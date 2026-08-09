@@ -2356,6 +2356,46 @@ Zahl. Die ersten zwei hängen an der Rückfrage am Ende des Assistenten (das ist
 neunte und zehnte Strecke mit dieser Ursache), die dritte an der Position des Infofelds in
 den Kacheln.
 
+## Die Liste aufräumen — und was ich von hier aus NICHT kann
+
+Sein Auftrag: **„Mach mal die Char Liste sauber. Schmeiß alle außer Hike raus."**
+
+**Von hier aus geht das nicht, und das ist kein Mangel, sondern seine eigene
+Entscheidung.** Die Bögen liegen ausschließlich im Speicher SEINES Geräts (lokal-first,
+kein Backend); im Repo liegt kein einziger Charakter, und die App kennt keinen Server, den
+ich fragen könnte. Was ich bauen kann, ist der WEG — drücken muss er.
+
+Gefragt und entschieden: **Mehrfachauswahl** (nicht „alle außer diesem einen") und **vorher
+eine Sicherung anbieten**.
+
+Vier Entscheidungen sind eine Notiz wert:
+
+- **Angekreuzt wird, was WEG soll.** Ein Knopf „alle außer diesem" wäre bei einem Fehlgriff
+  der teuerste der ganzen App — und er sähe genauso aus wie einer, der das Richtige tut.
+- **Die Rückfrage nennt jeden Namen einzeln**, und die Teststrecke prüft die Gegenprobe:
+  Hike steht NICHT darin. Ohne sie wäre die Prüfung auch dann grün, wenn alle vier
+  dastünden — dieselbe Familie wie die Farbprüfung, die gegen einen Startwert von 999 lief
+  und Erfolg meldete, ohne etwas gemessen zu haben.
+- **Die Sicherung ist der Rückweg, weil es keinen anderen gibt.** Ein Charakter kennt weder
+  Rücknahme noch Papierkorb — `CharacterRepo.remove` wirft die Zeile weg. Deshalb steht der
+  Satz dabei, und deshalb schreibt der Knopf eine Datei mit ALLEN Bögen (dieselbe, die
+  „Charakter-Datei (JSON)" wieder einliest). Scheitert sie, wird nicht gelöscht.
+- **„Abbrechen" steht VOR dem roten Knopf** — dieselbe Anordnung wie beim einzelnen
+  Löschen, und aus demselben Grund: sonst träfe der zweite Tipp eines Doppeltipps sofort
+  „löschen". Die Strecke prüft die Reihenfolge im DOM, nicht bloß, dass beide da sind.
+
+Dazu zwei Dinge, die im Modus selbst stecken: die **drei Punkte verschwinden** (ein
+Fehlgriff dürfte nicht das Aktions-Blatt mit der Gefahrenzone öffnen), und die Karte wird
+im Auswahlmodus wirklich zu einem KNOPF statt zu einem festgehaltenen Link — ein `<a>`, das
+man mit `preventDefault` bändigt, navigiert am Handy trotzdem, sobald jemand lange drückt
+und „Öffnen" wählt. Der Auswahl-Schalter selbst steht erst ab ZWEI Bögen da.
+
+**Und die deutschen Anführungszeichen zum SIEBTEN Mal**, diesmal in `strings.ts` statt in
+einer Teststrecke: `„Charakter-Datei (JSON)"` in einer doppelt gequoteten Zeichenkette, und
+`tsc` meldete acht Folgefehler in den Zeilen darunter. Die Regel gilt damit überall, nicht
+nur in Prüfdateien: **wer deutsche Anführungszeichen in einen Text schreibt, nimmt
+Backticks.**
+
 ## Noch offen
 
 - **`e2e-equip` meldet zehn Fehler, und sie sind ALT.** Die Strecke war doppelt tot

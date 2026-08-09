@@ -20,6 +20,7 @@ import { Card, GhostButton, OPEN_MARK } from "../ui/bits.js";
 import { campaignLook } from "../ui/campaignColors.js";
 import { cardTier, type CardTier } from "../ui/cardTier.js";
 import { CharacterActionsSheet, DiscardDraftButton } from "../ui/CharacterActions.js";
+import { BulkDeleteBar } from "../ui/BulkDelete.js";
 import { useCachedShelves } from "../group/useGroup.js";
 
 export function CharacterListPage() {
@@ -61,6 +62,26 @@ export function CharacterListPage() {
   */
   const [openFor, setOpenFor] = useState<string | null>(null);
   const openCharacter = openFor === null ? undefined : real.find((c) => c.id === openFor);
+
+  /*
+    Aufräumen — sein Auftrag: „Mach mal die Char Liste sauber." Der Modus ist AUS, bis
+    er ihn einschaltet: eine Liste, in der ein Tap etwas ankreuzt statt den Bogen zu
+    öffnen, wäre am Tisch die falsche Antwort auf den häufigsten Handgriff.
+
+    Die Auswahl steht als Menge von KENNUNGEN und nicht als Charaktere: die Liste kommt
+    live aus der Datenbank, und ein festgehaltenes Objekt wäre nach dem ersten Löschen
+    ein Stand von vorhin.
+  */
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleted, setDeleted] = useState(0);
+  const toggle = (id: string) =>
+    setSelected((old) => {
+      const next = new Set(old);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   // Eine einzige Gruppe beschriftet sich nicht selbst — „Ohne Kampagne" über der
   // einzigen Liste wäre Lärm. `cardTier` rechnet mit derselben Regel.
   const withHeadings = groups.length > 1;
@@ -79,13 +100,33 @@ export function CharacterListPage() {
       */}
       <div className="flex items-center justify-between gap-2">
         <h1 className="shrink-0 text-xl font-bold">{S.nav.characters}</h1>
-        <Link
-          to="/charaktere/neu"
-          className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-500"
-        >
-          + {S.wizard.title}
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          {/*
+            Der Auswahl-Schalter steht erst ab ZWEI Bögen da: bei einem gibt es nichts
+            auszuwählen, und ein Knopf ohne Wirkung ist der Anfang eines Fehlerberichts.
+          */}
+          {real.length > 1 && (
+            <GhostButton
+              onClick={() => {
+                setSelectMode(!selectMode);
+                setSelected(new Set());
+                setDeleted(0);
+              }}
+            >
+              {selectMode ? S.bulk.done : S.bulk.select}
+            </GhostButton>
+          )}
+          <Link
+            to="/charaktere/neu"
+            className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-500"
+          >
+            + {S.wizard.title}
+          </Link>
+        </div>
       </div>
+      {deleted > 0 && !selectMode && (
+        <p className="text-center text-xs text-emerald-400">{S.bulk.result(deleted)}</p>
+      )}
 
       <ImportBar />
 
@@ -132,6 +173,9 @@ export function CharacterListPage() {
               character={character}
               tier={tier}
               onOpenActions={() => setOpenFor(character.id)}
+              selectMode={selectMode}
+              checked={selected.has(character.id)}
+              onToggle={() => toggle(character.id)}
               {...(group.campaign === undefined ? {} : { look: campaignLook(group.campaign.color) })}
             />
           ))}
@@ -200,6 +244,28 @@ export function CharacterListPage() {
           Man öffnet diese Liste, um SEINEN Charakter zu spielen; die der anderen
           schaut man nachschlagend an. */}
       <GroupSection />
+
+      {/*
+        Die Leiste liegt fest am unteren Rand — deshalb braucht der Inhalt darüber
+        Platz, solange sie da ist. Ein Polster für eine Leiste, die es gerade nicht
+        gibt, ist die fünfte Falle; eines zu wenig verdeckt die letzte Karte.
+      */}
+      {selectMode && (
+        <>
+          <div className="h-16" />
+          <BulkDeleteBar
+            characters={real}
+            selected={selected}
+            onSelectAll={() => setSelected(new Set(real.map((c) => c.id)))}
+            onClear={() => setSelected(new Set())}
+            onDone={(count) => {
+              setDeleted(count);
+              setSelected(new Set());
+              if (count > 0) setSelectMode(false);
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -435,6 +501,15 @@ function CharacterRow(props: {
   tier: CardTier;
   /** Öffnet das Aktions-Blatt — das liegt auf Seitenebene, nicht hier. */
   onOpenActions: () => void;
+  /*
+    Aufräum-Modus: dann kreuzt ein Tap an, statt den Bogen zu öffnen. Der Link wird
+    dafür wirklich zu einem Knopf und nicht bloß überlagert — ein `<a>`, das man mit
+    `preventDefault` festhält, navigiert am Handy trotzdem, sobald jemand lange
+    drückt und „Öffnen" wählt.
+  */
+  selectMode: boolean;
+  checked: boolean;
+  onToggle: () => void;
   /** Fehlt bei Bögen ohne Kampagne — dann bleibt die Karte grau wie bisher. */
   look?: { card: string } | undefined;
 }) {
@@ -442,27 +517,14 @@ function CharacterRow(props: {
   const { raceText, classText } = useRowSummary(character);
   const open = useOpenWork(character);
 
-  return (
+  /*
+    Der INHALT ist in beiden Zuständen derselbe — nur die Hülle wechselt: sonst
+    stünden Porträt, Name und Marken zweimal im Quelltext und wären beim nächsten
+    Umbau zwei Wahrheiten.
+  */
+  const inhalt = (
     <>
-      {/* Karte ist KEIN Link: der Aktionsknopf darf nicht in einem Link liegen,
-          sonst öffnet jeder Tap darauf auch den Bogen. */}
-      {/*
-        `tone` und `padding` statt `className`: eine Klasse, die hinten angehängt
-        wird, gewinnt nicht — Tailwind entscheidet nach der Reihenfolge im
-        Stylesheet, und dort steht `slate` hinter allen Buntfarben. Die
-        Kampagnenfarbe war so unsichtbar, obwohl sie am Element stand.
-      */}
-      <Card
-        {...(props.look === undefined ? {} : { tone: props.look.card })}
-        padding={tier.padding}
-        className={`${tier.gap} flex items-center gap-3 transition-colors hover:border-amber-600/50`}
-      >
-        <Link
-          to="/charaktere/$charId"
-          params={{ charId: character.id }}
-          className="flex min-w-0 flex-1 items-center gap-3"
-        >
-          {character.portrait ? (
+      {character.portrait ? (
             <img
               src={character.portrait}
               alt=""
@@ -529,16 +591,76 @@ function CharacterRow(props: {
               {S.sheet.level} {character.levels.length}
             </span>
           </div>
-        </Link>
-        <button
-          onClick={props.onOpenActions}
-          aria-label={`${character.name}: Aktionen`}
-          className={`${tier.action} shrink-0 rounded-lg text-slate-400 hover:bg-slate-800`}
-        >
-          ⋯
-        </button>
-      </Card>
     </>
+  );
+
+  return (
+    /*
+      Karte ist KEIN Link: der Aktionsknopf darf nicht in einem Link liegen, sonst
+      öffnet jeder Tap darauf auch den Bogen.
+
+      `tone` und `padding` statt `className`: eine Klasse, die hinten angehängt wird,
+      gewinnt nicht — Tailwind entscheidet nach der Reihenfolge im Stylesheet, und dort
+      steht `slate` hinter allen Buntfarben. Die Kampagnenfarbe war so unsichtbar,
+      obwohl sie am Element stand.
+    */
+    <Card
+      {...(props.selectMode && props.checked
+        ? { tone: "border-red-600 bg-red-950/30" }
+        : props.look === undefined
+          ? {}
+          : { tone: props.look.card })}
+      padding={tier.padding}
+      className={`${tier.gap} flex items-center gap-3 transition-colors ${
+        props.selectMode ? "" : "hover:border-amber-600/50"
+      }`}
+    >
+      {props.selectMode ? (
+        <>
+          {/*
+            Im Aufräum-Modus ist die GANZE Karte der Schalter — ein Kästchen von 20px
+            wäre am Tisch mit dem Daumen das falsche Ziel. Das Kästchen selbst steht
+            trotzdem da: es sagt, dass hier angekreuzt und nicht geöffnet wird.
+          */}
+          <button
+            type="button"
+            onClick={props.onToggle}
+            aria-pressed={props.checked}
+            aria-label={`${character.name} auswählen`}
+            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          >
+            <span
+              aria-hidden
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-xs font-bold ${
+                props.checked
+                  ? "border-red-500 bg-red-700 text-white"
+                  : "border-slate-600 text-transparent"
+              }`}
+            >
+              ✓
+            </span>
+            {inhalt}
+          </button>
+        </>
+      ) : (
+        <>
+          <Link
+            to="/charaktere/$charId"
+            params={{ charId: character.id }}
+            className="flex min-w-0 flex-1 items-center gap-3"
+          >
+            {inhalt}
+          </Link>
+          <button
+            onClick={props.onOpenActions}
+            aria-label={`${character.name}: Aktionen`}
+            className={`${tier.action} shrink-0 rounded-lg text-slate-400 hover:bg-slate-800`}
+          >
+            ⋯
+          </button>
+        </>
+      )}
+    </Card>
   );
 }
 
