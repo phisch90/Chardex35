@@ -176,6 +176,16 @@ export const S = {
       „Zauberplätze" gegen „Fertigkeitsränge" schon einmal vermieden hat.
     */
     stowed: "Im Gepäck",
+    /*
+      Der Knopf, hinter dem der Blätterer steckt — und er sagt WAS er hinzufügt.
+      Vorher stand dort das allgemeine „Hinzufügen" aus `actions`: in einer Reihe
+      von Karten, die alle nur ihre Überschrift tragen, ist ein Knopf ohne Gegenstand
+      eine Frage. Sein Wort: „Mach daraus bitte Ausrüstung hinzufügen."
+      Eigene Zeichenkette und nicht `actions.add` umbenannt — das steht an sieben
+      weiteren Stellen (Talent, Zauber, Domäne, Teilgebiet, Modifikator), und dort
+      wäre „Ausrüstung" schlicht falsch.
+    */
+    addGear: "Ausrüstung hinzufügen",
     /** Behälter im Gepäck: Rucksack, Gürteltasche, Sack der Bewahrung. */
     container: {
       /** Die Marke am Kopf einer Behälterzeile. */
