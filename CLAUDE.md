@@ -2178,6 +2178,90 @@ hin", sie meldet einen Fehler an der Stelle, an der sie danach zufällig hinscha
 - `e2e-version` wartet auf einen Update-Knopf, den es nur mit zwei echten Ständen gibt;
   dafür ist `e2e-update` da.
 
+## Der Ausrüstungs-Reiter: ein Griff statt eines Formulars
+
+Vier Sätze, und zwei davon nehmen frühere Entscheidungen von IHM zurück. Das ist kein
+Widerspruch, sondern der Normalfall in diesem Projekt: eine Entscheidung galt für einen
+Reiter, den es so nicht mehr gibt.
+
+### 1. Der Kasten „Ausrüstung und Hände" ist weg
+
+Sein Wort: **„Am Anfang möchte ich erst mal den Container Ausrüstung und Hände entfernen.
+Den brauchen wir nicht."**
+
+Der Kasten war seine eigene frühere Bitte — „ich möchte wählen können, was ich in 1H und
+OH halte". **Deshalb war die wichtigste Frage dieser Runde nicht, ob er weg darf, sondern
+was an seine Stelle tritt**: ohne Ersatz hätte ich ihm etwas genommen, das er bestellt
+hatte. Gefragt und entschieden: **langer Druck auf die Marke öffnet die Plätze.**
+
+### 2. Das Geld steht ganz unten
+
+Auch das eine Umkehr: der Kasten stand ganz OBEN, weil er ihn unter der Liste nicht mehr
+gefunden hatte. Der Reiter ist inzwischen ein anderer — das Hinzufügen steckt hinter einem
+Knopf, das Gepäck ist geordnet. Geld zählt man nach dem Abenteuer, nicht im Kampf.
+
+### 3. Hinzufügen hinter EINEM Knopf
+
+Sein Wort: **„dass neue Waffen oder Ausrüstung hinzufügen deutlich schmaler gehalten
+werden kann und man wirklich erst, wenn man den Button drückt, dass dann die ganzen
+Optionen erscheinen beziehungsweise die Kategorien erst erscheinen … das kann man ja auch
+quasi in soner Art Pop-up Menü machen."**
+
+Vorher stand der ganze Blätterer offen im Reiter: Suchfeld, zwölf Kategorien und der Knopf
+für eigene Gegenstände — jedes Mal, auch wenn man nur nachsehen wollte, was man trägt.
+Geblieben ist eine Zeile. Gefragt und entschieden: **alles zum Hinzufügen** wandert mit
+hinein, auch die Suche und der eigene Gegenstand.
+
+### 4. Ein Griff zum Anlegen — und warum das eine Regel im KERN ist
+
+Sein Wort: **„wenn ich 'ne Einhandwaffe und ein Schild führe und dann auf den Zweihänder
+drauftippe, dass er den automatisch dann ausrüstet und die anderen beiden Sachen dann halt
+wegpackt. Genauso, wenn ich 'n Einhandwaffe trage und eine andere Einhandwaffe antippe,
+dass die dann einfach nur tauschen, also dass ich nicht erst etwas ablegen muss."**
+
+Gebaut als `equipTap` in `engine/equipment.ts`, und die Regel ist EINE Zeile: **der erste
+ERLAUBTE Platz, nicht der erste freie** — und was dort liegt, wandert ins Gepäck. Alle drei
+seiner Beispiele fallen damit auf dieselbe Regel: eine einhändige Waffe geht in die
+Haupthand (tauscht also), ein Zweihänder in „beide Hände" (verdrängt Waffe UND Schild), ein
+Schild in die Schildhand, eine Rüstung auf den Rüstungsplatz.
+
+**Das ist ausdrücklich das Gegenteil von `cycleEquipSlot`, und beide bleiben.** Jene
+Funktion sucht den nächsten FREIEN Platz; sie kam aus seiner damaligen Bitte „erste und
+zweite Hand equippen, zum Beispiel Kurzschwert und Dolch". Beides zugleich geht nicht —
+also entscheidet der kurze Tipp für den häufigen Fall (wechseln), der lange Druck öffnet
+die Plätze, und der Assistent führt weiter durch sie hindurch.
+
+Zwei Entscheidungen daran sind eine Notiz wert:
+
+- **Angesagt, nie still.** Ein Tipp, der ein Schild ablegt, kostet RK — und das merkt man
+  am Tisch erst, wenn man getroffen wird. Die App sagt „Kurzschwert und Schild ins Gepäck
+  gelegt" und stellt die Rücknahme daneben, in derselben Leiste wie beim Löschen.
+- **Der lange Druck merkt sich, dass er ausgelöst HAT.** Ohne diese zweite Hälfte kommt
+  nach dem Menü noch der Klick hinterher — die Marke würde also erst die Plätze zeigen und
+  dann trotzdem anlegen. Dieselbe Sorte Nebenwirkung wie oben.
+
+### Was diese Runde in ALTEN Strecken gefunden hat — und einmal war ICH es
+
+**`e2e-ziehen` war eine echte Regression, und zwar aus der VORIGEN Runde.** Bei 820×1180
+lag der Anfasser der letzten Gepäckzeile auf y=1152 — und dort steht seit der roten
+Bearbeiten-Leiste (die jetzt in JEDER Breite steht, nicht mehr nur am Handy) die
+Reiterleiste. `elementFromPoint` fand den REITER, der Zug fing nie an, und die Prüfung
+zeigte auf eine Funktion, die in Wirklichkeit läuft. Nachgemessen gegen einen Build ohne
+diese Runde: 73 grün gegen 71/2 — also wirklich von mir.
+
+Die App ist dabei in Ordnung (der Inhalt hat sein Polster, ein Daumen scrollt frei); die
+Sonde war es nicht. **Lehre: `scrollIntoViewIfNeeded` bringt ein Element in den
+SICHTBEREICH und hört dort auf — eine feste Leiste darüber kennt es nicht.** Wer mit
+`page.mouse` auf etwas zielt, muss selbst dafür sorgen, dass nichts darüber liegt.
+
+Und zwei Erwartungen mussten mitwandern, weil diese Runde sie bewusst umdreht:
+`e2e-fcimport` verlangte „Geld steht über der Liste" und „ein Tap legt den Dolch in die
+Schildhand". Beides war richtig — bis zu seinen neuen Sätzen. **`e2e-eigene` hat dabei
+etwas Echtes gefunden**: die Strecke legte die eigene Rüstung über das Auswahlfeld des
+Hände-Kastens an. Ohne ihn wäre sie nie angelegt worden, und die Prüfung hätte „RK 10"
+gemeldet und wie ein Rechenfehler ausgesehen. Angelegt wird jetzt über die Marke — was
+nebenbei beweist, dass der neue Weg auch für Rüstung durchgeht.
+
 ## Noch offen
 
 - **`e2e-equip` meldet zehn Fehler, und sie sind ALT.** Die Strecke war doppelt tot

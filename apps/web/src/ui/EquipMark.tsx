@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import type { EquipSlot } from "@codex35/core";
 import { S } from "../strings.js";
 
@@ -14,14 +15,59 @@ import { S } from "../strings.js";
 export function EquipMark(props: {
   slot: EquipSlot;
   onClick?: () => void;
+  /**
+   * Langer Druck — seine Wahl auf die Frage, wie die zweite Hand erreichbar bleibt,
+   * seit der Haende-Kasten weg ist.
+   *
+   * Der kurze Tipp legt an und verdraengt (der haeufige Fall: wechseln); der lange
+   * Druck oeffnet die Plaetze einzeln. Ohne ihn koennte man einen Dolch nicht mehr
+   * ausdruecklich in die Schildhand legen — und genau das hatte er sich einmal
+   * ausdruecklich gewuenscht.
+   */
+  onLongPress?: () => void;
   disabled?: boolean;
 }) {
   const active = props.slot !== "none";
   const mark = S.sheet.equipMark[props.slot] ?? "?";
+  /*
+    Der Timer, und daneben die Merkung, dass er ausgeloest HAT.
+
+    Ohne die zweite Haelfte kommt nach dem langen Druck noch der Klick hinterher — die
+    Marke wuerde also erst das Menue oeffnen und dann noch anlegen. Das ist die Sorte
+    Nebenwirkung, die man am Tisch erst drei Runden spaeter bemerkt.
+  */
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fired = useRef(false);
+  const stop = () => {
+    if (timer.current !== null) clearTimeout(timer.current);
+    timer.current = null;
+  };
   return (
     <button
       type="button"
-      onClick={props.onClick}
+      onClick={() => {
+        if (fired.current) {
+          fired.current = false;
+          return;
+        }
+        props.onClick?.();
+      }}
+      onPointerDown={() => {
+        if (props.onLongPress === undefined) return;
+        fired.current = false;
+        stop();
+        // 500 ms: lang genug, dass ein Tippen es nicht ausloest, kurz genug fuers Warten.
+        timer.current = setTimeout(() => {
+          fired.current = true;
+          props.onLongPress?.();
+        }, 500);
+      }}
+      onPointerUp={stop}
+      onPointerLeave={stop}
+      onPointerCancel={stop}
+      /* Ohne das oeffnet iOS beim Halten das Auswahl-Menue ueber unserem. */
+      onContextMenu={(e) => e.preventDefault()}
+      style={props.onLongPress === undefined ? undefined : { touchAction: "manipulation" }}
       disabled={props.disabled === true || props.onClick === undefined}
       aria-label={`${S.sheet.equipSlot[props.slot] ?? props.slot} — ${S.sheet.equipHint}`}
       title={S.sheet.equipSlot[props.slot] ?? props.slot}

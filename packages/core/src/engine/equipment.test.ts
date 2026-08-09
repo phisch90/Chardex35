@@ -3,6 +3,7 @@ import {
   allowedSlots,
   conflictingEquipIds,
   cycleEquipSlot,
+  equipTap,
   isNaturalOrUnarmed,
   itemKind,
   nextSlot,
@@ -326,5 +327,83 @@ describe("Eigene Modifikatoren an einer Inventarzeile", () => {
     expect(byLabel.get("Knüppel")?.damageText).toBe("1d6");
     // Und die Sammelzeile bleibt unberührt — sonst wäre jede Waffe besser.
     expect(byLabel.get("Nahkampf")?.bonuses).toEqual([1]);
+  });
+});
+
+/*
+  Der KURZE Tipp auf die Marke — seine drei Beispiele, woertlich abgepruft.
+
+  Sein Auftrag: "wenn ich 'ne Einhandwaffe und ein Schild fuehre und dann auf den
+  Zweihaender drauftippe, dass er den automatisch dann ausruestet und die anderen beiden
+  Sachen dann halt wegpackt. Genauso, wenn ich 'n Einhandwaffe trage und eine andere
+  Einhandwaffe antippe, dass die dann einfach nur tauschen."
+*/
+describe("equipTap — anlegen mit einem Griff", () => {
+  const einhand = weapon("one");
+  const zweihand = weapon("two");
+  const schild = item({ armor: { kind: "shield", ac: 2 } } as never);
+
+  it("legt einen Zweihaender an und packt Waffe UND Schild weg", () => {
+    const items: EquipCandidate[] = [
+      { id: "schwert", slot: "mainHand" },
+      { id: "schild", slot: "offHand" },
+      { id: "zweihand", slot: "none" },
+    ];
+    const out = equipTap(zweihand, items, "zweihand");
+    expect(out.slot).toBe("bothHands");
+    expect([...out.displaced].sort()).toEqual(["schild", "schwert"]);
+  });
+
+  it("tauscht eine Einhandwaffe gegen die andere — und laesst das Schild in Ruhe", () => {
+    /*
+      Die zweite Haelfte ist die wichtigere: ein Tipp auf das neue Schwert darf NUR das
+      alte Schwert wegpacken. Wer hier zu viel verdraengt, nimmt ihm im Kampf die RK.
+    */
+    const items: EquipCandidate[] = [
+      { id: "alt", slot: "mainHand" },
+      { id: "schild", slot: "offHand" },
+      { id: "neu", slot: "none" },
+    ];
+    const out = equipTap(einhand, items, "neu");
+    expect(out.slot).toBe("mainHand");
+    expect(out.displaced).toEqual(["alt"]);
+  });
+
+  it("legt in eine freie Hand, ohne irgendetwas zu verdraengen", () => {
+    const items: EquipCandidate[] = [{ id: "neu", slot: "none" }];
+    expect(equipTap(einhand, items, "neu")).toEqual({ slot: "mainHand", displaced: [] });
+  });
+
+  it("legt ab, was schon angelegt ist", () => {
+    /*
+      Ohne diesen Weg waere der kurze Tipp eine Einbahnstrasse: angelegt bliebe angelegt,
+      und ablegen ginge nur ueber den langen Druck. Ein Knopf, der nur in eine Richtung
+      geht, ist genau der Fall, den diese App sonst ueberall vermeidet.
+    */
+    const items: EquipCandidate[] = [{ id: "neu", slot: "mainHand" }];
+    expect(equipTap(einhand, items, "neu")).toEqual({ slot: "none", displaced: [] });
+  });
+
+  it("schickt ein Schild in die Schildhand und eine Ruestung auf den Ruestungsplatz", () => {
+    expect(equipTap(schild, [{ id: "s", slot: "none" }], "s").slot).toBe("offHand");
+    const ruestung = item({ armor: { kind: "light", ac: 4 } } as never);
+    const out = equipTap(ruestung, [{ id: "alt", slot: "armor" }, { id: "neu", slot: "none" }], "neu");
+    expect(out.slot).toBe("armor");
+    expect(out.displaced).toEqual(["alt"]);
+  });
+
+  it("laesst cycleEquipSlot unangetastet — die zwei Wege sind verschieden gemeint", () => {
+    /*
+      Die Gegenprobe zur Entscheidung dieser Runde. `cycleEquipSlot` sucht den naechsten
+      FREIEN Platz (der Assistent fuehrt damit durch die Plaetze), `equipTap` nimmt den
+      ersten ERLAUBTEN und verdraengt. Waere das dasselbe, haette eine der beiden
+      Bitten von ihm verloren.
+    */
+    const items: EquipCandidate[] = [
+      { id: "alt", slot: "mainHand" },
+      { id: "neu", slot: "none" },
+    ];
+    expect(cycleEquipSlot(einhand, items, "neu")).toBe("offHand");
+    expect(equipTap(einhand, items, "neu").slot).toBe("mainHand");
   });
 });

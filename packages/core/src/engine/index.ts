@@ -56,10 +56,12 @@ export {
   allowedSlots,
   conflictingEquipIds,
   cycleEquipSlot,
+  equipTap,
   isNaturalOrUnarmed,
   itemKind,
   nextSlot,
   type EquipCandidate,
+  type EquipTapResult,
   type ItemKind,
 } from "./equipment.js";
 export {

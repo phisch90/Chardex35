@@ -108,6 +108,19 @@ export const S = {
       Club stehen. Die Schranke dazu steht in `strings.test.ts`.
     */
     grapple: "Grapple",
+    /*
+      Was ein Tipp auf die Marke verdraengt hat — angesagt, nie still.
+
+      Sein Auftrag war der eine Griff („dass ich nicht erst etwas ablegen muss"), und
+      genau deshalb muss die Folge dastehen: ein Tipp auf den Zweihaender legt Waffe UND
+      Schild ab, und ein stilles Schild weniger kostet RK. Die Ruecknahme steht daneben.
+    */
+    equipDisplaced: (namen: string[]) =>
+      namen.length === 1
+        ? `${namen[0]} ins Gepäck gelegt`
+        : `${namen.join(" und ")} ins Gepäck gelegt`,
+    /** Der lange Druck auf die Marke: die Plätze einzeln. */
+    equipMenuTitle: "Wohin?",
     level: "Stufe",
     xp: "EP",
     nextLevel: "nächste Stufe",
