@@ -3,6 +3,7 @@ import {
   displayName,
   featBonusKinds,
   featEligibility,
+  featNeedsWeaponChoice,
   FEAT_BONUS_KINDS,
   type DerivedSheet,
   type Entity,
@@ -12,6 +13,7 @@ import {
 import { S } from "../strings.js";
 import { Chip, GhostButton, SearchInput } from "./bits.js";
 import { FeatText } from "./FeatText.js";
+import { FeatWeaponPicker } from "./FeatWeaponPicker.js";
 import { featBonuses, featOneLiner } from "./featSummary.js";
 
 /**
@@ -64,7 +66,22 @@ export function FeatPicker(props: {
   sheet: DerivedSheet | undefined;
   /** Schon gewählte Talent-IDs. */
   chosen: string[];
-  onPick: (feat: Entity) => void;
+  /**
+   * Die Waffen, die dieser Bogen (oder Entwurf) trägt — Kennung des Typs und der
+   * Name, unter dem die Zeile dort steht.
+   *
+   * Die Eigenschaft ist PFLICHT und nicht optional, obwohl eine leere Liste erlaubt
+   * ist: sonst würde eine neue Aufrufstelle die Waffenfrage still überspringen, und
+   * „Weapon Focus" landete wieder ohne Waffe am Bogen. Der Typ soll die Frage
+   * stellen, nicht mein Gedächtnis.
+   */
+  ownWeapons: { id: string; name: string }[];
+  /**
+   * Die Wahl kommt MIT dem Talent — sein Auftrag: „das muss man einmal machen, wenn
+   * man das Talent auswählt". Sie hier zurückzugeben statt sie hinterher am Bogen
+   * nachzutragen, ist der ganze Unterschied.
+   */
+  onPick: (feat: Entity, choice?: { choiceRef: string; choice: string }) => void;
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState<string | null>(null);
@@ -86,6 +103,11 @@ export function FeatPicker(props: {
   const [bonusOpen, setBonusOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [askId, setAskId] = useState<string | null>(null);
+  /*
+    Das Talent, dessen Waffe noch fehlt. Es ist bewusst NOCH NICHT hinzugefügt —
+    wer das Blatt schließt, hat auch kein halb eingerichtetes Talent am Bogen.
+  */
+  const [weaponFor, setWeaponFor] = useState<Entity | null>(null);
 
   const skillName = (id: string) => {
     const entity = props.compendium.get(id);
@@ -167,9 +189,19 @@ export function FeatPicker(props: {
     const open = openId === feat.id;
     const asking = askId === feat.id;
 
+    /*
+      Braucht das Talent eine Waffe, kommt ERST die Frage und dann das Talent. Die
+      Bedingung dafür steht im Kern (`featNeedsWeaponChoice`) und nicht hier: sie galt
+      schon an zwei anderen Stellen ausgeschrieben, und eine Regel in drei Ansichten
+      steht in keiner.
+    */
     const pick = () => {
-      props.onPick(feat);
       setAskId(null);
+      if (featNeedsWeaponChoice(feat)) {
+        setWeaponFor(feat);
+        return;
+      }
+      props.onPick(feat);
     };
 
     return (
@@ -352,6 +384,19 @@ export function FeatPicker(props: {
           </h3>
           <ul className="divide-y divide-slate-800">{blocked.map(row)}</ul>
         </div>
+      )}
+
+      {weaponFor !== null && (
+        <FeatWeaponPicker
+          feat={weaponFor}
+          compendium={props.compendium}
+          own={props.ownWeapons}
+          onPick={(choiceRef, choice) => {
+            props.onPick(weaponFor, { choiceRef, choice });
+            setWeaponFor(null);
+          }}
+          onClose={() => setWeaponFor(null)}
+        />
       )}
     </div>
   );

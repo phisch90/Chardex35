@@ -6,6 +6,7 @@ import {
   classCategory,
   deriveSheet,
   displayName,
+  isWeaponEntity,
   iterativeAttacks,
   maxRanks,
   applyTrackerLines,
@@ -55,7 +56,14 @@ export function LevelUpPage() {
   /** Beim Aufstieg neu angelegte Teilgebiete (z.B. erstes Knowledge (arcana)). */
   const [newSubtypes, setNewSubtypes] = useState<{ skillId: string; subtype: string }[]>([]);
   const [subtypeFor, setSubtypeFor] = useState<string | null>(null);
-  const [newFeatIds, setNewFeatIds] = useState<string[]>([]);
+  /*
+    Neu gewaehlte Talente — mit ihrer WAHL. Vorher lagen hier blosse Kennungen; seit
+    die Waffe beim Auswaehlen feststeht ("das muss man einmal machen, wenn man das
+    Talent auswaehlt"), muss der Aufstieg sie bis zum Speichern mittragen.
+  */
+  const [newFeats, setNewFeats] = useState<
+    { featId: string; choice?: string; choiceRef?: string }[]
+  >([]);
   /* Die Rückfrage am Ende — erst auf Tap, nicht als Dauerband. */
   const [askOpen, setAskOpen] = useState(false);
   const [newKnown, setNewKnown] = useState<string[]>([]);
@@ -92,13 +100,13 @@ export function LevelUpPage() {
     }
     copy.skillRanks = { ...ranks };
     copy.skillSubtypes = [...copy.skillSubtypes, ...newSubtypes];
-    copy.feats = [...copy.feats, ...newFeatIds.map((featId) => ({ featId, extraEffects: [] }))];
+    copy.feats = [...copy.feats, ...newFeats.map((entry) => ({ ...entry, extraEffects: [] }))];
     if (newKnown.length > 0) {
       const state = (copy.spellState[classId] ??= { known: [], prepared: [], usedSlots: [], favorites: [] });
       state.known = [...state.known, ...newKnown.filter((id) => !state.known.includes(id))];
     }
     return copy;
-  }, [character, classId, ranks, needsAbility, newTotal, abilityPick, newFeatIds, newKnown, newSubtypes, compendium]);
+  }, [character, classId, ranks, needsAbility, newTotal, abilityPick, newFeats, newKnown, newSubtypes, compendium]);
 
   const sheetAfter = useMemo(
     () => (afterCharacter && compendium ? deriveSheet(afterCharacter, compendium, houseRules) : undefined),
@@ -432,18 +440,23 @@ export function LevelUpPage() {
         )}
       </Card>
 
-      {(featSlotsLeft > 0 || newFeatIds.length > 0) && (
+      {(featSlotsLeft > 0 || newFeats.length > 0) && (
         <Card>
           <SectionTitle>
             {S.levelUp.feats} ({S.wizard.slotsLeft}: {featSlotsLeft})
           </SectionTitle>
-          {newFeatIds.length > 0 && (
+          {newFeats.length > 0 && (
             <div className="mb-1 flex flex-wrap gap-1.5">
-              {newFeatIds.map((id) => {
-                const feat = compendium.get(id);
+              {newFeats.map((entry) => {
+                const feat = compendium.get(entry.featId);
                 return (
-                  <Chip key={id} active onClick={() => setNewFeatIds(newFeatIds.filter((f) => f !== id))}>
-                    {feat ? displayName(feat) : id} ✕
+                  <Chip
+                    key={entry.featId}
+                    active
+                    onClick={() => setNewFeats(newFeats.filter((f) => f.featId !== entry.featId))}
+                  >
+                    {feat ? displayName(feat) : entry.featId}
+                    {entry.choice ? ` (${entry.choice})` : ""} ✕
                   </Chip>
                 );
               })}
@@ -463,8 +476,28 @@ export function LevelUpPage() {
           <FeatPicker
             compendium={compendium}
             sheet={sheetBefore}
-            chosen={[...(sheetBefore?.featIds ?? []), ...newFeatIds]}
-            onPick={(feat) => setNewFeatIds([...newFeatIds, feat.id])}
+            chosen={[...(sheetBefore?.featIds ?? []), ...newFeats.map((f) => f.featId)]}
+            /*
+              Die Waffen, die der Bogen SCHON traegt — beim Aufstieg kauft man selten
+              neu ein. Die vollstaendige Liste steht im Blatt darunter.
+            */
+            ownWeapons={character.inventory
+              .map((row) => {
+                const item = row.itemId ? compendium.get(row.itemId) : undefined;
+                return isWeaponEntity(item) && item !== undefined
+                  ? { id: item.id, name: row.customName ?? displayName(item) }
+                  : null;
+              })
+              .filter((entry): entry is { id: string; name: string } => entry !== null)}
+            onPick={(feat, choice) =>
+              setNewFeats([
+                ...newFeats,
+                {
+                  featId: feat.id,
+                  ...(choice ? { choiceRef: choice.choiceRef, choice: choice.choice } : {}),
+                },
+              ])
+            }
           />
         </Card>
       )}

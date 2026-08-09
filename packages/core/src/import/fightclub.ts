@@ -8,6 +8,7 @@ import {
 } from "../schema/character.js";
 import { displayName, skillKey, type Entity } from "../schema/entities.js";
 import { buildHomebrewItem } from "../compendium/homebrewItem.js";
+import { featNeedsWeaponChoice } from "../compendium/featChoice.js";
 import { allowedSlots, deriveSheet } from "../engine/index.js";
 import {
   applyFullExtras,
@@ -791,8 +792,7 @@ export function mapFightClubPc(
     }
     // Nur melden, wenn dadurch wirklich ein Bonus liegen bleibt.
     const entity = compendium.get(feat.featId);
-    const losesBonus =
-      entity?.kind === "feat" && entity.effects.some((e) => e.scope === "chosenItem");
+    const losesBonus = featNeedsWeaponChoice(entity);
     if (losesBonus) {
       const featName = entity ? displayName(entity) : feat.featId;
       issues.push({
