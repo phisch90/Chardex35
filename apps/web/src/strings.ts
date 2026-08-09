@@ -569,6 +569,12 @@ export const S = {
       "Eure Hausregel: der Schadensbonus gilt auf jede Nahkampfwaffe — mit Kurzschwert und Power Attack 4 sind das +4 Schaden. Der Angriffsmalus ist derselbe.",
     powerAttackLightOffHint:
       "Regel des Buches: mit einer leichten Waffe (Kurzschwert, Dolch) gibt Power Attack keinen Schaden — der Angriffsmalus gilt trotzdem. Unbewaffnet und natürliche Waffen sind davon ausgenommen.",
+    /** Martins Hausregel: Zaubern über eine Spellcraft-Probe statt eines Platzes. */
+    spellcraftCasting: "Zaubern per Spellcraft-Probe",
+    spellcraftCastingOnHint:
+      "Eure Hausregel: statt eines Zauberplatzes geht eine Spellcraft-Probe gegen DC 12 + Grad. Jede Probe erhöht den DC um den Grad (Ermüdung); die Rast (8 Stunden) setzt auf 12 zurück. Der Knopf dafür steht im Zauber-Reiter am Grad.",
+    spellcraftCastingOffHint:
+      "Aus: im Zauber-Reiter steht kein Probe-Knopf, gewirkt wird nur über Plätze. Eine schon angesammelte Ermüdung bleibt gespeichert und verschwindet mit der nächsten Rast.",
     exportTitle: "Export / Import",
     exportAll: "Alles exportieren (JSON)",
     importFile: "JSON importieren",
@@ -1214,6 +1220,8 @@ export const S = {
     slotLine: (className: string, freed: number) =>
       `${className}: ${freed} ${freed === 1 ? "verbrauchter Platz wird" : "verbrauchte Plätze werden"} frei`,
     trackerLine: (name: string, from: number, to: number) => `${name}: ${from} → ${to}`,
+    /** Martins Spellcraft-Hausregel: die lange Rast setzt die Ermüdung zurück. */
+    spellcraftLine: (from: number) => `Spellcraft-Ermüdung: ${from} → 0`,
     skippedTitle: "Bleibt in Ruhe:",
     /*
       Warum ein Zähler in Ruhe bleibt. Die Tabelle MUSS jeden Grund kennen, den
@@ -1554,6 +1562,49 @@ export const S = {
       "Wirken zieht einen Slot des Grads ab — welcher konkrete Zauber verbraucht ist, merkt ihr euch wie am Tisch üblich.",
     knownLimit: (have: number, max: string) => `${have}/${max} bekannt`,
     slots: "Slots",
+
+    /*
+      Zaubern über eine Spellcraft-Probe — Martins Hausregel, von seinem Blatt
+      („Spellcasting by Spellcraft (HB)"), Philipps Klärung: „Ermüdung bei jeder
+      Nutzung". Die Texte hier sind die ANLEITUNG; gerechnet wird im Kern
+      (`engine/spellcraftCasting.ts`).
+    */
+    craft: {
+      /** Der Knopf im Grad-Kopf. Kurz — die Zeile trägt schon Punkte, Zahl und SG. */
+      button: "Probe",
+      buttonTitle: (dc: number) => `Per Spellcraft wirken (DC ${dc})`,
+      title: (level: number) => `Grad ${level} per Spellcraft wirken`,
+      intro:
+        "Statt einen Platz zu verbrauchen, darfst du eine Spellcraft-Probe ablegen — eure Hausregel. Der Platz bleibt frei; dafür steigt mit jeder Probe die Ermüdung.",
+      checkTitle: "Die Probe",
+      check: (dc: number, exhaustion: number, level: number) =>
+        exhaustion > 0
+          ? `Spellcraft gegen DC ${dc} (12 + ${exhaustion} Ermüdung + Grad ${level}).`
+          : `Spellcraft gegen DC ${dc} (12 + Grad ${level}).`,
+      /** Grad 0 rechnet als 1 — steht nur dort, wo es gilt. */
+      levelZero: "Grad-0-Zauber zählen bei dieser Regel als Grad 1.",
+      noSkill:
+        "Spellcraft ist ohne Ränge nicht nutzbar — ohne Ränge gibt es hier keinen Wurf. Ob ihr es trotzdem erlaubt, entscheidet euer DM.",
+      outcomesTitle: "Was der Wurf bedeutet",
+      success: "Geschafft: der Zauber wirkt, als hättest du einen Platz benutzt.",
+      crit: (from: number) =>
+        `Natürliche ${from === 20 ? "20" : `${from}–20`}: kritisch — du wählst eines: kein Rettungswurf · doppelte Wirkungswürfel · im Kampf kein Gelegenheitsangriff.`,
+      fail: "Daneben: nichts passiert — im Kampf provoziert der Versuch einen Gelegenheitsangriff.",
+      critFail: (damage: number) =>
+        `Natürliche 1 (Patzer): wie daneben, und die Magie schlägt zurück — ${damage} Schaden an dich.`,
+      bookTitle: "Verbuchen",
+      bookHint: (from: number, to: number) =>
+        `Jede Probe ermüdet — auch eine geschaffte. Ermüdung ${from} → ${to}; die Rast (8 Stunden) setzt auf 0 zurück.`,
+      /** Der normale Fall: geschafft oder daneben — beides kostet nur Ermüdung. */
+      book: (from: number, to: number) => `Verbuchen (Ermüdung ${from} → ${to})`,
+      /** Der Patzer bucht zusätzlich den Schaden — mit Ansage, wie alles hier. */
+      bookCritFail: (damage: number) => `Patzer verbuchen (+${damage} Schaden)`,
+      booked: (level: number) => `Spellcraft-Probe Grad ${level}`,
+      /** Die Zeile oben im Block, nur wenn Ermüdung da ist. */
+      exhaustionLine: (value: number, nextDc: number) =>
+        `Spellcraft-Ermüdung: ${value} — Grad-1-Probe ab jetzt DC ${nextDc}. Setzt sich bei der Rast (8 Stunden) zurück.`,
+    },
+
     addToSpellbook: "Zauberbuch erweitern",
     emptySpellbook: "Noch keine Zauber im Buch — unten aus der Klassenliste wählen.",
     noneAtLevel: "Kein Zauber dieses Grades gefunden.",

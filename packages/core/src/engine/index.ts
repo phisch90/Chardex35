@@ -40,6 +40,7 @@ export * from "./spells.js";
 export * from "./tables.js";
 export * from "./trackers.js";
 export * from "./abilityGuide.js";
+export * from "./spellcraftCasting.js";
 export * from "./rest.js";
 export * from "./carry.js";
 export * from "./dying.js";

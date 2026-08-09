@@ -12,7 +12,11 @@ import { useEffect, useRef, useState } from "react";
  * sie nie wirksam war.
  */
 export function useUndo<T>() {
-  const [pending, setPending] = useState<{ label: string; restore: () => void } | null>(null);
+  const [pending, setPending] = useState<{
+    label: string;
+    restore: () => void;
+    verb?: string | undefined;
+  } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -22,10 +26,17 @@ export function useUndo<T>() {
     [],
   );
 
-  /** Nach dem Löschen aufrufen: Name für die Meldung + wie man es zurückholt. */
-  const offer = (label: string, restore: () => void) => {
+  /**
+   * Nach dem Löschen aufrufen: Name für die Meldung + wie man es zurückholt.
+   *
+   * `verb` nur, wenn es KEIN Löschen war — die Spellcraft-Buchung meldete sonst
+   * „Spellcraft-Probe verbucht gelöscht": zwei Verben, von denen das zweite lügt.
+   * Der Standard bleibt „gelöscht", weil das der Fall ist, für den die Leiste
+   * gebaut wurde.
+   */
+  const offer = (label: string, restore: () => void, verb?: string) => {
     if (timer.current !== null) clearTimeout(timer.current);
-    setPending({ label, restore });
+    setPending({ label, restore, verb });
     timer.current = setTimeout(() => setPending(null), 12000);
   };
 
@@ -42,7 +53,7 @@ export function useUndo<T>() {
 }
 
 export function UndoBar(props: {
-  pending: { label: string } | null;
+  pending: { label: string; verb?: string | undefined } | null;
   onUndo: () => void;
   onDismiss: () => void;
 }) {
@@ -62,7 +73,8 @@ export function UndoBar(props: {
       className="fixed inset-x-3 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-2 rounded-lg border border-amber-700 bg-amber-950 px-3 py-2 text-xs text-amber-100 shadow-lg shadow-black/50 md:inset-x-auto md:bottom-4 md:right-4 md:max-w-md"
     >
       <span className="min-w-0 flex-1">
-        <strong className="font-semibold">{props.pending.label}</strong> gelöscht
+        <strong className="font-semibold">{props.pending.label}</strong>{" "}
+        {props.pending.verb ?? "gelöscht"}
       </span>
       <button
         onClick={props.onUndo}

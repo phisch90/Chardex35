@@ -307,6 +307,25 @@ export function SettingsPage() {
         </div>
 
         {/*
+          Martins Hausregel vom Blatt („Spellcasting by Spellcraft"), Philipps Klärung:
+          „Ermüdung bei jeder Nutzung". Standard AN wie die anderen Tischregeln — sie
+          verschiebt keine Zahl an bestehenden Bögen, sie gibt einen zweiten Weg dazu.
+          Der Satz darunter nennt in beiden Stellungen die Folge, nicht die Absicht.
+        */}
+        <div className="mt-3 border-t border-slate-800 pt-3">
+          <Toggle
+            label={S.settings.spellcraftCasting}
+            checked={houseRules.spellcraftCasting}
+            onChange={(v) => setRule({ spellcraftCasting: v })}
+          />
+          <p className="mt-0.5 text-[11px] leading-snug text-slate-500">
+            {houseRules.spellcraftCasting
+              ? S.settings.spellcraftCastingOnHint
+              : S.settings.spellcraftCastingOffHint}
+          </p>
+        </div>
+
+        {/*
           Punktekauf für die Attribute. Das Feld `pointBuyBudget` lag lange da, ohne
           Leser und ohne Bedienelement — dieselbe Lage wie einst bei der Todesgrenze.
 

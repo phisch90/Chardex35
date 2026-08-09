@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
+  applyHpChange,
+  applySpellcraftCast,
   displayName,
+  spellcraftCastPlan,
+  spellcraftExhaustionOf,
   spellsForCaster,
   type Character,
   type SpellEntity,
@@ -10,7 +14,9 @@ import {
 import { S } from "../../strings.js";
 import { Icon, IconInline } from "../../ui/icons.js";
 import { DomainPicker } from "../../ui/DomainPicker.js";
-import { useCompendium } from "../../lib/hooks.js";
+import { SpellcraftCastSheet } from "../../ui/SpellcraftCastSheet.js";
+import { UndoBar, useUndo } from "../../ui/UndoBar.js";
+import { useCompendium, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import { TrackersCard } from "./Trackers.js";
 import type { TabProps } from "./index.js";
@@ -80,12 +86,52 @@ function spellSubline(spell: SpellEntity | null): string {
 function CasterBlock({
   block,
   character,
+  sheet,
   editMode,
   save,
 }: TabProps & { block: SpellcastingBlock }) {
   const compendium = useCompendium();
+  const houseRules = useHouseRules();
+  const undo = useUndo();
   const [query, setQuery] = useState("");
   const [addLevel, setAddLevel] = useState<number | null>(null);
+  /*
+    Zaubern über eine Spellcraft-Probe — Martins Hausregel. Der GRAD ist die ganze
+    Rechnung (DC, Ermüdung, Crit-Reichweite); welcher Zauber es erzählerisch wird,
+    entscheidet er am Tisch. Deshalb sitzt der Einstieg im Grad-Kopf und nicht an
+    jeder Zauberzeile — seine Wahl, und die Zeilen bleiben unberührt (eine volle
+    Zeile verträgt keinen vierten Knopf).
+  */
+  const [craftLevel, setCraftLevel] = useState<number | null>(null);
+  const craftPlan =
+    craftLevel === null ? null : spellcraftCastPlan(character, sheet, block, craftLevel);
+  const exhaustion = spellcraftExhaustionOf(character);
+
+  const bookCraft = (outcome: "normal" | "critFail") => {
+    if (craftPlan === null) return;
+    /*
+      Für die Rücknahme wird der Stand VOR dem Buchen festgehalten — nicht neu
+      gerechnet: zwischen Buchen und Zurücknehmen kann ein zweiter Versuch liegen.
+    */
+    const before = exhaustion;
+    const hpBefore = structuredClone(character.hp);
+    save((c) => {
+      applySpellcraftCast(c, craftPlan);
+      if (outcome === "critFail") c.hp = applyHpChange(c.hp, "damage", craftPlan.critFailDamage);
+    });
+    undo.offer(
+      S.spells.craft.booked(craftPlan.level),
+      () =>
+        save((c) => {
+          if (before === 0) delete c.spellcraftExhaustion;
+          else c.spellcraftExhaustion = before;
+          if (outcome === "critFail") c.hp = hpBefore;
+        }),
+      // „verbucht", nicht das eingebaute „gelöscht" — hier wurde nichts gelöscht.
+      "verbucht",
+    );
+    setCraftLevel(null);
+  };
   const foldKey = `${character.id}.${block.classId}`;
   const [folded, setFolded] = useState<Set<number>>(() => readFolded(foldKey));
   const toggleFold = (level: number) => {
@@ -270,6 +316,19 @@ function CasterBlock({
           EINMAL im ⋯-Menü, nennt vorher die Zahlen und lässt sich zurücknehmen.
         */}
       </div>
+
+      <UndoBar pending={undo.pending} onUndo={undo.undo} onDismiss={undo.dismiss} />
+
+      {/*
+        Die Spellcraft-Ermüdung — nur wenn welche DA ist. Ein Satz, der immer
+        dasteht, wird nicht gelesen; und mit 0 gibt es nichts zu wissen. Die Zeile
+        nennt den nächsten Grad-1-DC, weil das die Zahl ist, die am Tisch zählt.
+      */}
+      {houseRules.spellcraftCasting && exhaustion > 0 && (
+        <p className="mt-1.5 rounded-lg border border-slate-700 bg-slate-900/60 px-2.5 py-1.5 text-[11px] leading-snug text-slate-300">
+          {S.spells.craft.exhaustionLine(exhaustion, 12 + exhaustion + 1)}
+        </p>
+      )}
 
       {/*
         Domänen. Sie stehen ÜBER der Suche und über den Graden, weil sie
@@ -473,6 +532,20 @@ function CasterBlock({
               >
                 +
               </GhostButton>
+              {/*
+                Martins Hausregel: wirken über eine Spellcraft-Probe statt eines
+                Platzes. Ausgeschrieben und nicht als Kürzel — ein Knopf mit einem
+                Buchstaben war schon einmal sein Einwand („ZFW"). Der DC steht im
+                Tooltip; die ganze Rechnung steht im Blatt, das er öffnet.
+              */}
+              {houseRules.spellcraftCasting && (
+                <GhostButton
+                  onClick={() => setCraftLevel(level)}
+                  title={S.spells.craft.buttonTitle(12 + exhaustion + Math.max(1, level))}
+                >
+                  {S.spells.craft.button}
+                </GhostButton>
+              )}
             </div>
 
             {isFolded ? (
@@ -697,6 +770,20 @@ function CasterBlock({
         (unten am Zauberblock, nicht als Knopf), löst beides.
       */}
       <p className="mt-1 text-[10px] leading-snug text-slate-500">{S.spells.restElsewhere}</p>
+
+      {/*
+        Das Spellcraft-Blatt — die Anleitung mit den Zahlen dieses Bogens. Es liegt
+        auf Karten-Ebene und nicht im Grad-Abschnitt: es gibt garantiert nur eins,
+        und ein Dialog in einem Listeneintrag stirbt mit jeder Umsortierung.
+      */}
+      {craftPlan !== null && (
+        <SpellcraftCastSheet
+          plan={craftPlan}
+          characterName={character.name}
+          onClose={() => setCraftLevel(null)}
+          onBook={bookCraft}
+        />
+      )}
 
       {/*
         Legende. Nur noch für die Zeichen, die wirklich Zeichen bleiben: die

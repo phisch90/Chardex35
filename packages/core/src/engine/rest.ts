@@ -1,6 +1,7 @@
 import type { Character } from "../schema/character.js";
 import type { DerivedSheet } from "./types.js";
 import { effectiveTrackerMax, refillOf, resetToOf } from "./trackers.js";
+import { spellcraftExhaustionOf } from "./spellcraftCasting.js";
 
 /**
  * Die Rast — an EINER Stelle, mit Ansage.
@@ -89,6 +90,12 @@ export interface RestPlan {
   slots: RestSlotLine[];
   trackers: RestTrackerLine[];
   skipped: RestSkippedLine[];
+  /**
+   * Spellcraft-Ermuedung, die die lange Rast zuruecksetzt (Martins Hausregel) —
+   * 0 heisst: nichts zurueckzusetzen. Die kurze Pause laesst sie in Ruhe, wie die
+   * Zauberplaetze: das Blatt sagt ausdruecklich "resets to 12 after a long rest".
+   */
+  spellcraftExhaustion: number;
   /** Nichts zu tun — dann muss die Oberfläche auch nichts anbieten. */
   nothingToDo: boolean;
 }
@@ -170,12 +177,21 @@ export function planRest(
     trackers.push(line);
   }
 
+  /*
+    Die Spellcraft-Ermuedung setzt NUR die lange Rast zurueck. Sie steht im Plan
+    als Zahl, damit die Ansage sie nennen kann ("Ermuedung 5 -> 0") — eine Rast,
+    die still etwas zuruecksetzt, was die Ansage nicht genannt hat, waere dieselbe
+    Falle wie ein Zaehler, der ungefragt mitrastet.
+  */
+  const spellcraftExhaustion = scope === "full" ? spellcraftExhaustionOf(character) : 0;
+
   return {
     scope,
     slots,
     trackers,
     skipped,
-    nothingToDo: slots.length === 0 && trackers.length === 0,
+    spellcraftExhaustion,
+    nothingToDo: slots.length === 0 && trackers.length === 0 && spellcraftExhaustion === 0,
   };
 }
 
@@ -254,6 +270,9 @@ export function applyRest(character: Character, plan: RestPlan): void {
     const state = character.spellState[line.classId];
     if (state !== undefined) state.usedSlots = [];
   }
+  // `delete` statt 0: das Feld ist optional, und ein ausgeruhter Bogen soll so
+  // aussehen wie einer, der die Regel nie benutzt hat.
+  if (plan.spellcraftExhaustion > 0) delete character.spellcraftExhaustion;
   for (const line of plan.trackers) {
     const tracker = character.trackers.find((t) => t.id === line.id);
     // Über die Kennung, nie über den Listenindex — die Liste kann sich zwischen
@@ -272,6 +291,8 @@ export function applyRest(character: Character, plan: RestPlan): void {
 export interface RestUndo {
   usedSlots: { classId: string; usedSlots: number[] }[];
   trackers: { id: string; value: number }[];
+  /** Die Ermuedung vor der Rast — 0 heisst: war keine da, nichts wiederherstellen. */
+  spellcraftExhaustion: number;
 }
 
 export function snapshotForRest(character: Character, plan: RestPlan): RestUndo {
@@ -281,6 +302,7 @@ export function snapshotForRest(character: Character, plan: RestPlan): RestUndo 
       usedSlots: [...(character.spellState[line.classId]?.usedSlots ?? [])],
     })),
     trackers: plan.trackers.map((line) => ({ id: line.id, value: line.from })),
+    spellcraftExhaustion: plan.spellcraftExhaustion,
   };
 }
 
@@ -293,4 +315,5 @@ export function undoRest(character: Character, undo: RestUndo): void {
     const tracker = character.trackers.find((t) => t.id === entry.id);
     if (tracker !== undefined) tracker.value = entry.value;
   }
+  if (undo.spellcraftExhaustion > 0) character.spellcraftExhaustion = undo.spellcraftExhaustion;
 }
