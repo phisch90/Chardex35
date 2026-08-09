@@ -497,6 +497,14 @@ function RestLines(props: { plan: RestPlan }) {
         {plan.trackers.map((line) => (
           <li key={line.id}>{S.rest.trackerLine(line.name, line.from, line.to)}</li>
         ))}
+        {/*
+          Die Spellcraft-Ermüdung — nur wenn welche da ist. Eine Rast, die etwas
+          zurücksetzt, was die Ansage nicht genannt hat, wäre dieselbe Falle wie
+          ein Zähler, der ungefragt mitrastet.
+        */}
+        {plan.spellcraftExhaustion > 0 && (
+          <li>{S.rest.spellcraftLine(plan.spellcraftExhaustion)}</li>
+        )}
       </ul>
       {plan.skipped.length > 0 && (
         <>

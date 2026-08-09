@@ -86,6 +86,18 @@ export const houseRulesSchema = z.object({
    * ohnehin nicht.
    */
   coinWeight: z.boolean().default(false),
+  /**
+   * Zaubern über eine Spellcraft-Probe statt eines Platzes — Martins Hausregel,
+   * wörtlich von seinem Blatt („Spellcasting by Spellcraft (HB)"). DC 12 +
+   * Zaubergrad, die 12 steigt mit JEDER Nutzung um den Grad (Philipps Klärung:
+   * „Ermüdung bei jeder Nutzung") und setzt sich bei der langen Rast zurück.
+   *
+   * Standard AN wie bei `deathAt` und `powerAttackLightWeapons`: es ist die Regel
+   * seines Tisches, und sie verschiebt keine Zahl an bestehenden Bögen — sie gibt
+   * Zauberwirkern einen ZWEITEN Weg dazu. Rechnung: `engine/spellcraftCasting.ts`;
+   * Einstieg: der Knopf im Grad-Kopf des Zauber-Reiters.
+   */
+  spellcraftCasting: z.boolean().default(true),
 });
 export type HouseRules = z.infer<typeof houseRulesSchema>;
 export const DEFAULT_HOUSE_RULES: HouseRules = houseRulesSchema.parse({});
@@ -345,6 +357,22 @@ export const characterSchema = z.object({
   domains: z
     .array(z.object({ classId: z.string(), spellListId: z.string() }))
     .default([]),
+
+  /**
+   * Spellcraft-Ermüdung (Martins Hausregel „Spellcasting by Spellcraft"): die
+   * SUMME der Grade, die heute über eine Probe gewirkt wurden. Der DC der
+   * nächsten Probe ist 12 + Ermüdung + Grad; die lange Rast setzt zurück.
+   *
+   * Eine EINGABE (sie entsteht am Tisch, wie `usedSlots`) und Spielzustand —
+   * sie gehört dem Spieler (`group/orders.ts`) und zählt nicht zum Aufbau.
+   * Optional OHNE `.default(0)`: ein Default machte das Feld im Ausgabe-Typ
+   * Pflicht, und jedes Literal müsste es mitschreiben (Fehlerfamilie 1). Der
+   * Leser ist `spellcraftExhaustionOf` in `engine/spellcraftCasting.ts`.
+   *
+   * Je CHARAKTER und nicht je Klasse: das Blatt nennt sie „the spellcraft
+   * exhaustion of the character" — ein Kleriker/Magier ermüdet als eine Person.
+   */
+  spellcraftExhaustion: z.number().int().nonnegative().optional(),
 
   /** Je Klassen-ID. */
   spellState: z

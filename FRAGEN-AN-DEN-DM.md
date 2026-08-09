@@ -87,63 +87,29 @@ steht dort ausdrücklich NICHT — den hatte ich angehängt, und er wollte ihn w
 
 # Teil 2 — noch offen
 
-## 1. Die Spellcraft-Probe statt eines Platzes
+## 1. Die Spellcraft-Probe statt eines Platzes — BEANTWORTET
 
-> Philipp: „Eine weitere ist, dass wir eine spellcraft Probe machen können um einen
-> Zauber ohne einen Zauberrang zu verbrauchen wirken wollen."
+Martins Blatt („Spellcasting by Spellcraft (HB)") hat alle sechs Unterfragen auf
+einmal beantwortet, eine Klärung kam von Philipp:
 
-**Heute:** kennt die App nicht — wirken heißt Platz verbrauchen.
+- **DC 12 + Zaubergrad**, und die 12 ist eine Grundlage, die mit **jeder Nutzung**
+  um den gewirkten Grad steigt („Ermüdung", Philipps Klärung: „Ermüdung bei jeder
+  Nutzung") — die Rast (8 Stunden) setzt auf 12 zurück. Damit ist 1.1 beantwortet:
+  die Probe braucht keinen freien Platz, das Limit ist die wachsende Ermüdung.
+- **Misslingen:** kein Platz weg (es wurde ja keiner benutzt), im Kampf provoziert
+  der Versuch einen Gelegenheitsangriff. **Patzer (natürliche 1):** zusätzlich
+  1 Schaden je Zaubergrad zurück an den Wirker.
+- **Kritisch:** die Reichweite wächst je Grad um die Bonus-Plätze (2 Bonus-Grad-1-
+  Plätze → 18–20). Wahl aus: kein Rettungswurf · doppelte Wirkungswürfel · kein
+  Gelegenheitsangriff.
+- **Grad 0:** erlaubt, zählt aber als Grad 1 (Ermüdung und Patzer-Schaden); dafür
+  Crit-Grundlage 19–20.
 
-### 1.1 Braucht man dafür noch einen freien Platz? ← die wichtigste hier
-
-- [ ] **nur mit freiem Platz** — die Probe SPART ihn, das Tageslimit bleibt ein Limit
-- [ ] **auch wenn alle Plätze dieses Grades verbraucht sind** — das Tageslimit ist damit
-      nach oben offen
-- [ ] auch bei Zaubergraden, die die Figur noch gar nicht hat
-
-*Warum:* bei der ersten Antwort genügt ein zweiter Knopf neben „Wirken". Bei der zweiten
-muss die Sperre weg, und der Bogen braucht eine eigene Zeile für „über dem Tageslimit
-gewirkt" — sonst weiß nach dem dritten Mal niemand mehr, wie weit man drüber ist.
-
-### 1.2 Welcher Schwierigkeitsgrad?
-
-- [ ] 15 + doppelter Zaubergrad (Grad 3 → 21)
-- [ ] 20 + Zaubergrad (Grad 3 → 23)
-- [ ] 10 + doppelter Zaubergrad (Grad 3 → 16)
-- [ ] fester Wert: ______
-
-### 1.3 Was passiert beim Misslingen?
-
-- [ ] Platz ist weg, Zauber wirkt nicht
-- [ ] Platz bleibt, Zauber wirkt nicht (nur die Handlung ist verloren)
-- [ ] Zauber wirkt, Platz ist weg (die Probe war nur der Versuch zu sparen)
-
-*Warum:* ohne diese Antwort weiß die App nach einem Fehlwurf nicht, ob sie den Platz
-abziehen soll.
-
-### 1.4 Welchen Zauber darf man so wirken?
-
-- [ ] nur einen, den man morgens vorbereitet hat
-- [ ] jeden aus der Klassenliste
-- [ ] beim Magier jeden aus seinem Zauberbuch, bei Kleriker und Druide die ganze Liste
-
-*Warum:* „ganze Klassenliste" heißt: bei einem Kleriker der Stufe 7 stehen über 200
-Zauber mit einem Wirken-Knopf im Bogen, und der braucht dann eine eigene Suche.
-
-### 1.5 Wie oft, für wen, und muss Spellcraft trainiert sein?
-
-- [ ] beliebig oft · [ ] ______ mal pro Tag · [ ] einmal pro Zauber und Tag
-- [ ] alle Zauberwirker · [ ] nur Vorbereiter (Kleriker, Druide, Magier)
-- [ ] mindestens 1 Rang nötig · [ ] ungeübt geht auch
-
-### 1.6 Gilt die Probe auch für Cantrips?
-
-- [ ] ja, auch auf Grad 0
-- [ ] nein, erst ab Grad 1
-
-*Warum:* wenn der Schwierigkeitsgrad mit dem Zaubergrad steigt, wäre die Probe auf Grad 0
-die leichteste — Cantrips wären damit praktisch unbegrenzt, und die eben entschiedene
-Grad-0-Regel hätte keine Wirkung mehr.
+**Gebaut** (Hausregel `spellcraftCasting`, Standard an): Knopf „Probe" im Grad-Kopf
+des Zauber-Reiters → Anleitung mit den Zahlen des Bogens (DC, eigener
+Spellcraft-Wurf, Crit-Reichweite) → Verbuchen mit Ansage und Rücknahme; der Patzer
+bucht den Schaden mit. Die Ermüdung steht als Zeile im Zauber-Reiter und in der
+Rast-Ansage. Rechnung: `core/engine/spellcraftCasting.ts`.
 
 ---
 

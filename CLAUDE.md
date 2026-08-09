@@ -657,11 +657,12 @@ Vorschlag: ein neu angelegter Kleriker startete mit „Untote vertreiben 0 von 3
 derselbe Zähler am Bogen voll beginnt. Eine neue Figur hat ihre Tagesfähigkeiten noch
 nicht verbraucht.
 
-**Noch keine Antwort von Martin** haben: die Spellcraft-Probe statt eines Zauberplatzes,
-die EP-Strafe beim Mischen von Klassen und das Punktebudget für die Attribute. Die stehen
-als Teil 2 in `FRAGEN-AN-DEN-DM.md`. Die volle Attacke stand bis vor kurzem auch hier —
-sie ist beantwortet („Wir spielen bei 6bab mit zwei Angriffen"), und die Antwort war
-„alles bleibt".
+**Von Martin ist damit alles beantwortet.** Die Spellcraft-Probe kam als Foto seines
+Blatts und ist gebaut (eigener Abschnitt weiter unten); die EP-Strafe ist entfernt
+(„Spielen wir nicht"), das Punktebudget gebaut und standardmäßig aus. `FRAGEN-AN-DEN-DM.md`
+hat keinen offenen Teil mehr. Die volle Attacke stand bis vor kurzem auch hier — sie ist
+beantwortet („Wir spielen bei 6bab mit zwei Angriffen"), und die Antwort war „alles
+bleibt".
 
 Quer über 2 und 3 stand zweimal **„Zauberpunkte"**, und das war die Frage mit der
 größten Folge: bei einem echten Punktevorrat hätte die App einen ZWEITEN Weg gebraucht,
@@ -2355,6 +2356,54 @@ eine eigene Runde.
 Zahl. Die ersten zwei hängen an der Rückfrage am Ende des Assistenten (das ist jetzt die
 neunte und zehnte Strecke mit dieser Ursache), die dritte an der Position des Infofelds in
 den Kacheln.
+
+## Zaubern per Spellcraft-Probe — Martins Blatt, und die eine Klärung
+
+Martins Antwort auf die letzte offene DM-Frage kam als Foto seines Blatts
+(„Spellcasting by Spellcraft (HB)"), und Philipps Klärung schloss die eine Lücke im
+Text: **„Ermüdung bei jeder Nutzung"** — der DC-Grundwert 12 steigt mit JEDER Probe um
+den gewirkten Grad, nicht nur beim Fehlschlag (dort kommt nur der Gelegenheitsangriff
+dazu). Die Rast (8 Stunden) setzt auf 12 zurück.
+
+Die Regel in Zahlen: DC 12 + Ermüdung + Grad · Patzer (natürliche 1) wirft 1 Schaden je
+Grad zurück · kritisch ab 20 minus Bonus-Plätze des Grads (Blatt-Beispiel: 2
+Bonus-Grad-1-Plätze → 18–20), mit Wahl aus drei Boni · Grad 0 zählt als Grad 1
+(Ermüdung, Schaden), Crit-Grundlage dafür 19–20.
+
+Gefragt und entschieden (Geschmack): **ein Knopf je Zaubergrad** im Grad-Kopf (die
+Zeilen der Zauber bleiben unberührt — eine volle Zeile verträgt keinen vierten Knopf,
+zweimal bezahlt), und **der Patzer bucht den Schaden mit**, mit Ansage und Rücknahme.
+
+Fünf Entscheidungen sind eine Notiz wert:
+
+- **Die Ermüdung ist eine EINGABE und Spielzustand.** Gespeichert wird die SUMME der
+  gewirkten Grade (`spellcraftExhaustion`, optional ohne `.default(0)` — Fehlerfamilie 1,
+  der Leser ist `spellcraftExhaustionOf`), nicht der DC: die 12 ist eine Regel, kein
+  Zustand. Sie steht in `PLAY_STATE_FIELDS` (gehört dem Spieler, löst keine
+  Rettungskopie aus) und je CHARAKTER, nicht je Klasse — das Blatt sagt „exhaustion of
+  the character".
+- **Der GRAD ist die ganze Rechnung.** DC, Ermüdung und Crit-Reichweite hängen nur am
+  Grad — welcher Zauber es erzählerisch wird, entscheidet er am Tisch. Deshalb genügt
+  ein Knopf je Grad-Kopf, und die Plätze bleiben unberührt (das ist der Sinn der Regel).
+- **Dieselbe Bauart wie die Wirken-Anleitungen:** Rechnung im Kern
+  (`engine/spellcraftCasting.ts`, `spellcraftCastPlan`/`applySpellcraftCast` — dieselbe
+  Trennung wie `planRest`/`applyRest`), Anzeige in `ui/SpellcraftCastSheet.tsx`. Gebucht
+  wird am Ende, nie beim Öffnen; der Wurf ist der ECHTE Spellcraft-Wert des Bogens und
+  geht durch `parseDice` (die Strecke, an der schon einmal ein toter Würfelknopf
+  entstand). Ohne brauchbares Spellcraft (nur geübt nutzbar) gibt es keinen
+  Würfelknopf, sondern einen Satz — gewarnt, nicht gesperrt.
+- **Die Rast nennt die Ermüdung in der Ansage** („Spellcraft-Ermüdung: 5 → 0") und setzt
+  sie nur bei der LANGEN Rast zurück — das Blatt sagt ausdrücklich „after a long rest".
+  `applyRest` LÖSCHT das Feld statt 0 zu schreiben: ein ausgeruhter Bogen sieht aus wie
+  einer, der die Regel nie benutzt hat. Die Rücknahme der Rast bringt sie zurück.
+- **Standard AN** wie die anderen Tischregeln (`deathAt`, `powerAttackLightWeapons`):
+  sie verschiebt keine Zahl an bestehenden Bögen, sie gibt einen zweiten Weg DAZU.
+  Der Schalter in den Einstellungen nennt in beiden Stellungen die Folge.
+
+**Und ein Fund vom Bild, kein Test:** die Rücknahme-Leiste hängte ihr eingebautes
+„gelöscht" an — „Spellcraft-Probe verbucht gelöscht", zwei Verben, das zweite gelogen.
+`useUndo.offer` nimmt jetzt ein optionales Verb; der Standard bleibt „gelöscht", weil
+das der Fall ist, für den die Leiste gebaut wurde.
 
 ## Die Liste aufräumen — und was ich von hier aus NICHT kann
 

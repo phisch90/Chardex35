@@ -40,6 +40,11 @@ const PLAY_STATE_FIELDS = [
     Rettungskopie an. Genau der Fehler, den das Porträt schon einmal gemacht hat.
   */
   "mutedWarnings",
+  /*
+    Die Spellcraft-Ermüdung entsteht am Abend wie verbrauchte Plätze — sie gehört
+    dem Spieler, und ein ermüdeter Wirker darf keine Rettungskopie auslösen.
+  */
+  "spellcraftExhaustion",
 ] as const satisfies readonly (keyof Character)[];
 
 /**
