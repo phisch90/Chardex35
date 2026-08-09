@@ -1473,6 +1473,41 @@ export const S = {
     done: (n: number) => `${n} Konfliktkopien weggeräumt.`,
   },
 
+  /*
+    Mehrere Bögen auf einmal wegräumen — sein Auftrag: „Mach mal die Char Liste sauber.
+    Schmeiß alle außer Hike raus."
+
+    Gebaut als AUSWAHL und nicht als „alle außer diesem einen": ein Knopf, der alles bis
+    auf einen Bogen nimmt, ist bei einem Fehlgriff der teuerste der ganzen App. Angekreuzt
+    wird, was weg soll; die Rückfrage nennt jeden Namen einzeln.
+  */
+  bulk: {
+    select: "Auswählen",
+    done: "Fertig",
+    /** Steht in der Leiste unten, solange ausgewählt wird. */
+    count: (n: number, total: number) => `${n} von ${total} ausgewählt`,
+    none: "Nichts ausgewählt — tippe die Bögen an, die weg sollen.",
+    all: "Alle",
+    clear: "Keine",
+    delete: (n: number) => `${n} ${n === 1 ? "Bogen" : "Bögen"} löschen`,
+    /** Die Rückfrage. */
+    confirmTitle: (n: number) => `${n} ${n === 1 ? "Bogen" : "Bögen"} löschen?`,
+    /*
+      Der Satz, der die Sicherung trägt. Ein Charakter kennt keine Rücknahme und keinen
+      Papierkorb — `CharacterRepo.remove` wirft die Zeile weg. Wer das nicht dazuschreibt,
+      lässt jemanden auf ein Rückgängig warten, das es nicht gibt.
+    */
+    noUndo:
+      `Das lässt sich nicht rückgängig machen. Die Sicherung ist der einzige Rückweg — sie enthält ALLE Bögen und wird oben über „Charakter-Datei (JSON)“ wieder eingelesen.`,
+    backup: "Erst sichern (empfohlen)",
+    backupDone: "✓ Sicherung geschrieben",
+    backupFailed: "Sicherung hat nicht geklappt — deshalb wird nichts gelöscht.",
+    /** Der rote Knopf trägt die Menge, damit man sie noch einmal liest. */
+    confirmDelete: (n: number) => `${n} ${n === 1 ? "Bogen" : "Bögen"} endgültig löschen`,
+    busy: "lösche …",
+    result: (n: number) => `${n} ${n === 1 ? "Bogen" : "Bögen"} gelöscht.`,
+  },
+
   notes: {
     sections: "Abschnitte",
     addSection: "Abschnitt anlegen",
