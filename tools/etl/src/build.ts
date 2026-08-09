@@ -170,6 +170,14 @@ function main(): void {
 
   writeFileSync(
     join(PACKS_DIR, "manifest.json"),
+    // ACHTUNG: diese Zahl ist die WAHRHEIT. Bei srdRev 10 wurde nur das Manifest
+    // von Hand erhöht und dieser Erzeuger vergessen — wer die Packs dann neu
+    // erzeugt, dreht die Version ZURÜCK, und kein Gerät spielt die Änderung ein.
+    // Wer hier etwas ändert, erhöht DIESE Zahl, nie die Datei.
+    // srdRev 11: alte Wörter aus den deutschen Texten (GE/ST → DEX/STR,
+    //            Ringkampf → Grapple) — die Entscheidungen galten längst,
+    //            reichten aber nicht bis in die Packs
+    // srdRev 10: TP → HP in den deutschen Talent- und Zustandstexten
     // srdRev 9: strDamage an den Fernkampfwaffen (Wurfwaffen und Schleuder
     //           bekommen den STR-Bonus, Bögen nur den Malus)
     // srdRev 8: extraUses an Extra Turning und Extra Music (Zähler-Vorschläge)
@@ -177,7 +185,7 @@ function main(): void {
     // srdRev 6: deutsche Erklärungen an den Talenten (localized.de.summary)
     // srdRev 5: Weapon Focus & Specialization wirken über `scope: chosenItem`
     // auf die gewählte Waffe — vorher hatten sie gar keine Effekte.
-    `${canonicalJson({ srdRev: 9, files, counts: sortedCounts })}\n`,
+    `${canonicalJson({ srdRev: 11, files, counts: sortedCounts })}\n`,
   );
   console.log(`  manifest.json: ${files.length} Dateien, counts=${JSON.stringify(sortedCounts)}`);
 

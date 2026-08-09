@@ -2409,6 +2409,40 @@ Fünf Entscheidungen sind eine Notiz wert:
 `useUndo.offer` nimmt jetzt ein optionales Verb; der Standard bleibt „gelöscht", weil
 das der Fall ist, für den die Leiste gebaut wurde.
 
+## Die Packs sprechen die beschlossenen Wörter — und die Falle im Erzeuger
+
+Der Anlass: er gibt die App Martin zum Testen, und die Talent-Erklärungen sagten noch
+„GE-Bonus" und „Ringkampf" — Wörter, die er längst abgeschafft hat. Die Texte liegen als
+DATEN in `packs/srd`, Quelle ist `tools/etl` (`data/feats-de.ts`, `manual/conditions.ts`).
+
+**Der wichtigste Fund dieser Runde war nicht ein Text, sondern der Erzeuger.** Das
+Manifest im Repo stand auf `srdRev: 10`, `build.ts` schrieb aber noch `9`: bei der
+TP→HP-Runde wurde nur die DATEI von Hand erhöht und der Erzeuger vergessen. Wer die
+Packs dann neu erzeugt, dreht die Version ZURÜCK — und kein Gerät spielt irgendetwas
+neu ein, während alles grün aussieht. Deshalb VOR jeder Änderung die Gegenprobe: ETL
+unverändert laufen lassen und den Diff ansehen (er zeigte genau die eine Manifest-Zeile
+— die Quellen waren in Ordnung). Regel: **die `srdRev` wird im ERZEUGER erhöht, nie in
+der Datei**; der Warnkommentar steht jetzt in `build.ts`, und `packs.test.ts` nagelt
+die Zahl fest.
+
+Die Schranke in `strings.test.ts` liest seither auch die deutschen PACK-Texte (alles
+unter `localized.de` plus die `data.summary` der Zustände). Zwei Dinge daran:
+
+- **In Daten darf sie schärfer greifen als im Quelltext:** dort verbietet sie auch die
+  allein stehenden Kürzel (`\bGE\b`, `\bST\b`, …), die im Code falsche Treffer hätten.
+  Genau damit fand sie FÜNF Fälle mehr als der Blick: „KO-Würfe", zweimal „KO-Bonus",
+  „WE-Bonus" (Stunning Fist) und „CH-Bonus" (Divine Might). Aus 10 vermuteten
+  Fundstellen wurden 19.
+- **Und ihre erste Zusicherung war falsch:** sie verlangte über 1000 gelesene Texte,
+  weil ich die 1866 Gegenstandstexte in den Packs vermutete. Die liegen dort NICHT —
+  sie werden beim Einrichten aus `core/compendium/itemGerman.ts` übergelegt, und diese
+  Datei liest der Quelltext-Durchlauf längst. In den Packs stehen 204 deutsche Texte
+  (175 Talente + 29 Zustände). Eine Schwelle muss die Wirklichkeit kennen, die sie
+  prüft — sonst meldet sie die Packs als falsch, die recht haben.
+
+Ausgeliefert als `srdRev 11`; geprüft im gebauten Bogen mit frischem Profil (Dodge sagt
+„DEX-Bonus", Weapon Focus „Grapple", die Zustände im Kompendium sind sauber).
+
 ## Die Liste aufräumen — und was ich von hier aus NICHT kann
 
 Sein Auftrag: **„Mach mal die Char Liste sauber. Schmeiß alle außer Hike raus."**
@@ -2481,13 +2515,9 @@ Backticks.**
   das Ziehen inzwischen auch, auf seinen Wunsch („Umsortieren per Ziehen, gerne"), mit
   Anfasser und mit einer Prüfung über echte Touch-Ereignisse. Die ↑↓-Knöpfe bleiben
   daneben.
-- **In den PACKS stehen noch deutsche Kürzel und „Ringkampf".** 10 Fundstellen in
-  `tools/etl/src/data/feats-de.ts` (5× „GE-Bonus", 5× „Ringkampf") plus
-  `tools/etl/src/manual/conditions.ts`. Seine Entscheidungen dazu sind längst gefallen
-  (DEX statt GE, Grapple statt Ringkampf); die Schranke in `strings.test.ts` reicht nur
-  nicht bis in die Packs. Wer das angeht, ändert die ETL-Quelle, erzeugt die Packs neu und
-  erhöht `srdRev` — sonst kommt es auf seinem Gerät nie an. Und die Schranke sollte
-  danach die Packs mitlesen, sonst kommt es beim nächsten Text zurück.
+- **Die deutschen Kürzel in den Packs sind raus** (`srdRev 11`, eigener Abschnitt
+  „Die Packs sprechen die beschlossenen Wörter" weiter oben). Die Schranke in
+  `strings.test.ts` liest seither auch die Packs.
 - **97 Gegenstände tragen noch keine deutsche ERKLÄRUNG** — Name haben alle 1866. Die 97
   sind ausnahmslos episch (Stufe 21+, im Blätterer standardmäßig ausgeblendet) oder
   Artefakte; der Test in `core/compendium/itemGerman.test.ts` hält genau das fest, damit
