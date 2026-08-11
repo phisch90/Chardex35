@@ -18,3 +18,6 @@ tools/extract/out/
 tools/extract/private/
 packs/private/
 *.private.json
+
+# Persönliche Claude-Code-Einstellungen
+.claude/settings.local.json
