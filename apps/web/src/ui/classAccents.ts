@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { accentClassIdOf, type Character } from "@codex35/core";
+import { useAppSettings } from "../lib/hooks.js";
 
 /**
  * Welche Klasse trägt welche Farbe — und wie die Farbe heißt.
@@ -112,4 +114,29 @@ export function accentKeyOf(character: Character): AccentKey | undefined {
 /** Ist der gespeicherte Wert ein Thema, das es gibt? */
 export function isAccentKey(value: unknown): value is AccentKey {
   return typeof value === "string" && (ACCENT_KEYS as readonly string[]).includes(value);
+}
+
+/**
+ * Die Klassenfarbe ans `<html>`, solange diese Seite offen ist — und beim Verlassen
+ * wieder weg. Stand als Effekt im Bogen; seit die Übersicht dieselbe Farbe tragen
+ * soll (sie zeigt denselben Charakter), wohnt er hier EINMAL. Zwei Kopien desselben
+ * Effekts wären zwei Stellen, die den Hauptschalter (`classAccent`) vergessen können.
+ *
+ * Der Hauptschalter kommt VOR der Rangfolge: ist er aus, wird das Attribut gar nicht
+ * gesetzt, und Rahmenfarbe, Anstrich und Kartentönung fallen zusammen weg. Der Hook
+ * rechnet selbst mit dem noch nicht geladenen Charakter — ein Hook hinter einer
+ * Bedingung ist kein Hook (zehnte Falle).
+ */
+export function useAccentAttribute(character: Character | null | undefined): void {
+  const { classAccent } = useAppSettings();
+  useEffect(() => {
+    const root = document.documentElement;
+    const key =
+      !classAccent || character === undefined || character === null
+        ? undefined
+        : accentKeyOf(character);
+    if (key === undefined) root.removeAttribute("data-accent");
+    else root.setAttribute("data-accent", key);
+    return () => root.removeAttribute("data-accent");
+  }, [character, classAccent]);
 }

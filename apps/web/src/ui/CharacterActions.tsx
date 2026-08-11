@@ -303,6 +303,24 @@ export function CharacterActionsSheet(props: {
           />
         )}
         {/*
+          Martins Übersicht — der ganze Bogen auf einer Seite. Die Zeile steht in
+          BEIDEN Blättern (Bogen und Charakterkarte): sein Fall ist gerade der von
+          der Startseite aus — „Dann könnte ich mir jeden von euch als Charakter
+          anlegen und würde eine schnelle Übersicht erhalten."
+        */}
+        <ActionRow
+          icon="stats"
+          label={S.overview.action}
+          hint={S.overview.actionHint}
+          onClick={() => {
+            close();
+            void navigate({
+              to: "/charaktere/$charId/uebersicht",
+              params: { charId: character.id },
+            });
+          }}
+        />
+        {/*
           Die Kampagne. Von der Startseite aus ist das die erste Zeile im Blatt (die
           Rast erscheint dort nicht, weil der abgeleitete Bogen fehlt) — und genau so
           wollte er es: Karte antippen, ⋯, Kampagne eintragen, ohne den Bogen zu

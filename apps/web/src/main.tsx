@@ -13,6 +13,7 @@ import { Layout } from "./ui/Layout.js";
 import { CharacterListPage } from "./pages/CharacterList.js";
 import { CharacterWizardPage } from "./pages/CharacterWizard.js";
 import { CharacterSheetPage } from "./pages/sheet/index.js";
+import { CharacterOverviewPage } from "./pages/CharacterOverview.js";
 import { LevelUpPage } from "./pages/LevelUp.js";
 import { CompareDraftPage } from "./pages/CompareDraft.js";
 import { ImportPage } from "./pages/ImportPage.js";
@@ -42,6 +43,16 @@ const levelUpRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/charaktere/$charId/stufenaufstieg",
   component: LevelUpPage,
+});
+/*
+  Martins Übersicht: der ganze Bogen auf einer Seite, nur scrollen. Eine eigene
+  Adresse, damit man sie als Lesezeichen ablegen kann — erreichbar über das
+  ⋯-Menü des Bogens und der Charakterkarte.
+*/
+const overviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/charaktere/$charId/uebersicht",
+  component: CharacterOverviewPage,
 });
 const compareRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -89,6 +100,7 @@ const routeTree = rootRoute.addChildren([
   wizardRoute,
   sheetRoute,
   levelUpRoute,
+  overviewRoute,
   compareRoute,
   importRoute,
   compendiumRoute,
