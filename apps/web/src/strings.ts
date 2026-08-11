@@ -1345,6 +1345,32 @@ export const S = {
     },
   },
 
+  /*
+    Die Übersicht — Martins Wunsch, über Philipp: „Eine Übersicht pro Charakter. Wo auf
+    einer Seite, gerne mit scrolling aber ohne Seiten Wechsel, relevante Infos zusammen
+    gefasst werden. Dies ist aus DM Perspektive nützlich."
+
+    Gefragt und entschieden: im ⋯-Menü · alles kompakt · nur lesen, AUSSER den HP —
+    der eine Handgriff, den der DM am Tisch wirklich braucht.
+  */
+  overview: {
+    title: "Übersicht",
+    action: "Übersicht",
+    actionHint: "Der ganze Bogen auf einer Seite — nur scrollen, kein Reiterwechsel.",
+    toSheet: "Zum Bogen",
+    readOnly: "Nur zum Nachsehen — geändert wird am Bogen. Einzig die HP gehen auch hier.",
+    abilities: "Attribute",
+    attacksNone: "Keine Angriffe.",
+    skillsTitle: "Fertigkeiten mit Rängen",
+    skillsNone: "Keine Ränge vergeben.",
+    slotsFree: (free: number, total: number) => `${free} von ${total} frei`,
+    trackerOf: (value: number, max: number | undefined) =>
+      max === undefined ? `${value}` : `${value} von ${max}`,
+    notesNone: "Keine Notizen.",
+    gearNone: "Nichts angelegt.",
+    featsNone: "Keine Talente.",
+  },
+
   dice: {
     title: "Würfel",
     history: "Verlauf",

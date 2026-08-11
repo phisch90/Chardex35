@@ -2557,6 +2557,42 @@ durchschreibende Felder, sind beide leer, fällt `origin` ganz weg.
   diesen Bereich abgeschaltet: ein Erklärsatz, der die falsche Sache erklärt, ist schlimmer
   als keiner.
 
+## Martins Übersicht — eine Seite je Charakter
+
+Martins Wunsch, über Philipp: **„Eine Übersicht pro Charakter. Wo auf einer Seite, gerne
+mit scrolling aber ohne Seiten Wechsel, relevante Infos zusammen gefasst werden. Dies ist
+aus DM Perspektive nützlich. Dann könnte ich mir jeden von euch als Charakter anlegen und
+würde eine schnelle Übersicht erhalten."**
+
+Gefragt und entschieden: **im ⋯-Menü** (nicht als achter Reiter) · **alles kompakt** ·
+**nur lesen, AUSSER den HP**. Gebaut als eigene Adresse
+(`/charaktere/:id/uebersicht`, `pages/CharacterOverview.tsx`), erreichbar aus BEIDEN
+⋯-Blättern — Bogen UND Charakterkarte, denn Martins Fall ist gerade der von der
+Startseite aus.
+
+Vier Entscheidungen sind eine Notiz wert:
+
+- **Gerechnet wird auf der Seite nichts.** Jede Zahl kommt fertig aus `sheet`, die
+  Zauber-Grade aus `spellsForCaster`, die Zähler-Grenze aus `effectiveTrackerMax` —
+  dieselben Quellen wie die sieben Reiter. Eine zweite Rechnung wäre eine zweite
+  Wahrheit, und genau auf einer Übersicht fiele ein Widerspruch zuerst auf.
+- **Die HP sind der EINE Schreibweg** — dasselbe `HpPad` wie am Bogen, derselbe
+  `save`-Weg mit `catch`. Alles andere ist Auskunft; die Gegenprobe steht in der
+  Teststrecke: außerhalb des HP-Blatts gibt es kein einziges Eingabefeld.
+- **Die Klassenfarbe gilt auch hier.** Der Effekt dafür wohnt seither EINMAL
+  (`useAccentAttribute` in `ui/classAccents.ts`), Bogen und Übersicht rufen ihn — zwei
+  Kopien wären zwei Stellen, die den Hauptschalter vergessen können. Die Schranke in
+  `materials.test.ts` ist mit umgezogen und verlangt jetzt zusätzlich, dass BEIDE
+  Seiten den Hook wirklich rufen: eine „eine Stelle" ohne Anschluss wäre keine.
+- **Leere Abschnitte sagen das** („Keine Ränge vergeben.", „Keine Notizen.") statt zu
+  fehlen — ein Abschnitt, der stumm verschwindet, sieht wie ein Fehler aus.
+
+Und eine Sondenfalle, die Verwandte der dreizehnten: **`fullPage: true` fotografiert
+das FENSTER, nicht das `main`.** Diese App scrollt das `main` mit `overflow-y-auto`;
+das „ganzseitige" Bild war trotzdem 844 px hoch, und die untere Hälfte der Seite hätte
+nie jemand angesehen. Wer die ganze Seite sehen will, scrollt das `main` in Schritten
+und fotografiert je Stand — wie beim Messen gilt: der Kasten, der wirklich scrollt.
+
 ## Noch offen
 
 - **`e2e-equip` meldet zehn Fehler, und sie sind ALT.** Die Strecke war doppelt tot

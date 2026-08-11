@@ -23,7 +23,7 @@ import { IdentityCard } from "./Identity.js";
 import { ShareCharacterButton } from "../../ui/ShareCharacter.js";
 import { CharacterActionsSheet } from "../../ui/CharacterActions.js";
 import { IssueCard } from "../../ui/IssueCard.js";
-import { accentKeyOf } from "../../ui/classAccents.js";
+import { useAccentAttribute } from "../../ui/classAccents.js";
 import { Icon, IconInline, type IconName } from "../../ui/icons.js";
 import { ClassMark } from "../../ui/ClassMark.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
@@ -118,43 +118,22 @@ export function CharacterSheetPage() {
   const { diceEnabled, classAccent } = useAppSettings();
 
   /*
-    Die Klassenfarbe ans <html>, solange DIESER Bogen offen ist — und beim Verlassen wieder
-    weg. Draußen färbt die Kampagne (Startseite), drinnen die Klasse: außen sieht man, zu
-    welcher Gruppe eine Figur zählt, innen, wer sie ist.
+    Die Klassenfarbe ans <html>, solange DIESER Bogen offen ist — draußen färbt die
+    Kampagne (Startseite), drinnen die Klasse. Der Effekt selbst wohnt in
+    `useAccentAttribute` (classAccents.ts), weil die Übersichts-Seite dieselbe Farbe
+    trägt: sie zeigt denselben Charakter.
+  */
+  useAccentAttribute(character);
 
-    Der Hook steht VOR den drei frühen `return`s und rechnet selbst mit dem noch nicht
-    geladenen Charakter. Ein Hook hinter einer Bedingung ist kein Hook — genau daran ist der
-    Stufenaufstieg schon einmal mit „Minified React error #310" auf halb weiß gelaufen.
-
-    Vorrang: was am Bogen steht (`character.accent`, seine Wahl), sonst die Klasse mit den
-    meisten Stufen. Kennt die App die Klasse nicht (NPC, Prestige, selbstgebaut), bleibt
-    Amber stehen.
+  /*
+    Merken, welcher Bogen offen ist — dafür ist der Knopf „Zurück zu …" in den
+    Einstellungen da. Der Hook steht VOR den frühen `return`s und rechnet mit dem noch
+    nicht geladenen Charakter (zehnte Falle: ein Hook hinter einer Bedingung ist kein
+    Hook — „Minified React error #310").
   */
   useEffect(() => {
-    /*
-      Nebenbei merken, welcher Bogen offen ist — dafür ist der Knopf „Zurück zu …" in den
-      Einstellungen da. Der Hook läuft genau dann, wenn ein Bogen offen ist, und steht vor
-      allen frühen `return`s; ein zweiter Hook wäre eine zweite Stelle, die es vergessen
-      kann.
-    */
     if (character) rememberSheet(character.id);
-    const root = document.documentElement;
-    // Die Rangfolge (eigene Wahl vor Klasse) steht in `accentKeyOf` — EINMAL, weil sie
-    // auch der Porträt-Platzhalter der Startseite braucht.
-    /*
-      Der Hauptschalter aus den Einstellungen kommt VOR der Rangfolge: ist er aus, wird das
-      Attribut gar nicht gesetzt, und damit fallen Rahmenfarbe, Anstrich und Kartentönung
-      alle zusammen weg. Genau EINE Stelle entscheidet das — sonst müsste jede der drei
-      Schichten den Schalter selbst kennen.
-    */
-    const key =
-      !classAccent || character === undefined || character === null
-        ? undefined
-        : accentKeyOf(character);
-    if (key === undefined) root.removeAttribute("data-accent");
-    else root.setAttribute("data-accent", key);
-    return () => root.removeAttribute("data-accent");
-  }, [character, classAccent]);
+  }, [character]);
 
   /*
     Der Bearbeiten-Modus in den Store, damit die HÜLLE ihre Hauptnavigation ausblenden kann

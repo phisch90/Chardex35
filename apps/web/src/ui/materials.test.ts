@@ -190,12 +190,20 @@ describe("Der Hauptschalter für die Klassenfarbe", () => {
       - der Schalter fehlt in der Abhängigkeitsliste des Effekts. Dann wirkt er erst beim
         nächsten Öffnen des Bogens, und in den Einstellungen tut der Umschalter scheinbar
         nichts. Genau die Familie „etwas weiß es, und etwas anderes kann es nicht".
+
+      Die EINE Stelle ist seit Martins Übersicht `useAccentAttribute` in classAccents.ts —
+      Bogen UND Übersicht rufen sie; zwei Kopien des Effekts wären zwei Stellen, die den
+      Schalter vergessen können. Bogen und Übersicht müssen den Hook wirklich RUFEN, sonst
+      ist die eine Stelle eine ohne Anschluss.
     */
-    const sheet = readFileSync(join(SRC, "pages/sheet/index.tsx"), "utf8");
-    expect(sheet).toContain("!classAccent");
-    expect(sheet).toContain("}, [character, classAccent]);");
+    const accents = readFileSync(join(SRC, "ui/classAccents.ts"), "utf8");
+    expect(accents).toContain("!classAccent");
+    expect(accents).toContain("}, [character, classAccent]);");
     // Und der Schalter muss aus den Einstellungen kommen, nicht aus einem eigenen Speicher.
-    expect(sheet).toMatch(/const \{[^}]*classAccent[^}]*\} = useAppSettings\(\)/);
+    expect(accents).toMatch(/const \{[^}]*classAccent[^}]*\} = useAppSettings\(\)/);
+    for (const page of ["pages/sheet/index.tsx", "pages/CharacterOverview.tsx"]) {
+      expect(readFileSync(join(SRC, page), "utf8")).toContain("useAccentAttribute(character)");
+    }
   });
 
   it("die Einstellungen haben einen Umschalter dafür", () => {
