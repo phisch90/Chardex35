@@ -3,6 +3,7 @@ import {
   BONUS_TYPES,
   allowedSlots,
   conflictingEquipIds,
+  deityOf,
   displayName,
   featNeedsWeaponChoice,
   isStatPath,
@@ -10,6 +11,7 @@ import {
   equipTap,
   itemKind,
   proficiencyFor,
+  warDomainGrant,
   weaponSuggestions,
   type BonusType,
   type EquipSlot,
@@ -96,8 +98,20 @@ export function InventoryTab({ character, sheet, editMode, save }: TabProps) {
       proficiencyFor(
         character.levels.map((level) => level.classId),
         character.raceId === "" ? undefined : character.raceId,
+        /*
+          Die Lieblingswaffe der Gottheit, wenn die War-Domäne gewählt ist: ihr
+          Granted Power gewährt die Übung mit. Ohne das stünde am Bogen eines
+          reinen Klerikers „Weapon Focus geschenkt" und daneben „ohne Übung" —
+          zwei Sätze über dieselbe Waffe, die sich widersprechen.
+        */
+        compendium === undefined
+          ? []
+          : (() => {
+              const grant = warDomainGrant(deityOf(character, compendium), character.domains);
+              return grant === null ? [] : [grant.weaponId];
+            })(),
       ),
-    [character.levels, character.raceId],
+    [character.levels, character.raceId, character.deityRef, character.domains, compendium],
   );
   const suggestions = useMemo(() => {
     if (compendium === undefined) return undefined;

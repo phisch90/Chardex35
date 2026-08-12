@@ -3,6 +3,7 @@ import type { Character } from "../schema/character.js";
 import type {
   ClassEntity,
   ConditionEntity,
+  DeityEntity,
   Effect,
   FeatEntity,
   ItemEntity,
@@ -31,6 +32,20 @@ export interface ResolvedCharacter {
   conditions: { conditionId: string; entity: ConditionEntity | null }[];
   /** Gewählte Domänen samt aufgelöster Zauberliste (für Name und Zauber). */
   domains: { classId: string; spellListId: string; entity: SpellListEntity | null }[];
+  /**
+   * Die Gottheit des Bogens, über `deityRef` aufgelöst — oder `null`.
+   *
+   * Sie steht hier und nicht als Kompendiums-Zugriff in der Engine, weil die
+   * Engine das Kompendium bewusst nicht mehr hat: aufgelöst wird EINMAL in
+   * Stufe 1, gerechnet wird danach nur noch. Gebraucht wird sie für den
+   * Talentplatz, den die War-Domäne gewährt.
+   *
+   * Kein `issue`, wenn der Verweis ins Leere zeigt: eine Kennung ohne Eintrag
+   * heißt „keine Gottheit" (dieselbe Schutzregel wie bei den Behältern) — sonst
+   * würde ein auf dem anderen Gerät gelöschter Gott einen Fehler an den Bogen
+   * schreiben.
+   */
+  deity: DeityEntity | null;
   /**
    * Alle Fertigkeiten des Kompendiums (SRD + Homebrew, ohne Tombstones).
    * `id` ist die kanonische ID (bei Overrides die Ziel-ID) — unter dieser
