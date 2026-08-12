@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import {
   BONUS_TYPES,
   allowedSlots,
+  assignFeatOrigins,
   conflictingEquipIds,
+  sameOrigin,
   deityOf,
   displayName,
   featNeedsWeaponChoice,
@@ -15,6 +17,7 @@ import {
   weaponSuggestions,
   type BonusType,
   type EquipSlot,
+  type FeatSlotSource,
   type ItemEntity,
   type ItemKind,
   type StatPath,
@@ -1113,6 +1116,47 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
   const slotsLeft = sheet.featSlots.available - sheet.featSlots.used;
   const mayAdd = slotsLeft > 0 || editMode;
 
+  /** Eine Herkunft setzen oder wegnehmen — `undefined` heißt „keine Angabe". */
+  const setOrigin = (index: number, origin: FeatSlotSource["origin"] | undefined) =>
+    save((c) => {
+      const f = c.feats[index];
+      if (!f) return;
+      if (origin === undefined) delete f.origin;
+      else f.origin = { ...origin };
+    });
+
+  /*
+    Sein Auftrag: „Du kannst ja den bisherigen sechs Talenten einfach eine Quelle
+    zuordnen, sodass diese sechs einfach verteilt sind." Die Verteilung selbst steht im
+    KERN (`assignFeatOrigins`) — dieselbe Funktion benutzen der Assistent und der
+    Stufenaufstieg, sonst wären es drei Regeln für dieselbe Frage.
+
+    Der Knopf steht nur da, wenn es etwas zu tun GIBT: ein Knopf, der bei jedem Blick
+    auf den Reiter „0 Zeilen" verteilt, ist Lärm.
+  */
+  const ohneHerkunft = character.feats.filter((f) => f.origin === undefined).length;
+  const assignOrigins = () => {
+    const vorschlag = assignFeatOrigins(
+      character.feats.map((f) => f.origin),
+      sheet.featSlots.sources,
+    );
+    const vorher = structuredClone(character.feats);
+    let gesetzt = 0;
+    save((c) => {
+      vorschlag.forEach((origin, i) => {
+        const f = c.feats[i];
+        if (f === undefined || origin === undefined || f.origin !== undefined) return;
+        f.origin = { ...origin };
+        gesetzt++;
+      });
+    });
+    undo.offer(
+      S.feats.originAssigned(Math.min(gesetzt || ohneHerkunft, ohneHerkunft)),
+      () => save((c) => void (c.feats = vorher)),
+      "zugeordnet",
+    );
+  };
+
   return (
     <div className="space-y-3">
       <Card>
@@ -1124,7 +1168,26 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
           EINMAL über der Liste statt an jeder Zeile: bei sieben Talenten wäre der
           Satz siebenmal da, und ein Satz, der immer dasteht, wird nicht gelesen.
         */}
-        {editMode && <p className="mb-1 text-[11px] leading-snug text-slate-500">{S.feats.originHint}</p>}
+        {editMode && (
+          <>
+            <p className="mb-1 text-[11px] leading-snug text-slate-500">{S.feats.originHint}</p>
+            {/*
+              Der Vorschlag für alles, was noch nichts trägt. Nur da, wenn es etwas zu
+              verteilen GIBT — ein Knopf, der bei jedem Blick „0 Zeilen" verteilt, ist
+              Lärm. Der Hinweis steht DARUNTER und nicht darüber: er erklärt den Knopf,
+              und ein Satz über der falschen Sache ist schlimmer als keiner (im
+              Punktekauf schon einmal bezahlt).
+            */}
+            {ohneHerkunft > 0 && (
+              <div className="mb-2">
+                <GhostButton onClick={assignOrigins}>{S.feats.originAssign}</GhostButton>
+                <p className="mt-1 text-[11px] leading-snug text-slate-500">
+                  {S.feats.originAssignHint(ohneHerkunft)}
+                </p>
+              </div>
+            )}
+          </>
+        )}
         {/*
           Kräftigere Linie und mehr Luft — sein Auftrag: „Die Talente in der Talente
           Seite bitte deutlicher voneinander trennen mit 'ner leichten Trennlinie oder
@@ -1221,59 +1284,48 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
                     </label>
                   )}
                   {/*
-                    Herkunft nachtragen — bestehende Bögen tragen nichts (Fehlerfamilie 1:
-                    ein gespeicherter Datensatz ist nie auf dem Stand des Schemas). Beide
-                    Felder schreiben DURCH; sind beide leer, fällt das Feld ganz weg — ein
-                    leeres Objekt wäre eine Herkunft, die nichts sagt.
+                    Die Herkunft wird GEWÄHLT, nicht getippt. Hier standen zwei
+                    Freitextfelder (Stufe, Quelle) — in die konnte man „Stufe 47"
+                    schreiben, und man musste selbst wissen, welche Plätze der Bogen
+                    überhaupt hat. Die App weiß das: `sheet.featSlots.sources` rechnet
+                    sie aus Stufen, Volk, Klassen-Bonustalenten und Gewährtem aus. Wo
+                    die App die Möglichkeiten KENNT, gehört jede als Knopf hin.
                   */}
                   {editMode && (
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
-                      {S.feats.originTitle}
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        value={feat.origin?.level ?? ""}
-                        aria-label={S.feats.originLevelLabel}
-                        placeholder={S.feats.originLevelLabel}
-                        onChange={(e) => {
-                          const v = e.target.valueAsNumber;
-                          save((c) => {
-                            const f = c.feats[index];
-                            if (!f) return;
-                            const origin = { ...f.origin };
-                            if (Number.isFinite(v) && v >= 1) origin.level = Math.floor(v);
-                            else delete origin.level;
-                            if (origin.level === undefined && (origin.source ?? "") === "") {
-                              delete f.origin;
-                            } else {
-                              f.origin = origin;
-                            }
-                          });
-                        }}
-                        className="w-16 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
-                      />
-                      {S.feats.originSourceLabel}
-                      <input
-                        value={feat.origin?.source ?? ""}
-                        placeholder={S.feats.originSourcePlaceholder}
-                        onChange={(e) => {
-                          const next = e.target.value;
-                          save((c) => {
-                            const f = c.feats[index];
-                            if (!f) return;
-                            const origin = { ...f.origin };
-                            if (next === "") delete origin.source;
-                            else origin.source = next;
-                            if (origin.level === undefined && origin.source === undefined) {
-                              delete f.origin;
-                            } else {
-                              f.origin = origin;
-                            }
-                          });
-                        }}
-                        className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
-                      />
+                    <div className="mt-1.5">
+                      <div className="text-[11px] text-slate-500">{S.feats.originPick}</div>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        <Chip active={feat.origin === undefined} onClick={() => setOrigin(index, undefined)}>
+                          {S.feats.originNone}
+                        </Chip>
+                        {sheet.featSlots.sources.map((slot, si) => {
+                          const isMine = sameOrigin(feat.origin, slot.origin);
+                          /*
+                            Ein Platz gehört einem Talent. „belegt" steht dran, statt
+                            den Knopf zu sperren: gewarnt statt gesperrt, und wer
+                            zwei Zeilen tauschen will, kommt sonst nicht durch.
+                          */
+                          const takenByOther =
+                            !isMine &&
+                            character.feats.some(
+                              (other, oi) => oi !== index && sameOrigin(other.origin, slot.origin),
+                            );
+                          return (
+                            <Chip
+                              key={`${slot.label}-${si}`}
+                              active={isMine}
+                              onClick={() => setOrigin(index, slot.origin)}
+                            >
+                              {slot.label}
+                              {takenByOther && (
+                                <span className="ml-1 text-[10px] text-slate-500">
+                                  ({S.feats.originTaken})
+                                </span>
+                              )}
+                            </Chip>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>

@@ -2650,6 +2650,70 @@ keine) und der geschenkte Focus auf die Halbarte. Nicht neu anfangen — nachtra
 ein Kämpfer-Bonustalent zulässig ist (Extra Turning wäre es nicht). Bei ihm geht die
 Zuordnung auf, deshalb nur eine Notiz: es wäre eine eigene Runde mit einer Handtabelle.
 
+### Die Talentplätze wissen jetzt, WOHER sie kommen
+
+Sein Auftrag, und er ist die richtige Verallgemeinerung der Runde davor: **„man kann doch
+jetzt mal den Charakter zurückgehen und sehen, okay, drei Fighter, Mensch und vier
+Kleriker. Da raus kann man doch herleiten, wie viele Talente ich habe. Du kannst ja den
+bisherigen sechs Talenten einfach eine Quelle zuordnen … Und in der Zukunft, jedes Mal,
+wenn man ein neues Talent auswählt, dann steht drin, dass es vom Level-up zu Klasse Rang
+x y kommt oder was anderes als Quelle hat."**
+
+Er hat recht, und es ist genau die Trennung dieses Projekts: die **LISTE** der Plätze ist
+eine FOLGE (`engine/featSlots.ts`, `sheet.featSlots.sources`), gespeichert wird nur, WELCHER
+Platz zu welchem Talent gehört — das ist eine Eingabe, denn seine Spielhistorie kennt die
+App nicht. Für seinen Bogen kommt heraus: `Stufe 1 · Stufe 3 · Stufe 6 · Human · Fighter 1
+· Fighter 2`.
+
+Fünf Entscheidungen sind eine Notiz wert:
+
+- **Die Klassenplätze tragen die KLASSENstufe**, nicht die Charakterstufe („Fighter 2", nicht
+  „Stufe 2") — genau seine Formulierung „Klasse Rang x y". Bei einem Mehrklassler sagt
+  „Fighter 2" etwas, „Stufe 5" nichts. Die Zahl kommt aus `timeline.features[].level`, das
+  ohnehin die Klassenstufe ist.
+- **Gelesen wird der EFFEKT, nicht der Name.** Das Bonustalent des Menschen ist ein
+  `feats.slots`-Effekt in `races.json`; ein eigenes Volk aus seinen Büchern zählt damit von
+  allein mit, und ein Elf bekommt keinen Platz, den es nicht gibt. Dasselbe für die Klassen.
+- **Die Liste ist immer so lang wie die Zahl daneben.** `featSlotSources` bekommt
+  `available` herein und benennt den Rest als „andere Quelle", statt ihn zu verschweigen.
+  Zwei Zählungen derselben Sache, die auseinanderlaufen, hätte der Auswähler sofort gezeigt
+  (ein Platz ohne Knopf) — der Test hält `available === sources.length` über fünf Aufbauten
+  fest, bis Kämpfer 20.
+- **An einem Platz steht genau EINES der zwei Felder** (`level` ODER `source`). Damit bleibt
+  die Anzeige die, die es schon gibt (Quelle gewinnt, sonst „Stufe N"), und das Schema muss
+  sich nicht ändern: ein Feld, das schon ausgeliefert ist, wird benutzt und nicht umgebaut.
+- **Die Verteilung steht EINMAL im Kern** (`assignFeatOrigins`), und drei Stellen rufen sie:
+  der Knopf am Bogen, der Assistent und der Stufenaufstieg. Vorher schrieben zwei davon
+  pauschal eine Stufe hinein („Stufe 1" für alles im Assistenten, die neue Gesamtstufe beim
+  Aufstieg) — bei einem Kämpfer-Bonustalent ist das die falsche Auskunft.
+
+**Das Freitextfeld ist damit weg**, und das ist die siebte Falle zum wiederholten Mal
+richtig entschieden: dort konnte „Stufe 47" stehen, und man musste selbst wissen, welche
+Plätze der Bogen hat. Wo die App die Möglichkeiten KENNT, gehört jede als Knopf hin. Ein
+Platz, den ein anderes Talent hat, ist als „belegt" markiert — markiert, nicht gesperrt:
+gewarnt statt gesperrt, sonst käme man beim Tauschen zweier Zeilen nicht durch.
+
+**Beim Stufenaufstieg wird die Herkunft beim SPEICHERN gesetzt, nicht in der Vorschau.**
+Henne-Ei: welche Plätze der Aufstieg schafft, weiß erst der Bogen NACH dem Aufstieg — und
+der entsteht aus genau dem Objekt, in das die Herkunft gehört. Für die Vorschau ist es
+gleichgültig (eine Herkunft verschiebt keine Zahl), beim Schreiben steht `sheetAfter`
+bereit. Dieselbe Trennung wie bei den Zählern (`planLevelUpRefill`).
+
+**Drei Funde in MEINEN eigenen Prüfungen**, und alle drei sind aufgeschriebene Fallen:
+
+1. **Ein Ausdruck über den ganzen Bogen trifft den eigenen Text.** Meine Prüfung „vorher
+   trägt kein Talent eine Herkunft" suchte `/human|stufe/` im BODY — und im Kopf steht
+   „Fighter 3 / Cleric 4 · Stufe 7 · Human". Dreimal rot, und die App hatte recht. Gelesen
+   wird in den Talent-ZEILEN.
+2. **Wer nach Namen sucht, findet irgendwann nicht alles.** Meine Hilfsfunktion las fünf
+   Talentnamen — es sind aber SECHS Zeilen, weil zwei davon „Weapon Focus" heißen. Die
+   sechste Herkunft („Fighter 2") stand da und wurde nie angesehen. Gelesen werden jetzt
+   ALLE Zeilen mit fett gesetztem Namen.
+3. **Das Verb stand zweimal da.** „6 Herkünfte zugeordnet zugeordnet" — der Text trug sein
+   Verb selbst UND die Rücknahme-Leiste hängt eines an. Wörtlich derselbe Fehler wie
+   „Spellcraft-Probe verbucht gelöscht", und wieder hat ihn das BILD gefunden und kein Test.
+   Die Strecke zählt jetzt mit, dass „zugeordnet" genau einmal dasteht.
+
 Und eine Sondenfalle, die Verwandte der dreizehnten: **`fullPage: true` fotografiert
 das FENSTER, nicht das `main`.** Diese App scrollt das `main` mit `overflow-y-auto`;
 das „ganzseitige" Bild war trotzdem 844 px hoch, und die untere Hälfte der Seite hätte

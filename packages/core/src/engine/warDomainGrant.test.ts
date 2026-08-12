@@ -122,7 +122,7 @@ describe.skipIf(!packsAvailable)("Was die War-Domaene gewaehrt", () => {
       Grundrechnung falsch waere.
     */
     const ohneWar = hike({ domains: [{ classId: CLERIC, spellListId: HEALING }] });
-    expect(slots(ohneWar)).toEqual({ available: 6, used: 6 });
+    expect(slots(ohneWar)).toMatchObject({ available: 6, used: 6 });
     expect(codes(ohneWar)).toEqual([]);
 
     expect(slots(hike()).available).toBe(7);
@@ -133,7 +133,7 @@ describe.skipIf(!packsAvailable)("Was die War-Domaene gewaehrt", () => {
       Sonst haengt die Zahl am Eintragen, und der freie Focus waere unsichtbar.
       "1 Slot ist noch frei" ist hier die Wahrheit: seine Gottheit schenkt ihm einen.
     */
-    expect(slots(hike())).toEqual({ available: 7, used: 6 });
+    expect(slots(hike())).toMatchObject({ available: 7, used: 6 });
     expect(codes(hike())).toEqual(["feat-slots-open"]);
   });
 
@@ -149,7 +149,7 @@ describe.skipIf(!packsAvailable)("Was die War-Domaene gewaehrt", () => {
         },
       ],
     });
-    expect(slots(mitHalbarte)).toEqual({ available: 7, used: 7 });
+    expect(slots(mitHalbarte)).toMatchObject({ available: 7, used: 7 });
     expect(codes(mitHalbarte)).toEqual([]);
   });
 

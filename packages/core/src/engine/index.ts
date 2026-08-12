@@ -50,6 +50,7 @@ export * from "./advice.js";
 export * from "./pointBuy.js";
 export * from "./classFeatures.js";
 export * from "./domains.js";
+export * from "./featSlots.js";
 export * from "./issues.js";
 export * from "./types.js";
 export { stackContributions, withoutContributions } from "./stack.js";
