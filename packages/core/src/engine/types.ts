@@ -2,6 +2,7 @@ import type { EquipSlot } from "../schema/character.js";
 import type { Ability, BonusType, Size } from "../schema/common.js";
 import type { ContainerLoad } from "./carry.js";
 import type { DyingZone } from "./dying.js";
+import type { FeatSlotSource } from "./featSlots.js";
 
 /** Ein Beitrag zu einem Wert — bleibt IMMER erhalten (Breakdown-UI). */
 export interface Contribution {
@@ -331,7 +332,17 @@ export interface DerivedSheet {
   attacks: AttackLine[];
   skills: SkillLine[];
   skillPoints: { available: number; spent: number };
-  featSlots: { available: number; used: number };
+  /**
+   * Talentplätze — die Zahl UND woher jeder einzelne kommt.
+   *
+   * `sources` ist eine Folge aus Volk, Klassen und Stufen (siehe
+   * `engine/featSlots.ts`) und immer genau `available` Einträge lang: der
+   * Auswähler am Talent baut daraus seine Knöpfe, und der Vorschlag
+   * („Herkunft zuordnen") verteilt daraus die freien Plätze. Zwei Zählungen, die
+   * auseinanderlaufen könnten, hätte diese App schon einmal teuer bezahlt —
+   * deshalb hält der Test `available === sources.length` fest.
+   */
+  featSlots: { available: number; used: number; sources: FeatSlotSource[] };
   /** Talent-IDs wie am Charakter eingetragen — Mehrfachnennungen inklusive. */
   featIds: string[];
   /**

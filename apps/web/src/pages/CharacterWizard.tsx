@@ -8,6 +8,7 @@ import {
   pointBuyState,
   suggestPointBuy,
   adviceFor,
+  assignFeatOrigins,
   characterSchema,
   classCategory,
   conflictingEquipIds,
@@ -31,6 +32,7 @@ import {
   type DerivedSheet,
   type Entity,
   type EquipSlot,
+  type FeatSlotSource,
   type SkillLine,
   type SpellcastingBlock,
 } from "@codex35/core";
@@ -133,6 +135,13 @@ function draftToCharacter(
    * Anlegen werden sie mitgegeben.
    */
   trackers: ReturnType<typeof trackersFromDraft> = [],
+  /**
+   * Die Talentplätze dieses Aufbaus. Dieselbe Henne-Ei-Lage wie bei den Zählern: sie
+   * hängen am ABGELEITETEN Bogen, und der entsteht aus dieser Funktion — sie können
+   * also nicht von innen kommen. Beim Live-Ableiten bleiben sie leer, erst beim Anlegen
+   * werden sie mitgegeben.
+   */
+  featSlotSources: FeatSlotSource[] = [],
 ): Character {
   return characterSchema.parse({
     id: "draft",
@@ -145,11 +154,28 @@ function draftToCharacter(
     skillRanks: draft.skillRanks,
     skillSubtypes: draft.skillSubtypes,
     /*
-      Jede Wahl trägt ihre Herkunft — sein Auftrag: „die Talente [sollen] die Info
-      zeigen woher sie kommen … in welchem Level ich sie dazu genommen hab." Im
-      Assistenten ist das immer Stufe 1.
+      Jede Wahl trägt ihre Herkunft — und zwar den ECHTEN Platz, nicht pauschal
+      „Stufe 1". Hier stand `origin: { level: 1 }` an jedem Talent; bei einem
+      Menschen mit Kämpferstufe sind das aber drei verschiedene Plätze (Stufe 1,
+      das Bonustalent des Volkes, das Bonustalent der Klasse), und genau die will
+      er unterscheiden können. Verteilt wird mit derselben Funktion wie am Bogen
+      und im Stufenaufstieg (`assignFeatOrigins`) — drei Regeln für dieselbe Frage
+      wären drei Gelegenheiten, sie auseinanderlaufen zu lassen.
+
+      Die Plätze kommen aus dem Bogen des ENTWURFS (`props.sheet`); steht er noch
+      nicht (Volk oder Klasse fehlen), bleibt die Herkunft leer — lieber keine als
+      eine erfundene.
     */
-    feats: draft.featIds.map((entry) => ({ ...entry, origin: { level: 1 } })),
+    feats: (() => {
+      const origins = assignFeatOrigins(
+        draft.featIds.map(() => undefined),
+        featSlotSources,
+      );
+      return draft.featIds.map((entry, i) => {
+        const origin = origins[i];
+        return origin === undefined ? entry : { ...entry, origin };
+      });
+    })(),
     inventory: draft.inventory,
     /*
       Gewählte Zauber gehören zur Klasse, nicht an den Charakter global: ein
@@ -352,7 +378,7 @@ export function CharacterWizardPage() {
   };
 
   const create = async () => {
-    const data = draftToCharacter(draft, trackersFromDraft(draft, sheet));
+    const data = draftToCharacter(draft, trackersFromDraft(draft, sheet), sheet?.featSlots.sources ?? []);
     const { id: _drop, ...rest } = data;
     /*
       Der Assistent ist die längste Eingabe der App. Schlägt das Anlegen fehl,

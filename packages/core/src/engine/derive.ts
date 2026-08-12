@@ -18,6 +18,7 @@ import {
 import { carriedWeight } from "./carry.js";
 import { warDomainGrant } from "../compendium/deity.js";
 import { dyingStatus } from "./dying.js";
+import { featSlotSources } from "./featSlots.js";
 import { isNaturalOrUnarmed } from "./equipment.js";
 import type { ActiveEffect, ResolvedCharacter, TimelineResult } from "./internal.js";
 import {
@@ -964,12 +965,21 @@ export function deriveSheetValues(
     Wahrheit: seine Göttin schenkt ihm einen.
   */
   const warGrant = warDomainGrant(resolved.deity, character.domains);
+  const featSlotsAvailable =
+    baseFeatSlots(totalLevel) +
+    stackPaths(buckets, ["feats.slots"]).total +
+    (warGrant === null ? 0 : 1);
   const featSlots = {
-    available:
-      baseFeatSlots(totalLevel) +
-      stackPaths(buckets, ["feats.slots"]).total +
-      (warGrant === null ? 0 : 1),
+    available: featSlotsAvailable,
     used: character.feats.length,
+    /*
+      WOHER jeder Platz kommt — sein Auftrag: „man kann doch jetzt mal den
+      Charakter zurückgehen und sehen, okay, drei Fighter, Mensch und vier
+      Kleriker. Da raus kann man doch herleiten, wie viele Talente ich habe."
+      Die Liste ist immer so lang wie die Zahl daneben; `featSlotSources` bekommt
+      sie dafür herein.
+    */
+    sources: featSlotSources(resolved, timeline, featSlotsAvailable),
   };
 
   /**

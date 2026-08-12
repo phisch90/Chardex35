@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   ABILITIES,
   adviceFor,
+  assignFeatOrigins,
   classCategory,
   deriveSheet,
   displayName,
@@ -101,13 +102,16 @@ export function LevelUpPage() {
     copy.skillRanks = { ...ranks };
     copy.skillSubtypes = [...copy.skillSubtypes, ...newSubtypes];
     /*
-      `origin` ist die Herkunft am Talent — beim Aufstieg die NEUE Gesamtstufe.
-      Sein Auftrag: „in welchem Level ich sie dazu genommen hab."
+      Die Herkunft der neuen Talente wird beim SPEICHERN gesetzt und nicht hier.
+
+      Der Grund ist eine Henne-Ei-Lage: welche Plätze der Aufstieg schafft, weiß erst
+      der Bogen NACH dem Aufstieg — und der entsteht aus genau diesem Objekt. Für die
+      Vorschau ist das gleichgültig (eine Herkunft verschiebt keine Zahl), beim
+      Schreiben nicht: dort steht `sheetAfter` bereit, und `assignFeatOrigins` verteilt
+      die freien Plätze. Vorher stand hier pauschal die neue Gesamtstufe — bei einem
+      Kämpfer-Bonustalent ist das die falsche Auskunft.
     */
-    copy.feats = [
-      ...copy.feats,
-      ...newFeats.map((entry) => ({ ...entry, extraEffects: [], origin: { level: newTotal } })),
-    ];
+    copy.feats = [...copy.feats, ...newFeats.map((entry) => ({ ...entry, extraEffects: [] }))];
     if (newKnown.length > 0) {
       const state = (copy.spellState[classId] ??= { known: [], prepared: [], usedSlots: [], favorites: [] });
       state.known = [...state.known, ...newKnown.filter((id) => !state.known.includes(id))];
@@ -200,6 +204,23 @@ export function LevelUpPage() {
     if (!afterCharacter) return;
     const next = structuredClone(afterCharacter);
     applyTrackerLines(next, levelUpTrackers);
+    /*
+      Die Herkunft der neuen Talente: die Plätze, die dieser Aufstieg schafft. Gerechnet
+      am Bogen NACH dem Aufstieg (`sheetAfter`) — dieselbe Trennung wie bei den Zählern
+      (`planLevelUpRefill`), und mit derselben Funktion wie am Bogen und im Assistenten.
+      Angefasst werden nur Zeilen OHNE Herkunft; wer eine hat, behält sie.
+    */
+    if (sheetAfter !== undefined) {
+      const origins = assignFeatOrigins(
+        next.feats.map((f) => f.origin),
+        sheetAfter.featSlots.sources,
+      );
+      origins.forEach((origin, i) => {
+        const feat = next.feats[i];
+        if (feat === undefined || origin === undefined || feat.origin !== undefined) return;
+        feat.origin = { ...origin };
+      });
+    }
     /*
       Schlägt das Schreiben fehl, wird NICHT navigiert: sonst stünde er auf dem
       Bogen ohne die neue Stufe und hätte den ganzen Aufstieg noch einmal vor sich,

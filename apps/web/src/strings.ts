@@ -844,11 +844,36 @@ export const S = {
     */
     originLevel: (n: number) => `Stufe ${n}`,
     originTitle: "Herkunft",
-    originLevelLabel: "Stufe",
-    originSourceLabel: "oder Quelle",
-    originSourcePlaceholder: "z.B. Bonus (Mensch)",
+    /*
+      Die Herkunft wird GEWÄHLT, nicht getippt — sein Auftrag: „man kann doch jetzt mal
+      den Charakter zurückgehen und sehen, okay, drei Fighter, Mensch und vier Kleriker.
+      Da raus kann man doch herleiten, wie viele Talente ich habe."
+
+      Wo die App die Möglichkeiten KENNT, gehört jede einzelne als Knopf hin (dieselbe
+      Regel wie bei den Fertigkeits-Teilgebieten und der Waffenwahl). Das Freitextfeld
+      ist damit weg: „Stufe 47" war eingebbar und ist es nicht mehr.
+    */
+    originPick: "Woher kommt dieses Talent?",
+    originNone: "keine Angabe",
+    /** Steht am Knopf eines Platzes, den schon ein anderes Talent belegt. */
+    originTaken: "belegt",
     originHint:
-      "In welcher Stufe das Talent gewählt wurde — oder seine feste Quelle (Bonus-Talent von Volk, Klasse, Domäne). Steht eine Quelle da, zeigt der Bogen sie.",
+      "Die Plätze rechnet die App aus deinem Aufbau (Stufen, Volk, Klassen-Bonustalente, gewährte). Ein Platz kann nur einem Talent gehören.",
+    /*
+      Der Vorschlag für alles, was noch nichts trägt — sein Auftrag: „Du kannst ja den
+      bisherigen sechs Talenten einfach eine Quelle zuordnen, sodass diese sechs einfach
+      verteilt sind." Angesagt und rücknehmbar: es schreibt an mehreren Zeilen.
+    */
+    originAssign: "Herkunft zuordnen",
+    originAssignHint: (n: number) =>
+      `Verteilt die freien Plätze auf die ${n} ${n === 1 ? "Zeile" : "Zeilen"} ohne Herkunft — in der Reihenfolge, in der die Plätze entstehen. Danach kannst du jede einzeln richtigstellen.`,
+    /*
+      NUR die Menge, ohne Verb: die Rücknahme-Leiste hängt ihres selbst an
+      („6 Herkünfte" + „zugeordnet"). Mit Verb stand dort „6 Herkünfte zugeordnet
+      zugeordnet" — derselbe Fehler wie „Spellcraft-Probe verbucht gelöscht", und
+      gefunden hat ihn wieder das Bild und kein Test.
+    */
+    originAssigned: (n: number) => `${n} ${n === 1 ? "Herkunft" : "Herkünfte"}`,
   },
 
   campaign: {

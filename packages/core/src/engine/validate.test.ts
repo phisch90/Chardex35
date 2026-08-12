@@ -128,7 +128,7 @@ describe.skipIf(!packsAvailable)("Warnung, wenn etwas offen ist", () => {
 
   it("Talent-Slots offen — sein Beispiel", () => {
     const sheet = sheetOf(fighter4({ feats: [{ featId: "srd:feat:toughness" }] }));
-    expect(sheet.featSlots).toEqual({ available: 6, used: 1 });
+    expect(sheet.featSlots).toMatchObject({ available: 6, used: 1 });
     const issue = code(sheet.issues, "feat-slots-open");
     expect(issue?.message).toBe("Talente: 5 Slots sind noch frei (1 von 6 gewählt).");
     expect(issue?.tab).toBe("feats");
@@ -161,7 +161,7 @@ describe.skipIf(!packsAvailable)("Warnung, wenn etwas offen ist", () => {
       "iron-will",
     ].map((id) => ({ featId: `srd:feat:${id}` }));
     const sheet = sheetOf(fighter4({ feats }));
-    expect(sheet.featSlots).toEqual({ available: 6, used: 6 });
+    expect(sheet.featSlots).toMatchObject({ available: 6, used: 6 });
     expect(code(sheet.issues, "feat-slots-open")).toBeUndefined();
   });
 
