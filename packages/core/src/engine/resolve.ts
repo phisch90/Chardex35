@@ -1,5 +1,6 @@
 import type { Character } from "../schema/character.js";
 import type { Entity } from "../schema/entities.js";
+import { deityOf } from "../compendium/deity.js";
 import type { DerivedIssue } from "./types.js";
 import type { ResolvedCharacter } from "./internal.js";
 
@@ -76,6 +77,15 @@ export function resolve(
     entity: get(entry.spellListId, "spelllist", "Domäne"),
   }));
 
+  /*
+    Die Gottheit — bewusst OHNE `get`, also ohne `issue`, wenn der Verweis ins
+    Leere zeigt. Eine Kennung ohne Eintrag heißt „keine Gottheit" (dieselbe
+    Schutzregel wie bei den Behältern): wer seinen Gott auf dem anderen Gerät
+    löscht, soll keinen Fehler an seinem Bogen finden. `deityOf` prüft die Art
+    mit, ein Verweis auf etwas anderes zählt also auch nicht.
+  */
+  const deity = deityOf(character, compendium) ?? null;
+
   // Ein Override-Entity liegt unter eigener UND Ziel-ID in der Map. Gelistet
   // wird nur der kanonische Eintrag (bei Overrides: unter der Ziel-ID).
   const skills: { id: string; entity: Extract<Entity, { kind: "skill" }> }[] = [];
@@ -96,6 +106,7 @@ export function resolve(
     items,
     conditions,
     domains,
+    deity,
     skills,
     issues,
   };

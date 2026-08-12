@@ -63,6 +63,41 @@ export function buildDeity(input: {
 export const WAR_DOMAIN_ID = "srd:spelllist:domain-war";
 const WEAPON_FOCUS_ID = "srd:feat:weapon-focus";
 
+/** Was die War-Domäne gewährt — die Waffe, um die es geht. */
+export interface WarDomainGrant {
+  weaponId: string;
+  /** Der Name aus der Gottheit; die Anzeige darf ihn nachschlagen, wenn er fehlt. */
+  weaponName: string | undefined;
+  /** Der Name der Gottheit — für „War Domain (Dol Arrah)" an der Herkunft. */
+  deityName: string;
+}
+
+/**
+ * Gewährt die War-Domäne diesem Bogen etwas — und wenn ja, für welche Waffe?
+ *
+ * Wörtlich in den Packdaten: „Free Martial Weapon Proficiency with deity's
+ * favored weapon (if necessary) and Weapon Focus with the deity's favored
+ * weapon." Beides GEWÄHRT, also kostenlos: der Weapon Focus verbraucht keinen
+ * Talentplatz, die Übung keine Klassenfähigkeit.
+ *
+ * Diese Funktion ist die EINZIGE Stelle, an der die Bedingung steht (War-Domäne
+ * gewählt UND Gottheit mit Lieblingswaffe). Sie kommt ohne Kompendium aus, weil
+ * drei Leser sie brauchen und einer davon die Engine ist, die das Kompendium
+ * nicht mehr hat: `warFocusStatus` (der Hinweis am Bogen), `deriveSheetValues`
+ * (der Talentplatz) und die Übung im Ausrüstungs-Reiter. Stünde die Bedingung
+ * dreimal, wäre der Platz irgendwann da und der Hinweis weg — oder umgekehrt.
+ */
+export function warDomainGrant(
+  deity: DeityEntity | null | undefined,
+  domains: readonly { spellListId: string }[],
+): WarDomainGrant | null {
+  if (deity === null || deity === undefined) return null;
+  if (!domains.some((d) => d.spellListId === WAR_DOMAIN_ID)) return null;
+  const weaponId = deity.data.favoredWeaponId;
+  if (weaponId === undefined) return null;
+  return { weaponId, weaponName: deity.data.favoredWeaponName, deityName: deity.name };
+}
+
 export interface WarFocusStatus {
   /** Der Bogen hat die War-Domäne UND eine Gottheit mit Lieblingswaffe. */
   applies: boolean;
@@ -86,15 +121,13 @@ export function warFocusStatus(
   character: Pick<Character, "deityRef" | "domains" | "feats">,
   compendium: ReadonlyMap<string, Entity>,
 ): WarFocusStatus {
-  const deity = deityOf(character, compendium);
-  const hasWar = character.domains.some((d) => d.spellListId === WAR_DOMAIN_ID);
-  const weaponId = deity?.data.favoredWeaponId;
-  if (deity === undefined || !hasWar || weaponId === undefined) {
-    return { applies: false, granted: false };
-  }
+  // Die Bedingung steht in `warDomainGrant` — hier wird sie nur benutzt.
+  const grant = warDomainGrant(deityOf(character, compendium), character.domains);
+  if (grant === null) return { applies: false, granted: false };
+  const { weaponId } = grant;
   const weapon = compendium.get(weaponId);
   const weaponName =
-    deity.data.favoredWeaponName ??
+    grant.weaponName ??
     (weapon !== undefined ? (weapon.localized?.de?.name ?? weapon.name) : weaponId);
   const granted = character.feats.some((feat) => {
     if (feat.featId !== WEAPON_FOCUS_ID) return false;

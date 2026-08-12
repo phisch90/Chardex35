@@ -16,6 +16,7 @@ import {
   type WieldContext,
 } from "./combatOptions.js";
 import { carriedWeight } from "./carry.js";
+import { warDomainGrant } from "../compendium/deity.js";
 import { dyingStatus } from "./dying.js";
 import { isNaturalOrUnarmed } from "./equipment.js";
 import type { ActiveEffect, ResolvedCharacter, TimelineResult } from "./internal.js";
@@ -946,8 +947,28 @@ export function deriveSheetValues(
   }
 
   // --- Talent-Slots -------------------------------------------------------------
+  /*
+    Der GEWÄHRTE Weapon Focus der War-Domäne zählt als eigener Platz.
+
+    Das war ein echter Fehler, und zwar an genau der Stelle, an der die App
+    selbst zum Eintragen auffordert: der Knopf „Weapon Focus eintragen" im
+    Zauber-Reiter legt eine Talentzeile an, und `used` zählt stumpf jede Zeile —
+    aus „6 von 6" wurde „7 von 6" samt Rüge „Talente: 7 gewählt, nur 6 Slots
+    verfügbar". Die Domäne gewährt das Talent aber kostenlos (Granted Power,
+    wörtlich in den Packdaten). Ein Knopf, der etwas verspricht und danach eine
+    Rüge auslöst, ist die Fehlerfamilie dieses Projekts in Reinform.
+
+    Der Platz kommt DAZU, egal ob das Talent schon eingetragen ist — sonst wäre
+    die Zahl vom Eintragen abhängig und der freie Focus unsichtbar. Ist er nicht
+    eingetragen, sagt der Bogen jetzt „1 Talent ist noch frei", und das ist die
+    Wahrheit: seine Göttin schenkt ihm einen.
+  */
+  const warGrant = warDomainGrant(resolved.deity, character.domains);
   const featSlots = {
-    available: baseFeatSlots(totalLevel) + stackPaths(buckets, ["feats.slots"]).total,
+    available:
+      baseFeatSlots(totalLevel) +
+      stackPaths(buckets, ["feats.slots"]).total +
+      (warGrant === null ? 0 : 1),
     used: character.feats.length,
   };
 

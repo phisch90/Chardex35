@@ -241,6 +241,19 @@ export function classProficiency(classId: string): Proficiency | undefined {
 export function proficiencyFor(
   classIds: readonly string[],
   raceId: string | undefined,
+  /**
+   * Waffen, die aus einer ANDEREN Quelle geübt sind — heute genau eine: die
+   * Lieblingswaffe der Gottheit, wenn die War-Domäne gewählt ist. Ihr Granted
+   * Power lautet wörtlich „Free Martial Weapon Proficiency with deity's favored
+   * weapon (if necessary) and Weapon Focus …" — das sind ZWEI Hälften desselben
+   * Satzes, und die andere sitzt im Talentplatz (`derive.ts`).
+   *
+   * Für einen Kämpfer/Kleriker ändert das nichts (martialische Waffen sind schon
+   * geübt, das „if necessary" trifft ihn nicht). Für einen REINEN Kleriker ist es
+   * der Unterschied zwischen −4 und keinem Malus — und genau dessen Bogen hätte
+   * sonst „Weapon Focus geschenkt" gesagt und daneben „ohne Übung" gezeigt.
+   */
+  grantedWeaponIds: readonly string[] = [],
 ): Proficiency {
   const known = classIds.map((id) => classProficiency(id)).filter((p): p is Proficiency => p !== undefined);
 
@@ -279,6 +292,15 @@ export function proficiencyFor(
     sources.push(race.source);
   }
 
+  if (grantedWeaponIds.length > 0) {
+    // Durch `itemKey`, nicht rohe Kennung: die Tabellen hier führen nackte
+    // Schlüssel („longsword"), und `proficiencyOf` streift beim Vergleich dasselbe
+    // Präfix ab. Meine erste Fassung legte `srd:item:halberd` ab, und die Übung
+    // griff still nicht — gefunden hat es nur die Messung am reinen Kleriker.
+    for (const id of grantedWeaponIds) extraIds.add(itemKey(id));
+    sources.push("War-Domäne (Lieblingswaffe der Gottheit)");
+  }
+
   return {
     weapons: { simple, martial, extraIds: [...extraIds].sort() },
     armor: {
@@ -314,8 +336,23 @@ export type ProficiencyVerdict =
  * Gibt `notApplicable` zurück, wo die Frage keinen Sinn hat — sonst stünde an
  * jedem Rucksack „ohne Übung", und die Marke wäre nach drei Zeilen unsichtbar.
  */
+/**
+ * Der Schlüssel, unter dem die Tabellen dieser Datei eine Waffe führen.
+ *
+ * Nackt und nicht die volle Kennung („longsword", nicht „srd:item:longsword"),
+ * weil die Tabellen von Hand geschrieben sind. Steht als Funktion und nicht
+ * zweimal inline: die Ableitung muss an der EINEN Stelle, die einträgt
+ * (`proficiencyFor`), und an der, die vergleicht (`proficiencyOf`), dieselbe sein
+ * — sonst legt die eine ab, was die andere nie findet. Genau das ist mir bei der
+ * Lieblingswaffe der War-Domäne passiert. Eigene Gegenstände (`hb:item:…`)
+ * behalten ihr Präfix, und das ist richtig: sie stehen in keiner Tabelle.
+ */
+function itemKey(id: string): string {
+  return id.replace(/^srd:item:/, "");
+}
+
 export function proficiencyOf(entity: ItemEntity, prof: Proficiency): ProficiencyVerdict {
-  const key = entity.id.replace(/^srd:item:/, "");
+  const key = itemKey(entity.id);
   const weapon = entity.data.weapon;
   const armor = entity.data.armor;
 

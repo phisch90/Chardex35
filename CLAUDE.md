@@ -2587,6 +2587,69 @@ Vier Entscheidungen sind eine Notiz wert:
 - **Leere Abschnitte sagen das** („Keine Ränge vergeben.", „Keine Notizen.") statt zu
   fehlen — ein Abschnitt, der stumm verschwindet, sieht wie ein Fehler aus.
 
+### Der Knopf, der ruegte — was die War-Domaene GEWAEHRT, kostet nichts
+
+Der Fehler saß in der Runde davor, und zwar an genau der Stelle, an der die App selbst
+zum Eintragen auffordert. Gemessen an seinem Aufbau (Mensch, Kämpfer 3 / Kleriker 4):
+
+| | Talent-Plätze | Meldung |
+|---|---|---|
+| vorher | 6 von 6 | keine |
+| nach dem Tap auf „Weapon Focus eintragen" | **7 von 6** | „Talente: 7 gewählt, nur 6 Slots verfügbar." |
+
+Die War-Domäne **gewährt** den Weapon Focus (Granted Power, wörtlich in den Packdaten:
+„Free Martial Weapon Proficiency with deity's favored weapon (if necessary) and Weapon
+Focus with the deity's favored weapon"), er kostet also keinen Platz — aber
+`featSlots.used` ist `character.feats.length` und zählt stumpf jede Zeile. **Ein Knopf,
+der etwas verspricht und danach rügt**, ist die Fehlerfamilie dieses Projekts in Reinform.
+
+Vier Entscheidungen sind eine Notiz wert:
+
+- **Der Platz kommt DAZU, egal ob das Talent schon dasteht.** Sonst hinge die Zahl am
+  Eintragen und der freie Focus wäre unsichtbar. Ohne Eintrag sagt der Bogen jetzt „1 Slot
+  ist noch frei", und das ist die Wahrheit: seine Göttin schenkt ihm einen.
+- **Die Bedingung steht an EINER Stelle**, und sie kommt ohne Kompendium aus:
+  `warDomainGrant(deity, domains)` in `compendium/deity.ts`. Drei Leser brauchen sie — der
+  Hinweis am Bogen (`warFocusStatus`), der Talentplatz (`deriveSheetValues`) und die Übung
+  im Ausrüstungs-Reiter. Stünde sie dreimal, wäre irgendwann der Platz da und der Hinweis
+  weg.
+- **Die Gottheit wird in Stufe 1 aufgelöst** (`resolved.deity`), nicht im Rechenweg: die
+  Engine hat das Kompendium bewusst nicht mehr. Bewusst OHNE `issue`, wenn der Verweis ins
+  Leere zeigt — eine Kennung ohne Eintrag heißt „keine Gottheit" (dieselbe Schutzregel wie
+  bei den Behältern), sonst schreibt ein auf dem iPad gelöschter Gott einen Fehler an den
+  Bogen.
+- **Die zweite Hälfte desselben Satzes ist mitgebaut**: die Übung mit der Lieblingswaffe
+  (`proficiencyFor(..., grantedWeaponIds)`). Für seinen Kämpfer/Kleriker ändert das nichts
+  (martialisch ist schon geübt — das „if necessary" trifft ihn nicht), für einen REINEN
+  Kleriker ist es der Unterschied zwischen −4 und keinem Malus. Eine halb angewandte Regel
+  hätte „Weapon Focus geschenkt" gesagt und daneben „ohne Übung" gezeigt.
+
+**Zwei Funde in MEINEN eigenen Prüfungen dieser Runde**, und beide sind alte Bekannte:
+
+1. **Eine Sonde, die den Zustand nicht herstellt, den sie prüft.** Meine erste Messung gab
+   der Probe die War-Domäne, aber KEINE Gottheit — ohne Gottheit gibt es keine
+   Lieblingswaffe und damit zu Recht keinen Platz. Die Zahl blieb bei 7 von 6, und ich hielt
+   die Behebung für wirkungslos. Wer eine Bedingung prüft, muss jede ihrer Hälften
+   herstellen.
+2. **`extraIds` führt NACKTE Schlüssel.** Die Tabellen in `proficiency.ts` sind von Hand
+   geschrieben („longsword"), und `proficiencyOf` streift beim Vergleich `srd:item:` ab. Meine
+   erste Fassung legte `srd:item:halberd` ab — die Übung griff still nicht. Die Ableitung
+   stand nur inline und ist jetzt eine Funktion (`itemKey`), die beide Seiten benutzen:
+   **wer ablegt und wer vergleicht, müssen dieselbe Ableitung nehmen.** Gefunden hat es
+   allein die Messung am reinen Kleriker — beim Kämpfer war „ok" vorher wie nachher richtig,
+   und der Test wäre grün gewesen, ohne etwas zu beweisen.
+
+Und der Nebenbefund zu Hikes Talenten, der die eigentliche Frage dieser Runde beantwortet:
+**seine Zahl war schon regelkonform.** 6 Plätze = 3 (aus Stufe 7) + 1 (Mensch) + 2
+(Kämpfer-Bonus auf Stufe 1 und 2), und er hat genau 6 Talente. Sein Auftrag „alle Talente
+rausnehmen und neu vergeben" hätte also Arbeit gemacht und nichts geheilt; was wirklich
+fehlt, ist die HERKUNFT an den sechs Zeilen (sie kamen aus dem Fight-Club-Import und tragen
+keine) und der geschenkte Focus auf die Halbarte. Nicht neu anfangen — nachtragen.
+
+**Die Kämpfer-Bonusliste steht nicht in den Packdaten**, die App kann also nicht prüfen, ob
+ein Kämpfer-Bonustalent zulässig ist (Extra Turning wäre es nicht). Bei ihm geht die
+Zuordnung auf, deshalb nur eine Notiz: es wäre eine eigene Runde mit einer Handtabelle.
+
 Und eine Sondenfalle, die Verwandte der dreizehnten: **`fullPage: true` fotografiert
 das FENSTER, nicht das `main`.** Diese App scrollt das `main` mit `overflow-y-auto`;
 das „ganzseitige" Bild war trotzdem 844 px hoch, und die untere Hälfte der Seite hätte
