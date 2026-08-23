@@ -1,0 +1,42 @@
+{
+  "formatVersion": 1,
+  "exportedAt": "2026-08-09T00:00:00.000Z",
+  "app": "chardex35",
+  "homebrewEntities": [],
+  "characters": [
+    {
+      "id": "goetter-probe-0001",
+      "rev": 1,
+      "name": "Domprobe",
+      "raceId": "srd:race:human",
+      "abilities": {
+        "base": { "str": 12, "dex": 12, "con": 14, "int": 10, "wis": 16, "cha": 12 }
+      },
+      "levels": [
+        { "classId": "srd:class:cleric", "hpRoll": "max" },
+        { "classId": "srd:class:cleric", "hpRoll": "max" },
+        { "classId": "srd:class:cleric", "hpRoll": "max" },
+        { "classId": "srd:class:cleric", "hpRoll": "max" },
+        { "classId": "srd:class:cleric", "hpRoll": "max" },
+        { "classId": "srd:class:cleric", "hpRoll": "max" }
+      ],
+      "domains": [
+        { "classId": "srd:class:cleric", "spellListId": "srd:spelllist:domain-war" },
+        { "classId": "srd:class:cleric", "spellListId": "srd:spelllist:domain-healing" }
+      ],
+      "feats": [
+        { "featId": "srd:feat:dodge", "extraEffects": [] },
+        { "featId": "srd:feat:combat-casting", "extraEffects": [], "origin": { "level": 3 } }
+      ],
+      "inventory": [
+        {
+          "id": "row-longsword",
+          "itemId": "srd:item:longsword",
+          "qty": 1,
+          "slot": "mainHand",
+          "extraEffects": []
+        }
+      ]
+    }
+  ]
+}
