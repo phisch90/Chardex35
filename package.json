@@ -12,6 +12,10 @@
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "etl": "pnpm --filter @codex35/etl build-packs",
-    "etl:verify": "pnpm --filter @codex35/etl verify"
+    "etl:verify": "pnpm --filter @codex35/etl verify",
+    "e2e": "node e2e/run.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
   }
 }

@@ -1,0 +1,134 @@
+{
+  "formatVersion": 1,
+  "exportedAt": "2026-08-23T00:00:00.000Z",
+  "app": "chardex35",
+  "homebrewEntities": [
+    {
+      "id": "hb:deity:kriegsgott-probe",
+      "kind": "deity",
+      "name": "Probegott",
+      "source": "homebrew",
+      "schemaVersion": 1,
+      "rev": 1,
+      "updatedAt": "",
+      "tags": [],
+      "effects": [],
+      "description": "Eine erfundene Gottheit fuer die Teststrecken. Die Namen der D&D-Goetter stehen nicht im freien SRD und gehoeren deshalb nicht ins Repo - sein Tisch legt seine eigenen als Homebrew an, und genau diesen Weg prueft die Strecke.",
+      "data": {
+        "domainIds": [
+          "srd:spelllist:domain-good",
+          "srd:spelllist:domain-healing",
+          "srd:spelllist:domain-war"
+        ],
+        "favoredWeaponId": "srd:item:halberd",
+        "favoredWeaponName": "Halbarte",
+        "alignment": "LG"
+      }
+    }
+  ],
+  "characters": [
+    {
+      "id": "ohnewar-0001",
+      "rev": 1,
+      "name": "Ohnewar",
+      "raceId": "srd:race:human",
+      "deityRef": "hb:deity:kriegsgott-probe",
+      "deity": "Probegott",
+      "abilities": {
+        "base": {
+          "str": 16,
+          "dex": 13,
+          "con": 14,
+          "int": 10,
+          "wis": 14,
+          "cha": 14
+        }
+      },
+      "levels": [
+        {
+          "classId": "srd:class:fighter",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:fighter",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:fighter",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:cleric",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:cleric",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:cleric",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:cleric",
+          "hpRoll": "max"
+        }
+      ],
+      "domains": [
+        {
+          "classId": "srd:class:cleric",
+          "spellListId": "srd:spelllist:domain-healing"
+        },
+        {
+          "classId": "srd:class:cleric",
+          "spellListId": "srd:spelllist:domain-good"
+        }
+      ],
+      "feats": [
+        {
+          "featId": "srd:feat:dodge",
+          "extraEffects": []
+        },
+        {
+          "featId": "srd:feat:extra-turning",
+          "extraEffects": []
+        },
+        {
+          "featId": "srd:feat:improved-initiative",
+          "extraEffects": []
+        },
+        {
+          "featId": "srd:feat:power-attack",
+          "extraEffects": []
+        },
+        {
+          "featId": "srd:feat:weapon-focus",
+          "choiceRef": "srd:item:sword-short",
+          "choice": "Kurzschwert",
+          "extraEffects": []
+        },
+        {
+          "featId": "srd:feat:weapon-focus",
+          "choiceRef": "srd:item:greatsword",
+          "choice": "Zweihaender",
+          "extraEffects": []
+        }
+      ],
+      "inventory": [
+        {
+          "id": "row-halberd",
+          "itemId": "srd:item:halberd",
+          "qty": 1,
+          "extraEffects": []
+        },
+        {
+          "id": "row-shirt",
+          "itemId": "srd:item:chain-shirt",
+          "qty": 1,
+          "slot": "armor",
+          "extraEffects": []
+        }
+      ]
+    }
+  ]
+}

@@ -2720,15 +2720,88 @@ das „ganzseitige" Bild war trotzdem 844 px hoch, und die untere Hälfte der Se
 nie jemand angesehen. Wer die ganze Seite sehen will, scrollt das `main` in Schritten
 und fotografiert je Stand — wie beim Messen gilt: der Kasten, der wirklich scrollt.
 
-## Noch offen
+## Die Teststrecken liegen im Repo — die Fehlerfamilie einen Stock höher
 
-- **`e2e-equip` meldet zehn Fehler, und sie sind ALT.** Die Strecke war doppelt tot
-  (falscher Port, dazu die Rückfrage des Assistenten) und läuft seit dieser Runde wieder
-  durch. Nachgemessen gegen einen Build ohne diese Runde: dieselben zehn. Es geht um die
-  Slot-Marken (eine zweite Rüstung verdrängt die erste, ein Zweihänder verdrängt Schild und
-  Langschwert, ein Bogen wird 2H) und darum, dass der Power-Attack-Regler in DIESER Strecke
-  nicht gefunden wird. Ob App oder Sonde, ist ungeklärt — bei einer monatelang toten Strecke
-  ist beides gleich wahrscheinlich, und die Slot-Regeln haben eigene Tests im Kern.
+Der Anlass war keine Runde, sondern ein Neustart: die Maschine, auf der ich laufe, wurde
+neu aufgesetzt, und der Arbeitsordner war leer. **Alle 108 Teststrecken waren weg.** Sie
+lagen nie im Repo — nur dort. Aus dem Gesprächsprotokoll waren VIER zu retten (die aus
+der letzten Sitzung), der Rest ist verloren.
+
+Das ist die Fehlerfamilie dieses Projekts einen Stock höher. Bisher hieß sie „ein
+abgeleiteter Wert, der gespeichert wurde" und „etwas weiß es, und etwas anderes kann es
+nicht"; hier heißt sie: **eine Prüfung, die nur an einer Stelle existiert, die niemand
+sichert, ist keine Prüfung.** Monatelang stand in meinen Meldungen „im gebauten Bogen
+geprüft" — und die Belege dafür lagen auf einem Rechner, den niemand aufhebt.
+
+Gebaut ist deshalb `e2e/` im Repo: `run.mjs` (baut, stellt die Vorschau auf 5199 hin,
+ruft die Strecken, räumt auf), `lib/probe.mjs` (die gemeinsame Hülle), `strecken/*.mjs`
+(eine Datei je Runde), `fixtures/*.json` (die Bögen, die importiert werden) und `.out/`
+für Bilder (gitignored). Gestartet mit `pnpm e2e`, `pnpm e2e warfocus`,
+`pnpm e2e --no-build`.
+
+Fünf Entscheidungen daran sind eine Notiz wert:
+
+- **Die Fallen stehen jetzt EINMAL.** Es gab 108 Kopien von `check()`, vom Browserstart,
+  vom Reiterwechsel — also stand jede Falle 108-mal da und wurde einmal abgestellt. Die
+  Hülle trägt sie als Funktionen: `openTab` (Leiste zuerst, wirft sonst), `setzeBearbeiten`,
+  `featZeile`, `innerstesLi`, `scrollMain`, `intoView`, `blattText`. Und `done(n)` nennt
+  eine MINDESTZAHL an Prüfungen: eine Strecke, die früh abbricht, meldet nicht rot,
+  sondern gar nichts — genau daran sind mehrere monatelang unentdeckt gewesen.
+- **Kein fest verdrahteter Browserpfad.** `/opt/pw-browsers/chromium-1194/...` stand in
+  jeder alten Strecke; auf einer anderen Maschine startet sie damit gar nicht. Jetzt erst
+  `CHROMIUM_PATH`, dann was unter `PLAYWRIGHT_BROWSERS_PATH` liegt, sonst Playwrights
+  eigene Wahl.
+- **Die Bogendateien haben eine SCHRANKE**, nicht bloß einen Ordner
+  (`apps/web/src/e2eFixtures.test.ts`): jede Datei geht durch `exportEnvelopeSchema` —
+  denselben Parser wie sein Import-Knopf — und jede `srd:`-Kennung muss in den Packs
+  stehen. Ohne das fällt eine veraltete Kennung beim Import LEISE aus, und die Strecke
+  danach klagt die App an einer Stelle an, an der sie recht hat. Dazu die Gegenprobe, dass
+  überhaupt Dateien gefunden wurden: ein Test, der nichts messen konnte und grün meldet,
+  ist schlimmer als kein Test.
+- **Nicht in die GitHub-Aktion.** Ein Lauf braucht Browser und Build; ein roter Lauf dort
+  hielte jeden Merge auf, und „merge einfach immer" ist seine Entscheidung. Die Strecken
+  sind das Werkzeug VOR dem Push. Playwright liegt als Werkzeug im Repo, und beide
+  Aktionen setzen `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1` — sonst holt jede Installation
+  vier Browser.
+- **Die Bögen sind erfunden, und zwar mit Absicht.** Die alten Strecken liefen gegen seine
+  echte Gottheit aus dem Eberron-Setting; deren Name ist Product Identity und steht nicht
+  im freien SRD. Im Repo heißen sie deshalb `Probegott` und `Testgottheit` — dieselbe
+  Regel wie bei den Gegenstandstexten, und die Strecke beweist dabei genau den Weg, den
+  sein Tisch geht (Gottheit als Homebrew anlegen).
+
+**Und der Beweis der Thesis kam beim Umziehen von allein:** die gerettete Götter-Strecke
+suchte zum Nachtragen der Herkunft ein `input[type="number"]` — das gibt es seit der
+Herkunfts-Runde nicht mehr, dort stehen jetzt Knöpfe je Platz. Die Strecke wäre beim
+nächsten Lauf mit „Herkunfts-Feld nicht gefunden" gestorben, und der Fehler hätte auf die
+App gezeigt. Eine Strecke, die niemand laufen lässt, ist schon kaputt, bevor sie verloren
+geht.
+
+Vier Strecken sind damit im Repo und **grün: 279 Prüfungen** in drei Größen — `goetter`
+(93), `herkunft` (75), `uebersicht` (66), `warfocus` (45). **Die Regel ab jetzt: jede neue
+Strecke gehört in denselben Commit wie die Runde, die sie prüft.** Die rund 103 verlorenen
+kommen nicht zurück; was zählt, wächst mit den nächsten Runden nach — und was von den
+alten in dieser Datei beschrieben ist, ist der Aufschrieb, der sie überlebt hat.
+
+## Noch offen
+- **Rund 103 Teststrecken sind verloren** (eigener Abschnitt darüber). Ungeprüft sind
+  damit die Bereiche, die in dieser Datei beschrieben, aber nicht mehr abgedeckt sind:
+  die vier Papiere und die elf Klassenfarben, das Ziehen im Gepäck, die Behälter, das
+  Anlegen über die Marke, der Talentfilter, die Kacheln von Volk und Klasse, das Wischen
+  zwischen Reitern, der Fight-Club-Import, der Update-Weg mit zwei echten Ständen, die
+  Warnungen bei offenen Punkten, die halben Ränge, die Talent-Modifikatoren, die eigenen
+  Gegenstände, die deutsche Ausrüstung, das Porträt, die Startseite. Die Zahlen darin
+  (Kontraste, Farbabstände, Pixelmaße) stehen in dieser Datei — sie sind der Aufschrieb,
+  der die Strecken überlebt hat. **Neu geschrieben wird nicht auf Vorrat**, sondern je
+  Runde: wer einen Bereich anfasst, legt seine Strecke daneben.
+
+- **Zehn ungeklärte Befunde aus `e2e-equip` — die Strecke gibt es nicht mehr.** Sie war
+  doppelt tot (falscher Port, dazu die Rückfrage des Assistenten), lief einmal wieder
+  durch und meldete zehn Fehler, nachgemessen genauso alt wie die Strecke. Es ging um die
+  Slot-Marken (eine zweite Rüstung verdrängt die erste, ein Zweihänder verdrängt Schild
+  und Langschwert, ein Bogen wird 2H) und darum, dass der Power-Attack-Regler dort nicht
+  gefunden wurde. Ob App oder Sonde, ist ungeklärt — und mit der Strecke ist auch der
+  Beleg weg. Die Slot-Regeln haben eigene Tests im Kern; wer den Ausrüstungs-Reiter
+  wieder anfasst, schreibt die Strecke neu und weiß dann, was davon echt war.
 - **Die volle Attacke ist beantwortet und steht damit nicht mehr hier.** „Wir spielen bei
   6bab mit zwei Angriffen" — die Reihe bleibt, wie sie war, und hat jetzt einen Test
   (`core/engine/iterativeAttacks.test.ts`). Dasselbe Schicksal wie der halbe

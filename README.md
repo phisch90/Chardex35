@@ -31,6 +31,7 @@ Zwei Wege, bewusst getrennt:
 | `tools/etl/` | Konvertiert den SRD-3.5-Datensatz nach `packs/srd/` (Build-Zeit, nicht ausgeliefert) |
 | `tools/extract/` | Konverter für **private** Inhalte (Output ist gitignored, wird nie committet) |
 | `packs/srd/` | Generierte, committete SRD-JSON-Chunks (Open Game Content, OGL 1.0a) |
+| `e2e/` | Teststrecken im gebauten Bogen (echter Browser, drei Größen) — siehe `e2e/README.md` |
 
 ## Entwicklung
 
@@ -40,6 +41,8 @@ pnpm dev        # Dev-Server
 pnpm test       # Engine-Tests (die Spezifikation des Projekts)
 pnpm etl        # SRD-Packs neu generieren
 pnpm build      # Produktions-Build (PWA)
+pnpm typecheck  # tsc über alle Pakete (vitest typprüft nicht)
+pnpm e2e        # Teststrecken im gebauten Bogen (braucht einen Chromium)
 ```
 
 ## Lizenz der Spieldaten

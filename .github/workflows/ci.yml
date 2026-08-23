@@ -5,6 +5,13 @@ on:
     branches: [main, "claude/**"]
   pull_request:
 
+# Playwright liegt als Werkzeug fuer die Teststrecken im Repo (e2e/), lauft aber
+# NICHT in dieser Aktion: ein Lauf braucht einen echten Browser und einen Build,
+# und ein roter Lauf hier wuerde jeden Merge aufhalten. Ohne diese Zeile holt die
+# Installation trotzdem vier Browser (rund 500 MB) und macht die Aktion langsam.
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
 jobs:
   test:
     runs-on: ubuntu-latest
