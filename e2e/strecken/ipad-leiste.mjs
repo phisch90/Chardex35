@@ -98,12 +98,13 @@ for (const [groesse, width, height] of GROESSEN) {
   const geteilt = () => page.locator('[data-geteilt="ja"]');
 
   if (breit) {
-    bericht.check("der Knopf fuer die zweite Ansicht steht da", (await knopf.count()) > 0);
-    bericht.check("und sie ist anfangs ZU", (await geteilt().count()) === 0);
-
-    await knopf.first().click();
-    await page.waitForTimeout(900);
-    bericht.check("nach dem Tipp stehen zwei Spalten da", (await geteilt().count()) === 1);
+    /*
+      Zwei Spalten sind der NORMALFALL — sein Befund: "Bitte mache 2 Reiter auf ein Bild.
+      Sonst ist ein Reiter zuuuuu breit." Vorher musste man sie erst aufschlagen; jetzt
+      stehen sie da, ohne dass jemand etwas antippt.
+    */
+    bericht.check("im Querformat stehen SOFORT zwei Spalten da", (await geteilt().count()) === 1);
+    bericht.check("der Knopf zum Schliessen steht da", (await knopf.count()) > 0);
 
     const spalten = geteilt().locator("> div");
     bericht.check("es sind genau zwei", (await spalten.count()) === 2, `${await spalten.count()}`);
@@ -152,10 +153,23 @@ for (const [groesse, width, height] of GROESSEN) {
 
     if (groesse === "ipad-quer") await bild(page, "ipad-zwei-ansichten");
 
-    /* Wieder zu. */
+    /* Zumachen — und zwar so, dass es HAELT. */
     await page.locator("button:visible").filter({ hasText: /Zweite Ansicht schließen/i }).first().click();
     await page.waitForTimeout(900);
-    bericht.check("sie laesst sich wieder schliessen", (await geteilt().count()) === 0);
+    bericht.check("sie laesst sich schliessen", (await geteilt().count()) === 0);
+    /*
+      Die Gegenprobe zum Standard: ein Reiterwechsel darf sie nicht wieder aufgehen
+      lassen. Ohne den eigenen gespeicherten Zustand "zu" waere das genau passiert — der
+      Knopf haette scheinbar nichts getan.
+    */
+    await page.locator("button:visible").filter({ hasText: /^Kampf$/ }).first().click();
+    await page.waitForTimeout(900);
+    bericht.check("und sie bleibt zu, auch nach einem Reiterwechsel", (await geteilt().count()) === 0);
+
+    /* Und wieder auf. */
+    await page.locator("button:visible").filter({ hasText: /Zweite Ansicht/i }).first().click();
+    await page.waitForTimeout(900);
+    bericht.check("wieder aufschlagen geht auch", (await geteilt().count()) === 1);
   } else {
     /*
       Die GEGENPROBE, und sie ist der Kern von "im Hochformat anders": weder der Knopf
@@ -177,9 +191,9 @@ for (const [groesse, width, height] of GROESSEN) {
 }
 
 /*
-  41 und nicht mehr: im Hochformat laufen weniger Pruefungen als im Querformat (dort gibt
+  42 und nicht mehr: im Hochformat laufen weniger Pruefungen als im Querformat (dort gibt
   es die zweite Ansicht gar nicht). Die Zahl ist gemessen und nicht geschaetzt — eine
   Mindestzahl, die nie erreicht wird, macht jede gruene Strecke rot; eine zu niedrige
   faengt den Abbruch nicht.
 */
-bericht.done(41);
+bericht.done(42);
