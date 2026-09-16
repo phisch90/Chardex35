@@ -4,6 +4,7 @@ import {
   ABILITIES,
   adviceFor,
   assignFeatOrigins,
+  requiredFeatsOf,
   classCategory,
   deriveSheet,
   displayName,
@@ -212,8 +213,9 @@ export function LevelUpPage() {
     */
     if (sheetAfter !== undefined) {
       const origins = assignFeatOrigins(
-        next.feats.map((f) => f.origin),
+        next.feats.map((f) => ({ featId: f.featId, origin: f.origin })),
         sheetAfter.featSlots.sources,
+        requiredFeatsOf(compendium),
       );
       origins.forEach((origin, i) => {
         const feat = next.feats[i];

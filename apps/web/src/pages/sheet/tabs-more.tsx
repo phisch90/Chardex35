@@ -3,6 +3,8 @@ import {
   BONUS_TYPES,
   allowedSlots,
   assignFeatOrigins,
+  featFitsSlot,
+  requiredFeatsOf,
   conflictingEquipIds,
   sameOrigin,
   deityOf,
@@ -1134,11 +1136,14 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
     Der Knopf steht nur da, wenn es etwas zu tun GIBT: ein Knopf, der bei jedem Blick
     auf den Reiter „0 Zeilen" verteilt, ist Lärm.
   */
+  /* Einmal je Bogen statt je Chip — die Nachschlagefunktion liest das Kompendium. */
+  const requiredFeats = requiredFeatsOf(compendium);
   const ohneHerkunft = character.feats.filter((f) => f.origin === undefined).length;
   const assignOrigins = () => {
     const vorschlag = assignFeatOrigins(
-      character.feats.map((f) => f.origin),
+      character.feats.map((f) => ({ featId: f.featId, origin: f.origin })),
       sheet.featSlots.sources,
+      requiredFeatsOf(compendium),
     );
     const vorher = structuredClone(character.feats);
     let gesetzt = 0;
@@ -1217,13 +1222,46 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
             const originLabel =
               feat.origin?.source ??
               (feat.origin?.level !== undefined ? S.feats.originLevel(feat.origin.level) : undefined);
+            /* Passt der eingetragene Platz zu diesem Talent? Dieselbe Funktion wie im
+               Auswähler und in der Warnung — drei Leser, eine Regel. */
+            const originSlot =
+              feat.origin === undefined
+                ? undefined
+                : sheet.featSlots.sources.find((q) => sameOrigin(q.origin, feat.origin));
+            const originProblem =
+              originSlot === undefined
+                ? null
+                : featFitsSlot(
+                    feat.featId,
+                    originSlot,
+                    character.feats.map((f) => ({ featId: f.featId, origin: f.origin })),
+                    sheet.featSlots.sources,
+                    requiredFeats,
+                  );
             return (
               <li key={index} className="flex items-start justify-between gap-2 py-3 text-sm">
                 <div className="min-w-0 flex-1">
                   <span className="font-medium">{entity ? displayName(entity) : feat.featId}</span>
                   {feat.choice && <span className="text-slate-400"> ({feat.choice})</span>}
                   {originLabel !== undefined && (
-                    <span className="ml-1.5 whitespace-nowrap rounded bg-slate-800 px-1.5 py-0.5 align-middle text-[10px] text-slate-400">
+                    /*
+                      Die Marke sagt jetzt auch, wenn die Herkunft NICHT passt. Der
+                      Hinweis steht zwar oben in der Karte — aber die Zeile selbst sah
+                      harmlos aus, und damit sucht man den Fehler beim Lesen der Liste
+                      nicht. Gefunden hat das ein Bild und kein Test.
+
+                      Rosé und nicht amber: das ist die Farbe für "hier ist etwas offen"
+                      (elfte Falle — eine Farbe, die alles bedeutet, bedeutet nichts).
+                    */
+                    <span
+                      className={`ml-1.5 whitespace-nowrap rounded px-1.5 py-0.5 align-middle text-[10px] ${
+                        originProblem === null
+                          ? "bg-slate-800 text-slate-400"
+                          : "bg-rose-950 text-rose-300"
+                      }`}
+                      {...(originProblem === null ? {} : { title: originProblem.reason })}
+                    >
+                      {originProblem !== null && <span aria-hidden="true">⚠ </span>}
                       {originLabel}
                     </span>
                   )}
@@ -1310,12 +1348,35 @@ export function FeatsTab({ character, sheet, editMode, save }: TabProps) {
                             character.feats.some(
                               (other, oi) => oi !== index && sameOrigin(other.origin, slot.origin),
                             );
+                          /*
+                            Und passt das Talent hier ueberhaupt hin? Die Kaempfer-Bonus-
+                            liste und die Reihenfolge der Voraussetzungen sagen es — beides
+                            wusste die App vorher nicht, und der Zuordnen-Knopf legte
+                            deshalb Extra Turning auf einen Kaempfer-Platz.
+
+                            MARKIERT, nicht gesperrt: die Liste ist von Hand geschrieben,
+                            und ein Talent aus seinen Buechern steht nie darauf. Der Grund
+                            haengt als `title` daran, damit die Marke nicht raten laesst.
+                          */
+                          const problem = featFitsSlot(
+                            feat.featId,
+                            slot,
+                            character.feats.map((f) => ({ featId: f.featId, origin: f.origin })),
+                            sheet.featSlots.sources,
+                            requiredFeats,
+                          );
                           return (
                             <Chip
                               key={`${slot.label}-${si}`}
                               active={isMine}
+                              {...(problem === null ? {} : { title: problem.reason })}
                               onClick={() => setOrigin(index, slot.origin)}
                             >
+                              {problem !== null && (
+                                <span className="mr-1 text-rose-300" aria-hidden="true">
+                                  ⚠
+                                </span>
+                              )}
                               {slot.label}
                               {takenByOther && (
                                 <span className="ml-1 text-[10px] text-slate-500">

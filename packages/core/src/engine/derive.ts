@@ -40,6 +40,7 @@ import {
   averageHitDie,
   baseFeatSlots,
   bonusSpells,
+  maxCastableSpellLevel,
   carryingCapacity,
   iterativeAttacks,
   maxRanks,
@@ -1017,6 +1018,16 @@ export function deriveSheetValues(
       baseContribution(`${cls.name}-Stufe`, classLevel),
     ]);
     const dcBase = 10 + abilityMod + stackPaths(buckets, ["dc.spells"]).total;
+    /*
+      Was das ATTRIBUT zulässt — der Riegel, den die App bisher nicht kannte: sie zeigte
+      Plätze für Grade, die dieser Bogen nach den Regeln gar nicht wirken darf. Genau die
+      Familie „etwas weiß es, und etwas anderes kann es nicht": WIS und Zaubergrad standen
+      beide da, und niemand hat sie verglichen.
+
+      Der WERT, nicht der Modifikator (siehe `maxCastableSpellLevel`).
+    */
+    const abilityScore = abilities[casting.ability].score.total;
+    const maxCastableLevel = maxCastableSpellLevel(abilityScore);
 
     const usedSlots = character.spellState[classId]?.usedSlots ?? [];
     /*
@@ -1051,6 +1062,8 @@ export function deriveSheetValues(
       abilityMod,
       casterLevel,
       dcBase,
+      abilityScore,
+      maxCastableLevel,
       slots,
       spellsKnown: row.spellsKnown,
       spellListId: casting.spellListId,

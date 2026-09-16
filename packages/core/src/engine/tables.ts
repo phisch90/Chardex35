@@ -102,6 +102,25 @@ export function bonusSpells(abilityMod: number, spellLevel: number): number {
 }
 
 /**
+ * Der höchste Zaubergrad, den dieser Attributswert überhaupt zulässt.
+ *
+ * Die Regel steht bei jeder zaubernden Klasse im SRD mit demselben Satz: „To prepare or
+ * cast a spell, a cleric must have a Wisdom score of 10 + the spell's level" — beim
+ * Hexenmeister „to learn or cast", beim Magier mit Intelligenz, und so weiter. Es ist
+ * also immer derselbe Vergleich, und deshalb steht er hier EINMAL.
+ *
+ * Wichtig: verglichen wird der WERT, nicht der Modifikator. WIS 11 gibt Modifikator +0
+ * und reicht damit für Grad 1 — für Grad 2 braucht es WIS 12, obwohl der Modifikator
+ * derselbe bleibt. Wer hier den Modifikator nimmt, riegelt vier Grade zu früh ab.
+ *
+ * Rückgabe −1 heißt „gar nichts": unter 10 ist selbst Grad 0 nicht wirkbar. Die 9 oben
+ * ist der höchste Grad, den es im Regelwerk gibt.
+ */
+export function maxCastableSpellLevel(abilityScore: number): number {
+  return Math.max(-1, Math.min(9, abilityScore - 10));
+}
+
+/**
  * Maximale Ränge: Klassenfertigkeit Stufe+3, klassenfremd die Hälfte (PHB S. 62).
  *
  * ABGERUNDET, obwohl das PHB die Hälfte als „2½", „5½" schreibt: in 3.5 kostet

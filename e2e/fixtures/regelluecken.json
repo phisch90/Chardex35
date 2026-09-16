@@ -1,0 +1,98 @@
+{
+  "formatVersion": 1,
+  "exportedAt": "2026-09-16T00:00:00.000Z",
+  "app": "chardex35",
+  "homebrewEntities": [],
+  "characters": [
+    {
+      "id": "regelluecken-0001",
+      "rev": 1,
+      "name": "Lueckenprobe",
+      "raceId": "srd:race:human",
+      "abilities": {
+        "base": {
+          "str": 15,
+          "dex": 13,
+          "con": 12,
+          "int": 10,
+          "wis": 11,
+          "cha": 10
+        }
+      },
+      "levels": [
+        {
+          "classId": "srd:class:fighter",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:fighter",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:fighter",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:cleric",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:cleric",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:cleric",
+          "hpRoll": "max"
+        },
+        {
+          "classId": "srd:class:cleric",
+          "hpRoll": "max"
+        }
+      ],
+      "domains": [
+        {
+          "classId": "srd:class:cleric",
+          "spellListId": "srd:spelllist:domain-healing"
+        },
+        {
+          "classId": "srd:class:cleric",
+          "spellListId": "srd:spelllist:domain-good"
+        }
+      ],
+      "feats": [
+        {
+          "featId": "srd:feat:dodge",
+          "extraEffects": []
+        },
+        {
+          "featId": "srd:feat:extra-turning",
+          "extraEffects": [],
+          "origin": {
+            "source": "Fighter 1"
+          }
+        },
+        {
+          "featId": "srd:feat:improved-initiative",
+          "extraEffects": []
+        },
+        {
+          "featId": "srd:feat:power-attack",
+          "extraEffects": []
+        },
+        {
+          "featId": "srd:feat:weapon-focus",
+          "choiceRef": "srd:item:sword-short",
+          "choice": "Kurzschwert",
+          "extraEffects": []
+        },
+        {
+          "featId": "srd:feat:weapon-focus",
+          "choiceRef": "srd:item:greatsword",
+          "choice": "Zweihaender",
+          "extraEffects": []
+        }
+      ],
+      "inventory": []
+    }
+  ]
+}
