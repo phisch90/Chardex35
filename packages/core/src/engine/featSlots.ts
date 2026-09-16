@@ -1,4 +1,5 @@
 import { warDomainGrant } from "../compendium/deity.js";
+import { fighterBonusVerdict } from "../compendium/fighterBonus.js";
 import { displayName } from "../schema/entities.js";
 import type { Character } from "../schema/character.js";
 import type { ResolvedCharacter, TimelineResult } from "./internal.js";
@@ -41,6 +42,18 @@ export interface FeatSlotSource {
    * umgebaut.
    */
   origin: NonNullable<Character["feats"][number]["origin"]>;
+  /**
+   * Auf welcher CHARAKTERSTUFE dieser Platz entsteht.
+   *
+   * Nötig, weil die Reihenfolge der Liste nicht die zeitliche ist: „Stufe 1 · Stufe 3 ·
+   * Stufe 6 · Human · Fighter 1 · Fighter 2" — das Bonustalent des Menschen und der
+   * erste Kämpfer-Platz entstehen beide auf Stufe 1. Ohne diese Zahl ist „vorher" nicht
+   * entscheidbar, und genau das braucht die Prüfung, ob ein Talent seinen Vorgänger
+   * schon haben KONNTE.
+   */
+  charLevel: number;
+  /** Bei `kind: "class"`: welche Klasse den Platz gibt — für die Bonustalent-Liste. */
+  classId?: string;
 }
 
 /**
@@ -84,7 +97,7 @@ export function featSlotSources(
   */
   for (let level = 1; level <= timeline.totalLevel; level++) {
     if (baseFeatSlots(level) > baseFeatSlots(level - 1)) {
-      sources.push({ kind: "level", label: `Stufe ${level}`, origin: { level } });
+      sources.push({ kind: "level", label: `Stufe ${level}`, origin: { level }, charLevel: level });
     }
   }
 
@@ -100,7 +113,13 @@ export function featSlotSources(
         0,
       );
     for (let i = 0; i < fromRace; i++) {
-      sources.push({ kind: "race", label: displayName(race), origin: { source: displayName(race) } });
+      sources.push({
+        kind: "race",
+        label: displayName(race),
+        origin: { source: displayName(race) },
+        /* Das Bonustalent des Volkes gibt es ab dem ersten Tag. */
+        charLevel: 1,
+      });
     }
   }
 
@@ -109,11 +128,31 @@ export function featSlotSources(
        KLASSENstufe, auf der sie entstehen. Genau seine Formulierung („Klasse
        Rang x y"): bei einem Mehrklassler sagt „Fighter 2" mehr als „Stufe 5".
   */
+  /*
+    Auf welcher CHARAKTERstufe steht die n-te Stufe einer Klasse? Das ist die Position in
+    `character.levels`, an der diese Klasse zum n-ten Mal auftaucht — bei einem
+    Mehrklassler ist „Cleric 1" eben Charakterstufe 4 und nicht 1. Einmal vorab gezählt,
+    damit die Schleife darunter nur noch nachschlägt.
+  */
+  const charLevelOfClassLevel = new Map<string, number>();
+  const gesehen = new Map<string, number>();
+  character.levels.forEach((lvl, idx) => {
+    const n = (gesehen.get(lvl.classId) ?? 0) + 1;
+    gesehen.set(lvl.classId, n);
+    charLevelOfClassLevel.set(`${lvl.classId}#${n}`, idx + 1);
+  });
+
   for (const feature of timeline.features) {
     const n = feature.effects.filter((e) => e.target === "feats.slots").length;
     for (let i = 0; i < n; i++) {
       const label = `${feature.className} ${feature.level}`;
-      sources.push({ kind: "class", label, origin: { source: label } });
+      sources.push({
+        kind: "class",
+        label,
+        origin: { source: label },
+        charLevel: charLevelOfClassLevel.get(`${feature.classId}#${feature.level}`) ?? feature.level,
+        classId: feature.classId,
+      });
     }
   }
 
@@ -124,7 +163,12 @@ export function featSlotSources(
   const grant = warDomainGrant(resolved.deity, character.domains);
   if (grant !== null) {
     const label = `War Domain (${grant.deityName})`;
-    sources.push({ kind: "granted", label, origin: { source: label } });
+    /*
+      Der geschenkte Focus haengt an der Domaenenwahl, also am Kleriker-Start. Die genaue
+      Stufe weiss die App nicht — sie ist hier die Gesamtstufe, damit dieser Platz in der
+      Reihenfolge NIE vor einem anderen liegt und niemandem einen Vorgaenger verbaut.
+    */
+    sources.push({ kind: "granted", label, origin: { source: label }, charLevel: timeline.totalLevel });
   }
 
   /*
@@ -133,7 +177,12 @@ export function featSlotSources(
        Platz, den der Bogen wirklich hat, keinen Knopf.
   */
   while (sources.length < totalAvailable) {
-    sources.push({ kind: "other", label: "andere Quelle", origin: { source: "andere Quelle" } });
+    sources.push({
+      kind: "other",
+      label: "andere Quelle",
+      origin: { source: "andere Quelle" },
+      charLevel: timeline.totalLevel,
+    });
   }
 
   return sources;
@@ -157,26 +206,124 @@ export function featSlotSources(
  */
 export function assignFeatOrigins(
   /**
-   * Die Herkünfte, wie sie JETZT an den Talenten stehen — `undefined` je Zeile
-   * ohne Angabe. Bewusst nur die Herkünfte und nicht die Talente: der Assistent
-   * hat einen Entwurf, dessen Zeilen das Feld gar nicht kennen, und die Funktion
-   * braucht vom Talent nichts weiter.
+   * Die Talente mit ihrer Herkunft, wie sie JETZT am Bogen stehen — `origin:
+   * undefined` je Zeile ohne Angabe.
+   *
+   * Seit der Vorschlag die REGELN mitliest, braucht er die Kennung: ob ein Platz
+   * passt, hängt am Talent (Kämpfer-Bonusliste, Voraussetzungen). Vorher stand hier
+   * nur die Herkunft, und genau deshalb legte der Knopf Extra Turning auf Fighter 1.
    */
-  current: readonly (Character["feats"][number]["origin"] | undefined)[],
+  current: readonly { featId: string; origin: Character["feats"][number]["origin"] }[],
   sources: readonly FeatSlotSource[],
+  /**
+   * Welche ANDEREN Talente ein Talent voraussetzt. Hereingereicht statt hier
+   * nachgeschlagen, weil dieses Modul bewusst kein Kompendium hat — dieselbe Trennung
+   * wie überall in der Engine. Ohne Angabe wird die Reihenfolge nicht geprüft.
+   */
+  benoetigteTalente: (featId: string) => readonly string[] = () => [],
 ): (FeatSlotSource["origin"] | undefined)[] {
   const belegt = sources.map((slot) =>
-    current.some((origin) => origin !== undefined && sameOrigin(origin, slot.origin)),
+    current.some((f) => f.origin !== undefined && sameOrigin(f.origin, slot.origin)),
   );
   /*
     Zwei Talente mit derselben Herkunft (zwei „Fighter 2" von Hand eingetragen)
     belegen nur EINEN Platz — der zweite gilt als unbelegt und bekommt einen
     neuen Vorschlag. Sonst wäre ein Tippfehler nicht mehr auflösbar.
   */
-  const frei = sources.filter((_, i) => !belegt[i]);
-  let next = 0;
-  return current.map((origin) => {
-    if (origin !== undefined) return origin;
-    return next < frei.length ? frei[next++]!.origin : undefined;
+  const nochFrei = sources.filter((_, i) => !belegt[i]);
+  const vergeben = new Set<number>();
+  return current.map((feat) => {
+    if (feat.origin !== undefined) return feat.origin;
+    /*
+      Der erste freie Platz, der auch PASST — nicht einfach der erste freie. Das ist
+      der ganze Unterschied zur alten Fassung: sie verteilte der Reihe nach und legte
+      damit Extra Turning auf einen Kämpfer-Bonusplatz, den es nicht haben darf.
+
+      Findet sich kein passender, bleibt die Zeile LEER statt falsch. Ein Vorschlag,
+      der die Regel bricht, ist schlechter als keiner — den Rest trägt er selbst ein,
+      und der Auswähler am Talent sagt ihm dabei, was nicht passt.
+    */
+    let fallback: number | undefined;
+    for (let i = 0; i < nochFrei.length; i++) {
+      if (vergeben.has(i)) continue;
+      const slot = nochFrei[i]!;
+      if (featFitsSlot(feat.featId, slot, current, sources, benoetigteTalente) === null) {
+        vergeben.add(i);
+        return slot.origin;
+      }
+      fallback ??= i;
+    }
+    void fallback;
+    return undefined;
   });
+}
+
+/**
+ * Passt dieses Talent auf diesen Platz?
+ *
+ * Der Anlass steht in seinem Bogen: der Knopf „Herkunft zuordnen" legte **Extra Turning
+ * auf Fighter 1** — und das ist kein Bonustalent des Kämpfers. Die App konnte es nicht
+ * wissen, weil die Liste nirgends stand; jetzt steht sie in `compendium/fighterBonus.ts`.
+ *
+ * **Geprüft wird nur, was wirklich belegbar ist**, und das ist Absicht. Eine Prüfung, die
+ * rät, meldet irgendwann an der falschen Stelle — davon hat dieses Projekt genug bezahlt.
+ * Zwei Dinge sind hart:
+ *
+ * 1. **Die Bonustalent-Liste des Kämpfers.** Steht das Talent nicht darauf, darf es nicht
+ *    auf einem seiner Bonusplätze sitzen.
+ * 2. **Die Reihenfolge bei Talent-Voraussetzungen.** Cleave setzt Power Attack voraus —
+ *    also kann Cleave nicht auf einem Platz sitzen, der VOR dem von Power Attack entsteht.
+ *    Dafür ist `charLevel` am Platz da.
+ *
+ * Was NICHT geprüft wird: Voraussetzungen im Fließtext („Ability to turn or rebuke
+ * creatures" bei Extra Turning). Ob er auf Stufe 3 schon vertreiben konnte, steht in
+ * keinem Feld — die App sagt dazu nichts, statt etwas zu erfinden. Genau so hält es
+ * `featEligibility` mit `unverifiable` schon heute.
+ *
+ * Und wie überall: **gewarnt, nicht gesperrt.** Die Rückgabe ist ein Grund, keine Sperre.
+ */
+export interface SlotFitProblem {
+  /** Was nicht passt — fertig formulierter Satz für die Oberfläche. */
+  reason: string;
+}
+
+export function featFitsSlot(
+  featId: string,
+  slot: FeatSlotSource,
+  /** Alle Talente des Bogens mit ihrer eingetragenen Herkunft — für die Reihenfolge. */
+  belegung: readonly { featId: string; origin: Character["feats"][number]["origin"] }[],
+  /** Die Plätze, damit eine eingetragene Herkunft auf ihre Stufe zurückgeführt werden kann. */
+  sources: readonly FeatSlotSource[],
+  /** Voraussetzungen je Talent-Kennung: welche ANDEREN Talente es braucht. */
+  benoetigteTalente: (featId: string) => readonly string[],
+): SlotFitProblem | null {
+  /* 1. Kämpfer-Bonusplatz. */
+  if (slot.kind === "class" && slot.classId === "srd:class:fighter") {
+    const verdict = fighterBonusVerdict(featId);
+    if (verdict.kind === "no") {
+      return {
+        reason: `steht nicht auf der Bonustalent-Liste des Kämpfers (${slot.label})`,
+      };
+    }
+  }
+
+  /*
+    2. Die Reihenfolge. Ein Talent kann nicht früher genommen worden sein als das, was es
+       voraussetzt — und „früher" heißt hier CHARAKTERSTUFE, nicht Position in der Liste.
+       Trägt der Vorgänger noch gar keine Herkunft, ist nichts zu prüfen: dann weiß die
+       App die Reihenfolge nicht und behauptet sie auch nicht.
+  */
+  for (const vorgaengerId of benoetigteTalente(featId)) {
+    const vorgaenger = belegung.find((f) => f.featId === vorgaengerId);
+    if (vorgaenger?.origin === undefined) continue;
+    const vorgaengerSlot = sources.find((s) => sameOrigin(s.origin, vorgaenger.origin));
+    if (vorgaengerSlot === undefined) continue;
+    if (slot.charLevel < vorgaengerSlot.charLevel) {
+      return {
+        reason: `setzt ein Talent voraus, das erst auf ${vorgaengerSlot.label} dazukam`,
+      };
+    }
+  }
+
+  return null;
 }

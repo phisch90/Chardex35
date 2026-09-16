@@ -9,6 +9,7 @@ import {
   suggestPointBuy,
   adviceFor,
   assignFeatOrigins,
+  requiredFeatsOf,
   characterSchema,
   classCategory,
   conflictingEquipIds,
@@ -136,6 +137,11 @@ function draftToCharacter(
    */
   trackers: ReturnType<typeof trackersFromDraft> = [],
   /**
+   * Welche Talente ein Talent voraussetzt — für die Reihenfolge der Herkunft. Wie die
+   * Plätze von aussen, weil der Assistent das Kompendium hat und diese Funktion nicht.
+   */
+  requiredFeats: (featId: string) => readonly string[] = () => [],
+  /**
    * Die Talentplätze dieses Aufbaus. Dieselbe Henne-Ei-Lage wie bei den Zählern: sie
    * hängen am ABGELEITETEN Bogen, und der entsteht aus dieser Funktion — sie können
    * also nicht von innen kommen. Beim Live-Ableiten bleiben sie leer, erst beim Anlegen
@@ -168,8 +174,9 @@ function draftToCharacter(
     */
     feats: (() => {
       const origins = assignFeatOrigins(
-        draft.featIds.map(() => undefined),
+        draft.featIds.map((entry) => ({ featId: entry.featId, origin: undefined })),
         featSlotSources,
+        requiredFeats,
       );
       return draft.featIds.map((entry, i) => {
         const origin = origins[i];
@@ -378,7 +385,12 @@ export function CharacterWizardPage() {
   };
 
   const create = async () => {
-    const data = draftToCharacter(draft, trackersFromDraft(draft, sheet), sheet?.featSlots.sources ?? []);
+    const data = draftToCharacter(
+      draft,
+      trackersFromDraft(draft, sheet),
+      requiredFeatsOf(compendium),
+      sheet?.featSlots.sources ?? [],
+    );
     const { id: _drop, ...rest } = data;
     /*
       Der Assistent ist die längste Eingabe der App. Schlägt das Anlegen fehl,

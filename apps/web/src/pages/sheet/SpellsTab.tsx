@@ -559,6 +559,23 @@ function CasterBlock({
                   {isFolded ? "▸" : "▾"}
                 </span>
                 {S.spells.level} {level}
+                {/*
+                  Der Riegel aus dem Attribut, AM GRAD. Die Warnung oben in der
+                  Hinweiskarte gibt es auch — aber wer hier steht, will gerade vorbereiten,
+                  und ein Zustand, der nur zwei Bildschirme weiter oben steht, ist derselbe
+                  Fehler wie die Konsole beim fehlgeschlagenen Speichern.
+
+                  Gewarnt, nicht gesperrt: die Plätze und das Vorbereiten bleiben.
+                */}
+                {level > block.maxCastableLevel && (
+                  <span
+                    className="font-normal normal-case text-rose-300"
+                    title={S.spells.abilityTooLow(block.ability.toUpperCase(), 10 + level)}
+                  >
+                    {" "}
+                    ⚠ {block.ability.toUpperCase()} {10 + level}
+                  </span>
+                )}
                 {isFolded && favCount > 0 && (
                   <span className="font-normal normal-case text-amber-300">
                     {" "}

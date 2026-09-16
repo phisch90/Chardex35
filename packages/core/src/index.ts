@@ -23,6 +23,7 @@ export * from "./compendium/items.js";
 export * from "./compendium/itemGerman.js";
 export * from "./compendium/proficiency.js";
 export * from "./compendium/featBonus.js";
+export * from "./compendium/fighterBonus.js";
 export * from "./compendium/featChoice.js";
 export * from "./compendium/deity.js";
 export * from "./compendium/homebrewItem.js";

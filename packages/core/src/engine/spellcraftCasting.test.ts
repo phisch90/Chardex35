@@ -39,6 +39,9 @@ function fakeBlock(bonusAt1: number): SpellcastingBlock {
     abilityMod: 3,
     casterLevel: { total: 6, contributions: [] },
     dcBase: 13,
+    /* WIS 16: reicht bis Grad 6, riegelt hier also nichts ab. */
+    abilityScore: 16,
+    maxCastableLevel: 6,
     slots: [
       { level: 0, base: 5, bonus: 0, domain: 0, total: 5, used: 0 },
       { level: 1, base: 4, bonus: bonusAt1, domain: 1, total: 5 + bonusAt1, used: 0 },

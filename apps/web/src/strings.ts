@@ -1640,6 +1640,12 @@ export const S = {
   },
 
   spells: {
+    /*
+      Der Riegel aus dem Attribut (SRD: 10 + Zaubergrad). Er nennt den Wert, der FEHLT —
+      `WIS 12 nötig` ist eine Handlung, `zu niedrig` nur ein Befund.
+    */
+    abilityTooLow: (kuerzel: string, noetig: number) =>
+      `Diesen Grad kannst du nach den Regeln nicht wirken — dafür ist ${kuerzel} ${noetig} nötig.`,
     prepared: "Vorbereitet",
     known: "Bekannt",
     spellbook: "Zauberbuch",

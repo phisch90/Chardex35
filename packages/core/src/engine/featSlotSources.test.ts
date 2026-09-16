@@ -155,14 +155,28 @@ describe.skipIf(!packsAvailable)("Woher die Talentplaetze kommen", () => {
 
 describe("Herkunft zuordnen", () => {
   const plaetze = [
-    { kind: "level" as const, label: "Stufe 1", origin: { level: 1 } },
-    { kind: "level" as const, label: "Stufe 3", origin: { level: 3 } },
-    { kind: "race" as const, label: "Human", origin: { source: "Human" } },
-    { kind: "class" as const, label: "Fighter 1", origin: { source: "Fighter 1" } },
+    { kind: "level" as const, label: "Stufe 1", origin: { level: 1 }, charLevel: 1 },
+    { kind: "level" as const, label: "Stufe 3", origin: { level: 3 }, charLevel: 3 },
+    { kind: "race" as const, label: "Human", origin: { source: "Human" }, charLevel: 1 },
+    {
+      kind: "class" as const,
+      label: "Fighter 1",
+      origin: { source: "Fighter 1" },
+      charLevel: 1,
+      classId: "srd:class:fighter",
+    },
+  ];
+
+  /* Ein Talent, das auf der Bonustalent-Liste des Kaempfers steht — sonst verweigert die
+     Regel den Fighter-Platz zu Recht, und diese Tests messen etwas anderes. */
+  const drei = [
+    { featId: "srd:feat:dodge", origin: undefined },
+    { featId: "srd:feat:mobility", origin: undefined },
+    { featId: "srd:feat:power-attack", origin: undefined },
   ];
 
   it("verteilt die freien Plaetze in der Reihenfolge, in der sie entstehen", () => {
-    expect(assignFeatOrigins([undefined, undefined, undefined], plaetze)).toEqual([
+    expect(assignFeatOrigins(drei, plaetze)).toEqual([
       { level: 1 },
       { level: 3 },
       { source: "Human" },
@@ -174,7 +188,16 @@ describe("Herkunft zuordnen", () => {
       Sonst wuerde ein von Hand gesetztes "Fighter 1" gleich zweimal vergeben, und
       der Vorschlag machte die Zuordnung kaputt, die er selbst gemacht hat.
     */
-    expect(assignFeatOrigins([{ source: "Fighter 1" }, undefined, undefined], plaetze)).toEqual([
+    expect(
+      assignFeatOrigins(
+        [
+          { featId: "srd:feat:dodge", origin: { source: "Fighter 1" } },
+          { featId: "srd:feat:mobility", origin: undefined },
+          { featId: "srd:feat:power-attack", origin: undefined },
+        ],
+        plaetze,
+      ),
+    ).toEqual([
       { source: "Fighter 1" },
       { level: 1 },
       { level: 3 },
@@ -182,7 +205,10 @@ describe("Herkunft zuordnen", () => {
   });
 
   it("mehr Talente als Plaetze: der Rest bleibt ohne — keine erfundene Herkunft", () => {
-    const ergebnis = assignFeatOrigins(Array.from({ length: 6 }, () => undefined), plaetze);
+    const ergebnis = assignFeatOrigins(
+      Array.from({ length: 6 }, () => ({ featId: "srd:feat:dodge", origin: undefined })),
+      plaetze,
+    );
     expect(ergebnis.filter((o) => o !== undefined)).toHaveLength(4);
     expect(ergebnis[4]).toBeUndefined();
     expect(ergebnis[5]).toBeUndefined();
@@ -194,7 +220,14 @@ describe("Herkunft zuordnen", () => {
       zweite Zeile gilt als unbelegt und bekommt einen neuen Vorschlag. Sie behaelt
       ihre Angabe aber, solange sie dasteht — angefasst wird nur, was leer ist.
     */
-    const ergebnis = assignFeatOrigins([{ source: "Human" }, { source: "Human" }, undefined], plaetze);
+    const ergebnis = assignFeatOrigins(
+      [
+        { featId: "srd:feat:dodge", origin: { source: "Human" } },
+        { featId: "srd:feat:mobility", origin: { source: "Human" } },
+        { featId: "srd:feat:power-attack", origin: undefined },
+      ],
+      plaetze,
+    );
     expect(ergebnis[2]).toEqual({ level: 1 });
   });
 

@@ -2646,9 +2646,10 @@ rausnehmen und neu vergeben" hätte also Arbeit gemacht und nichts geheilt; was 
 fehlt, ist die HERKUNFT an den sechs Zeilen (sie kamen aus dem Fight-Club-Import und tragen
 keine) und der geschenkte Focus auf die Halbarte. Nicht neu anfangen — nachtragen.
 
-**Die Kämpfer-Bonusliste steht nicht in den Packdaten**, die App kann also nicht prüfen, ob
-ein Kämpfer-Bonustalent zulässig ist (Extra Turning wäre es nicht). Bei ihm geht die
-Zuordnung auf, deshalb nur eine Notiz: es wäre eine eigene Runde mit einer Handtabelle.
+**Die Kämpfer-Bonusliste steht nicht in den Packdaten** — die App konnte also nicht prüfen,
+ob ein Kämpfer-Bonustalent zulässig ist (Extra Turning wäre es nicht). **Inzwischen
+erledigt:** die Handtabelle steht in `compendium/fighterBonus.ts`, siehe den Abschnitt
+„Zwei Regellücken" weiter unten.
 
 ### Die Talentplätze wissen jetzt, WOHER sie kommen
 
@@ -2862,6 +2863,84 @@ Regel der Runde davor: im selben Commit wie das, was sie prüft. Sie misst in al
 Größen GEGENEINANDER — was im Querformat da sein muss, darf im Hochformat gerade nicht
 da sein. Eine Prüfung, die eine Breite ausnimmt, behauptet nicht „hier gilt es nicht",
 sie schaut nur nicht hin.
+
+## Zwei Regellücken — die App wusste es und schwieg
+
+Beim Durchrechnen seines Bogens (die Talent-Analyse für Martin) sind zwei Stellen
+aufgefallen, an denen die App beide Hälften einer Regel kannte und sie nie verglichen
+hat. Das ist die dritte Fehlerfamilie in ihrer leisesten Form — beide Zahlen standen auf
+demselben Schirm.
+
+### 1. Was das Attribut überhaupt zulässt
+
+Im SRD steht bei JEDER zaubernden Klasse derselbe Satz: „To prepare or cast a spell, a
+cleric must have a Wisdom score of 10 + the spell's level." Die App kannte den Satz nicht
+— sie zeigte bei WIS 11 brav drei Grad-2-Plätze mit vollen Punkten, die er nach den
+Regeln gar nicht belegen darf.
+
+Die Regel steht jetzt EINMAL (`maxCastableSpellLevel` in `engine/tables.ts`) und wird an
+zwei Stellen gelesen: die Warnung am Bogen (`spell-ability-too-low`) und eine Marke am
+GRAD selbst. Beides zusammen, und das ist kein Doppel: wer im Grad-2-Block steht und
+vorbereiten will, ist zwei Bildschirme von der Hinweiskarte entfernt — dieselbe Lage wie
+beim fehlgeschlagenen Speichern, das in der Konsole stand.
+
+**Die Falle dabei: verglichen wird der WERT, nicht der Modifikator.** WIS 11 und WIS 12
+sehen im Modifikator gleich aus (beide +0), erlauben aber Grad 1 bzw. Grad 2. Wer hier
+den Modifikator nimmt, riegelt vier Grade zu früh ab. Der Test beweist es an einem Paar
+mit GLEICHEM Modifikator (WIS 12 und 13, beide +1, aber Grad 2 gegen Grad 3) — mein
+erster Anlauf verglich 11 gegen 12 und bewies damit gar nichts.
+
+Gewarnt, nicht gesperrt: die Plätze bleiben stehen. Eine Sperre nähme die Zahl weg, über
+die geredet wird.
+
+### 2. Die Herkunft hält sich jetzt an die Regeln
+
+Der Knopf „Herkunft zuordnen" legte **Extra Turning auf Fighter 1** — und das Talent
+steht nicht auf der Bonustalent-Liste des Kämpfers. Die App konnte es nicht wissen, und
+genau das stand seit der War-Domänen-Runde als offener Punkt hier: „Die Kämpfer-Bonusliste
+steht nicht in den Packdaten … es wäre eine eigene Runde mit einer Handtabelle."
+
+**Die Handtabelle ist gebaut** (`compendium/fighterBonus.ts`, 47 Talente). Dieselbe
+Entscheidung wie beim Talentfilter, und dieselbe Pflicht: eine Handtabelle, die man nicht
+ansehen kann, ist eine Meinung — deshalb nennt die App sie als GRUND und nicht als Sperre.
+
+Drei Entscheidungen sind eine Notiz wert:
+
+- **Geprüft wird nur, was belegbar ist.** Zwei Dinge sind hart: die Kämpfer-Liste, und die
+  REIHENFOLGE bei Talent-Voraussetzungen (Cleave kann nicht vor Power Attack stehen). Die
+  Voraussetzung von Extra Turning steht dagegen im Fließtext („Ability to turn or rebuke
+  creatures") — ob er auf Stufe 3 schon vertreiben konnte, sagt kein Feld, und dazu sagt
+  die App nichts, statt etwas zu erfinden. Genau so hält es `featEligibility` mit
+  `unverifiable` schon heute.
+- **Für die Reihenfolge braucht ein Platz seine CHARAKTERSTUFE** (`FeatSlotSource.charLevel`).
+  Die Liste ist nicht chronologisch: „Stufe 1 · Stufe 3 · Stufe 6 · Human · Fighter 1 ·
+  Fighter 2" — das Bonustalent des Menschen und der erste Kämpfer-Platz entstehen BEIDE auf
+  Stufe 1. Ohne diese Zahl ist „vorher" nicht entscheidbar.
+- **Der Vorschlag lässt lieber leer als falsch.** `assignFeatOrigins` nimmt jetzt den ersten
+  freien Platz, der auch PASST; findet sich keiner, bleibt die Zeile ohne Herkunft. Ein
+  Vorschlag, der die Regel bricht, ist schlechter als keiner.
+
+**Drei Leser, eine Regel:** `featFitsSlot` beantwortet die Frage für die Warnung am Bogen,
+für den Auswähler (der unpassende Plätze markiert statt sperrt) und für die Marke an der
+Talentzeile. Stünde die Bedingung dreimal, wäre irgendwann der Chip markiert und die
+Warnung weg.
+
+### Was das HINSEHEN gefunden hat, und die Prüfungen nicht
+
+Die Marke „Fighter 1" an der Talentzeile sah **harmlos** aus — grau wie jede andere
+Herkunft. Die Warnung stand oben in der Hinweiskarte, aber wer die Liste liest, sucht den
+Fehler nicht zwei Zentimeter weiter oben. Die Marke trägt ihn jetzt selbst (rosé, mit dem
+Grund als `title`) — rosé und nicht amber, weil das die Bedienfarbe ist (elfte Falle).
+
+### Und eine Sondenfalle, die aufgeschrieben war
+
+`filter({ hasText: /^GRAD \d/i })` traf keinen einzigen Grad-Kopf: vor dem Wort steht das
+Aufklapp-Zeichen, und `hasText` prüft `textContent` — im DOM steht „▸GRAD 2". Sechs rote
+Prüfungen, und sie zeigten auf eine Marke, die es längst gab. Gefunden wird der Kopf jetzt
+über `aria-expanded`, also über seine ROLLE statt über seinen Text.
+
+Gemessen: `pnpm test` 1040 grün, `pnpm e2e` 6 von 6 Strecken mit 365 Prüfungen
+(`regelluecken` neu mit 45).
 
 ## Noch offen
 - **Rund 103 Teststrecken sind verloren** (eigener Abschnitt darüber). Ungeprüft sind

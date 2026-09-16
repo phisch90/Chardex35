@@ -2,7 +2,8 @@ import type { Entity } from "../schema/entities.js";
 import { displayName } from "../schema/entities.js";
 import type { ResolvedCharacter } from "./internal.js";
 import { domainsOutsideDeity, warFocusStatus } from "../compendium/deity.js";
-import { featEligibility } from "./prereqs.js";
+import { featEligibility, requiredFeatsOf } from "./prereqs.js";
+import { featFitsSlot, sameOrigin } from "./featSlots.js";
 import type { DerivedSheet } from "./types.js";
 
 /**
@@ -166,6 +167,37 @@ export function validate(
     }
   }
 
+  /*
+    Passt die eingetragene HERKUNFT zum Talent?
+
+    Der Anlass steht in seinem Bogen: der Zuordnen-Knopf legte Extra Turning auf einen
+    Kämpfer-Bonusplatz — und das Talent steht nicht auf der Liste des Kämpfers. Die App
+    hatte beide Hälften (das Talent und den Platz) und verglich sie nie.
+
+    Gewarnt, nicht gesperrt: die Liste in `fighterBonus.ts` ist von Hand geschrieben, und
+    ein Talent aus einem seiner Bücher steht ohnehin nicht darauf. Der DM hat Recht.
+  */
+  {
+    const belegung = character.feats.map((f) => ({ featId: f.featId, origin: f.origin }));
+    const benoetigt = requiredFeatsOf(compendium);
+    for (const feat of character.feats) {
+      if (feat.origin === undefined) continue;
+      const slot = sheet.featSlots.sources.find((q) => sameOrigin(q.origin, feat.origin));
+      if (slot === undefined) continue;
+      const problem = featFitsSlot(feat.featId, slot, belegung, sheet.featSlots.sources, benoetigt);
+      if (problem === null) continue;
+      const name = resolved.feats.find((f) => f.featId === feat.featId)?.entity;
+      issues.push({
+        severity: "warning",
+        code: "feat-origin-mismatch",
+        message: `${name ? displayName(name) : feat.featId}: ${problem.reason}.`,
+        ref: feat.featId,
+        tab: "feats",
+        muteKey: `feat-origin-mismatch:${feat.featId}`,
+      });
+    }
+  }
+
   // TP-Würfe plausibel?
   character.levels.forEach((level, i) => {
     const cls = resolved.classes.get(level.classId);
@@ -243,6 +275,38 @@ export function validate(
           muteKey: `war-focus-missing:${block.classId}`,
         });
       }
+    }
+
+    /*
+      Reicht das Attribut ueberhaupt fuer die Grade, die dastehen?
+
+      Die Regel steht bei jeder zaubernden Klasse im SRD mit demselben Satz (10 + Grad,
+      siehe `maxCastableSpellLevel`) — und die App hat sie nie gelesen. Bei WIS 11 zeigte
+      ein Kleriker 4 brav drei Grad-2-Plaetze, die er nach den Regeln gar nicht belegen
+      darf. Das ist die Familie „etwas weiss es, und etwas anderes kann es nicht" in ihrer
+      leisesten Form: beide Zahlen standen auf demselben Schirm.
+
+      GEWARNT, nicht gesperrt: die Plaetze bleiben stehen, der DM hat Recht. Und die
+      Meldung nennt den Wert, der FEHLT — „WIS 12 noetig" ist eine Handlung, „zu niedrig"
+      nur ein Befund.
+    */
+    const zuHoch = block.slots.filter(
+      (slot) => slot.total !== null && slot.total > 0 && slot.level > block.maxCastableLevel,
+    );
+    if (zuHoch.length > 0) {
+      const ab = zuHoch[0]!.level;
+      const kuerzel = block.ability.toUpperCase();
+      issues.push({
+        severity: "warning",
+        code: "spell-ability-too-low",
+        message:
+          `${block.className}: ${kuerzel} ${block.abilityScore} reicht nur bis Grad ` +
+          `${Math.max(0, block.maxCastableLevel)}. Die Plätze ab Grad ${ab} kannst du nach ` +
+          `den Regeln nicht wirken — dafür ist ${kuerzel} ${10 + ab} nötig.`,
+        ref: block.classId,
+        tab: "spells",
+        muteKey: `spell-ability-too-low:${block.classId}`,
+      });
     }
 
     const prepared = character.spellState[block.classId]?.prepared ?? [];

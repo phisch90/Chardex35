@@ -143,6 +143,20 @@ export interface SpellcastingBlock {
   casterLevel: StatValue;
   /** DC = dcBase + Zaubergrad. */
   dcBase: number;
+  /**
+   * Der Attributswert, an dem die Grenze unten hängt — damit die Anzeige sagen kann,
+   * WAS fehlt („WIS 12 nötig") statt nur, dass etwas fehlt.
+   */
+  abilityScore: number;
+  /**
+   * Höchster Grad, den dieses Attribut nach den Regeln zulässt (10 + Grad, SRD).
+   * −1 heißt: nicht einmal Grad 0.
+   *
+   * Eine FOLGE und nie gespeichert. Sie steht am Block und nicht je Platz, weil sie
+   * für alle Grade dieselbe Rechnung ist — und weil zwei Leser sie brauchen: die
+   * Warnung in `validate.ts` und der Zauber-Reiter.
+   */
+  maxCastableLevel: number;
   slots: SlotInfo[];
   spellsKnown: (number | null)[] | undefined;
   spellListId: string;

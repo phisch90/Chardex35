@@ -175,3 +175,25 @@ export function featEligibility(
     unverifiable: lines.filter((line) => !line.checkable).map((line) => line.label),
   };
 }
+
+/**
+ * Welche ANDEREN Talente ein Talent voraussetzt — als Nachschlagefunktion.
+ *
+ * Gebaut für `assignFeatOrigins`/`featFitsSlot`: die rechnen bewusst ohne Kompendium
+ * (dieselbe Trennung wie in der ganzen Engine), brauchen aber die Reihenfolge. Also
+ * wird die Auskunft hereingereicht statt dort nachgeschlagen.
+ *
+ * Gelesen wird nur `hasFeat`. Ein `minBab` oder `minAbility` sagt nichts über die
+ * REIHENFOLGE zweier Talente, und Fließtext ist ohnehin nicht prüfbar.
+ */
+export function requiredFeatsOf(
+  compendium: ReadonlyMap<string, Entity> | undefined,
+): (featId: string) => readonly string[] {
+  return (featId) => {
+    const entity = compendium?.get(featId);
+    if (entity === undefined || entity.kind !== "feat") return [];
+    return entity.data.prerequisites
+      .filter((p): p is Extract<typeof p, { type: "hasFeat" }> => p.type === "hasFeat")
+      .map((p) => p.featId);
+  };
+}
