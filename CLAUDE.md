@@ -2838,6 +2838,26 @@ Gegenprobe (nach dem Schließen einen Reiter wechseln — sie bleibt zu).
 Nebennutzen des Standards: er wird GERECHNET (der nächste Reiter nach dem linken), nicht
 gespeichert. Wechselt er links auf den, der rechts steht, rutscht der Standard von allein
 weiter — zweimal derselbe Inhalt kann gar nicht entstehen.
+
+**Und noch ein Nachtrag, aus einem eingekreisten Bild: „Mach das schöner."** Er hat die
+Reiterreihe der rechten Spalte samt ✕ markiert. Zwei Dinge waren daran falsch, und nur
+eines davon war Geschmack:
+
+- **Dasselbe Schließen stand ZWEIMAL auf einem Schirm** — das ✕ in der Spalte und
+  „Zweite Ansicht schließen" oben. Das ist keine Geschmacksfrage, sondern die Doppelung,
+  die diese App überall vermeidet (dieselbe Lehre wie bei der Rettungswürfe-Karte und den
+  zwei Infofeldern). Das ✕ ist weg; die Strecke prüft die Abwesenheit, sonst kommt es beim
+  nächsten Umbau zurück.
+- **Sieben Reiter mit je eigenem Rahmen sahen neben der großen Chip-Reihe wie ein zweites
+  System aus.** Gefragt und entschieden: **Zeichen ohne Kästchen.** Nur der aktive trägt
+  eine Fläche.
+
+**Die Schiene ist der Teil, der NICHT bestellt war und trotzdem dazugehört.** Sieben nackte
+Zeichen allein wären kein erkennbares Bedienelement mehr — und „ein Knopf, den man nicht
+als Knopf erkennt, ist keiner" ist seine eigene Regel aus der Talente-Runde. Ein
+gemeinsamer, sehr leiser Kasten (`w-fit`, damit er kein Band wird) sagt „hier ist eine
+Auswahl", ohne dass jedes Zeichen einen Rahmen braucht. Das Ziel bleibt dabei 36 px groß:
+ein Zeichen, das man nicht trifft, ist kein Bedienelement.
 - **Die Hinweiskarte zieht in ihre Spalte.** Sie stand einmal oben für den aktiven
   Reiter; nebeneinander wäre das die halbe Wahrheit — der Punkt an einem Reiter führte
   dann zu einer Karte, die von der anderen Spalte redet.
