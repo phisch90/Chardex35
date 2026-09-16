@@ -29,6 +29,11 @@ import { ClassMark } from "../../ui/ClassMark.js";
 import { CombatTab, SkillsTab, StatsTab } from "./tabs-core.js";
 import { FeatsTab, InventoryTab, NotesTab } from "./tabs-more.js";
 import { SpellsTab } from "./SpellsTab.js";
+import {
+  BLATT_BREITE,
+  LEISTE_VERSATZ,
+  useBreiterSchirm,
+} from "../../ui/layoutMetrics.js";
 
 export interface TabProps {
   character: Character;
@@ -96,6 +101,18 @@ function rememberedTab(charId: string): TabKey {
   return "stats";
 }
 
+const TAB2_MEMORY = "codex35.sheet.tab2.";
+
+function rememberedTab2(charId: string): TabKey | null {
+  try {
+    const stored = sessionStorage.getItem(TAB2_MEMORY + charId);
+    if (stored !== null && stored in S.sheet.tabs) return stored as TabKey;
+  } catch {
+    // siehe rememberedTab
+  }
+  return null;
+}
+
 export function CharacterSheetPage() {
   const { charId } = useParams({ strict: false }) as { charId: string };
   const navigate = useNavigate();
@@ -103,6 +120,25 @@ export function CharacterSheetPage() {
   const sheet = useSheet(character);
   const compendium = useCompendium();
   const [tab, setTab] = useState<TabKey>(() => rememberedTab(charId));
+  /*
+    Die ZWEITE Ansicht. `null` heißt „nur eine" — das ist der Normalfall und der einzige
+    unter 1024 px.
+
+    Gemerkt wie der erste Reiter, je Bogen und nur für diese Sitzung: womit er heute
+    Abend spielt, ist kein Zustand seiner Figur.
+  */
+  const [tab2, setTab2] = useState<TabKey | null>(() => rememberedTab2(charId));
+  /*
+    Und dieser Hook steht HIER und nicht unten bei seiner Verwendung — die zehnte Falle
+    dieses Projekts, und sie ist mir damit zum dritten Mal passiert: unter den Zeilen
+    steht `if (character === undefined) return …`. Solange der Bogen lud, lief der Hook
+    nicht; sobald er da war, lief er, und React zählte einen Hook mehr als beim Durchlauf
+    davor — Fehler 310, die halbe Seite weiß.
+
+    Gemeldet hat es wieder nur der Lauf im gebauten Bogen: ein Hook hinter einer Bedingung
+    ist gültiges TypeScript, und `pnpm test` rendert diese Seite nicht.
+  */
+  const breit = useBreiterSchirm();
   const [editMode, setEditMode] = useState(false);
   const [hpPadOpen, setHpPadOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -210,6 +246,48 @@ export function CharacterSheetPage() {
     // Seite aus.
     document.querySelector("main")?.scrollTo({ top: 0 });
   };
+
+  /*
+    Die zweite Ansicht steht nur da, wenn BEIDES stimmt: er hat sie aufgeschlagen UND es
+    ist wirklich Platz. Die Breite wird GEMESSEN (`useBreiterSchirm`) und nicht aus der
+    Einstellung geschlossen — wer im Querformat zwei Ansichten öffnet und dann dreht,
+    hat die Einstellung noch, den Platz nicht. Ohne diese zweite Hälfte bliebe im
+    Hochformat das Wischen abgeschaltet, während nur eine Ansicht dasteht, und der Grund
+    wäre nirgends zu sehen. Dieselbe Regel wie bei der Reiterleiste: wer ein Hüllenmaß
+    einrechnet, muss prüfen, ob die Hülle in dieser Breite dieselbe ist.
+  */
+  const rechts: TabKey | null = tab2 !== null && tabs.includes(tab2) ? tab2 : null;
+  const geteilt = breit && rechts !== null;
+
+  const merkeTab2 = (key: TabKey | null) => {
+    setTab2(key);
+    try {
+      if (key === null) sessionStorage.removeItem(TAB2_MEMORY + character.id);
+      else sessionStorage.setItem(TAB2_MEMORY + character.id, key);
+    } catch {
+      // siehe rememberedTab
+    }
+  };
+
+  /*
+    Rechts denselben Reiter zu wählen, der schon links steht, TAUSCHT die beiden.
+
+    Die Alternative wäre, es zu verbieten oder zu warnen — aber zweimal derselbe Inhalt
+    nebeneinander ist kein Zustand, den jemand meint, und eine gesperrte Kachel in einer
+    Reihe aus sieben sieht nach einem Fehler aus. Tauschen hat keinen toten Zustand:
+    jeder Tipp führt zu etwas Sinnvollem.
+  */
+  const goTab2 = (key: TabKey) => {
+    if (key === active) {
+      if (rechts !== null) goTab(rechts);
+      merkeTab2(active);
+      return;
+    }
+    merkeTab2(key);
+  };
+
+  /** Beim Aufschlagen steht rechts der nächste Reiter — irgendeiner muss es sein. */
+  const oeffneZweite = () => merkeTab2(tabs.find((t) => t !== active) ?? active);
 
   const at = tabs.indexOf(active);
   const before = tabs[at - 1];
@@ -478,6 +556,21 @@ export function CharacterSheetPage() {
             )}
           </Chip>
         ))}
+        {/*
+          Nur dort, wo zwei Ansichten wirklich passen — `lg` ist dieselbe Grenze wie in
+          `BLATT_BREITE` und in `useBreiterSchirm`. Ein Knopf, der im Hochformat nichts
+          bewirkt, wäre ein Versprechen ohne Weg.
+        */}
+        {/* `GhostButton` trägt sein `aria-label` selbst aus `title` — der Platz kommt
+            deshalb vom Kasten darum und nicht vom Knopf. */}
+        <span className="ml-auto hidden lg:block">
+          <GhostButton
+            title={geteilt ? S.sheet.splitClose : S.sheet.splitOpen}
+            onClick={() => (geteilt ? merkeTab2(null) : oeffneZweite())}
+          >
+            ⧉ {geteilt ? S.sheet.splitClose : S.sheet.splitOpen}
+          </GhostButton>
+        </span>
       </div>
 
       {/*
@@ -504,20 +597,93 @@ export function CharacterSheetPage() {
         Reitern. Der Punkt an der Reiterleiste führt hierher, also steht die Karte
         oben und nicht unten; und ein achter Reiter kann sie nicht vergessen.
       */}
-      <IssueCard sheet={sheet} tab={active} save={save} />
+      {/*
+        Der Inhalt EINES Reiters. Herausgezogen, weil es ihn seit der zweiten Ansicht
+        zweimal gibt — stünde die Liste zweimal da, würde ein achter Reiter beim nächsten
+        Mal in genau einer der beiden vergessen.
+      */}
+      {(() => {
+        const koerper = (key: TabKey) => (
+          <>
+            {/*
+              Die Hinweise gehören zu IHRER Ansicht. Vorher stand die Karte einmal oben
+              für den aktiven Reiter; nebeneinander wäre das die Hälfte der Wahrheit —
+              der Punkt an einem Reiter führte dann zu einer Karte, die von der anderen
+              Spalte redet.
+            */}
+            <IssueCard sheet={sheet} tab={key} save={save} />
+            {key === "stats" && <StatsTab {...tabProps} />}
+            {key === "combat" && <CombatTab {...tabProps} />}
+            {key === "skills" && <SkillsTab {...tabProps} />}
+            {key === "spells" && hasSpells && <SpellsTab {...tabProps} />}
+            {key === "inventory" && <InventoryTab {...tabProps} />}
+            {key === "feats" && <FeatsTab {...tabProps} />}
+            {key === "notes" && <NotesTab {...tabProps} />}
+          </>
+        );
 
-      <SwipeTabs
-        onPrev={before === undefined ? undefined : () => goTab(before)}
-        onNext={after === undefined ? undefined : () => goTab(after)}
-      >
-        {active === "stats" && <StatsTab {...tabProps} />}
-        {active === "combat" && <CombatTab {...tabProps} />}
-        {active === "skills" && <SkillsTab {...tabProps} />}
-        {active === "spells" && hasSpells && <SpellsTab {...tabProps} />}
-        {active === "inventory" && <InventoryTab {...tabProps} />}
-        {active === "feats" && <FeatsTab {...tabProps} />}
-        {active === "notes" && <NotesTab {...tabProps} />}
-      </SwipeTabs>
+        /*
+          EINE Ansicht: alles wie bisher, samt Wischen zwischen den Reitern.
+
+          Im geteilten Zustand ist das Wischen AUS — bei zwei Spalten ist nicht mehr
+          eindeutig, welche der beiden eine Wischbewegung meint, und ein Reiterwechsel,
+          den man nicht gemeint hat, ist schlimmer als kein Wischen. Am Handy und im
+          Hochformat bleibt es unverändert, weil es dort gar keine zweite Spalte gibt.
+        */
+        if (!geteilt || rechts === null) {
+          return (
+            <SwipeTabs
+              onPrev={before === undefined ? undefined : () => goTab(before)}
+              onNext={after === undefined ? undefined : () => goTab(after)}
+            >
+              {koerper(active)}
+            </SwipeTabs>
+          );
+        }
+
+        return (
+          <div className="grid grid-cols-2 gap-4" data-geteilt="ja">
+            <div className="min-w-0">{koerper(active)}</div>
+            {/*
+              Die rechte Spalte trägt ihre eigene Reiterreihe. Ohne sie müsste man
+              erraten, welcher Tipp welche Spalte meint — und ein zweiter Zustand ohne
+              eigenes Bedienelement ist die Familie „etwas weiß es, und etwas anderes
+              kann es nicht".
+            */}
+            <div className="min-w-0">
+              {/*
+                NUR die Zeichen, kein `flex-wrap`. Mit den Kurznamen brach die Reihe bei
+                sieben Reitern in eine zweite Zeile um, „Notiz" stand allein darin und
+                schob das ✕ mit — eine Zeile, die nur aus der Spaltenbreite entsteht, ist
+                genau sein Einwand an den Wertekacheln. Gefunden hat das der BLICK aufs
+                Bild; alle 40 Prüfungen waren dabei grün, sie lesen ja nur den Text.
+
+                Der Name hängt als `title` daran — dieselbe Entscheidung wie an der
+                Symbolleiste links, und aus demselben Grund: ein abgeschnittenes Wort ist
+                schlimmer als gar keines.
+              */}
+              <div className="mb-2 flex items-center gap-1 border-b border-slate-800 pb-2">
+                {tabs.map((key) => (
+                  <Chip
+                    key={key}
+                    active={rechts === key}
+                    title={S.sheet.tabs[key]}
+                    onClick={() => goTab2(key)}
+                  >
+                    <IconInline name={TAB_ICONS[key]} size={16} />
+                  </Chip>
+                ))}
+                <span className="ml-auto">
+                  <GhostButton title={S.sheet.splitClose} onClick={() => merkeTab2(null)}>
+                    ✕
+                  </GhostButton>
+                </span>
+              </div>
+              {koerper(rechts)}
+            </div>
+          </div>
+        );
+      })()}
 
       {/*
         Mobile Reiter-Leiste: ganz unten, in Daumenreichweite. Icons + Kurzlabel, damit
@@ -545,22 +711,22 @@ export function CharacterSheetPage() {
         die WARNUNG und der einzige Ausgang, und beides darf nicht an einer Bildschirmbreite
         hängen. Sein Wort „Leiste mit Hover Effekt" sagt es selbst: ein Daumen fährt nicht
         darüber, gemeint ist also gerade die große Fassung. Ab `md` rückt sie hinter die
-        Seitenleiste (`md:left-52`), damit sie nichts überdeckt, was daneben steht.
+        Symbolleiste (`LEISTE_VERSATZ`), damit sie nichts überdeckt, was daneben steht.
       */}
       <nav
         className={`fixed inset-x-0 bottom-0 z-30 flex border-t pb-[env(safe-area-inset-bottom)] backdrop-blur ${
           editMode
-            ? "border-rose-700 bg-rose-950/95 md:left-52"
+            ? `border-rose-700 bg-rose-950/95 ${LEISTE_VERSATZ}`
             : "border-slate-800 bg-slate-900/95 md:hidden"
         }`}
       >
         {/*
-          Die Knöpfe laufen bis `max-w-3xl` und dann mittig — dieselbe Breite wie das Blatt
+          Die Knöpfe laufen bis zur Blattbreite und dann mittig — dieselbe wie das Blatt
           darüber. Am Handy ändert das nichts (dort ist der Bildschirm schmaler); ab `md`
           stünden sieben Reiter sonst über die ganze Breite verteilt und hätten mit dem
           Bogen darüber nichts mehr zu tun.
         */}
-        <div className="mx-auto flex w-full max-w-3xl">
+        <div className={`flex ${BLATT_BREITE}`}>
         {editMode && (
           /*
             Der Ausgang ganz links, vor den Reitern: er ist der einzige Knopf hier, der

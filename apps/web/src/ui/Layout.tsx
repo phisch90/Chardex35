@@ -6,6 +6,7 @@ import { useAppSettings } from "../lib/hooks.js";
 import { useEditModeActive } from "../lib/editMode.js";
 import { useScrollMemory } from "../lib/scrollMemory.js";
 import { Icon, type IconName } from "./icons.js";
+import { BLATT_BREITE, LEISTE_BREITE } from "./layoutMetrics.js";
 import { DiceResultSheet } from "./DiceSheet.js";
 import { SyncGate } from "../sync/SyncGate.js";
 import { SyncBadge } from "./SyncBadge.js";
@@ -75,23 +76,41 @@ export function Layout() {
 
   return (
     <div className="flex h-full flex-col md:flex-row">
-      {/* Sidebar ≥md */}
-      <nav className="hidden w-52 shrink-0 flex-col gap-1 border-r border-slate-800 p-3 md:flex">
-        <div className="mb-4 px-2 text-lg font-bold tracking-tight text-amber-400">
-          {S.appName}
+      {/*
+        Die Symbolleiste ab `md`. Sein Befund: „Die Leiste links ist auf dem iPad zu groß.
+        Und dafür ist sie auch zu unwichtig." Beides stimmt — sie war 208 px breit für vier
+        Links, die man im Bogen praktisch nie anfasst.
+
+        Jetzt 64 px und nur noch Zeichen. Der NAME steht als Kürzel oben (seine Wahl), weil
+        „Chardex35" in 64 px nicht lesbar wäre und ein abgeschnittenes Wort schlimmer ist
+        als ein kurzes.
+
+        Ohne Beschriftung braucht jedes Ziel seinen Namen für Zeigegerät und Vorlesen —
+        `title` für den Mauszeiger, `aria-label` für alles andere. Ein Zeichen ohne Namen
+        ist für ein Vorleseprogramm ein leerer Knopf.
+
+        Und das Polster oben ist kein Schmuck: auf dem iPad liegt die Statusleiste über der
+        Seite, und ohne `env(safe-area-inset-top)` steckte das Kürzel darunter. Genau das
+        war auf seinem Bild zu sehen — die Leiste am Handy rechnete den Rand längst ein,
+        die Seitenleiste nicht.
+      */}
+      <nav
+        className={`hidden shrink-0 flex-col items-center gap-1 border-r border-slate-800 px-2 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:flex ${LEISTE_BREITE}`}
+      >
+        <div className="mb-3 text-xs font-bold tracking-tight text-amber-400/80" title={S.appName}>
+          {S.appShort}
         </div>
         {visibleNav.map((item) => (
           <Link
             key={item.to}
             to={item.to}
-            className={`rounded-lg px-3 py-2 text-sm font-medium ${
-              isActive(item.to) ? "bg-amber-600/20 text-amber-300" : "text-slate-300 hover:bg-slate-800"
+            title={item.label}
+            aria-label={item.label}
+            className={`flex h-11 w-11 items-center justify-center rounded-lg ${
+              isActive(item.to) ? "bg-amber-600/20 text-amber-300" : "text-slate-400 hover:bg-slate-800"
             }`}
           >
-            <span className="mr-2 inline-flex align-[-0.2em]">
-              <Icon name={item.icon} size={18} />
-            </span>
-            {item.label}
+            <Icon name={item.icon} size={20} />
           </Link>
         ))}
       </nav>
@@ -132,7 +151,7 @@ export function Layout() {
           eingefasstes Blatt aussieht („einen kräftigen Rahmen um alles"). Außerhalb eines
           Bogens greift keine Regel darauf zu — die Startseite bleibt ohne Rahmen.
         */}
-        <div className="blatt mx-auto max-w-3xl p-3 sm:p-4">
+        <div className={`blatt p-3 sm:p-4 ${BLATT_BREITE}`}>
           <Outlet />
         </div>
       </main>
