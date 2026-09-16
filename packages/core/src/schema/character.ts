@@ -9,8 +9,11 @@ import { campaignColorSchema } from "./campaign.js";
  * 1 → 2: die vorbereiteten Grad-0-Zauber werden entfernt (Martins Hausregel — auf Grad 0
  * wird nicht mehr vorbereitet). Die Wanderung selbst steht in `apps/web/src/db/repo.ts`,
  * weil nur die App gespeicherte Zeilen kennt; hier steht nur, WOHIN gewandert wird.
+ *
+ * 2 → 3: ein Aktionspunkte-Zähler, der an keiner Regel hing, wird angeschlossen
+ * („Action points setze nur bei level up zurück"). Ebenfalls in `repo.ts`.
  */
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 export const CURRENT_EXPORT_FORMAT_VERSION = 1;
 
 /**

@@ -160,8 +160,18 @@ export function planRest(
     if (!refill.has(when)) {
       skipped.push({
         name: tracker.name,
-        // Nur nach dem Aufstieg? Dann hilft auch die lange Rast nicht.
-        reason: when === "short" ? "erst nach acht Stunden" : "nur beim Stufenaufstieg",
+        /*
+          Der Grund richtet sich danach, ob die LANGE Rast ihn füllt — nicht danach,
+          welche Rast gerade läuft.
+
+          Vorher stand bei jeder kurzen Pause „erst nach acht Stunden", auch bei einem
+          Zähler, der nur beim Stufenaufstieg zurückgeht: acht Stunden hätten dort
+          nichts geholfen, und wer danach eine Nacht rastet, sucht den Fehler bei sich.
+          Genau diese Sorte Satz hat diese App schon einmal bezahlt (der Erklärtext zu
+          Power Attack mit leichter Waffe). Ein Test hielt die falsche Auskunft sogar
+          fest — er ist mitgewandert.
+        */
+        reason: refill.has("long") ? "erst nach acht Stunden" : "nur beim Stufenaufstieg",
       });
       continue;
     }

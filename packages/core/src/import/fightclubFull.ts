@@ -2,6 +2,7 @@ import { ABILITIES, type Ability } from "../schema/common.js";
 import { characterSchema, type Character } from "../schema/character.js";
 import type { Entity } from "../schema/entities.js";
 import { buildHomebrewItem } from "../compendium/homebrewItem.js";
+import { suggestionRefill } from "../engine/trackers.js";
 import type { FightClubAction, FightClubPc, ImportIssue, ImportResultPc } from "./fightclub.js";
 
 /**
@@ -87,8 +88,17 @@ const FC_MODIFIER: Record<string, { target: string; label: string }> = {
  * Sorte eingefrorener Wert, die wir bei den Zählern gerade abgeschafft haben.
  *
  * Alles, was hier NICHT steht, kommt als „von Hand gesetzt" an und bleibt
- * unangetastet: „Action Points" und „Restore Spell Points" gibt es im SRD nicht,
- * für die kennen wir keine Formel, und eine erfundene wäre schlimmer als seine Zahl.
+ * unangetastet: „Restore Spell Points" gibt es im SRD nicht, dafür kennen wir keine
+ * Formel, und eine erfundene wäre schlimmer als seine Zahl.
+ *
+ * **Die Aktionspunkte standen aus genau diesem Grund lange NICHT hier — und der Grund
+ * ist abgelaufen.** Seit Martins Antwort („Actionpoints hat jeder 6", „Reset bei
+ * Stufenaufstieg") kennt die App die Regel, und `suggestTrackers` bietet sie jedem
+ * Bogen an. Ohne Eintrag hier kam sein importierter Zähler trotzdem als Fremdkörper an:
+ * mit eingefrorener Grenze, ohne Anschluss an die Regel — und weil Fight Club für ihn
+ * kein `resetType 1` setzt, mit gar keiner Bedingung. Er füllte sich also NIE, auch
+ * nicht beim Stufenaufstieg. Sein Auftrag dazu: „Action points setze nur bei level up
+ * zurück."
  *
  * Der Vergleich läuft über den Anfang des Namens, weil Fight Club Zusätze anhängt
  * („Turn Undead (1d6+2)").
@@ -101,6 +111,14 @@ const DERIVED_TRACKERS: { prefix: string; key: string }[] = [
   { prefix: "rage", key: "rage" },
   { prefix: "wild shape", key: "wild-shape" },
   { prefix: "stunning fist", key: "stunning-fist" },
+  /*
+    Beide Schreibweisen: Fight Club führt den Zähler englisch, die App nennt ihn
+    deutsch — und wer den Bogen zwischendurch von Hand umbenannt hat, hat vielleicht
+    schon „Aktionspunkte" stehen. Eine Namensliste, die nur eine Sprache kennt, geht am
+    halben Bestand vorbei.
+  */
+  { prefix: "action points", key: "action-points" },
+  { prefix: "aktionspunkte", key: "action-points" },
 ];
 
 /**
@@ -439,6 +457,21 @@ export function applyFullExtras(
         value: tracker.value,
         maxManual: false,
         suggestedFrom: derived,
+        /*
+          Die Bedingung des Vorschlags kommt MIT — dieselbe Zeile wie an den zwei
+          anderen Stellen, die aus einem Vorschlag einen Zähler machen (der Knopf am
+          Bogen und der Assistent). Am Zähler ist sie dann eine Eingabe, und wer sie
+          umstellt, behält seine Einstellung.
+
+          Ohne sie hinge alles am Rückfall in `refillOf`, und der ist zwar seit dieser
+          Runde richtig — aber dann stünde dieselbe Antwort an drei Stellen im Code
+          und an einer vierten nicht. Was Fight Club selbst über den Nachschub sagt
+          (`resetType`), wird hier bewusst NICHT gelesen: die Regel dieses Zählers
+          kennt die App besser als die Exportdatei.
+        */
+        ...(suggestionRefill(derived) === undefined
+          ? {}
+          : { refill: [...suggestionRefill(derived)!] }),
       });
       if (tracker.max > 0) {
         issues.push({

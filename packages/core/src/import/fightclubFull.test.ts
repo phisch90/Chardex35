@@ -255,18 +255,79 @@ describe("Zähler: was folgt, folgt", () => {
     expect(derivedTrackerKey("Wild Shape")).toBe("wild-shape");
   });
 
-  it(`lässt Hausregel-Zähler in Ruhe`, () => {
-    // „Action Points" und „Restore Spell Points" gibt es im SRD nicht. Für die kennen
-    // wir keine Formel, und eine erfundene wäre schlimmer als seine Zahl.
-    expect(derivedTrackerKey("Action Points")).toBeUndefined();
+  it(`lässt Hausregel-Zähler in Ruhe, für die es keine Regel gibt`, () => {
+    // „Restore Spell Points" gibt es im SRD nicht, und eine erfundene Formel wäre
+    // schlimmer als seine Zahl.
     expect(derivedTrackerKey("Restore Spell Points")).toBeUndefined();
     expect(derivedTrackerKey("Spellcast DC")).toBeUndefined();
     expect(derivedTrackerKey("Level 0 Spell")).toBeUndefined();
   });
 
+  it(`aber die Aktionspunkte kennt die App inzwischen — in beiden Sprachen`, () => {
+    /*
+      Hier stand „Action Points gibt es im SRD nicht", und das war richtig, bis Martin
+      geantwortet hat: „Actionpoints hat jeder 6", „Reset bei Stufenaufstieg." Seither
+      bietet `suggestTrackers` den Zähler jedem Bogen an — nur der Import wusste es
+      nicht, und sein importierter Zähler hing an keiner Regel.
+
+      Der Preis dafür stand auf seinem Bogen: Fight Club setzt für diesen Zähler kein
+      `resetType 1`, also bekam er gar keine Bedingung und füllte sich NIE — auch nicht
+      beim Stufenaufstieg. Sein Auftrag: „Action points setze nur bei level up zurück."
+    */
+    expect(derivedTrackerKey("Action Points")).toBe("action-points");
+    expect(derivedTrackerKey("Aktionspunkte")).toBe("action-points");
+    expect(derivedTrackerKey("Action Points 6/day")).toBe("action-points");
+  });
+
   it(`verwechselt nichts, was nur ähnlich anfängt`, () => {
     expect(derivedTrackerKey("Ragebringer Aufladungen")).toBeUndefined();
     expect(derivedTrackerKey("")).toBeUndefined();
+  });
+});
+
+/**
+ * Was am BOGEN ankommt — und nicht nur, was der Parser gelesen hat.
+ *
+ * Diese Lücke ist beim Aufräumen der Aktionspunkte aufgefallen: geprüft war bisher
+ * `pc.full.trackers` (die Zeilen aus der Datei) und `derivedTrackerKey` (die
+ * Zuordnung), aber KEINE Zeile prüfte den Zähler, der danach im Charakter steht. Genau
+ * dort saß der Fehler — mit der Bedingung, die über Rast und Stufenaufstieg entscheidet.
+ *
+ * Eine Prüfung auf die Hälfte eines Weges meldet grün, während das Ende falsch ist.
+ */
+describe.skipIf(!packsAvailable)("Was aus einem Zähler am Bogen wird", () => {
+  const compendium = packsAvailable ? loadFullCompendium() : new Map<string, Entity>();
+  let n = 0;
+  const character = packsAvailable
+    ? importFightClubXml(XML, compendium, { idFactory: () => `t-${++n}` }).results[0]!.character
+    : undefined;
+  const punkte = character?.trackers.find((t) => t.name === "Action Points");
+  const untote = character?.trackers.find((t) => t.name === "Turn Undead");
+
+  it(`hängt die Aktionspunkte an die Regel und setzt sie auf den Stufenaufstieg`, () => {
+    /*
+      Sein Auftrag: „Action points setze nur bei level up zurück." Vorher hing dieser
+      Zähler an gar nichts: `derivedTrackerKey` kannte ihn nicht, also kam er mit
+      eingefrorener Grenze an — und weil Fight Club für ihn kein `resetType 1` setzt,
+      ganz ohne Bedingung. Er füllte sich nie, auch nicht beim Aufstieg.
+    */
+    expect(punkte?.suggestedFrom).toBe("action-points");
+    expect(punkte?.refill).toEqual(["levelUp"]);
+    expect(punkte?.maxManual).toBe(false);
+    // Der Stand aus der Datei kommt mit — wie viele Punkte heute noch übrig sind,
+    // weiß nur der Export.
+    expect(punkte?.value).toBe(3);
+  });
+
+  it(`und lässt den Tageszähler daneben, wie er war`, () => {
+    /*
+      Die Gegenprobe zur Runde: „Untote vertreiben" hat `resetType 1` und bekommt
+      deshalb weiter KEINE ausdrückliche Bedingung — der Rückfall in `refillOf` macht
+      daraus „kurze Pause", und das war seine Entscheidung. Ohne diese Zeile könnte die
+      neue Tabelle unbemerkt auch hier zugreifen.
+    */
+    expect(untote?.suggestedFrom).toBe("turn-undead");
+    expect(untote?.refill).toBeUndefined();
   });
 });
 
