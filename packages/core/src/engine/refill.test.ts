@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { characterSchema, type Character } from "../schema/character.js";
 import { refillOf, resetToOf } from "./trackers.js";
-import { planRest } from "./rest.js";
+import { planLevelUpRefill, planRest } from "./rest.js";
 import type { DerivedSheet } from "./types.js";
 
 /**
@@ -55,6 +55,41 @@ describe("Füllt sich bei der Rast", () => {
     const character = C([counter({ suggestedFrom: "turn-undead" })]);
     expect(planRest(character, sheet, "short").trackers).toHaveLength(1);
     expect(planRest(character, sheet, "full").trackers).toHaveLength(1);
+  });
+
+  it("nichts gesagt, aber der Vorschlag WEISS es — Aktionspunkte nur beim Aufstieg", () => {
+    /*
+      Sein Auftrag: `Action points setze nur bei level up zurueck.`
+
+      Der Rueckfall war schluesselblind: `short` fuer jeden Zaehler aus einem Vorschlag.
+      Fuer einen Tageszaehler ist das richtig und bleibt es (die Pruefung darueber), fuer
+      die Aktionspunkte war es das genaue Gegenteil von Martins Regel 3. Die App wusste
+      die Antwort die ganze Zeit — sie stand am Vorschlag und kam am gespeicherten
+      Zaehler nicht an. Betroffen war alles, was nicht ueber die Oberflaeche entstand:
+      der Fight-Club-Import und jeder Zaehler von vor diesem Feld.
+    */
+    expect([...refillOf({ suggestedFrom: "action-points" })]).toEqual(["levelUp"]);
+
+    const character = C([counter({ suggestedFrom: "action-points", value: 1 })]);
+    for (const scope of ["short", "full"] as const) {
+      const plan = planRest(character, sheet, scope);
+      expect(plan.trackers, scope).toEqual([]);
+      expect(plan.skipped, scope).toEqual([{ name: "Zähler", reason: "nur beim Stufenaufstieg" }]);
+    }
+    // Und die andere Haelfte: der Aufstieg fasst ihn sehr wohl an.
+    expect(planLevelUpRefill(character, sheet)).toEqual([
+      { id: "c1", name: "Zähler", from: 1, to: 3 },
+    ]);
+  });
+
+  it("eine eigene Einstellung gewinnt trotzdem — der Rueckfall ist kein Zwang", () => {
+    /*
+      Die Tabelle beantwortet nur den Fall `nie gesagt`. Wer die Knopfreihe anfasst,
+      schreibt einen echten Wert an den Zaehler, und der gilt — sonst waere aus einer
+      Voreinstellung eine Sperre geworden.
+    */
+    expect([...refillOf({ suggestedFrom: "action-points", refill: ["long"] })]).toEqual(["long"]);
+    expect(refillOf({ suggestedFrom: "action-points", refill: [] }).size).toBe(0);
   });
 
   it("nichts gesagt und selbst angelegt: bleibt in Ruhe, wie bisher", () => {
@@ -181,17 +216,29 @@ describe("Füllt sich bei der Rast", () => {
   });
 
   it("nur beim Stufenaufstieg: keine Rast fasst ihn an, und sie sagt warum", () => {
+    /*
+      Der Grund ist in BEIDEN Rasten derselbe, und das ist der Kern dieser Prüfung.
+
+      Vorher stand bei der kurzen Pause „erst nach acht Stunden" — eine Auskunft, die
+      der Bogen daneben widerlegt: acht Stunden füllen diesen Zähler auch nicht. Die
+      alte Fassung dieses Tests hat den falschen Satz festgenagelt, statt ihn zu
+      fangen. Eine Schranke, die die falsche Antwort verlangt, ist schlimmer als keine.
+    */
     const character = C([counter({ refill: ["levelUp"] })]);
     for (const scope of ["full", "short"] as const) {
       const plan = planRest(character, sheet, scope);
       expect(plan.trackers).toEqual([]);
-      expect(plan.skipped).toEqual([
-        {
-          name: "Zähler",
-          reason: scope === "short" ? "erst nach acht Stunden" : "nur beim Stufenaufstieg",
-        },
-      ]);
+      expect(plan.skipped).toEqual([{ name: "Zähler", reason: "nur beim Stufenaufstieg" }]);
     }
+  });
+
+  it("und die Gegenprobe: was die Nacht füllt, hört bei der Pause den anderen Grund", () => {
+    // Hier ist „erst nach acht Stunden" die Wahrheit — der Satz ist nicht abgeschafft,
+    // sondern steht jetzt dort, wo er stimmt.
+    const character = C([counter({ refill: ["long"] })]);
+    expect(planRest(character, sheet, "short").skipped).toEqual([
+      { name: "Zähler", reason: "erst nach acht Stunden" },
+    ]);
   });
 
   it("„zurück auf 0“ zählt HERUNTER statt hoch — der Fehler, der da war", () => {

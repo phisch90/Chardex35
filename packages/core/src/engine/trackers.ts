@@ -75,6 +75,40 @@ const SUGGESTION_CATEGORY: Readonly<Record<string, TrackerCategory>> = {
 };
 
 /**
+ * Wann sich ein Zähler AUS EINEM VORSCHLAG von allein füllt — die eine Wahrheit dazu.
+ *
+ * Sein Auftrag: „Action points setze nur bei level up zurück." Die Regel stand längst
+ * da (Martins Antwort 3, „Reset bei Stufenaufstieg") — aber nur als Literal AM
+ * VORSCHLAG, und damit nur für Zähler, die durch den Vorschlag entstanden sind und die
+ * Bedingung beim Anlegen mitbekommen haben.
+ *
+ * Alle anderen fielen auf „short" zurück, und das ist genau das Gegenteil: eine kurze
+ * Pause füllte die Aktionspunkte auf. Betroffen sind zwei echte Fälle — ein Zähler aus
+ * dem Fight-Club-Import und jeder, der gespeichert wurde, bevor es das Feld gab.
+ *
+ * Deshalb steht die Bedingung hier als TABELLE und nicht am Vorschlag, mit genau
+ * derselben Begründung wie `SUGGESTION_CATEGORY` eine Zeile darüber: sie hat ZWEI
+ * Leser — die Vorschläge selbst und den Rückfall in `refillOf`. Zwei Listen wären zwei
+ * Wahrheiten, und die eine würde beim nächsten neuen Vorschlag vergessen.
+ *
+ * Was hier NICHT steht, fällt weiter auf „short" zurück — das ist die Antwort für einen
+ * Tageszähler („Untote vertreiben"), und sie war seine Entscheidung. Ein Eintrag
+ * „turn-undead: short" wäre Lärm.
+ */
+const SUGGESTION_REFILL: Readonly<Record<string, readonly TrackerRefillKind[]>> = {
+  "action-points": ["levelUp"],
+};
+
+/**
+ * Die Bedingung eines Vorschlags — für die Stellen, die aus einem Vorschlag einen
+ * Zähler machen. Am Zähler ist sie dann eine EINGABE und keine Ableitung: wer sie
+ * umstellt, meint es so, und der Rückfall greift nicht mehr.
+ */
+export function suggestionRefill(key: string): readonly TrackerRefillKind[] | undefined {
+  return SUGGESTION_REFILL[key];
+}
+
+/**
  * In welchem Bereich der Zähler steht. `undefined` heißt „nie gesagt".
  *
  * Der Leser statt eines Schema-Standardwerts, aus demselben Grund wie bei `refillOf`:
@@ -191,9 +225,23 @@ export function refillOf(tracker: {
   const raw = tracker.refill;
 
   if (raw === undefined) {
-    // Nie gesagt: die alte Ableitung. „short", weil die kurze Pause die Tageszähler
-    // bisher mitgefüllt hat — das war seine Entscheidung.
-    if (tracker.suggestedFrom !== undefined) out.add("short");
+    /*
+      Nie gesagt — dann fragt der Rückfall den VORSCHLAG, aus dem der Zähler stammt.
+
+      Vorher stand hier pauschal „short", weil die kurze Pause die Tageszähler
+      mitgefüllt hat; das war seine Entscheidung und bleibt die Antwort für alles, was
+      in `SUGGESTION_REFILL` nicht steht. Für die Aktionspunkte war es aber die genau
+      falsche: sein Auftrag lautet „Action points setze nur bei level up zurück", und
+      die App WUSSTE das längst — am Vorschlag stand es, am gespeicherten Zähler kam es
+      nicht an. Das ist die dritte Fehlerfamilie dieses Projekts in ihrer leisesten
+      Form, und sie trifft genau die Zähler, die nicht über die Oberfläche entstanden
+      sind: den aus dem Fight-Club-Import und jeden von vor diesem Feld.
+    */
+    if (tracker.suggestedFrom !== undefined) {
+      const ausVorschlag = SUGGESTION_REFILL[tracker.suggestedFrom];
+      if (ausVorschlag === undefined) out.add("short");
+      else for (const kind of ausVorschlag) out.add(kind);
+    }
   } else if (typeof raw === "string") {
     // Die ausgelieferte erste Fassung.
     if (raw === "long" || raw === "short") out.add(raw);
@@ -241,14 +289,18 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
    * Extra Turning mit und ein Homebrew-Talent nicht.
    */
   const push = (suggestion: TrackerSuggestion) => {
-    // Der Bereich kommt aus der Tabelle oben — nicht an jedem Vorschlag wiederholt.
-    const withCategory: TrackerSuggestion = {
+    // Bereich UND Bedingung kommen aus den Tabellen oben — nicht an jedem Vorschlag
+    // wiederholt, weil beide noch einen zweiten Leser haben (`categoryOf`, `refillOf`).
+    const withTables: TrackerSuggestion = {
       ...suggestion,
       ...(SUGGESTION_CATEGORY[suggestion.key] === undefined
         ? {}
         : { category: SUGGESTION_CATEGORY[suggestion.key] }),
+      ...(SUGGESTION_REFILL[suggestion.key] === undefined
+        ? {}
+        : { refill: SUGGESTION_REFILL[suggestion.key] }),
     };
-    suggestion = withCategory;
+    suggestion = withTables;
     const extra = sheet.extraUses[suggestion.key] ?? 0;
     if (extra === 0) {
       out.push(suggestion);
@@ -275,7 +327,7 @@ export function suggestTrackers(sheet: DerivedSheet): TrackerSuggestion[] {
     name: "Aktionspunkte",
     max: 6,
     note: "Hausregel am Tisch: jeder hat 6 · zurück beim Stufenaufstieg",
-    refill: ["levelUp"],
+    // `refill` steht in SUGGESTION_REFILL — siehe dort, warum nicht hier.
   });
 
   // Untote vertreiben: 3 + CHA-Modifikator pro Tag (Kleriker, Paladin ab Stufe 4).

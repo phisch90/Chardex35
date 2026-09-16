@@ -572,6 +572,9 @@ jeweils daraus folgt. **Diese sechs sind entschieden — nicht neu fragen.**
    „Actionpoints hat jeder 6" ist der Zähler damit vollständig: Vorschlag für JEDEN
    Charakter, Höchstwert 6, `refill: ["levelUp"]`. Ausdrücklich NICHT „short" — genau
    dieser Rückfall war der Grund, den Vorschlag vorher nicht zu bauen.
+   **Nachgetragen, eigener Abschnitt weiter unten:** die Regel stand danach nur am
+   VORSCHLAG und kam an seinem gespeicherten Zähler nie an („Action points setze nur bei
+   level up zurück").
 4. **„Zweihändig / 1,5x Stärke: wird immer angewendet, auch bei negativem Mod."** Das ist
    das Verhalten, das die App schon hat (`Math.floor(strMod * 1.5)`, aus −1 wird −2).
    Nichts zu ändern — aber jetzt steht ein Test daneben, der es festhält, damit es nicht
@@ -3014,6 +3017,74 @@ Prüfungen, und sie zeigten auf eine Marke, die es längst gab. Gefunden wird de
 
 Gemessen: `pnpm test` 1040 grün, `pnpm e2e` 6 von 6 Strecken mit 365 Prüfungen
 (`regelluecken` neu mit 45).
+
+## Die Aktionspunkte: eine Regel, die nur am Vorschlag stand
+
+Sein Auftrag war ein Satz: **„Action points setze nur bei level up zurück."** Und die
+Regel war längst entschieden — Martins Antwort 3 steht seit Monaten in dieser Datei, der
+Vorschlag trug `refill: ["levelUp"]`, ein Test hielt es fest. Trotzdem hatte er recht.
+
+**Die Regel kam an seinem Zähler nie an.** Sie stand als Literal AM VORSCHLAG, also
+wirkte sie nur für Zähler, die durch die Oberfläche entstanden sind und die Bedingung
+beim Anlegen mitbekommen haben. Seiner kam aus dem Fight-Club-Import, und `derivedTrackerKey`
+kannte „Action Points" nicht — der Kommentar dort sagte sogar warum: „gibt es im SRD
+nicht, für die kennen wir keine Formel." Das war richtig, bis Martin geantwortet hat, und
+danach hat es niemand nachgezogen. Der Commit zu Martins Regeln (#70) fasste `trackers.ts`,
+`Trackers.tsx` und den Assistenten an — `fightclubFull.ts` stand nicht in seiner Dateiliste.
+
+Die Folge auf seinem Bogen war der schlimmste der beiden möglichen Äste: ohne Anschluss an
+den Vorschlag UND ohne `resetType 1` in seiner Datei bekam der Zähler gar keine Bedingung.
+Er füllte sich **nie** — auch nicht beim Stufenaufstieg. (Mit `resetType 1` wäre es der
+andere Ast gewesen: der Import schreibt dann hart `"short"`, und eine kurze Pause hätte ihn
+aufgefüllt. Beide Äste verletzen die Regel, in entgegengesetzte Richtungen.)
+
+**Die Antwort ist eine TABELLE, kein zweites Literal.** `SUGGESTION_REFILL` in
+`engine/trackers.ts`, gebaut wie `SUGGESTION_CATEGORY` eine Zeile darüber und aus demselben
+Grund: sie hat ZWEI Leser — die Vorschläge selbst und den Rückfall in `refillOf`. Vorher war
+dieser Rückfall schlüsselblind („aus einem Vorschlag entstanden = kurze Pause"); jetzt fragt
+er den Vorschlag. Was nicht in der Tabelle steht, fällt weiter auf „short" zurück — das ist
+die Antwort für einen Tageszähler, und sie war seine Entscheidung.
+
+Vier Entscheidungen sind eine Notiz wert:
+
+- **Der Import kennt die Aktionspunkte jetzt, in BEIDEN Sprachen.** Fight Club führt sie
+  englisch, die App nennt sie deutsch, und ein von Hand umbenannter Zähler kann beides
+  tragen. Eine Namensliste, die nur eine Sprache kennt, geht am halben Bestand vorbei.
+- **Der Grund einer übersprungenen Rast richtet sich nach der LANGEN Rast, nicht nach der
+  laufenden.** Vorher stand bei jeder kurzen Pause „füllt sich erst bei der langen Rast" —
+  auch bei einem Zähler, den acht Stunden ebenfalls nicht anfassen. Wer danach eine Nacht
+  rastet, sucht den Fehler bei sich. **Ein Test hat den falschen Satz sogar festgenagelt**;
+  er ist mitgewandert, und die Gegenprobe steht daneben (wo die Nacht hilft, steht es
+  weiter). Eine Schranke, die die falsche Antwort verlangt, ist schlimmer als keine.
+- **Gefragt und entschieden: einmal geradeziehen.** Wanderung 3 in `db/repo.ts` hängt einen
+  Aktionspunkte-Zähler an den Vorschlag — aber **nur `suggestedFrom`**, und **nur wenn er nie
+  etwas gesagt hat** (kein `refill`, kein `suggestedFrom`). Damit ist es ein ANSCHLUSS und
+  keine zweite Wahrheit: die Bedingung rechnet danach `refillOf`. `max`, `maxManual`, `value`
+  und der Name bleiben unangetastet — seine 6 bleiben 6. Erkannt wird über dasselbe
+  `derivedTrackerKey` wie im Import, hart auf `action-points` eingeengt: zwei Namenslisten
+  wären zwei Wahrheiten, und ohne die Einengung hinge plötzlich auch ein von Hand angelegtes
+  „Turn Undead" an einer gerechneten Grenze.
+- **Der Nebeneffekt ist eine eigene Prüfung wert:** die Werte-Seite bot den Vorschlag
+  „Aktionspunkte" ein ZWEITES Mal an, weil sie nach `suggestedFrom` oder dem DEUTSCHEN Namen
+  sucht und sein Zähler englisch hieß. Seit er am Vorschlag hängt, ist das weg.
+
+**Die Bogendatei der Strecke steht ausdrücklich auf `schemaVersion: 2`** — und das ist kein
+Detail: `exportEnvelopeSchema` parst mit `characterSchema`, und dessen `.default()` setzt
+sonst die heutige Fassung ein. Die Wanderung liefe dann gar nicht, und die Strecke prüfte
+einen Weg, den sein Gerät nie geht.
+
+### Was die Prüfungen dieser Runde gefunden haben, und was der BLICK
+
+- **Eine Lücke am ENDE eines Weges.** Geprüft war `pc.full.trackers` (was der Parser liest)
+  und `derivedTrackerKey` (die Zuordnung) — aber keine Zeile prüfte den Zähler, der danach
+  im Charakter steht. Genau dort saß der Fehler. Eine Prüfung auf die Hälfte eines Weges
+  meldet grün, während das Ende falsch ist.
+- **Und in MEINER Sonde wieder der Ausdruck, der den Nachbarn trifft:**
+  `/Action Points.*erst bei der langen Rast/is` war rot, obwohl die App recht hatte — unter
+  den Aktionspunkten steht „Schicksalspunkte — füllt sich erst bei der langen Rast", und
+  `.*` mit `s` läuft über den Zeilenumbruch. Gelesen wird die ZEILE, um die es geht.
+- Das Bild hat bestätigt, was die Zahlen sagen: „Action Points · max. 6 · füllt sich bei:
+  Stufenaufstieg" neben „Schicksalspunkte · füllt sich bei: Lange Rast".
 
 ## Noch offen
 - **Rund 103 Teststrecken sind verloren** (eigener Abschnitt darüber). Ungeprüft sind

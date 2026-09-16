@@ -1,6 +1,7 @@
 import {
   CURRENT_SCHEMA_VERSION,
   DEFAULT_HOUSE_RULES,
+  derivedTrackerKey,
   characterSchema,
   entitySchema,
   houseRulesSchema,
@@ -27,6 +28,26 @@ import { db } from "./db.js";
  * eine Sorte Eintrag an. Was verloren geht, ist nichts, was noch etwas bedeutet — die
  * Plätze auf Grad 0 zählt der Bogen unverändert weiter, und welcher Zauber es wird,
  * entscheidet er beim Wirken.
+ *
+ * **3 — den Aktionspunkte-Zähler an seine Regel hängen.** Sein Auftrag: „Action points
+ * setze nur bei level up zurück." Die Regel stand längst da (Martins Antwort: „Reset bei
+ * Stufenaufstieg") — nur sein Zähler hing an nichts: er kam aus dem Fight-Club-Import,
+ * und `derivedTrackerKey` kannte „Action Points" damals nicht. Ohne Anschluss füllte er
+ * sich NIE, auch nicht beim Aufstieg, und die Werte-Seite bot den Vorschlag ein zweites
+ * Mal an, weil sie nach `suggestedFrom` oder dem deutschen Namen sucht.
+ *
+ * Gefragt und entschieden: einmal geradeziehen. Drei Schranken machen das ungefährlich:
+ *
+ * 1. Geschrieben wird **nur `suggestedFrom`**. Damit ist es ein ANSCHLUSS und keine
+ *    zweite Wahrheit: die Bedingung rechnet danach `refillOf` aus der Tabelle im Kern.
+ *    `max`, `maxManual`, `value` und der Name bleiben unangetastet — seine 6 bleiben 6.
+ * 2. Angefasst wird **nur, wer nie etwas gesagt hat**: kein `refill`, kein
+ *    `suggestedFrom`. Wer die Knopfreihe im Bearbeiten-Modus benutzt hat, behält seine
+ *    Einstellung; eine Wanderung darf keine Entscheidung überschreiben.
+ * 3. Erkannt wird über **`derivedTrackerKey`**, dieselbe Ableitung, die auch der Import
+ *    benutzt — und ausschließlich auf `action-points` eingeengt. Zwei Namenslisten wären
+ *    zwei Wahrheiten, und ohne die Einengung hinge plötzlich auch ein „Turn Undead" aus
+ *    fremder Hand an einer gerechneten Grenze.
  */
 const characterMigrations: Record<number, (raw: Record<string, unknown>) => Record<string, unknown>> = {
   2: (raw) => {
@@ -55,6 +76,27 @@ const characterMigrations: Record<number, (raw: Record<string, unknown>) => Reco
       };
     }
     return { ...raw, spellState: next };
+  },
+  3: (raw) => {
+    const trackers = raw.trackers;
+    if (!Array.isArray(trackers)) return raw;
+    let geaendert = false;
+    const next = trackers.map((entry) => {
+      /*
+        Auf der ROHEN Zeile, also mit allem rechnen, was dort liegen kann: kein Objekt,
+        kein Name, ein Name, der keine Zeichenkette ist. Das ist die erste Fehlerfamilie
+        dieses Projekts, diesmal von vorn bedacht — ein gespeicherter Datensatz ist nie
+        auf dem Stand des Schemas.
+      */
+      if (typeof entry !== "object" || entry === null) return entry;
+      const tracker = entry as Record<string, unknown>;
+      if (typeof tracker.name !== "string") return tracker;
+      if (tracker.refill !== undefined || tracker.suggestedFrom !== undefined) return tracker;
+      if (derivedTrackerKey(tracker.name) !== "action-points") return tracker;
+      geaendert = true;
+      return { ...tracker, suggestedFrom: "action-points" };
+    });
+    return geaendert ? { ...raw, trackers: next } : raw;
   },
 };
 const entityMigrations: Record<number, (raw: Record<string, unknown>) => Record<string, unknown>> = {};

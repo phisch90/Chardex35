@@ -1,0 +1,48 @@
+{
+  "formatVersion": 1,
+  "exportedAt": "2026-09-16T00:00:00.000Z",
+  "app": "chardex35",
+  "homebrewEntities": [],
+  "characters": [
+    {
+      "id": "aktionspunkte-0001",
+      "rev": 1,
+      "schemaVersion": 2,
+      "name": "Punkteprobe",
+      "raceId": "srd:race:human",
+      "abilities": { "base": { "str": 14, "dex": 12, "con": 12, "int": 10, "wis": 14, "cha": 14 } },
+      "levels": [
+        { "classId": "srd:class:cleric", "hpRoll": "max" },
+        { "classId": "srd:class:cleric", "hpRoll": "max" },
+        { "classId": "srd:class:cleric", "hpRoll": "max" }
+      ],
+      "trackers": [
+        {
+          "id": "ap-1",
+          "name": "Action Points",
+          "kind": "counter",
+          "value": 2,
+          "max": 6,
+          "maxManual": true
+        },
+        {
+          "id": "tu-1",
+          "name": "Turn Undead",
+          "kind": "counter",
+          "value": 1,
+          "maxManual": false,
+          "suggestedFrom": "turn-undead"
+        },
+        {
+          "id": "sp-1",
+          "name": "Schicksalspunkte",
+          "kind": "counter",
+          "value": 0,
+          "max": 3,
+          "maxManual": true,
+          "refill": ["long"]
+        }
+      ]
+    }
+  ]
+}
