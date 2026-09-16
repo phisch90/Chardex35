@@ -129,6 +129,19 @@ for (const [groesse, width, height] of GROESSEN) {
     */
     const eigene = await spalten.nth(1).getByTitle("Kampf", { exact: true }).count();
     bericht.check("die rechte Spalte hat eine eigene Reiterreihe", eigene > 0, `${eigene}`);
+
+    /*
+      Und sie hat GENAU EINEN Weg zum Schliessen. Vorher stand das ✕ in der rechten
+      Spalte UND "Zweite Ansicht schliessen" oben — dasselbe zweimal auf einem Schirm,
+      und im Bild war das das Auffaelligste. Ohne diese Gegenprobe kaeme es beim naechsten
+      Umbau zurueck.
+    */
+    const schliessenRechts = await spalten
+      .nth(1)
+      .locator("button:visible")
+      .filter({ hasText: /✕|×/ })
+      .count();
+    bericht.check("kein zweiter Schliessen-Knopf in der Spalte", schliessenRechts === 0, `${schliessenRechts}`);
     bericht.check(
       "und sie steht in EINER Zeile (kein Umbruch)",
       await spalten.nth(1).evaluate((el) => {
@@ -191,9 +204,9 @@ for (const [groesse, width, height] of GROESSEN) {
 }
 
 /*
-  42 und nicht mehr: im Hochformat laufen weniger Pruefungen als im Querformat (dort gibt
+  43 und nicht mehr: im Hochformat laufen weniger Pruefungen als im Querformat (dort gibt
   es die zweite Ansicht gar nicht). Die Zahl ist gemessen und nicht geschaetzt — eine
   Mindestzahl, die nie erreicht wird, macht jede gruene Strecke rot; eine zu niedrige
   faengt den Abbruch nicht.
 */
-bericht.done(42);
+bericht.done(43);

@@ -708,22 +708,53 @@ export function CharacterSheetPage() {
                 Symbolleiste links, und aus demselben Grund: ein abgeschnittenes Wort ist
                 schlimmer als gar keines.
               */}
-              <div className="mb-2 flex items-center gap-1 border-b border-slate-800 pb-2">
+              {/*
+                Seine Antwort auf das eingekreiste Bild („Mach das schöner"): die Zeichen
+                OHNE Kästchen. Vorher trug jeder der sieben Reiter seinen eigenen Rahmen,
+                und das waren sieben Kästen für eine Nebensache — neben der großen
+                Chip-Reihe der Hauptspalte sah es nach einem zweiten System aus.
+
+                Jetzt trägt nur der AKTIVE eine Fläche; die anderen sind nackte Zeichen,
+                die beim Darüberfahren aufhellen. Die Trennlinie ist mit weg: sie zog eine
+                dritte waagerechte Ebene ein, obwohl die Karte darunter schon einen Rahmen
+                hat.
+
+                **Und das ✕ ist weg.** Dasselbe Schließen stand zweimal auf einem Schirm —
+                hier und oben als „Zweite Ansicht schließen". Eine Sache, ein Knopf; das
+                ist die Doppelung, die diese App überall vermeidet, und im Bild war sie das
+                Auffälligste.
+
+                Das Ziel bleibt groß genug für einen Daumen (h-9 w-9 = 36 px), auch ohne
+                Rahmen — ein Zeichen, das man nicht trifft, ist kein Bedienelement.
+              */}
+              {/*
+                Die SCHIENE. Sieben nackte Zeichen erfüllen zwar seinen Wunsch („ohne
+                Kästchen"), aber allein wären sie kein erkennbares Bedienelement mehr —
+                und „ein Knopf, den man nicht als Knopf erkennt, ist keiner" steht als
+                seine eigene Regel in CLAUDE.md. Ein gemeinsamer, sehr leiser Kasten sagt
+                „hier ist eine Auswahl", ohne dass jedes Zeichen einen Rahmen braucht.
+
+                `w-fit`, damit die Schiene nur so breit ist wie ihre Zeichen: über die
+                ganze Spalte gezogen wäre sie wieder ein Band.
+              */}
+              <div className="mb-2 flex w-fit items-center gap-0.5 rounded-xl bg-slate-900/70 p-1">
                 {tabs.map((key) => (
-                  <Chip
+                  <button
                     key={key}
-                    active={rechts === key}
+                    type="button"
                     title={S.sheet.tabs[key]}
+                    aria-label={S.sheet.tabs[key]}
+                    aria-pressed={rechts === key}
                     onClick={() => goTab2(key)}
+                    className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+                      rechts === key
+                        ? "bg-amber-600/20 text-amber-300"
+                        : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"
+                    }`}
                   >
-                    <IconInline name={TAB_ICONS[key]} size={16} />
-                  </Chip>
+                    <IconInline name={TAB_ICONS[key]} size={18} />
+                  </button>
                 ))}
-                <span className="ml-auto">
-                  <GhostButton title={S.sheet.splitClose} onClick={() => merkeTab2(null)}>
-                    ✕
-                  </GhostButton>
-                </span>
               </div>
               {koerper(rechts)}
             </div>
