@@ -1,3 +1,4 @@
+import { BLATT_BREITE, LEISTE_VERSATZ } from "./layoutMetrics.js";
 import { useState } from "react";
 import type { Character } from "@codex35/core";
 import { S } from "../strings.js";
@@ -91,8 +92,8 @@ export function BulkDeleteBar(props: {
         Startseite hat unten nichts — also `bottom-0` ohne Abzug, aber mit dem Polster für
         die Home-Anzeige. Ein Wert zu viel wäre genau das Band, das über dem Rand schwebt.
       */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/95 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:left-52">
-        <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-2">
+      <div className={`fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/95 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur ${LEISTE_VERSATZ}`}>
+        <div className={`flex flex-wrap items-center gap-2 ${BLATT_BREITE}`}>
           <span className="min-w-0 flex-1 text-xs text-slate-400">
             {picked.length === 0 ? S.bulk.none : S.bulk.count(picked.length, props.characters.length)}
           </span>

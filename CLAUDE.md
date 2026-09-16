@@ -2782,6 +2782,87 @@ Strecke gehört in denselben Commit wie die Runde, die sie prüft.** Die rund 10
 kommen nicht zurück; was zählt, wächst mit den nächsten Runden nach — und was von den
 alten in dieser Datei beschrieben ist, ist der Aufschrieb, der sie überlebt hat.
 
+## Die Symbolleiste und zwei Ansichten nebeneinander
+
+Sein Befund zu einem iPad-Bild: **„Die Leiste links ist auf dem iPad zu groß. Und dafür
+ist sie auch zu unwichtig. Bitte Bau das anders ein."** Beides stimmte — 208 px (`w-52`)
+für vier Links, die man im Bogen praktisch nie anfasst, also rund ein Sechstel der Fläche.
+
+Gefragt und entschieden: **schmale Symbolleiste** (64 px, nur Zeichen) · **volle Breite**
+· und dazu sein eigener Zusatz: **„Volle Breite evtl. dafür dann auch zwei Ansichten
+nebeneinander? Im Querformat. Im Hochformat anders."**
+
+**Eine Zahl gehörte dabei in die Frage und nicht ins Ergebnis:** schmaler machen bringt
+dem Bogen keinen einzigen Pixel, solange er auf `max-w-3xl` gedeckelt ist und mittig
+steht — der Platz wandert in den Rand. Ohne diesen Hinweis hätte er eine Verbesserung
+bestellt, die man nicht sieht.
+
+Fünf Entscheidungen sind eine Notiz wert:
+
+- **Die Maße der Hülle stehen jetzt an EINER Stelle** (`ui/layoutMetrics.ts`). Beim
+  Schmalermachen kam heraus, dass die Breite **viermal** im Quelltext stand: einmal an
+  der Leiste und dreimal als `md:left-52` an allem, was fest daneben klebt (die rote
+  Bearbeiten-Leiste, die Löschen-Leiste). Wer eine davon vergisst, bekommt ein Band, das
+  144 px neben dem Rand schwebt — die fünfte Falle, wörtlich, und hier schon zweimal
+  bezahlt. Die Schranke dazu (`layoutMetrics.test.ts`) verbietet die Zahlen im Rest der
+  App.
+- **Die Grenze für zwei Ansichten ist die BREITE und nicht die Ausrichtung.** Sein iPad
+  ist quer 1180 px (zwei Spalten passen) und hoch 820 px (sie passen nicht), also `lg`.
+  Eine Abfrage auf die Ausrichtung wäre die schlechtere Bedingung: ein geteiltes Fenster
+  hat die Ausrichtung des Geräts, aber nicht dessen Breite.
+- **Und sie wird GEMESSEN, nicht aus der Einstellung geschlossen** (`useBreiterSchirm`).
+  Wer im Querformat zwei Ansichten aufschlägt und dann dreht, hat die Einstellung noch —
+  den Platz nicht. Ohne diese zweite Hälfte bliebe im Hochformat das Wischen zwischen den
+  Reitern abgeschaltet, obwohl nur eine Ansicht dasteht, und der Grund wäre nirgends zu
+  sehen.
+- **Die rechte Spalte hat ihre EIGENE Reiterreihe.** Ein zweiter Zustand ohne eigenes
+  Bedienelement wäre die Familie „etwas weiß es, und etwas anderes kann es nicht" — man
+  müsste raten, welcher Tipp welche Spalte meint. Und rechts denselben Reiter zu wählen,
+  der links steht, **tauscht** die beiden: kein toter Zustand, keine gesperrte Kachel in
+  einer Reihe aus sieben, jeder Tipp führt zu etwas Sinnvollem.
+- **Die Hinweiskarte zieht in ihre Spalte.** Sie stand einmal oben für den aktiven
+  Reiter; nebeneinander wäre das die halbe Wahrheit — der Punkt an einem Reiter führte
+  dann zu einer Karte, die von der anderen Spalte redet.
+
+**Ein echter Fehler kam von seinem Bild, nicht von einem Test:** das „Chardex35" oben
+links steckte unter der Statusleiste. Die Leiste am Handy rechnete `env(safe-area-inset-top)`
+längst ein, die Seitenleiste nie. In 64 px passt der Name ohnehin nicht — dort steht jetzt
+das Kürzel `C35`, der ganze Name hängt als `title` daran, und jedes Zeichen trägt sein
+`aria-label`: ein Zeichen ohne Namen ist für ein Vorleseprogramm ein leerer Knopf.
+
+**Die zehnte Falle, und sie ist mir damit zum DRITTEN Mal passiert.** `useBreiterSchirm`
+stand unten bei seiner Verwendung — und damit hinter `if (character === undefined) return
+…`. Solange der Bogen lud, lief der Hook nicht; sobald er da war, lief er, React zählte
+einen Hook mehr als beim Durchlauf davor, Fehler 310, die Seite weiß. Gemeldet hat es
+**nur der Lauf im gebauten Bogen**: `tsc` und `pnpm test` sehen einen Hook hinter einer
+Bedingung nicht, und der Sondenfehler sah zuerst nach einer fehlenden Hülle aus
+(`document.querySelector("main")` war leer, obwohl die Startseite in Ordnung war).
+
+**Und zwei Funde, die nur das HINSEHEN gebracht hat:**
+
+- Die rechte Reiterreihe brach mit den Kurznamen in eine **zweite Zeile** um, „Notiz"
+  stand allein darin und schob das ✕ mit. Alle 40 Prüfungen waren dabei grün — sie lesen
+  `innerText`, und der stimmte. Wörtlich derselbe Fund wie bei den Behältern und beim
+  Wirken-Knopf: **eine Zeile, die schon voll ist, verträgt keinen weiteren Knopf.** Jetzt
+  nur Zeichen, und die Strecke prüft die Umbruchfreiheit an der y-Position.
+- Die Strecke hat danach eine Zahl bekommen, die GEMESSEN ist: `done(41)`. Meine erste
+  Schätzung war 45, und die hätte jede grüne Strecke rot gemeldet.
+
+**Zwei eigene Schranken-Fehler, beide dieselbe Sorte:** die erste Fassung von
+`layoutMetrics.test.ts` verbot jedes `w-16` und meldete damit vier Zahlenfelder und eine
+Kachelspalte, die mit der Leiste nichts zu tun haben — ein Maß der HÜLLE erkennt man am
+responsiven Präfix, nicht an der Zahl. Und sie meldete `max-w-3xl` im Assistenten, wo es
+in einem **Erklärsatz** steht: Kommentare gehören vor der Suche heraus, mit demselben
+kleinen Zustandsautomaten wie in der Kürzel-Prüfung. Beides ist die aufgeschriebene
+Regel — eine Prüfung, die zu weit greift, meldet eine Stelle, die mit der Regel nichts zu
+tun hat, und man baut den Text kaputt, um sie grün zu bekommen.
+
+Die Strecke liegt als `e2e/strecken/ipad-leiste.mjs` im Repo (41 Prüfungen), nach der
+Regel der Runde davor: im selben Commit wie das, was sie prüft. Sie misst in allen drei
+Größen GEGENEINANDER — was im Querformat da sein muss, darf im Hochformat gerade nicht
+da sein. Eine Prüfung, die eine Breite ausnimmt, behauptet nicht „hier gilt es nicht",
+sie schaut nur nicht hin.
+
 ## Noch offen
 - **Rund 103 Teststrecken sind verloren** (eigener Abschnitt darüber). Ungeprüft sind
   damit die Bereiche, die in dieser Datei beschrieben, aber nicht mehr abgedeckt sind:

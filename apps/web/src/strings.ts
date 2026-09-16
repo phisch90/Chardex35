@@ -4,6 +4,12 @@
  */
 export const S = {
   appName: "Chardex35",
+  /*
+    Das Kürzel für die Symbolleiste ab `md`. Sie ist 64 px breit — dort ist der ganze
+    Name nicht lesbar, und ein abgeschnittenes Wort ist schlimmer als ein kurzes. Der
+    volle Name hängt als `title` daran.
+  */
+  appShort: "C35",
 
   nav: {
     characters: "Charaktere",
@@ -56,6 +62,14 @@ export const S = {
       feats: "Talente",
       notes: "Notiz",
     },
+    /*
+      Die zweite Ansicht nebeneinander — nur dort, wo wirklich Platz ist (ab 1024 px,
+      also sein iPad im Querformat). Seine Entscheidung: „Volle Breite evtl. dafür dann
+      auch zwei Ansichten nebeneinander? Im Querformat. Im Hochformat anders."
+    */
+    splitOpen: "Zweite Ansicht",
+    splitClose: "Zweite Ansicht schließen",
+    splitPick: "Was soll rechts stehen?",
     hp: "HP",
     hpMax: "max.",
     damage: "Schaden",
