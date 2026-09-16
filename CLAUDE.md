@@ -2821,6 +2821,23 @@ Fünf Entscheidungen sind eine Notiz wert:
   müsste raten, welcher Tipp welche Spalte meint. Und rechts denselben Reiter zu wählen,
   der links steht, **tauscht** die beiden: kein toter Zustand, keine gesperrte Kachel in
   einer Reihe aus sieben, jeder Tipp führt zu etwas Sinnvollem.
+
+**NACHTRAG, eine Runde später: zwei Spalten sind der NORMALFALL.** Sein Befund am fertigen
+Bogen: **„Ok iPad sieht besser aus. Bitte mache 2 Reiter auf ein Bild. Sonst ist ein Reiter
+zuuuuu breit."** Er hat recht — eine einzelne Spalte über 1100 px ist keine lesbare Zeile
+mehr, und die volle Breite war ja gerade seine Bestellung. Im Querformat stehen die zwei
+Ansichten jetzt sofort da, ohne dass jemand etwas aufschlägt.
+
+Dafür braucht der Zustand eine DRITTE Möglichkeit, und das ist der Kern des Nachtrags:
+„noch nichts gewählt" (→ Standard, rechts steht der nächste Reiter), „ausdrücklich zu"
+und „dieser Reiter". Mit nur zwei Werten hieße `null` beides — und der Schließen-Knopf
+wäre beim nächsten Rendern wieder wirkungslos, also genau der Knopf, der etwas verspricht
+und nichts tut. Gespeichert wird deshalb `"zu"` als eigener Wert; die Strecke prüft die
+Gegenprobe (nach dem Schließen einen Reiter wechseln — sie bleibt zu).
+
+Nebennutzen des Standards: er wird GERECHNET (der nächste Reiter nach dem linken), nicht
+gespeichert. Wechselt er links auf den, der rechts steht, rutscht der Standard von allein
+weiter — zweimal derselbe Inhalt kann gar nicht entstehen.
 - **Die Hinweiskarte zieht in ihre Spalte.** Sie stand einmal oben für den aktiven
   Reiter; nebeneinander wäre das die halbe Wahrheit — der Punkt an einem Reiter führte
   dann zu einer Karte, die von der anderen Spalte redet.

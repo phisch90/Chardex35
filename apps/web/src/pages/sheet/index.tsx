@@ -103,14 +103,30 @@ function rememberedTab(charId: string): TabKey {
 
 const TAB2_MEMORY = "codex35.sheet.tab2.";
 
-function rememberedTab2(charId: string): TabKey | null {
+/**
+ * Was rechts steht — mit DREI Zuständen, und der dritte ist der Grund für diese Runde.
+ *
+ * Sein Befund zum fertigen iPad-Bogen: „Bitte mache 2 Reiter auf ein Bild. Sonst ist ein
+ * Reiter zuuuuu breit." Er hat recht — eine einzelne Spalte über 1100 px ist keine
+ * lesbare Zeile mehr. Zwei Ansichten sind also der NORMALFALL und nicht etwas, das man
+ * erst aufschlägt.
+ *
+ * Damit er sie trotzdem zumachen kann, reicht „ein Reiter oder nichts" nicht: `null`
+ * hieße sonst gleichzeitig „noch nie entschieden" und „ausdrücklich zu", und der
+ * Schließen-Knopf wäre wirkungslos. Deshalb `"zu"` als eigener gespeicherter Wert und
+ * `undefined` für „noch nichts gewählt".
+ */
+const TAB2_CLOSED = "zu";
+
+function rememberedTab2(charId: string): TabKey | typeof TAB2_CLOSED | undefined {
   try {
     const stored = sessionStorage.getItem(TAB2_MEMORY + charId);
+    if (stored === TAB2_CLOSED) return TAB2_CLOSED;
     if (stored !== null && stored in S.sheet.tabs) return stored as TabKey;
   } catch {
     // siehe rememberedTab
   }
-  return null;
+  return undefined;
 }
 
 export function CharacterSheetPage() {
@@ -127,7 +143,9 @@ export function CharacterSheetPage() {
     Gemerkt wie der erste Reiter, je Bogen und nur für diese Sitzung: womit er heute
     Abend spielt, ist kein Zustand seiner Figur.
   */
-  const [tab2, setTab2] = useState<TabKey | null>(() => rememberedTab2(charId));
+  const [tab2, setTab2] = useState<TabKey | typeof TAB2_CLOSED | undefined>(() =>
+    rememberedTab2(charId),
+  );
   /*
     Und dieser Hook steht HIER und nicht unten bei seiner Verwendung — die zehnte Falle
     dieses Projekts, und sie ist mir damit zum dritten Mal passiert: unter den Zeilen
@@ -256,14 +274,32 @@ export function CharacterSheetPage() {
     wäre nirgends zu sehen. Dieselbe Regel wie bei der Reiterleiste: wer ein Hüllenmaß
     einrechnet, muss prüfen, ob die Hülle in dieser Breite dieselbe ist.
   */
-  const rechts: TabKey | null = tab2 !== null && tabs.includes(tab2) ? tab2 : null;
+  /*
+    Ohne eigene Wahl steht rechts der NÄCHSTE Reiter — gerechnet und nicht gespeichert.
+    Das ist seit seinem Befund der Normalfall: „Bitte mache 2 Reiter auf ein Bild. Sonst
+    ist ein Reiter zuuuuu breit."
+
+    Der Nebennutzen: wechselt er links auf genau den Reiter, der rechts steht, rutscht der
+    Standard von allein weiter. Zweimal derselbe Inhalt kann so gar nicht entstehen.
+  */
+  const rechts: TabKey | null =
+    tab2 === TAB2_CLOSED
+      ? null
+      : tab2 !== undefined && tabs.includes(tab2)
+        ? tab2
+        : (tabs.find((t) => t !== active) ?? null);
   const geteilt = breit && rechts !== null;
 
   const merkeTab2 = (key: TabKey | null) => {
-    setTab2(key);
+    /*
+      `null` heißt hier „zumachen", und das wird als eigener Wert GESPEICHERT: ohne ihn
+      wäre es vom Anfangszustand nicht zu unterscheiden, und der Schließen-Knopf ginge
+      beim nächsten Rendern wieder auf.
+    */
+    const wert = key ?? TAB2_CLOSED;
+    setTab2(wert);
     try {
-      if (key === null) sessionStorage.removeItem(TAB2_MEMORY + character.id);
-      else sessionStorage.setItem(TAB2_MEMORY + character.id, key);
+      sessionStorage.setItem(TAB2_MEMORY + character.id, wert);
     } catch {
       // siehe rememberedTab
     }
@@ -286,8 +322,18 @@ export function CharacterSheetPage() {
     merkeTab2(key);
   };
 
-  /** Beim Aufschlagen steht rechts der nächste Reiter — irgendeiner muss es sein. */
-  const oeffneZweite = () => merkeTab2(tabs.find((t) => t !== active) ?? active);
+  /**
+   * Wieder aufschlagen heisst zurück zum STANDARD und nicht zu einem festen Reiter: so
+   * folgt die rechte Spalte wieder dem linken Wechsel, statt stehenzubleiben.
+   */
+  const oeffneZweite = () => {
+    setTab2(undefined);
+    try {
+      sessionStorage.removeItem(TAB2_MEMORY + character.id);
+    } catch {
+      // siehe rememberedTab
+    }
+  };
 
   const at = tabs.indexOf(active);
   const before = tabs[at - 1];
