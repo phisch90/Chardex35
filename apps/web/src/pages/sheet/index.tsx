@@ -609,12 +609,68 @@ export function CharacterSheetPage() {
         */}
         {/* `GhostButton` trägt sein `aria-label` selbst aus `title` — der Platz kommt
             deshalb vom Kasten darum und nicht vom Knopf. */}
-        <span className="ml-auto hidden lg:block">
+        <span className="ml-auto hidden items-center gap-2 lg:flex">
+          {/*
+            Die SCHIENE der rechten Spalte — hier und nicht mehr in der Spalte selbst.
+
+            Sein Befund: „Mir gefällt der Versatz nicht." Sie stand über der rechten
+            Karte und schob sie rund 40 px nach unten; die linke Karte fing höher an.
+            In dieser Zeile steht sie über BEIDEN Spalten und kann gar keinen Versatz
+            mehr machen — auch dann nicht, wenn die Zeile bei 1024 px umbricht, denn
+            eine zweite Zeile liegt wieder über beiden.
+
+            Dass sie rechts sitzt, sagt das Auge: sie steht über der Spalte, die sie
+            bedient. Dem Ohr sagt es `splitTab` — sonst käme zweimal „Kampf" ohne
+            Unterschied, einmal aus jeder Reiterreihe.
+
+            Die Zeichen bleiben ohne Kästchen (seine Wahl: „Mach das schöner"), der
+            gemeinsame leise Kasten bleibt ihre Schiene, und das Ziel bleibt 36 px groß
+            — ein Zeichen, das man nicht trifft, ist kein Bedienelement.
+          */}
+          {geteilt && (
+            <span
+              role="group"
+              aria-label={S.sheet.splitPick}
+              className="flex w-fit items-center gap-0.5 rounded-xl bg-slate-900/70 p-1"
+            >
+              {tabs.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  title={S.sheet.tabs[key]}
+                  aria-label={S.sheet.splitTab(S.sheet.tabs[key])}
+                  aria-pressed={rechts === key}
+                  onClick={() => goTab2(key)}
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+                    rechts === key
+                      ? "bg-amber-600/20 text-amber-300"
+                      : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"
+                  }`}
+                >
+                  <IconInline name={TAB_ICONS[key]} size={18} />
+                </button>
+              ))}
+            </span>
+          )}
+          {/*
+            Steht die Schiene daneben, ist der Knopf nur noch sein Zeichen: der ganze Satz
+            „Zweite Ansicht schließen" neben sieben Reitern hätte die Zeile schon bei
+            1024 px ohne Not umbrechen lassen. Der Name bleibt am `title`, und
+            `GhostButton` macht daraus sein `aria-label` — ein Zeichen ohne Namen ist ein
+            leerer Knopf.
+
+            Und es ist ein ✕ und kein ⧉: ⧉ heißt „zweite Ansicht" und sagt allein nicht,
+            ob es sie aufschlägt oder zumacht — am iPad gibt es keinen Mauszeiger, der
+            den `title` zeigt. Ein ✕ ist in jeder App dasselbe. Dass es hier jetzt stehen
+            darf, liegt daran, dass es das EINZIGE Schließen auf dem Schirm ist: in der
+            Spalte stand früher eines und oben der Satz, und genau diese Doppelung war
+            sein Einwand („Mach das schöner").
+          */}
           <GhostButton
             title={geteilt ? S.sheet.splitClose : S.sheet.splitOpen}
             onClick={() => (geteilt ? merkeTab2(null) : oeffneZweite())}
           >
-            ⧉ {geteilt ? S.sheet.splitClose : S.sheet.splitOpen}
+            {geteilt ? "✕" : `⧉ ${S.sheet.splitOpen}`}
           </GhostButton>
         </span>
       </div>
@@ -687,77 +743,21 @@ export function CharacterSheetPage() {
           );
         }
 
+        /*
+          Beide Spalten beginnen auf DERSELBEN Höhe, und das ist der ganze Punkt dieser
+          Runde. Sein Befund: „Mir gefällt der Versatz nicht." Die Schiene der rechten
+          Spalte stand ÜBER deren Karte — die linke Karte fing damit rund 40 px höher an
+          als die rechte, und zwei Karten nebeneinander, die auf verschiedenen Höhen
+          anfangen, sehen aus wie ein Fehler.
+
+          Behoben nicht mit einem Platzhalter links (das wäre eine Lücke, die nichts
+          trägt), sondern indem die Schiene dorthin wandert, wo die andere Reiterreihe
+          schon steht: in die Zeile darüber. Hier bleiben nur noch die zwei Karten.
+        */
         return (
-          <div className="grid grid-cols-2 gap-4" data-geteilt="ja">
+          <div className="grid grid-cols-2 items-start gap-4" data-geteilt="ja">
             <div className="min-w-0">{koerper(active)}</div>
-            {/*
-              Die rechte Spalte trägt ihre eigene Reiterreihe. Ohne sie müsste man
-              erraten, welcher Tipp welche Spalte meint — und ein zweiter Zustand ohne
-              eigenes Bedienelement ist die Familie „etwas weiß es, und etwas anderes
-              kann es nicht".
-            */}
-            <div className="min-w-0">
-              {/*
-                NUR die Zeichen, kein `flex-wrap`. Mit den Kurznamen brach die Reihe bei
-                sieben Reitern in eine zweite Zeile um, „Notiz" stand allein darin und
-                schob das ✕ mit — eine Zeile, die nur aus der Spaltenbreite entsteht, ist
-                genau sein Einwand an den Wertekacheln. Gefunden hat das der BLICK aufs
-                Bild; alle 40 Prüfungen waren dabei grün, sie lesen ja nur den Text.
-
-                Der Name hängt als `title` daran — dieselbe Entscheidung wie an der
-                Symbolleiste links, und aus demselben Grund: ein abgeschnittenes Wort ist
-                schlimmer als gar keines.
-              */}
-              {/*
-                Seine Antwort auf das eingekreiste Bild („Mach das schöner"): die Zeichen
-                OHNE Kästchen. Vorher trug jeder der sieben Reiter seinen eigenen Rahmen,
-                und das waren sieben Kästen für eine Nebensache — neben der großen
-                Chip-Reihe der Hauptspalte sah es nach einem zweiten System aus.
-
-                Jetzt trägt nur der AKTIVE eine Fläche; die anderen sind nackte Zeichen,
-                die beim Darüberfahren aufhellen. Die Trennlinie ist mit weg: sie zog eine
-                dritte waagerechte Ebene ein, obwohl die Karte darunter schon einen Rahmen
-                hat.
-
-                **Und das ✕ ist weg.** Dasselbe Schließen stand zweimal auf einem Schirm —
-                hier und oben als „Zweite Ansicht schließen". Eine Sache, ein Knopf; das
-                ist die Doppelung, die diese App überall vermeidet, und im Bild war sie das
-                Auffälligste.
-
-                Das Ziel bleibt groß genug für einen Daumen (h-9 w-9 = 36 px), auch ohne
-                Rahmen — ein Zeichen, das man nicht trifft, ist kein Bedienelement.
-              */}
-              {/*
-                Die SCHIENE. Sieben nackte Zeichen erfüllen zwar seinen Wunsch („ohne
-                Kästchen"), aber allein wären sie kein erkennbares Bedienelement mehr —
-                und „ein Knopf, den man nicht als Knopf erkennt, ist keiner" steht als
-                seine eigene Regel in CLAUDE.md. Ein gemeinsamer, sehr leiser Kasten sagt
-                „hier ist eine Auswahl", ohne dass jedes Zeichen einen Rahmen braucht.
-
-                `w-fit`, damit die Schiene nur so breit ist wie ihre Zeichen: über die
-                ganze Spalte gezogen wäre sie wieder ein Band.
-              */}
-              <div className="mb-2 flex w-fit items-center gap-0.5 rounded-xl bg-slate-900/70 p-1">
-                {tabs.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    title={S.sheet.tabs[key]}
-                    aria-label={S.sheet.tabs[key]}
-                    aria-pressed={rechts === key}
-                    onClick={() => goTab2(key)}
-                    className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
-                      rechts === key
-                        ? "bg-amber-600/20 text-amber-300"
-                        : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"
-                    }`}
-                  >
-                    <IconInline name={TAB_ICONS[key]} size={18} />
-                  </button>
-                ))}
-              </div>
-              {koerper(rechts)}
-            </div>
+            <div className="min-w-0">{koerper(rechts)}</div>
           </div>
         );
       })()}

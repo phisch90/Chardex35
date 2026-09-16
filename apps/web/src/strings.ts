@@ -70,6 +70,13 @@ export const S = {
     splitOpen: "Zweite Ansicht",
     splitClose: "Zweite Ansicht schließen",
     splitPick: "Was soll rechts stehen?",
+    /*
+      Der Name eines Reiters der RECHTEN Spalte. Seit die Schiene in der Reiterzeile
+      steht (sein Befund: `Mir gefällt der Versatz nicht`), stehen beide Reiterreihen
+      nebeneinander — und ein Vorleseprogramm bekäme sonst zweimal „Kampf" ohne
+      Unterschied. Die Augen trennen sie an der Schiene, das Ohr an diesem Wort.
+    */
+    splitTab: (name: string) => `Rechts: ${name}`,
     hp: "HP",
     hpMax: "max.",
     damage: "Schaden",

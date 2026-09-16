@@ -94,7 +94,13 @@ for (const [groesse, width, height] of GROESSEN) {
   }
 
   /* ---------- Zwei Ansichten ---------- */
-  const knopf = page.locator("button:visible").filter({ hasText: /Zweite Ansicht/i });
+  /*
+    Der Knopf traegt bei offener zweiter Ansicht NUR noch sein Zeichen — der ganze Satz
+    haette die Reiterzeile bei 1024 px umbrechen lassen, seit die Schiene daneben steht.
+    Gesucht wird deshalb am `title` und nicht am Text: ein `hasText` liefe ins Leere und
+    saehe aus wie ein fehlender Knopf in der App.
+  */
+  const knopf = page.locator("button[title*='Zweite Ansicht']:visible");
   const geteilt = () => page.locator('[data-geteilt="ja"]');
 
   if (breit) {
@@ -119,16 +125,45 @@ for (const [groesse, width, height] of GROESSEN) {
     );
 
     /*
-      Die rechte Spalte hat ihre eigene Reiterreihe — ohne sie muesste man raten,
-      welcher Tipp welche Spalte meint.
+      DER KERN DIESER RUNDE. Sein Befund: "Mir gefaellt der Versatz nicht." Die Schiene
+      der rechten Spalte stand ueber deren Karte und schob sie nach unten — die linke
+      Karte fing rund 40 px hoeher an.
+
+      Gemessen wird die OBERKANTE beider Karten, nicht die Abwesenheit der Schiene: eine
+      Pruefung, die nur sagt "die Schiene ist weg", waere auch dann gruen, wenn etwas
+      anderes den Versatz macht.
     */
+    const obenLinks = await spalten.nth(0).locator(".karte").first().boundingBox();
+    const obenRechts = await spalten.nth(1).locator(".karte").first().boundingBox();
+    bericht.check(
+      "beide Spalten beginnen auf derselben Hoehe (kein Versatz)",
+      obenLinks !== null && obenRechts !== null && Math.abs(obenLinks.y - obenRechts.y) <= 2,
+      `links y=${Math.round(obenLinks?.y ?? -1)} rechts y=${Math.round(obenRechts?.y ?? -1)}`,
+    );
+
     /*
-      Die Reiter der rechten Spalte tragen NUR ihr Zeichen — gesucht wird deshalb der
-      Name am `title` und nicht der Text. Ein `hasText` liefe hier ins Leere und sähe
-      aus wie eine fehlende Reiterreihe in der App.
+      Die Schiene ist damit nicht verschwunden, sondern umgezogen: sie steht in der
+      Reiterzeile ueber BEIDEN Spalten. Erkannt wird sie an ihrer Gruppe — der Name der
+      Reiter ist dort derselbe wie in der grossen Chip-Reihe, also traegt nur die Gruppe
+      den Unterschied.
     */
-    const eigene = await spalten.nth(1).getByTitle("Kampf", { exact: true }).count();
-    bericht.check("die rechte Spalte hat eine eigene Reiterreihe", eigene > 0, `${eigene}`);
+    const schiene = page.locator('[role="group"][aria-label*="rechts"]:visible');
+    bericht.check("die Schiene fuer rechts steht da", (await schiene.count()) === 1);
+    bericht.check(
+      "und nicht mehr in der Spalte selbst",
+      (await spalten.nth(1).locator('[role="group"]').count()) === 0,
+    );
+    bericht.check(
+      "sie traegt alle sieben Reiter",
+      (await schiene.locator("button").count()) === 7,
+      `${await schiene.locator("button").count()}`,
+    );
+    /*
+      Und jeder traegt einen Namen, der ihn von der Chip-Reihe daneben unterscheidet.
+      Zweimal "Kampf" auf einem Schirm waere fuer ein Vorleseprogramm nicht trennbar.
+    */
+    const eigene = await schiene.locator('button[aria-label*="Rechts:"]').count();
+    bericht.check("jeder Reiter der Schiene sagt, dass er rechts meint", eigene === 7, `${eigene}`);
 
     /*
       Und sie hat GENAU EINEN Weg zum Schliessen. Vorher stand das ✕ in der rechten
@@ -142,18 +177,25 @@ for (const [groesse, width, height] of GROESSEN) {
       .filter({ hasText: /✕|×/ })
       .count();
     bericht.check("kein zweiter Schliessen-Knopf in der Spalte", schliessenRechts === 0, `${schliessenRechts}`);
+    /*
+      Und die andere Haelfte derselben Zusage: es gibt ueberhaupt genau EINEN. Ohne diese
+      Zahl waere die Pruefung darueber auch dann gruen, wenn das zweite Kreuz irgendwo
+      sonst auf dem Schirm steht.
+    */
+    const kreuze = await page.locator("button[title*='Zweite Ansicht']:visible").count();
+    bericht.check("genau ein Weg, die zweite Ansicht zuzumachen", kreuze === 1, `${kreuze}`);
     bericht.check(
       "und sie steht in EINER Zeile (kein Umbruch)",
-      await spalten.nth(1).evaluate((el) => {
-        const knoepfe = [...el.querySelectorAll("button[title]")].slice(0, 7);
+      await schiene.evaluate((el) => {
+        const knoepfe = [...el.querySelectorAll("button")];
         const oben = new Set(knoepfe.map((b) => Math.round(b.getBoundingClientRect().y)));
-        return knoepfe.length >= 7 && oben.size === 1;
+        return knoepfe.length === 7 && oben.size === 1;
       }),
     );
 
     /* Umschalten der rechten Spalte, ohne die linke anzufassen. */
     const vorherLinks = (await spalten.nth(0).innerText()).slice(0, 80);
-    await spalten.nth(1).getByTitle("Notizen", { exact: true }).first().click();
+    await schiene.getByTitle("Notizen", { exact: true }).click();
     await page.waitForTimeout(900);
     const nachherLinks = (await geteilt().locator("> div").nth(0).innerText()).slice(0, 80);
     bericht.check("die linke Spalte bleibt dabei stehen", vorherLinks === nachherLinks);
@@ -167,7 +209,7 @@ for (const [groesse, width, height] of GROESSEN) {
     if (groesse === "ipad-quer") await bild(page, "ipad-zwei-ansichten");
 
     /* Zumachen — und zwar so, dass es HAELT. */
-    await page.locator("button:visible").filter({ hasText: /Zweite Ansicht schließen/i }).first().click();
+    await page.locator("button[title*='schließen']:visible").first().click();
     await page.waitForTimeout(900);
     bericht.check("sie laesst sich schliessen", (await geteilt().count()) === 0);
     /*
@@ -180,7 +222,7 @@ for (const [groesse, width, height] of GROESSEN) {
     bericht.check("und sie bleibt zu, auch nach einem Reiterwechsel", (await geteilt().count()) === 0);
 
     /* Und wieder auf. */
-    await page.locator("button:visible").filter({ hasText: /Zweite Ansicht/i }).first().click();
+    await knopf.first().click();
     await page.waitForTimeout(900);
     bericht.check("wieder aufschlagen geht auch", (await geteilt().count()) === 1);
   } else {
@@ -204,9 +246,9 @@ for (const [groesse, width, height] of GROESSEN) {
 }
 
 /*
-  43 und nicht mehr: im Hochformat laufen weniger Pruefungen als im Querformat (dort gibt
+  48 und nicht mehr: im Hochformat laufen weniger Pruefungen als im Querformat (dort gibt
   es die zweite Ansicht gar nicht). Die Zahl ist gemessen und nicht geschaetzt — eine
   Mindestzahl, die nie erreicht wird, macht jede gruene Strecke rot; eine zu niedrige
-  faengt den Abbruch nicht.
+  faengt den Abbruch nicht. 43 waren es, bevor die Schiene in die Reiterzeile umzog.
 */
-bericht.done(43);
+bericht.done(48);

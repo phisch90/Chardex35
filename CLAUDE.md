@@ -2895,11 +2895,47 @@ kleinen Zustandsautomaten wie in der Kürzel-Prüfung. Beides ist die aufgeschri
 Regel — eine Prüfung, die zu weit greift, meldet eine Stelle, die mit der Regel nichts zu
 tun hat, und man baut den Text kaputt, um sie grün zu bekommen.
 
-Die Strecke liegt als `e2e/strecken/ipad-leiste.mjs` im Repo (41 Prüfungen), nach der
+Die Strecke liegt als `e2e/strecken/ipad-leiste.mjs` im Repo (48 Prüfungen), nach der
 Regel der Runde davor: im selben Commit wie das, was sie prüft. Sie misst in allen drei
 Größen GEGENEINANDER — was im Querformat da sein muss, darf im Hochformat gerade nicht
 da sein. Eine Prüfung, die eine Breite ausnimmt, behauptet nicht „hier gilt es nicht",
 sie schaut nur nicht hin.
+
+### Und der dritte Nachtrag: „Mir gefällt der Versatz nicht"
+
+Sein Befund am fertigen Bild, und er ist das letzte Stück derselben Runde: die **linke
+Karte fing rund 40 px höher an als die rechte.** Die Ursache stand direkt daneben — die
+Schiene saß ÜBER der rechten Karte und schob nur diese nach unten. Zwei Karten
+nebeneinander, die auf verschiedenen Höhen anfangen, sehen aus wie ein Fehler, und zwar
+auch dann, wenn man den Grund kennt.
+
+**Der naheliegende Ausweg wäre ein Platzhalter links gewesen** — ein leerer Kasten in
+Schienenhöhe, damit beide gleich hoch beginnen. Das ist die falsche Antwort aus demselben
+Grund wie überall in dieser Datei: es hätte 40 px Luft eingebaut, die nichts trägt, und
+der Versatz wäre nicht weg, sondern verdoppelt.
+
+Richtig ist der Umzug: **die Schiene gehört in die Zeile, in der die andere Reiterreihe
+schon steht.** Dort liegt sie über BEIDEN Spalten, und damit kann sie gar keinen Versatz
+mehr machen — auch dann nicht, wenn die Zeile bei 1024 px umbricht, denn eine zweite
+Zeile liegt wieder über beiden. Das ist die eigentliche Eigenschaft dieser Lösung und
+nicht bloß ein Nebeneffekt.
+
+Drei Entscheidungen sind eine Notiz wert:
+
+- **Gemessen wird die OBERKANTE beider Karten, nicht die Abwesenheit der Schiene.** Eine
+  Prüfung, die nur sagt „die Schiene ist weg", wäre auch dann grün, wenn etwas anderes
+  den Versatz macht — sie prüft dann meine Behebung und nicht seinen Befund.
+- **Zwei Reiterreihen nebeneinander brauchen einen Unterschied fürs OHR.** Die Augen
+  trennen sie an der Schiene; ein Vorleseprogramm bekäme zweimal „Kampf" ohne jeden
+  Unterschied. Deshalb `splitTab` („Rechts: Kampf") und eine `role="group"` mit Namen.
+  Dieselbe Lehre wie an der Symbolleiste: ein Zeichen ohne Namen ist ein leerer Knopf.
+- **Aus dem ⧉ ist beim Schließen ein ✕ geworden.** Der ganze Satz „Zweite Ansicht
+  schließen" hätte die Zeile neben sieben Reitern ohne Not umbrechen lassen, also bleibt
+  nur das Zeichen — und ⧉ allein sagt nicht, ob es aufschlägt oder zumacht. Am iPad gibt
+  es keinen Mauszeiger, der den `title` zeigt. Dass ein ✕ hier jetzt stehen DARF, liegt
+  daran, dass es das einzige Schließen auf dem Schirm ist; genau die Doppelung war der
+  Einwand eine Runde vorher. Die Strecke prüft beides: keines in der Spalte, und im
+  ganzen Bild genau eines.
 
 ## Zwei Regellücken — die App wusste es und schwieg
 
