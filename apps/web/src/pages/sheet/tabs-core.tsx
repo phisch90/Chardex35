@@ -9,6 +9,7 @@ import { useAppSettings, useCompendium, useHouseRules } from "../../lib/hooks.js
 import { SubtypePicker } from "../../ui/SubtypePicker.js";
 import { TrackersCard } from "./Trackers.js";
 import { CombatOptionsCard } from "./CombatOptions.js";
+import { combatAttackList } from "./attackList.js";
 import type { TabProps } from "./index.js";
 
 /**
@@ -118,7 +119,36 @@ function GlanceCard({ sheet, openBreakdown }: Pick<TabProps, "sheet" | "openBrea
               key={mode}
               label={S.sheet[mode]}
               value={fmtMod(line.attack.total)}
-              onClick={() => openBreakdown(line.label, line.attack, { rollable: false })}
+              /*
+                Die NOTIZEN der Sammelzeile hängen jetzt hier — und das ist kein Zusatz,
+                sondern die zweite Hälfte der Runde, in der die zwei Zeilen aus der
+                Angriffsliste verschwunden sind.
+
+                Es gibt genau eine: „Zweiwaffenkampf ist an — die Mali stehen an den
+                Waffenzeilen, nicht hier." Sie beantwortet die Frage, die am Tisch
+                entsteht, wenn oben +8 steht und am Kurzschwert +5. Seit die Zeile im
+                Kampf-Reiter fehlt, entsteht diese Frage an DIESER Kachel — und eine
+                Zahl, deren Erklärung an einer Stelle liegt, die es nicht mehr gibt,
+                ist die Familie „etwas weiß es, und etwas anderes kann es nicht".
+              */
+              /*
+                Und WÜRFELN lässt sie sich jetzt auch — das `rollable: false` ist weg.
+
+                Es stand hier, weil die Sammelzeile im Kampf-Reiter ihren eigenen
+                Würfelknopf hatte. Seit sie dort nicht mehr steht, wäre der blanke
+                Nahkampf- oder Fernkampfwurf ersatzlos verschwunden: der unbewaffnete
+                Schlag, der improvisierte Gegenstand und vor allem die Berührungs- und
+                Strahlangriffe der Zauber würfeln genau diese Zahl und keine Waffe.
+                Eine Auskunft darf umziehen, ihr Weg muss mit.
+
+                Nebenbei war die Ausnahme ohnehin schief: Initiative, Ringkampf und die
+                drei Rettungswürfe sind hier seit jeher würfelbar.
+              */
+              onClick={() =>
+                openBreakdown(line.label, line.attack, {
+                  ...(line.notes.length > 0 ? { note: line.notes.join(" ") } : {}),
+                })
+              }
             />
           );
         })}
@@ -267,21 +297,20 @@ export function CombatTab(props: TabProps) {
   const { diceEnabled } = useAppSettings();
   const { ignoreEncumbrance } = useHouseRules();
   /*
-    Angelegte Waffen zuerst — seine Wahl. Sortiert wird in der ANZEIGE und nicht in der
-    Engine: die Reihenfolge dort ist die seines Gepäcks, also eine Eingabe, und die
-    Übersichtsseite liest dieselbe Liste. Ein `sort` auf `sheet.attacks` würde sie
-    stillschweigend mit umstellen.
+    Nur Waffen, angelegte zuerst — sein Wort: „wenn es ein Schwert ist brauchen wir doch
+    kein fernkampfschaden."
 
-    `toSorted` und nicht `sort`: `sheet.attacks` gehört der Engine, und eine Anzeige,
-    die die Liste ihrer Quelle umdreht, ist die Sorte Nebenwirkung, die man erst drei
-    Ansichten später bemerkt.
+    Die zwei Sammelzeilen standen bis hierher ganz oben in der Liste, und seit der Runde
+    davor mit je einer GROSSEN Zahl: bei Langschwert + Schild also „Fernkampf +7/+2" für
+    eine Waffe, die er nicht trägt, und darüber „Nahkampf +9/+4" — dieselbe Zahl wie das
+    Langschwert direkt darunter. Beim Entdoppeln hatte ich die KACHEL-Fassung entfernt
+    und die ZEILEN-Fassung stehen lassen, also die größere von beiden.
 
-    Die zwei Sammelzeilen (Nahkampf/Fernkampf, ohne `slot`) bleiben ganz oben: sie sind
-    seine Grundwerte und keine Waffe, die man wählen könnte.
+    Die Regel steht in `attackList.ts` und nicht hier: die Übersichtsseite filtert
+    dieselben zwei Zeilen seit ihrer eigenen Runde heraus. Zwei Kopien wären zwei
+    Wahrheiten.
   */
-  const rang = (a: (typeof sheet.attacks)[number]) =>
-    a.slot === undefined ? 0 : a.slot === "none" ? 2 : 1;
-  const attacks = sheet.attacks.toSorted((a, b) => rang(a) - rang(b));
+  const attacks = combatAttackList(sheet.attacks);
 
   return (
     <div className="space-y-3">

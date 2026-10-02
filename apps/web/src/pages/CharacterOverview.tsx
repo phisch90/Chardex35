@@ -17,6 +17,7 @@ import { reportSaveFailure } from "../lib/saveError.js";
 import { HpPad } from "../ui/HpPad.js";
 import { ItemName } from "../ui/ItemName.js";
 import { Card, SectionTitle, fmtMod } from "../ui/bits.js";
+import { weaponAttackLines } from "./sheet/attackList.js";
 import { useAccentAttribute } from "../ui/classAccents.js";
 
 /**
@@ -63,7 +64,15 @@ export function CharacterOverviewPage() {
   const hpRatio = sheet.hp.max > 0 ? sheet.hp.current / sheet.hp.max : 0;
   const ranked = sheet.skills.filter((skill) => skill.ranks > 0);
   const equipped = character.inventory.filter((row) => row.slot !== "none");
-  const attackLines = sheet.attacks.filter((a) => a.key !== "melee" && a.key !== "ranged");
+  /*
+    Nur die Waffen — die zwei Sammelzeilen stehen als Kacheln weiter unten.
+
+    Diese Bedingung stand hier ausgeschrieben und seit der Kampf-Runde ein zweites Mal im
+    Kampf-Reiter. Zwei Kopien einer Regel sind zwei Wahrheiten: es hätte gereicht, eine
+    davon beim nächsten Umbau zu vergessen, und die zwei Ansichten listeten verschiedene
+    Angriffe. Sie steht jetzt in `sheet/attackList.ts`.
+  */
+  const attackLines = weaponAttackLines(sheet.attacks);
   const coins = (["pp", "gp", "sp", "cp"] as const).filter((c) => character.money[c] > 0);
 
   /* Die zwölf Kacheln von „Auf einen Blick" — als stille Werte, ohne Aufschlüsselung. */
