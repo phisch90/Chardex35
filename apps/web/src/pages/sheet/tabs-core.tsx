@@ -261,108 +261,6 @@ export function CombatTab(props: TabProps) {
   return (
     <div className="space-y-3">
       <Card>
-        <SectionTitle>{S.sheet.ac}</SectionTitle>
-        <div className="grid grid-cols-3 gap-2">
-          <StatButton
-            big
-            label={S.sheet.ac}
-            value={`${sheet.ac.total.total}`}
-            onClick={() =>
-              openBreakdown(S.sheet.ac, sheet.ac.total, { rollable: false, absolute: true })
-            }
-          />
-          <StatButton
-            label={S.sheet.touch}
-            value={`${sheet.ac.touch.total}`}
-            onClick={() =>
-              openBreakdown(S.sheet.touch, sheet.ac.touch, {
-                rollable: false,
-                absolute: true,
-                note: S.sheet.touchHint,
-              })
-            }
-          />
-          <StatButton
-            label={S.sheet.flatFooted}
-            value={`${sheet.ac.flatFooted.total}`}
-            onClick={() =>
-              openBreakdown(S.sheet.flatFooted, sheet.ac.flatFooted, {
-                rollable: false,
-                absolute: true,
-                note: S.sheet.flatFootedHint,
-              })
-            }
-          />
-        </div>
-
-        {/*
-          Sein Einwand: „das sind ja zwei einzelne Sachen, ich kann ja das Schild
-          ablegen". Genau — also steht die RK nicht mehr nur als Summe da. Die
-          Bestandteile kommen aus derselben Aufschlüsselung, die der Tap zeigt;
-          hier sind sie sichtbar, ohne dass man tippen muss.
-        */}
-        <ul className="mt-2 space-y-0.5 text-xs">
-          {sheet.ac.total.contributions
-            .filter((c) => c.value !== 0)
-            .map((c, i) => (
-              <li key={i} className="flex items-baseline justify-between gap-2">
-                <span className={c.applied ? "text-slate-400" : "text-slate-600 line-through"}>
-                  {c.source}
-                </span>
-                <span className={`shrink-0 tabular-nums ${c.applied ? "text-slate-300" : "text-slate-600"}`}>
-                  {fmtMod(c.value)}
-                </span>
-              </li>
-            ))}
-        </ul>
-      </Card>
-
-      <CombatOptionsCard {...props} />
-
-      <Card>
-        <div className="grid grid-cols-4 gap-2">
-          <StatButton
-            label={S.sheet.init}
-            value={fmtMod(sheet.init.total)}
-            onClick={() => openBreakdown(S.sheet.init, sheet.init)}
-          />
-          <StatButton label={S.sheet.bab} value={fmtMod(sheet.bab)} />
-          <StatButton
-            label={S.sheet.grapple}
-            value={fmtMod(sheet.grapple.total)}
-            onClick={() => openBreakdown(S.sheet.grapple, sheet.grapple)}
-          />
-          <StatButton
-            label={S.sheet.speed}
-            value={`${sheet.speedFt.total} ft`
-            }
-            onClick={() =>
-              openBreakdown(S.sheet.speed, sheet.speedFt, {
-                rollable: false,
-                absolute: true,
-                note: "Fuß pro Runde",
-              })
-            }
-          />
-        </div>
-        {/* Nah-/Fernkampf als Gesamtwert — der BAB allein sagt am Tisch zu wenig. */}
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {(["melee", "ranged"] as const).map((mode) => {
-            const line = sheet.attacks.find((a) => a.key === mode);
-            if (!line) return null;
-            return (
-              <StatButton
-                key={mode}
-                label={S.sheet[mode]}
-                value={fmtMod(line.attack.total)}
-                onClick={() => openBreakdown(line.label, line.attack, { rollable: false })}
-              />
-            );
-          })}
-        </div>
-      </Card>
-
-      <Card>
         <SectionTitle>{S.sheet.attacks}</SectionTitle>
         {/*
           Die volle Attacke EINMAL deutlich, über der Liste und ohne Tap. Sein Auftrag:
@@ -464,6 +362,71 @@ export function CombatTab(props: TabProps) {
               </div>
             </li>
           ))}
+        </ul>
+      </Card>
+
+      {/*
+        Die Kampfoptionen stehen zwischen dem, was sie ÄNDERN: über ihnen die Angriffe,
+        unter ihnen die RK. Der Hinweis darin sagt seit jeher „die Werte oben ändern sich
+        mit" — und zeigte bis zu dieser Runde auf die RK, die Power Attack gar nicht
+        anfasst. Ein Satz, der auf die falsche Zahl zeigt, ist schlimmer als keiner.
+      */}
+      <CombatOptionsCard {...props} />
+
+      <Card>
+        <SectionTitle>{S.sheet.ac}</SectionTitle>
+        <div className="grid grid-cols-3 gap-2">
+          <StatButton
+            big
+            label={S.sheet.ac}
+            value={`${sheet.ac.total.total}`}
+            onClick={() =>
+              openBreakdown(S.sheet.ac, sheet.ac.total, { rollable: false, absolute: true })
+            }
+          />
+          <StatButton
+            label={S.sheet.touch}
+            value={`${sheet.ac.touch.total}`}
+            onClick={() =>
+              openBreakdown(S.sheet.touch, sheet.ac.touch, {
+                rollable: false,
+                absolute: true,
+                note: S.sheet.touchHint,
+              })
+            }
+          />
+          <StatButton
+            label={S.sheet.flatFooted}
+            value={`${sheet.ac.flatFooted.total}`}
+            onClick={() =>
+              openBreakdown(S.sheet.flatFooted, sheet.ac.flatFooted, {
+                rollable: false,
+                absolute: true,
+                note: S.sheet.flatFootedHint,
+              })
+            }
+          />
+        </div>
+
+        {/*
+          Sein Einwand: „das sind ja zwei einzelne Sachen, ich kann ja das Schild
+          ablegen". Genau — also steht die RK nicht mehr nur als Summe da. Die
+          Bestandteile kommen aus derselben Aufschlüsselung, die der Tap zeigt;
+          hier sind sie sichtbar, ohne dass man tippen muss.
+        */}
+        <ul className="mt-2 space-y-0.5 text-xs">
+          {sheet.ac.total.contributions
+            .filter((c) => c.value !== 0)
+            .map((c, i) => (
+              <li key={i} className="flex items-baseline justify-between gap-2">
+                <span className={c.applied ? "text-slate-400" : "text-slate-600 line-through"}>
+                  {c.source}
+                </span>
+                <span className={`shrink-0 tabular-nums ${c.applied ? "text-slate-300" : "text-slate-600"}`}>
+                  {fmtMod(c.value)}
+                </span>
+              </li>
+            ))}
         </ul>
       </Card>
 

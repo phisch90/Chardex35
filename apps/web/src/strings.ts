@@ -970,6 +970,26 @@ export const S = {
     powerAttackWeaponsTitle: "Mit dem, was du führst:",
     /** Nichts in der Hand — dann ist die Frage nicht zu beantworten, und das sagt sie. */
     powerAttackNoWeapon: "Nichts in der Hand — leg eine Waffe an, dann steht hier, was sie bekommt.",
+    /*
+      Der zugeklappte Kopf. Sein Auftrag war „Kampfoptionen kleiner" — und die Bedingung
+      dafür ist diese Zeile: zugeklappt muss der KASTEN sagen, was gerade an ist. Ein
+      Regler, der einen Malus auf jeden Angriff legt und sich dabei versteckt, ist die
+      Fehlerfamilie dieses Projekts in ihrer teuersten Form.
+
+      Deshalb kurze Formen statt der Chip-Beschriftungen: auf dem Knopf steht
+      „Defensiv kämpfen (−4 / +2 RK)", und drei davon nebeneinander wären wieder die
+      Zeile, die nicht mehr lesbar ist.
+    */
+    optionsNone: "keine Option aktiv",
+    optionsPowerAttack: (n: number) => `Power Attack ${n}`,
+    optionsExpertise: (n: number) => `Kampfgeschick ${n}`,
+    optionsDefensive: "Defensiv kämpfen",
+    optionsTotalDefense: "Totale Verteidigung",
+    optionsDodge: "Dodge",
+    optionsTwoWeapon: "Zwei Waffen",
+    /** Für Zeigegerät und Vorleseprogramm — das Zeichen allein sagt nichts. */
+    optionsOpen: "Kampfoptionen aufklappen",
+    optionsClose: "Kampfoptionen zuklappen",
   },
 
   /*

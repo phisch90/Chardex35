@@ -1,9 +1,23 @@
+import { useState } from "react";
 import { COMBAT_EXPERTISE_MAX } from "@codex35/core";
 import { S } from "../../strings.js";
 import { Card, Chip, GhostButton, NumberStepper, SectionTitle } from "../../ui/bits.js";
 import { RuleHint } from "../../ui/RuleHint.js";
 import { useHouseRules } from "../../lib/hooks.js";
 import type { TabProps } from "./index.js";
+
+/** Der zugeklappte Zustand gehört dem GERÄT, nicht der Figur — wie der Zaubergrad. */
+const FOLD_KEY = "codex35.combat.optionsOpen.";
+
+function rememberedOpen(charId: string): boolean {
+  try {
+    return sessionStorage.getItem(FOLD_KEY + charId) === "1";
+  } catch {
+    // Privater Modus, gesperrte Website-Daten: dann eben zu. Ein Lesefehler
+    // darf den Kasten nicht kosten.
+    return false;
+  }
+}
 
 /**
  * Kampfoptionen — was man von Runde zu Runde wählt.
@@ -15,6 +29,22 @@ import type { TabProps } from "./index.js";
  * Defensiv kämpfen und totale Verteidigung braucht jeder — die stehen immer da.
  */
 export function CombatOptionsCard({ character, sheet, save }: TabProps) {
+  /*
+    Der Hook steht GANZ OBEN und nicht bei seiner Verwendung — die zehnte Falle dieses
+    Projekts, und sie ist mir damit schon dreimal passiert. Hier gibt es zwar keinen
+    frühen `return`, aber die Regel gilt ohne Ausnahme: ein Hook steht vor dem ersten
+    `return`, oder es ist keiner.
+  */
+  const [offen, setOffen] = useState(() => rememberedOpen(character.id));
+  const setzeOffen = (wert: boolean) => {
+    setOffen(wert);
+    try {
+      if (wert) sessionStorage.setItem(FOLD_KEY + character.id, "1");
+      else sessionStorage.removeItem(FOLD_KEY + character.id);
+    } catch {
+      // Gemerkt wird es dann nicht — der Kasten klappt trotzdem auf.
+    }
+  };
   /*
     Die Hausregel gehört in den HINWEIS und nicht nur in die Rechnung: stand dort „mit
     leichter Waffe gar nicht", während die Engine den Schaden gab, widersprach der
@@ -28,18 +58,54 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
   const set = (patch: Partial<typeof options>) =>
     save((c) => void Object.assign(c.combatOptions, patch));
 
-  const anyActive =
-    options.powerAttack > 0 ||
-    options.combatExpertise > 0 ||
-    options.fightingDefensively ||
-    options.totalDefense ||
-    options.dodgeActive ||
-    options.twoWeaponFighting;
+  /*
+    Was gerade AN ist — als Liste und nicht als `boolean`, und das ist der Kern dieser
+    Runde. Vorher gab es `anyActive` nur als Ja/Nein für den amber Rahmen; seit der
+    Kasten zuklappt, muss dieselbe Frage auch den SATZ im Kopf tragen.
+
+    Beides aus EINER Quelle: stünde die Bedingung zweimal, wäre irgendwann der Rahmen
+    amber und die Zeile sagte „keine Option aktiv". Genau diese Sorte Widerspruch hat
+    dieses Projekt schon mehrfach bezahlt.
+  */
+  const activeLabels: string[] = [];
+  if (options.powerAttack > 0) activeLabels.push(S.combat.optionsPowerAttack(options.powerAttack));
+  if (options.combatExpertise > 0)
+    activeLabels.push(S.combat.optionsExpertise(options.combatExpertise));
+  if (options.fightingDefensively) activeLabels.push(S.combat.optionsDefensive);
+  if (options.totalDefense) activeLabels.push(S.combat.optionsTotalDefense);
+  if (options.dodgeActive) activeLabels.push(S.combat.optionsDodge);
+  if (options.twoWeaponFighting) activeLabels.push(S.combat.optionsTwoWeapon);
+  const anyActive = activeLabels.length > 0;
 
   return (
     <Card className={anyActive ? "border-amber-700/70" : ""}>
       <div className="flex items-center justify-between gap-2">
-        <SectionTitle>{S.combat.title}</SectionTitle>
+        {/*
+          Die Überschrift IST der Schalter — kein zweites Bedienelement daneben, dieselbe
+          Entscheidung wie beim amber Streifen des Bearbeiten-Modus. Das ▸ sagt, dass hier
+          etwas aufgeht: ein Knopf, den man nicht als Knopf erkennt, ist keiner.
+        */}
+        <button
+          type="button"
+          aria-expanded={offen}
+          aria-label={offen ? S.combat.optionsClose : S.combat.optionsOpen}
+          onClick={() => setzeOffen(!offen)}
+          /*
+            `-my-1 py-1` macht das Ziel groesser, ohne etwas zu verschieben: die
+            Ueberschrift ist mit `text-xs` nur rund 28 px hoch, und am Tisch wird mit dem
+            Daumen getippt.
+          */
+          className="-my-1 flex min-w-0 flex-1 items-center gap-1.5 py-1 text-left"
+        >
+          {/*
+            Das `mb-2` ist kein Schmuck, sondern die Ausrichtung: `SectionTitle` traegt es
+            selbst, und ohne dasselbe Mass am Zeichen zentriert `items-center` die zwei
+            verschieden hohen Kaesten — das Dreieck sass sichtbar tiefer als das Wort.
+            Gefunden hat das der BLICK aufs Bild; alle 79 Pruefungen waren dabei gruen.
+          */}
+          <span className="mb-2 text-xs text-slate-500">{offen ? "▾" : "▸"}</span>
+          <SectionTitle>{S.combat.title}</SectionTitle>
+        </button>
         {anyActive && (
           <GhostButton
             onClick={() =>
@@ -58,6 +124,24 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
           </GhostButton>
         )}
       </div>
+
+      {/*
+        Zugeklappt trägt diese Zeile den ganzen Zustand. Sie steht in der Bedienfarbe,
+        wenn etwas an ist — hier ist das richtig und nicht die elfte Falle: es IST ein
+        Zustand, den man bedient hat, und der amber Rahmen des Kastens sagt dasselbe.
+
+        Offen steht sie nicht: dort sagen es die Regler und die aktiven Chips selbst,
+        und dieselbe Auskunft zweimal auf einem Schirm ist die Doppelung, die diese App
+        überall vermeidet.
+      */}
+      {!offen && (
+        <p className={`text-xs ${anyActive ? "text-amber-300" : "text-slate-500"}`}>
+          {anyActive ? activeLabels.join(" · ") : S.combat.optionsNone}
+        </p>
+      )}
+
+      {offen && (
+      <>
       <p className="mb-2 text-xs text-slate-500">{S.combat.hint}</p>
 
       <div className="space-y-2">
@@ -194,6 +278,8 @@ export function CombatOptionsCard({ character, sheet, save }: TabProps) {
           </>
         )}
       </div>
+      </>
+      )}
     </Card>
   );
 }
