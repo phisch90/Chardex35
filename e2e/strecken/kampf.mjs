@@ -123,15 +123,40 @@ for (const [groesse, width, height] of GROESSEN) {
     bericht.check(`keine ${name}-Kachel mehr im Kampf`, (await kacheln(page, muster)) === 0);
   }
   /*
-    Nahkampf und Fernkampf sind der interessantere Fall: sie standen ZWEIMAL auf diesem
-    einen Schirm — als Kachel und zwei Zentimeter darunter als Angriffszeile mit genau
-    derselben Zahl. Die Zeile bleibt, die Kachel geht.
+    Nahkampf und Fernkampf sind der interessantere Fall, und er hat ZWEI Runden
+    gebraucht.
+
+    Zuerst standen sie doppelt auf diesem einen Schirm — als Kachel und zwei Zentimeter
+    darunter als Angriffszeile mit derselben Zahl. Entfernt wurde damals die KACHEL, also
+    die kleinere von beiden; die Zeile blieb und bekam in derselben Runde eine grosse
+    Zahl. Sein Befund dazu, woertlich: `Aber wenn es ein Schwert ist brauchen wir doch
+    kein fernkampfschaden.` Er hatte recht — bei Langschwert + Schild stand oben in der
+    Liste eine Fernwaffe, die er nicht traegt, und darueber dieselbe Zahl wie am Schwert.
+
+    Jetzt sind beide Fassungen weg: in der Liste stehen nur noch WAFFEN. Die Gegenprobe
+    auf der Werte-Seite steht gleich darunter und ist die wichtigere Haelfte.
   */
-  const kampfText = await spaltenText(page);
   for (const wort of ["Nahkampf", "Fernkampf"]) {
-    const treffer = kampfText.split(new RegExp(wort, "g")).length - 1;
-    bericht.check(`${wort} steht genau einmal da`, treffer === 1, `${treffer}×`);
+    bericht.check(`keine ${wort}-Kachel mehr im Kampf`, (await kacheln(page, new RegExp(`^${wort}$`, "i"))) === 0);
   }
+  const angriffsZeilen = (await angriffe.locator("li").allInnerTexts()).map((t) => t.trim());
+  const kurz = angriffsZeilen.map((t) => t.split("\n")[0]).join(" | ");
+  for (const wort of ["Nahkampf", "Fernkampf"]) {
+    bericht.check(
+      `und auch keine ${wort}-ZEILE mehr`,
+      !angriffsZeilen.some((t) => new RegExp(`^${wort}\\b`, "i").test(t)),
+      kurz,
+    );
+  }
+  /*
+    Und die positive Haelfte: es bleibt genau die eine Waffe uebrig, die der Bogen hat.
+    Ohne sie waere die Pruefung darueber auch dann gruen, wenn die ganze Liste leer ist.
+  */
+  bericht.check(
+    "uebrig bleibt genau die Waffe des Bogens",
+    angriffsZeilen.length === 1 && /Halbarte|Halberd/i.test(angriffsZeilen[0] ?? ""),
+    `${angriffsZeilen.length} Zeile(n): ${kurz}`,
+  );
 
   /* ---------- Die GEGENPROBE: auf der Werte-Seite steht alles weiter ---------- */
   await openTab(page, /Werte/i);
@@ -143,6 +168,50 @@ for (const [groesse, width, height] of GROESSEN) {
       new RegExp(wort, "i").test(werteText),
     );
   }
+  /*
+    Und der WEG zur Erklaerung muss mit umgezogen sein.
+
+    Die Sammelzeile im Kampf-Reiter trug ihre Notizen selbst (`Zweiwaffenkampf ist an —
+    die Mali stehen an den Waffenzeilen, nicht hier.`). Seit sie dort fehlt, entsteht die
+    Frage `warum steht oben +8 und an der Waffe +5` an dieser Kachel — eine Zahl, deren
+    Erklaerung an einer Stelle liegt, die es nicht mehr gibt, ist die Familie `etwas
+    weiss es, und etwas anderes kann es nicht`.
+  */
+  /*
+    Gesucht wird der Knopf an seiner BESCHRIFTUNG und nicht an seinem Text: im DOM steht
+    `+9NAHKAMPF` (Wert und Beschriftung in einem Knopf, ohne Trennzeichen), also trifft
+    weder `^Nahkampf` noch `^Nahkampf\s`. Dieselbe Falle wie bei den Zeilen im ⋯-Blatt —
+    was man liest, ist nicht, was der Ausdruck sieht.
+  */
+  const nahkampfKachel = (await aktiveSpalte(page))
+    .locator("button")
+    .filter({ has: page.locator("span", { hasText: /^nahkampf$/i }) })
+    .first();
+  bericht.check("die Nahkampf-Kachel ist ein Knopf", (await nahkampfKachel.count()) > 0);
+  await nahkampfKachel.click();
+  await page.waitForTimeout(500);
+  const blatt = page.locator('[role="dialog"]').first();
+  bericht.check(
+    "und oeffnet die Aufschluesselung",
+    (await blatt.count()) > 0 && /BAB/i.test(await blatt.innerText()),
+    (await blatt.innerText().catch(() => "-")).replace(/\n/g, " | ").slice(0, 120),
+  );
+  /*
+    Und der WURF muss mit umgezogen sein. Die Sammelzeile im Kampf-Reiter hatte ihren
+    eigenen Wuerfelknopf; ohne diesen hier waere der blanke Nahkampfwurf ersatzlos weg —
+    der unbewaffnete Schlag und vor allem der Beruehrungsangriff eines Zaubers wuerfeln
+    genau diese Zahl und keine Waffe. Eine Auskunft darf umziehen, ihr WEG muss mit.
+  */
+  bericht.check(
+    "und bietet den Wurf an, den die Sammelzeile hatte",
+    (await blatt.locator("button").filter({ hasText: /w(ü|ue)rfeln|1d20/i }).count()) > 0,
+    (await blatt.innerText().catch(() => "-")).replace(/\n/g, " | ").slice(0, 160),
+  );
+  /* Zumachen: Escape kann der Bogen ueberhoeren, der Knopf im Blatt nie. */
+  await page.keyboard.press("Escape").catch(() => {});
+  const zu = page.locator('[role="dialog"] button').filter({ hasText: /✕|×|schlie/i }).first();
+  if ((await zu.count()) > 0) await zu.click().catch(() => {});
+  await page.waitForTimeout(400);
   await openTab(page, /Kampf/i);
   await page.waitForTimeout(700);
 
@@ -299,6 +368,18 @@ for (const [groesse, width, height] of GROESSEN) {
     iKolben >= 0 && iSchwert >= 0 && iKolben < iSchwert,
     `Kolben ${iKolben} · Schwert ${iSchwert}`,
   );
+  /*
+    Die Gegenprobe zur Sammelzeile am SCHWIERIGEN Fall: dieser Bogen traegt WIRKLICH eine
+    Fernwaffe (Kurzbogen im Gepaeck). Trotzdem kommt die Zeile `Fernkampf` nicht zurueck —
+    der Bogen hat eine Fernwaffe, und die hat ihre eigene Zeile mit Schaden und
+    Reichweite. Genau drei Waffen, genau drei Zeilen.
+  */
+  bericht.check(
+    "auch mit Fernwaffe keine Sammelzeilen — drei Waffen, drei Zeilen",
+    reihenfolge.length === 3 &&
+      !reihenfolge.some((x) => /^(Nahkampf|Fernkampf)\b/i.test(x.trim())),
+    reihenfolge.map((x) => x.split("\n")[0]).join(" | "),
+  );
 
   if (groesse === "iphone") await bild(page2, "kampf-waffen");
   bericht.check("kein Seitenfehler auf dem zweiten Bogen", zweiter.seitenfehler.length === 0);
@@ -314,16 +395,18 @@ for (const [groesse, width, height] of GROESSEN) {
   if (groesse === "iphone") {
     const mass = await scrollMain(page3, 0);
     /*
-      Gemessen: 1640 px vor der Aufraeum-Runde, 1245 danach — und 1477, seit die
-      Uebersichtskarte und die grossen Zahlen dazugekommen sind.
+      Gemessen: 1640 px vor der Aufraeum-Runde, 1245 danach, 1477 mit der
+      Uebersichtskarte und den grossen Zahlen — und 1275, seit die zwei Sammelzeilen
+      aus der Liste sind.
 
-      Die Schranke stand auf 1450 und hat bei dieser Runde ANGESCHLAGEN. Genau dafuer
-      ist sie da: sie hat gefragt, ob der neue Inhalt den gewonnenen Platz wert ist. Die
-      Antwort war ja (sein Auftrag), also steht sie jetzt auf 1550 — angehoben mit Grund
-      und nicht gesenkt, damit es gruen wird. Unter dem Ausgangswert bleibt sie in jedem
-      Fall: wer hier wieder bei 1640 landet, hat die Runde rueckgaengig gemacht.
+      Die Schranke ist damit in beide Richtungen gewandert: 1450, dann 1550 (angehoben
+      mit Grund, weil der neue Inhalt den Platz wert war), jetzt 1350. Gesenkt wird sie
+      nur, weil WIRKLICH etwas weggefallen ist — gemessen und nicht geschaetzt. Eine
+      Schranke, die nach jeder Runde auf ihrem alten Wert stehen bleibt, merkt den
+      Rueckschritt irgendwann nicht mehr.
     */
-    bericht.check("der Reiter bleibt deutlich kuerzer als am Anfang", mass.hoehe < 1550, `${mass.hoehe}px`);
+    console.log(`    ---- Hoehe des Kampf-Reiters: ${mass.hoehe}px`);
+    bericht.check("der Reiter bleibt deutlich kuerzer als am Anfang", mass.hoehe < 1350, `${mass.hoehe}px`);
   }
 
   bericht.check("kein Browser-Dialog", dialoge.length === 0, dialoge.join(" | "));
@@ -335,8 +418,8 @@ for (const [groesse, width, height] of GROESSEN) {
 }
 
 /*
-  Gemessen, nicht geschaetzt: 40 Pruefungen je Groesse, am iPhone eine mehr (die Hoehe).
+  Gemessen, nicht geschaetzt: 47 Pruefungen je Groesse, am iPhone eine mehr (die Hoehe).
   Eine Mindestzahl, die nie erreicht wird, macht jede gruene Strecke rot; eine zu
   niedrige faengt den Abbruch nicht.
 */
-bericht.done(121);
+bericht.done(142);

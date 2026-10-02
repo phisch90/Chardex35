@@ -3261,6 +3261,65 @@ man tippt") war aus demselben Grund GRÜN am falschen Kasten.
 **Jede neue Karte, die vorhandene Namen wiederholt, erzeugt diese Falle neu.** Gesucht wird
 jetzt in der Angriffe-Karte (`angriffsZeile`), nicht im Dokument.
 
+### Nachtrag: „wenn es ein Schwert ist brauchen wir doch kein fernkampfschaden"
+
+Sein Befund eine Runde später, und er trifft genau die Runde davor. Nachgemessen bei
+Langschwert + Schild stand oben in der Angriffsliste:
+
+```
+Nahkampf    +9 / +4   ANGRIFF     ← dieselbe Zahl wie das Langschwert darunter
+Fernkampf   +7 / +2   ANGRIFF     ← er trägt gar keine Fernwaffe
+Langschwert 1H  +9 / +4 ANGRIFF   1d8+3 SCHADEN
+```
+
+Die zwei obersten Zeilen sind keine Waffen, sondern die **Grundwerte** — die Zahl, mit der
+man eine Waffe schlägt, die man gerade aufhebt. Und sie standen längst auf der Werte-Seite
+als Kacheln (BAB · NAHKAMPF · FERNKAMPF). **Beim Entdoppeln hatte ich die KACHEL-Fassung
+entfernt und die ZEILEN-Fassung stehen lassen** — also die größere von beiden, und das in
+derselben Runde, die den Reiter kürzer machen sollte.
+
+Gefragt und entschieden: **beide raus.** In der Liste stehen nur noch Waffen. Gemessen:
+1477 → **1275 px**, und am iPad passt der ganze Reiter jetzt auf ein Bild.
+
+Vier Entscheidungen sind eine Notiz wert:
+
+- **Die Regel steht in `pages/sheet/attackList.ts` und nicht im Reiter.** Die
+  Übersichtsseite filtert dieselben zwei Zeilen seit ihrer eigenen Runde inline heraus
+  (`a.key !== "melee" && a.key !== "ranged"`) — mit einer zweiten Kopie im Kampf-Reiter
+  wären es zwei Wahrheiten, und die zwei Ansichten hätten irgendwann verschiedene Angriffe
+  gelistet. Erkannt wird am SCHLÜSSEL und nicht am Platz: `slot` wäre heute gleichwertig
+  (das Schema setzt `.default("none")`), aber genau diese Sorte „geht heute auch" hat dieses
+  Projekt schon einmal `equipped` statt `slot` gekostet.
+- **Der RÜCKFALL ist der Teil, der ohne Test still kaputtgeht.** Wer gar keine Waffe dabei
+  hat, sähe sonst eine leere Karte — dann sind die zwei Grundwerte das Einzige, was es zu
+  sagen gibt, und sie stehen wieder da. Geprüft in `attackList.test.ts`, in beide
+  Richtungen.
+- **Die NOTIZ der Sammelzeile ist mit umgezogen.** Es gibt genau eine: „Zweiwaffenkampf ist
+  an — die Mali stehen an den Waffenzeilen, nicht hier." Sie beantwortet die Frage, die am
+  Tisch entsteht, wenn oben +8 steht und am Kurzschwert +5 — und diese Frage entsteht jetzt
+  an der KACHEL. Eine Zahl, deren Erklärung an einer Stelle liegt, die es nicht mehr gibt,
+  ist die Familie „etwas weiß es, und etwas anderes kann es nicht".
+- **Und der WURF ist mit umgezogen**, das `rollable: false` an der Kachel ist weg. Die
+  Sammelzeile hatte ihren eigenen Würfelknopf; ohne diesen Schritt wäre der blanke
+  Nahkampfwurf ersatzlos verschwunden — der unbewaffnete Schlag, der improvisierte
+  Gegenstand und vor allem die Berührungs- und Strahlangriffe der Zauber würfeln genau diese
+  Zahl und keine Waffe. **Eine Auskunft darf umziehen, ihr WEG muss mit.** Nebenbei war die
+  Ausnahme ohnehin schief: Initiative, Grapple und die drei Rettungswürfe sind dort seit
+  jeher würfelbar.
+
+**Gefunden hat den Wurf nicht der Blick und kein Test, sondern ein Durchgang durch alles,
+was an den zwei Zeilen hing.** Die Prüfungen waren vorher grün und wären es geblieben: es
+gibt keine, die „dieser Wert lässt sich würfeln" verlangt hätte. Jetzt gibt es sie.
+
+**Was ABSICHTLICH nicht mitgeht:** der Gruppenbogen (`GroupSheet.tsx`) und die
+Zusammenfassung des Assistenten (`DraftSummary.tsx`) listen weiter alles. Dort gibt es keine
+Kachel mit diesen Werten — ein Filter nähme dort die Auskunft weg statt eine Doppelung.
+
+**Und die Schranke ist zum ersten Mal GESUNKEN:** 1450 → 1550 (angehoben mit Grund) → jetzt
+**1350**. Gesenkt wird sie nur, weil wirklich etwas weggefallen ist, und zwar gemessen. Eine
+Schranke, die nach jeder Runde auf ihrem alten Wert stehen bleibt, merkt den Rückschritt
+irgendwann nicht mehr.
+
 ## Noch offen
 - **Zählt der −4 für eine nicht geübte Waffe an seinem Tisch?** Die App MELDET seit der
   Kampf-Runde, dass die Übung fehlt, und rechnet den Malus ausdrücklich nicht — das wäre
@@ -3268,6 +3327,11 @@ jetzt in der Angriffe-Karte (`angriffsZeile`), nicht im Dokument.
   kann alle martialischen Waffen), für einen reinen Kleriker mit Langschwert sind es −4.
   Ein Test hält die Abwesenheit fest; sagt er „gilt bei uns", wird daraus ein Beitrag in
   `derive.ts` und der Test dreht sich um.
+- **Eine schwache Prüfung in `e2e/strecken/uebersicht.mjs`, nicht von dieser Runde.** Sie
+  heißt „die zwölf Werte-Kacheln" und misst vier Wörter (RK, Fortitude, BAB, Grapple) — bei
+  zehn Kacheln bliebe sie still. Dieselbe Familie wie der Farbtest, der gegen einen
+  Startwert von 999 lief und Erfolg meldete, ohne etwas gemessen zu haben. Wer die
+  Übersichtsseite anfasst, zieht sie gerade.
 - **Rund 103 Teststrecken sind verloren** (eigener Abschnitt darüber). Ungeprüft sind
   damit die Bereiche, die in dieser Datei beschrieben, aber nicht mehr abgedeckt sind:
   die vier Papiere und die elf Klassenfarben, das Ziehen im Gepäck, die Behälter, das
