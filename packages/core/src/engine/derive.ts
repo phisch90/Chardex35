@@ -602,6 +602,19 @@ export function deriveSheetValues(
   ): AttackLine => {
     const weaponData = weapon?.entity.data.weapon;
     /*
+      Die Übung — EINMAL gerechnet, zweimal gelesen: der Malus unten in den Beiträgen und
+      die Marke an der Zeile. Stünde der Aufruf zweimal, wäre irgendwann die Marke da und
+      die Zahl nicht (oder umgekehrt), und am Tisch suchte man den Fehler im Würfel.
+
+      DREI Antworten, nicht zwei. `notApplicable` ist der Fall, den die erste Fassung
+      verschluckt hat: Munition trägt in den Packdaten `data.weapon` (Pfeile, Bolzen,
+      Schleuderkugeln, das Wurfnetz — sechs Stück) und bekommt damit eine Angriffszeile.
+      `kind === "ok"` war dort `false`, also stand an einem Bündel Pfeile „nicht geübt" —
+      und mit dem Malus wären daraus still −4 geworden. Deshalb trägt die Zeile das Feld
+      jetzt gar nicht, wenn die Frage sich nicht stellt.
+    */
+    const uebung = weapon === null ? null : proficiencyOf(weapon.entity, proficiency);
+    /*
       Zweihändig GEFÜHRT, nicht „zweihändige Waffe": ein Langschwert in beiden
       Händen zählt bei Power Attack doppelt und gibt STR×1,5. Das steht im
       Ausrüstungs-Slot, nicht in den Waffendaten.
@@ -663,8 +676,36 @@ export function deriveSheetValues(
       mode === "melee" ? ["attack.melee", "attack.all"] : ["attack.ranged", "attack.all"];
     // Power Attack und Kampfgeschick gelten nur im Nahkampf — vorher fiel der
     // Langbogen von +8/+3 auf +4/−1, sobald Power Attack eingestellt war.
+    /*
+      Ohne Übung −4 auf den Angriff (SRD, „Weapon Proficiency").
+
+      Die App WUSSTE das seit der Ausrüstungs-Runde und tat es nicht: im Blätterer steht
+      an jeder Waffe „ohne Übung: −4 Angriff", die Engine rechnete nie damit, und seit der
+      Kampf-Runde stand am Bogen sogar eine Marke, die ausdrücklich keine Zahl nannte. Ein
+      Versprechen auf dem einen Schirm und Schweigen auf dem anderen — die dritte
+      Fehlerfamilie dieses Projekts.
+
+      Gebaut wird es erst jetzt, und das ist der Grund für die lange Wartezeit: es
+      verschiebt Zahlen an BESTEHENDEN Bögen, also war es eine Regelentscheidung für
+      seinen Tisch und keine Programmierentscheidung. Gefragt und beantwortet, wörtlich:
+      „Ja -4 zählt."
+
+      Nur der ANGRIFF, nicht der Schaden — so steht es im Regelwerk, und `damageText`
+      wird deshalb bewusst nicht angefasst.
+    */
     const contributions = [
       ...base,
+      ...(uebung?.kind === "untrained"
+        ? [
+            {
+              source: "Nicht geübt",
+              bonusType: "untyped" as const,
+              value: -4,
+              applied: true,
+              condition: undefined,
+            },
+          ]
+        : []),
       ...combat.attack,
       ...(mode === "melee" ? combat.meleeAttack : []),
       // Der Zweiwaffen-Malus ist für Haupthand und zweite Hand VERSCHIEDEN hoch
@@ -891,7 +932,9 @@ export function deriveSheetValues(
         : { weaponRules: nichtLeer(weapon?.entity.description)! }),
       ...(weapon === null || weapon === undefined
         ? {}
-        : { proficient: proficiencyOf(weapon.entity, proficiency).kind === "ok" }),
+        : uebung === null || uebung.kind === "notApplicable"
+          ? {}
+          : { proficient: uebung.kind === "ok" }),
       ...(weapon?.slot === undefined ? {} : { slot: weapon.slot }),
     };
   };

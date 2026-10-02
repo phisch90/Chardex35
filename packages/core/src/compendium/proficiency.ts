@@ -328,7 +328,21 @@ export type ProficiencyVerdict =
   /** Darf er nicht — mit dem Grund und dem Preis. */
   | { kind: "untrained"; reason: "weapon" | "armor" | "shield" | "material" }
   /** Keine Frage: Ausrüstung, Trank, Schriftrolle. */
-  | { kind: "notApplicable" };
+  | { kind: "notApplicable" }
+  /**
+   * Die App WEISS es nicht — kein einziger Stand ist bekannt.
+   *
+   * Das ist der Fall eines Bogens, dessen Klassen alle aus seinen Büchern kommen
+   * (Homebrew, Prestige): `proficiencyFor` findet dann nichts und gibt den leeren
+   * Stand zurück, in dem NICHTS geübt ist. Bis diese Runde kostete das nur eine
+   * falsche Marke; seit der Malus rechnet, wären es stillschweigend −4 auf jede
+   * Waffe gewesen — und zwar für eine Auskunft, die die App gar nicht hat.
+   *
+   * Dieselbe Entscheidung wie `unverifiable` bei den Talent-Voraussetzungen und wie
+   * beim Klassenthema: eine unbekannte Klasse bekommt gar keins, weil eine falsche
+   * Farbe schlimmer wäre als keine.
+   */
+  | { kind: "unknown" };
 
 /**
  * Darf dieser Charakter mit diesem Stück umgehen?
@@ -355,6 +369,17 @@ export function proficiencyOf(entity: ItemEntity, prof: Proficiency): Proficienc
   const key = itemKey(entity.id);
   const weapon = entity.data.weapon;
   const armor = entity.data.armor;
+
+  /*
+    Kennt die App überhaupt eine Quelle? Wenn nicht, schweigt sie.
+
+    `sources` ist leer, sobald KEINE der Klassen in der Handtabelle steht — bei einem
+    Bogen, der nur aus eigenen Klassen besteht. Der leere Stand sagt `nichts ist geübt`,
+    und das ist keine Auskunft, sondern eine fehlende. Die Frage steht hier oben und
+    nicht an den drei Stellen darunter: eine Bedingung, die dreimal dasteht, steht
+    irgendwann in zweien.
+  */
+  if (prof.sources.length === 0) return { kind: "unknown" };
 
   if (armor !== undefined) {
     if (armor.kind === "shield") {

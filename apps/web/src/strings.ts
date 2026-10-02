@@ -170,16 +170,29 @@ export const S = {
     */
     attackRange: (ft: number) => `${ft} ft Reichweite`,
     /*
-      Die Übung FEHLT — und die Marke nennt ausdrücklich keine Zahl.
+      Die Übung FEHLT — und die Marke nennt jetzt die ZAHL.
 
-      Das Regelwerk kennt dafür −4 auf den Angriff; die Engine rechnet ihn nicht, und
-      ihn nebenbei einzubauen würde die Zahlen bestehender Bögen verschieben. Stünde
-      hier „−4", widerspräche der Satz der Zahl zwei Zentimeter daneben — genau der
-      Fehler, den der Erklärtext zu Power Attack diese App schon einmal gekostet hat.
+      Sie tat es ausdrücklich nicht, solange die Engine den Malus nicht rechnete: ein
+      Text, der eine Zahl behauptet, die danebensteht und sie nicht enthält, ist
+      schlimmer als keiner. Sein Wort hat das aufgelöst — `Ja -4 zählt` —, der Malus
+      steckt seither im Angriffswert, und damit DARF der Satz ihn nennen. Er muss es
+      sogar: sonst steht am Tisch eine Zahl, die vier zu niedrig aussieht, und man sucht
+      den Fehler im eigenen Kopfrechnen.
+
+      Das Minus der TASTATUR und nicht das typografische — und das ist ein Fund vom Bild,
+      kein Test. Die Marke sitzt unmittelbar über dem Angriffswert, und der kommt aus
+      `fmtMod`: beim Kurzbogen stand damit `nicht geübt −4` einen Zentimeter über
+      `-1 ANGRIFF`. Zwei verschiedene Minuszeichen auf EINER Karte — dieselbe Falle, die
+      die Rüstungskarte schon einmal gekostet hat.
+
+      Die Regel von dort gilt hier genauso: eine Zahl folgt ihrer NACHBARSCHAFT, weil sie
+      über genau diese Zahl redet. Dass derselbe Malus im Blätterer `−4` heißt, ist kein
+      Widerspruch: dort steht er zwischen Gegenstandstexten, die alle das typografische
+      Zeichen tragen.
     */
-    attackUntrained: "nicht geübt",
+    attackUntrained: "nicht geübt -4",
     attackUntrainedHint:
-      "Mit dieser Waffe bist du nicht geübt. Was das an deinem Tisch kostet, entscheidet der DM — der Angriffswert daneben rechnet es nicht mit.",
+      "Mit dieser Waffe bist du nicht geübt: -4 auf den Angriff. Der Wert daneben rechnet ihn mit.",
     /** Der Regeltext der Waffe, aufklappbar. */
     weaponTextToggle: "Was die Waffe kann",
     /*

@@ -320,16 +320,77 @@ for (const [groesse, width, height] of GROESSEN) {
     bogenText.replace(/\n/g, " | "),
   );
   /*
-    Die Uebung: GEWARNT, nicht gerechnet. Der Kleriker ist mit dem Kurzbogen nicht
-    geuebt (martialisch), mit dem Streitkolben schon (einfach) — beide Richtungen, sonst
-    waere die Marke auch dann gruen, wenn sie an JEDER Waffe staende.
+    Die Uebung: gewarnt UND gerechnet. Der Kleriker ist mit dem Kurzbogen nicht geuebt
+    (martialisch), mit dem Streitkolben schon (einfach) — beide Richtungen, sonst waere
+    die Marke auch dann gruen, wenn sie an JEDER Waffe staende.
+
+    Die Marke nennt seit seinem Wort `Ja -4 zaehlt` auch die ZAHL. Sie tat es
+    ausdruecklich nicht, solange die Engine den Malus nicht rechnete — ein Text, der eine
+    Zahl behauptet, die danebensteht und sie nicht enthaelt, ist schlimmer als keiner.
   */
   bericht.check("und die Warnung, dass die Uebung fehlt", /nicht ge(ü|ue)bt/i.test(bogenText));
+  bericht.check(
+    "und sie nennt die Zahl",
+    /nicht ge(ü|ue)bt\s*[−-]\s*4/i.test(bogenText),
+    bogenText.replace(/\n/g, " | "),
+  );
+  /*
+    Und zwar mit DEMSELBEN Minuszeichen wie der Angriffswert darunter.
+
+    Ein Fund vom Bild und kein Test: beim Kurzbogen stand `nicht geuebt −4` (das
+    typografische Minus der Gegenstandstexte) einen Zentimeter ueber `-1 ANGRIFF` (das
+    ASCII-Zeichen aus `fmtMod`). Zwei verschiedene Minuszeichen auf einer Karte —
+    dieselbe Falle, die die Ruestungskarte schon einmal gekostet hat. Geprueft wird
+    deshalb nicht das EINE Zeichen, sondern die GLEICHHEIT: so haelt die Pruefung die
+    Regel und nicht meine Wahl.
+  */
+  const markeMinus = /nicht ge(?:ü|ue)bt\s*(.)\s*4/i.exec(bogenText)?.[1];
+  const wertMinus = /(.)\s*1\n?ANGRIFF/i.exec(bogenText)?.[1];
+  bericht.check(
+    "beide Minuszeichen auf der Karte sind dasselbe",
+    markeMinus !== undefined && wertMinus !== undefined && markeMinus === wertMinus,
+    `Marke ${JSON.stringify(markeMinus)} · Wert ${JSON.stringify(wertMinus)}`,
+  );
   const kolbenZeile = await angriffsZeile(page2, /Streitkolben/i);
   bericht.check(
     "beim Streitkolben steht sie NICHT",
     !/nicht ge(ü|ue)bt/i.test(await kolbenZeile.innerText()),
   );
+
+  /*
+    Und die Zahl steht WIRKLICH im Angriffswert — die Aufschluesselung nennt sie als
+    eigenen Beitrag. Eine Marke allein waere genau der Zustand, den diese Runde
+    aufgeloest hat: die App sagt etwas, und die Zahl daneben weiss nichts davon.
+
+    Gelesen wird im Blatt (`[role=dialog]`) und nicht im Body — es steht WEIT hinten im
+    DOM, und die Marke selbst traegt den Text ja auch.
+  */
+  await bogenZeile.locator("button").first().click();
+  await page2.waitForTimeout(600);
+  const blatt2 = page2.locator('[role="dialog"]').first();
+  const blattText2 = await blatt2.innerText();
+  bericht.check(
+    "die Aufschluesselung nennt den Malus als Beitrag",
+    /Nicht ge(ü|ue)bt/i.test(blattText2) && /-4/.test(blattText2),
+    blattText2.replace(/\n/g, " | ").slice(0, 160),
+  );
+  await page2.keyboard.press("Escape").catch(() => {});
+  const zu2 = page2.locator('[role="dialog"] button').filter({ hasText: /✕|×|schlie/i }).first();
+  if ((await zu2.count()) > 0) await zu2.click().catch(() => {});
+  await page2.waitForTimeout(400);
+  /* Die Gegenprobe: beim geuebten Streitkolben steht der Beitrag NICHT im Blatt. */
+  await kolbenZeile.locator("button").first().click();
+  await page2.waitForTimeout(600);
+  const kolbenBlatt = await page2.locator('[role="dialog"]').first().innerText();
+  bericht.check(
+    "und beim geuebten Streitkolben steht er nicht drin",
+    !/Nicht ge(ü|ue)bt/i.test(kolbenBlatt),
+    kolbenBlatt.replace(/\n/g, " | ").slice(0, 160),
+  );
+  await page2.keyboard.press("Escape").catch(() => {});
+  const zu3 = page2.locator('[role="dialog"] button').filter({ hasText: /✕|×|schlie/i }).first();
+  if ((await zu3.count()) > 0) await zu3.click().catch(() => {});
+  await page2.waitForTimeout(400);
 
   /* Der Regeltext klappt auf — deutsch zuerst. */
   const aufklapper = kolbenZeile.locator("button").filter({ hasText: /Was die Waffe kann/i });
@@ -418,8 +479,8 @@ for (const [groesse, width, height] of GROESSEN) {
 }
 
 /*
-  Gemessen, nicht geschaetzt: 47 Pruefungen je Groesse, am iPhone eine mehr (die Hoehe).
+  Gemessen, nicht geschaetzt: 51 Pruefungen je Groesse, am iPhone eine mehr (die Hoehe).
   Eine Mindestzahl, die nie erreicht wird, macht jede gruene Strecke rot; eine zu
   niedrige faengt den Abbruch nicht.
 */
-bericht.done(142);
+bericht.done(154);

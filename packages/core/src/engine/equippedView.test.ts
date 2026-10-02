@@ -71,6 +71,12 @@ describe.skipIf(!packsAvailable)("Was geführt wird, und was die Waffe kann", ()
       { id: "i3", itemId: "srd:item:leather", qty: 1, slot: "armor" },
       { id: "i4", itemId: "srd:item:longsword", qty: 1, slot: "none" },
       { id: "i5", itemId: "srd:item:shortbow", qty: 1, slot: "none" },
+      /*
+        Munition. Sie liegt hier, weil sie in den Packdaten `data.weapon` traegt und
+        damit eine Angriffszeile bekommt — der Fall, an dem die Übungsfrage sich gar
+        nicht stellt.
+      */
+      { id: "i6", itemId: "srd:item:arrows-20", qty: 1, slot: "none" },
     ]);
 
   it("`equipped` nennt jede Hand und die Rüstung", () => {
@@ -125,21 +131,54 @@ describe.skipIf(!packsAvailable)("Was geführt wird, und was die Waffe kann", ()
     expect(zeile(sheet, "Kurzbogen").proficient).toBe(false);
   });
 
-  it("gemeldet, nicht GERECHNET — der Angriffswert bleibt derselbe", () => {
+  it("und GERECHNET: ohne Übung vier weniger auf den Angriff", () => {
     /*
-      DIE Zusage dieser Runde, und sie ist eine Abwesenheit.
-
-      Das Regelwerk kennt −4 für eine nicht geübte Waffe. Die Engine hat ihn nie
-      gerechnet, und ihn hier nebenbei einzubauen würde die Zahlen BESTEHENDER Bögen
-      verschieben — in diesem Projekt eine Regelentscheidung für seinen Tisch und keine
-      Programmierentscheidung. Ohne diesen Test fiele der Malus beim nächsten Umbau
-      unbemerkt hinein, und am Tisch stünde plötzlich eine andere Zahl.
+      Hier stand eine Runde lang das Gegenteil, und zwar mit Absicht: `gemeldet, nicht
+      GERECHNET — der Angriffswert bleibt derselbe`. Der Malus verschiebt Zahlen an
+      BESTEHENDEN Bögen, also war er eine Regelentscheidung für seinen Tisch und keine
+      Programmierentscheidung. Gefragt und beantwortet, wörtlich: `Ja -4 zählt.`
 
       Verglichen werden zwei Waffen mit demselben Grundwert: Streitkolben (geübt) und
-      Langschwert (nicht geübt) sind beide einhändig, STR +2, BAB +2.
+      Langschwert (nicht geübt) sind beide einhändig, STR +2, BAB +2. Die DIFFERENZ ist
+      die Zusage — eine feste Zahl wäre auch dann grün, wenn irgendwo anders vier
+      verlorengingen.
     */
     const sheet = voll();
-    expect(zeile(sheet, "Langschwert").attack.total).toBe(zeile(sheet, "Streitkolben").attack.total);
+    const geuebt = zeile(sheet, "Streitkolben").attack.total;
+    expect(zeile(sheet, "Langschwert").attack.total).toBe(geuebt - 4);
+    expect(zeile(sheet, "Kurzbogen").attack.contributions.map((c) => c.source)).toContain(
+      "Nicht geübt",
+    );
+  });
+
+  it("der Schaden bleibt unberührt — der Malus steht nur auf dem Angriff", () => {
+    /*
+      Die Gegenprobe, und sie ist die Hälfte, die man vergisst. Das Regelwerk legt den
+      Malus auf den ANGRIFFSWURF; würde er auch im Schaden landen, sähe die Zahl
+      plausibel aus und wäre falsch.
+    */
+    const sheet = voll();
+    expect(zeile(sheet, "Langschwert").damageBonus.total).toBe(
+      zeile(sheet, "Streitkolben").damageBonus.total,
+    );
+    expect(zeile(sheet, "Langschwert").damageText).toBe("1d8+2");
+  });
+
+  it("Munition ist keine Übungsfrage — kein Feld, kein Malus", () => {
+    /*
+      Der Fall, den die erste Fassung verschluckt hätte. Pfeile tragen in den Packdaten
+      `data.weapon` (mit `damage: —`) und bekommen damit eine Angriffszeile; `kind ===
+      "ok"` war dort `false`, also stand an einem Bündel Pfeile `nicht geübt` — und mit
+      dem Malus wären daraus still vier Punkte geworden.
+
+      Geprüft wird BEIDES: das Feld fehlt, und der Angriffswert trägt den Beitrag nicht.
+      Das Feld allein zu prüfen wäre die halbe Wahrheit — genau daran hängt der Malus
+      aber nicht, sondern an derselben Auskunft eine Zeile höher.
+    */
+    const sheet = voll();
+    const pfeile = zeile(sheet, "Pfeile (20)");
+    expect(pfeile.proficient).toBeUndefined();
+    expect(pfeile.attack.contributions.map((c) => c.source)).not.toContain("Nicht geübt");
   });
 
   it("der Regeltext kommt mit — deutsch UND englisch", () => {
