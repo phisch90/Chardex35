@@ -17,6 +17,7 @@ import {
 } from "./combatOptions.js";
 import { carriedWeight } from "./carry.js";
 import { warDomainGrant } from "../compendium/deity.js";
+import { proficiencyFor, proficiencyOf } from "../compendium/proficiency.js";
 import { dyingStatus } from "./dying.js";
 import { featSlotSources } from "./featSlots.js";
 import { isNaturalOrUnarmed } from "./equipment.js";
@@ -57,6 +58,7 @@ import type {
   CostSource,
   DerivedIssue,
   DerivedSheet,
+  EquippedBlock,
   FeatureLine,
   PowerAttackWeapon,
   SkillLine,
@@ -140,6 +142,47 @@ export function deriveSheetValues(
   const size: Size = race?.data.size ?? "medium";
   const sizeModifier = SIZE_MODIFIER[size];
   const totalLevel = timeline.totalLevel;
+
+  /*
+    Die Übung — EINMAL hier, und von derselben Funktion wie im Ausrüstungs-Reiter.
+
+    `warGrant` steht deshalb hier oben und nicht mehr unten beim Talentplatz: beide
+    Hälften desselben SRD-Satzes („Free Martial Weapon Proficiency with deity's favored
+    weapon … and Weapon Focus …") lesen jetzt dieselbe Zeile. Stünde der Aufruf zweimal,
+    wäre irgendwann der Talentplatz da und die Übung weg.
+
+    Gerechnet wird daraus NUR die Marke an der Angriffszeile. Der Malus des Regelwerks
+    (−4) geht ausdrücklich nicht in den Angriffswert: das wäre eine Zahl auf einem
+    bestehenden Bogen, und darüber entscheidet sein Tisch, nicht diese Datei.
+  */
+  const warGrant = warDomainGrant(resolved.deity, character.domains);
+  const proficiency = proficiencyFor(
+    character.levels.map((level) => level.classId),
+    character.raceId === "" ? undefined : character.raceId,
+    warGrant === null ? [] : [warGrant.weaponId],
+  );
+
+  /** Leerer Text ist kein Text — sonst klappt am Bogen ein leerer Kasten auf. */
+  const nichtLeer = (text: string | undefined): string | undefined =>
+    text === undefined || text.trim() === "" ? undefined : text;
+
+  /*
+    Was gerade am Körper ist — Hände und Rüstung, als EIN Block.
+
+    Eine eigene Schleife und nicht nebenbei bei den Waffen: in einer Hand kann auch
+    liegen, was weder Waffe noch Rüstung ist (eine Fackel, ein Zauberstab), und genau
+    das gehört in einen Überblick über das Angelegte. Wer hier nach `data.weapon`
+    filterte, bekäme eine Haupthand, die als leer gilt, während etwas darin liegt.
+  */
+  const equipped: EquippedBlock = { mainHand: null, offHand: null, bothHands: null, armor: null };
+  for (const { instance, entity } of resolved.items) {
+    if (!entity) continue;
+    const label = instance.customName ?? displayName(entity);
+    if (instance.slot === "mainHand") equipped.mainHand ??= label;
+    else if (instance.slot === "offHand") equipped.offHand ??= label;
+    else if (instance.slot === "bothHands") equipped.bothHands ??= label;
+    else if (instance.slot === "armor") equipped.armor ??= label;
+  }
 
   // --- Ausgerüstete Rüstung/Schilde --------------------------------------
   const equippedArmor: EquippedArmorInfo[] = [];
@@ -827,6 +870,28 @@ export function deriveSheetValues(
       damageBonus,
       critical: weaponData ? `${weaponData.critRange}/${weaponData.critMult}` : "—",
       notes,
+      /*
+        Drei Angaben, die alle schon in den Daten lagen und am Angriff nie standen —
+        sein Befund: „keinen Überblick, was meine Waffe kann." Die Reichweite las bisher
+        nur die Gepäckliste, der Regeltext stand im Kompendium, und die Übung wurde
+        ausschließlich im Ausrüstungs-Reiter geprüft.
+
+        `localized.de` zuerst: seit der Übersetzungsrunde trägt ein Gegenstand seine
+        deutsche Erklärung dort, und die englische ist der Rückfall. Dieselbe Reihenfolge
+        wie in `ui/ItemName.tsx` — zwei Reihenfolgen wären zwei Wahrheiten.
+      */
+      ...(weaponData?.rangeIncrementFt === undefined
+        ? {}
+        : { rangeIncrementFt: weaponData.rangeIncrementFt }),
+      ...(nichtLeer(weapon?.entity.localized?.de?.summary) === undefined
+        ? {}
+        : { weaponSummary: nichtLeer(weapon?.entity.localized?.de?.summary)! }),
+      ...(nichtLeer(weapon?.entity.description) === undefined
+        ? {}
+        : { weaponRules: nichtLeer(weapon?.entity.description)! }),
+      ...(weapon === null || weapon === undefined
+        ? {}
+        : { proficient: proficiencyOf(weapon.entity, proficiency).kind === "ok" }),
       ...(weapon?.slot === undefined ? {} : { slot: weapon.slot }),
     };
   };
@@ -965,7 +1030,6 @@ export function deriveSheetValues(
     eingetragen, sagt der Bogen jetzt „1 Talent ist noch frei", und das ist die
     Wahrheit: seine Göttin schenkt ihm einen.
   */
-  const warGrant = warDomainGrant(resolved.deity, character.domains);
   const featSlotsAvailable =
     baseFeatSlots(totalLevel) +
     stackPaths(buckets, ["feats.slots"]).total +
@@ -1187,6 +1251,7 @@ export function deriveSheetValues(
     spellcasting,
     encumbrance,
     armorCost,
+    equipped,
     twoWeaponPossible: twoWeaponSetup !== null,
     powerAttackWeapons,
     xp: {

@@ -1,0 +1,27 @@
+{
+  "formatVersion": 1,
+  "exportedAt": "2026-10-02T00:00:00.000Z",
+  "app": "chardex35",
+  "homebrewEntities": [],
+  "characters": [
+    {
+      "id": "waffenprobe-0001",
+      "rev": 1,
+      "name": "Waffenprobe",
+      "raceId": "srd:race:human",
+      "abilities": { "base": { "str": 14, "dex": 12, "con": 12, "int": 10, "wis": 15, "cha": 12 } },
+      "levels": [
+        { "classId": "srd:class:cleric", "hpRoll": "max" },
+        { "classId": "srd:class:cleric", "hpRoll": "max" },
+        { "classId": "srd:class:cleric", "hpRoll": "max" }
+      ],
+      "inventory": [
+        { "id": "i1", "itemId": "srd:item:mace-heavy", "qty": 1, "slot": "mainHand" },
+        { "id": "i2", "itemId": "srd:item:shield-light-wooden", "qty": 1, "slot": "offHand" },
+        { "id": "i3", "itemId": "srd:item:leather", "qty": 1, "slot": "armor" },
+        { "id": "i4", "itemId": "srd:item:longsword", "qty": 1, "slot": "none" },
+        { "id": "i5", "itemId": "srd:item:shortbow", "qty": 1, "slot": "none" }
+      ]
+    }
+  ]
+}

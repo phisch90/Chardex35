@@ -255,11 +255,44 @@ export function StatsTab(props: TabProps) {
 
 export function CombatTab(props: TabProps) {
   const { sheet, openBreakdown } = props;
+  /*
+    Welcher Waffentext ist aufgeklappt? Der Hook steht vor allem anderen — die zehnte
+    Falle dieses Projekts, und sie ist mir schon dreimal passiert.
+
+    Nur EINER zugleich: zwei offene Regeltexte untereinander sind wieder die Wand, die
+    er gerade loswerden wollte.
+  */
+  const [offenerText, setOffenerText] = useState<string | null>(null);
   const roll = useDiceStore((s) => s.roll);
   const { diceEnabled } = useAppSettings();
   const { ignoreEncumbrance } = useHouseRules();
+  /*
+    Angelegte Waffen zuerst — seine Wahl. Sortiert wird in der ANZEIGE und nicht in der
+    Engine: die Reihenfolge dort ist die seines Gepäcks, also eine Eingabe, und die
+    Übersichtsseite liest dieselbe Liste. Ein `sort` auf `sheet.attacks` würde sie
+    stillschweigend mit umstellen.
+
+    `toSorted` und nicht `sort`: `sheet.attacks` gehört der Engine, und eine Anzeige,
+    die die Liste ihrer Quelle umdreht, ist die Sorte Nebenwirkung, die man erst drei
+    Ansichten später bemerkt.
+
+    Die zwei Sammelzeilen (Nahkampf/Fernkampf, ohne `slot`) bleiben ganz oben: sie sind
+    seine Grundwerte und keine Waffe, die man wählen könnte.
+  */
+  const rang = (a: (typeof sheet.attacks)[number]) =>
+    a.slot === undefined ? 0 : a.slot === "none" ? 2 : 1;
+  const attacks = sheet.attacks.toSorted((a, b) => rang(a) - rang(b));
+
   return (
     <div className="space-y-3">
+      {/*
+        Was gerade am Körper ist. Sein Befund: „Ich habe beim Kampf keinen Überblick was
+        ich eigentlich equipped hab." Die App wusste es an drei Stellen verstreut und
+        sagte es an keiner im Ganzen — gerechnet wird hier nichts, `sheet.equipped` kommt
+        fertig aus der Engine.
+      */}
+      <EquippedCard sheet={sheet} />
+
       <Card>
         <SectionTitle>{S.sheet.attacks}</SectionTitle>
         {/*
@@ -282,7 +315,7 @@ export function CombatTab(props: TabProps) {
           </p>
         )}
         <ul className="space-y-2">
-          {sheet.attacks.map((attack) => (
+          {attacks.map((attack) => (
             <li key={attack.key} className="rounded-lg bg-slate-800/60 p-2">
               <div className="flex items-center justify-between gap-2">
                 <button
@@ -298,8 +331,18 @@ export function CombatTab(props: TabProps) {
                     })
                   }
                 >
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="truncate text-sm font-semibold">{attack.label}</span>
+                  {/*
+                    `flex-wrap`, und das ist kein Detail: mit der neuen Marke „nicht
+                    geübt" stand bei 390 px vom Namen noch „Langsch…" da. Wörtlich
+                    derselbe Fund wie bei den Behältern und beim Wirken-Knopf — eine
+                    Zeile, die schon voll ist, verträgt kein weiteres Stück.
+
+                    Umbrechen statt kürzen: der NAME ist das, woran er die Waffe
+                    erkennt, die Marken sind der Zusatz. Wer hier `truncate` lässt,
+                    opfert die Hauptsache für die Nebensache.
+                  */}
+                  <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                    <span className="text-sm font-semibold">{attack.label}</span>
                     {/*
                       Welche Waffe liegt WIRKLICH in der Hand? Angriffszeilen gibt
                       es für alles, was man trägt (auch aus dem Rucksack — man
@@ -314,26 +357,88 @@ export function CombatTab(props: TabProps) {
                     {attack.slot === "none" && (
                       <span className="shrink-0 text-[10px] text-slate-500">{S.sheet.stowed}</span>
                     )}
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    {attack.bonuses.map(fmtMod).join(" / ")}
-                    {attack.damageText !== "—" && (
-                      <>
-                        {" · "}
-                        {S.sheet.damage2} {attack.damageText} · {S.sheet.critical} {attack.critical}
-                      </>
+                    {/*
+                      Fehlende Übung — rosé und nicht amber: das ist eine Warnung, und
+                      Amber ist in diesem Bogen die Bedienfarbe (elfte Falle). Die Marke
+                      nennt KEINE Zahl; warum, steht in `attackUntrainedHint` und an
+                      `AttackLine.proficient`.
+                    */}
+                    {attack.proficient === false && (
+                      <span
+                        title={S.sheet.attackUntrainedHint}
+                        className="shrink-0 rounded border border-rose-700/60 px-1 text-[10px] font-semibold text-rose-300"
+                      >
+                        {S.sheet.attackUntrained}
+                      </span>
                     )}
                   </div>
-                  {attack.bonuses.length > 1 && (
-                    <div className="text-[10px] leading-snug text-slate-500">
-                      <span className="sm:hidden">
-                        {S.sheet.iterativeShort(attack.bonuses.length, fmtMod(sheet.bab))}
+                  {/*
+                    Die zwei Zahlen GROSS und nebeneinander — seine Wahl auf „die Boni
+                    sind super klein und nur klein gedruckt". Sie standen in derselben
+                    grauen `text-xs`-Zeile wie Krit und Notizen, also kleiner als der
+                    Name der Waffe; im Kampf liest er aber die Zahl und nicht den Namen.
+
+                    Beide gleich gross, weil er beide würfelt. Krit und Reichweite
+                    bleiben klein darunter: die liest man einmal und dann nie wieder.
+                  */}
+                  <div className="mt-1 flex items-stretch gap-2">
+                    <span className="flex min-w-16 flex-col items-center rounded-lg border border-slate-700/60 bg-slate-900/50 px-2 py-1 text-center">
+                      <span className="text-lg font-bold tabular-nums text-slate-100">
+                        {attack.bonuses.map(fmtMod).join(" / ")}
                       </span>
-                      <span className="hidden sm:inline">
-                        {S.sheet.iterativeHint(attack.bonuses.map(fmtMod), fmtMod(sheet.bab))}
+                      <span className="text-[10px] uppercase tracking-wide text-slate-400">
+                        {S.sheet.attackValue}
                       </span>
+                    </span>
+                    {attack.damageText !== "—" && (
+                      <span className="flex min-w-16 flex-col items-center rounded-lg border border-slate-700/60 bg-slate-900/50 px-2 py-1 text-center">
+                        <span className="text-lg font-bold tabular-nums text-slate-100">
+                          {attack.damageText}
+                        </span>
+                        <span className="text-[10px] uppercase tracking-wide text-slate-400">
+                          {S.sheet.damageValue}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                  {/*
+                    Krit, Reichweite — und die Reichweite stand am Angriff noch nie,
+                    obwohl sie seit dem ersten ETL-Lauf in den Packdaten liegt. Gelesen
+                    hat sie bisher allein die Gepäckliste.
+                  */}
+                  {attack.damageText !== "—" && (
+                    <div className="mt-1 text-xs text-slate-400">
+                      {S.sheet.critical} {attack.critical}
+                      {attack.rangeIncrementFt !== undefined && (
+                        <> · {S.sheet.attackRange(attack.rangeIncrementFt)}</>
+                      )}
                     </div>
                   )}
+                  {/*
+                    Die Angriffsfolge steht an der Zeile nur, wenn sie von der
+                    ALLGEMEINEN abweicht — also bei der zweiten Hand, die nicht der
+                    BAB-Reihe folgt, sondern den Zweiwaffen-Talenten.
+
+                    Vorher stand sie an jeder Waffe, und darüber sagte die grüne Karte
+                    dasselbe schon einmal ausdrücklich: auf seinem Bogen viermal
+                    dieselbe Auskunft auf einem Schirm. Genau das meinte er mit „nicht
+                    übersichtlich". Ein Satz, der überall steht, wird nirgends gelesen —
+                    und hier ist er oben schon deutlich gesagt.
+                  */}
+                  {attack.bonuses.length > 1 &&
+                    attack.bonuses.join() !==
+                      iterativeAttacks(sheet.bab)
+                        .map((b) => b + (attack.attack.total - sheet.bab))
+                        .join() && (
+                      <div className="text-[10px] leading-snug text-slate-500">
+                        <span className="sm:hidden">
+                          {S.sheet.iterativeShort(attack.bonuses.length, fmtMod(sheet.bab))}
+                        </span>
+                        <span className="hidden sm:inline">
+                          {S.sheet.iterativeHint(attack.bonuses.map(fmtMod), fmtMod(sheet.bab))}
+                        </span>
+                      </div>
+                    )}
                   {attack.notes.map((note, i) => (
                     <div key={i} className="text-[10px] text-slate-500">
                       {note}
@@ -360,6 +465,54 @@ export function CombatTab(props: TabProps) {
                   </>
                 )}
               </div>
+              {/*
+                Was die Waffe SONST kann — aufklappbar, und ausdrücklich NICHT im Knopf
+                darüber: ein Knopf in einem Knopf geht nicht, und die Aufschlüsselung des
+                Angriffs ist eine andere Frage als der Regeltext der Waffe.
+
+                Der Text steht aufgeklappt in voller Breite. Bei der Halbarte sind das
+                drei Sätze (gegen Sturmangriff ansetzen, Bein stellen, loslassen statt
+                selbst zu fallen) — in einer Zeile neben den Zahlen wäre davon „If you
+                use a ready…" übrig.
+              */}
+              {(attack.weaponSummary !== undefined || attack.weaponRules !== undefined) && (
+                <div className="mt-1">
+                  <button
+                    type="button"
+                    aria-expanded={offenerText === attack.key}
+                    onClick={() =>
+                      setOffenerText(offenerText === attack.key ? null : attack.key)
+                    }
+                    className="text-[11px] text-slate-400 hover:text-slate-200"
+                  >
+                    {offenerText === attack.key ? "▾" : "▸"} {S.sheet.weaponTextToggle}
+                  </button>
+                  {offenerText === attack.key && (
+                    <>
+                      {/*
+                        Deutsch zuerst, das englische Original klein darunter — die
+                        Regel dieses Projekts für Ausrüstung, wörtlich: „Bitte alle
+                        Ausrüstungsgegenstände immer auf deutsch im Namen und Erklärung.
+                        Englischen og namen klein daneben."
+
+                        Der englische Text ist hier nicht bloß das Original, sondern der
+                        GENAUERE: er trägt die Einzelheiten (gegen Sturmangriff ansetzen,
+                        Bein stellen), die der deutsche Satz zusammenfasst.
+                      */}
+                      {attack.weaponSummary !== undefined && (
+                        <p className="mt-1 text-xs leading-snug text-slate-300">
+                          {attack.weaponSummary}
+                        </p>
+                      )}
+                      {attack.weaponRules !== undefined && (
+                        <p className="mt-1 text-[11px] leading-snug text-slate-500">
+                          {attack.weaponRules}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -461,6 +614,56 @@ export function CombatTab(props: TabProps) {
       </Card>
       )}
     </div>
+  );
+}
+
+/**
+ * Was gerade am Körper ist — Hände und Rüstung.
+ *
+ * Eine LEERE Hand steht ausdrücklich mit da („Schildhand: frei"). Das ist die Hälfte
+ * der Auskunft, die am Tisch zählt: wer wissen will, ob er noch eine Hand für den
+ * Trank hat, sucht nicht nach dem, was fehlt — er liest, was dasteht.
+ *
+ * Liegt eine Waffe in BEIDEN Händen, stehen Haupt- und Schildhand gar nicht erst da:
+ * sie sind dann zwangsläufig leer, und zwei Zeilen „frei" darunter wären Lärm, der
+ * aussieht wie eine zweite Möglichkeit.
+ */
+function EquippedCard({ sheet }: { sheet: TabProps["sheet"] }) {
+  const e = sheet.equipped;
+  const zeilen: { slot: string; wert: string | null; leer: string }[] =
+    e.bothHands !== null
+      ? [{ slot: "bothHands", wert: e.bothHands, leer: S.sheet.equippedEmpty }]
+      : [
+          { slot: "mainHand", wert: e.mainHand, leer: S.sheet.equippedEmpty },
+          { slot: "offHand", wert: e.offHand, leer: S.sheet.equippedEmpty },
+        ];
+  zeilen.push({ slot: "armor", wert: e.armor, leer: S.sheet.equippedNoArmor });
+
+  return (
+    <Card>
+      <SectionTitle>{S.sheet.equippedTitle}</SectionTitle>
+      <ul className="space-y-1 text-sm">
+        {zeilen.map((zeile) => (
+          <li key={zeile.slot} className="flex items-baseline justify-between gap-3">
+            <span className="shrink-0 text-xs uppercase tracking-wide text-slate-500">
+              {S.sheet.equippedSlots[zeile.slot] ?? zeile.slot}
+            </span>
+            {/*
+              Leer steht GEDÄMPFT da und nicht in der Bedienfarbe: es ist eine Auskunft
+              und kein Knopf, und Amber ist in diesem Bogen das, was man drückt
+              (elfte Falle).
+            */}
+            <span
+              className={`min-w-0 truncate text-right ${
+                zeile.wert === null ? "text-slate-600" : "font-medium text-slate-100"
+              }`}
+            >
+              {zeile.wert ?? zeile.leer}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 

@@ -55,6 +55,41 @@ export interface AttackLine {
   critical: string;
   notes: string[];
   /**
+   * Der Reichweiten-Schritt in ft — nur bei Fernwaffen, sonst `undefined`.
+   *
+   * Die Zahl lag seit dem ersten ETL-Lauf in den Packdaten und wurde am ANGRIFF
+   * nie gezeigt: `itemSummary` las sie für die Gepäckliste, der Kampf-Reiter nicht.
+   * Sein Befund dazu: „keinen Überblick, was meine Waffe kann."
+   */
+  rangeIncrementFt?: number;
+  /**
+   * Was die Waffe SONST kann — in ZWEI Feldern, und das ist die Regel dieses Projekts
+   * für Ausrüstung: deutsche Erklärung zuerst, englisches Original daneben.
+   *
+   * `weaponSummary` ist der deutsche Satz aus `compendium/itemGerman.ts` („Axt, Spitze
+   * und Haken an einem Schaft. Sticht oder schneidet, und kann zu Fall bringen."),
+   * `weaponRules` der SRD-Regeltext, der die Einzelheiten trägt (gegen Sturmangriff
+   * ansetzen, Bein stellen). Beides stand bisher nur im Kompendium, zwei Schirme weit
+   * weg — sein Befund: „keinen Überblick, was meine Waffe kann."
+   *
+   * Zwei Felder und kein zusammengesetzter Satz: die Engine baut keine deutschen Texte,
+   * sonst stünden Regeltexte an zwei Orten.
+   */
+  weaponSummary?: string;
+  weaponRules?: string;
+  /**
+   * Ist der Charakter mit dieser Waffe geübt? `undefined` bei den Sammelzeilen.
+   *
+   * GEWARNT, NICHT GERECHNET: der Angriffswert daneben enthält den Malus des
+   * Regelwerks (−4) ausdrücklich NICHT. Die Engine hat ihn nie gerechnet, und ihn hier
+   * nebenbei einzubauen würde die Zahlen bestehender Bögen verschieben — das ist in
+   * diesem Projekt eine Regelentscheidung für seinen Tisch und keine
+   * Programmierentscheidung. Deshalb sagt die Marke, dass die Übung fehlt, und nennt
+   * KEINE Zahl: ein Text, der eine Zahl behauptet, die danebensteht und sie nicht
+   * enthält, ist schlimmer als keiner.
+   */
+  proficient?: boolean;
+  /**
    * Wo die Waffe steckt — und ob überhaupt eine gemeint ist (`undefined` bei den
    * beiden Sammelzeilen Nahkampf/Fernkampf).
    *
@@ -211,6 +246,26 @@ export type CostSource = "armor" | "load" | "both";
  * (welcher Wert gewinnt, verdoppelt sich der Malus, betrifft es diesen Bogen);
  * das ist die Falle „eine Regel, die in drei Ansichten steht, steht in keiner".
  */
+/**
+ * Was gerade am Körper ist — Hände und Rüstung.
+ *
+ * Sein Befund: „Ich habe beim Kampf keinen Überblick, was ich eigentlich equipped
+ * hab." Die App wusste es an drei Stellen verstreut (die Marke an der Angriffszeile,
+ * `armorCost.pieces`, `twoWeaponPossible`) und sagte es an keiner im Ganzen.
+ *
+ * Eine FOLGE aus dem Gepäck, nie gespeichert — und sie steht in der Engine und nicht
+ * in der Anzeige, weil sie dort der VIERTE Leser derselben Frage wäre. Ein `null`
+ * heißt ausdrücklich „dort liegt nichts": genau das ist die Hälfte der Auskunft, die
+ * am Tisch zählt (die leere Schildhand).
+ */
+export interface EquippedBlock {
+  mainHand: string | null;
+  offHand: string | null;
+  /** Eine Waffe in beiden Händen — dann sind Haupt- und Schildhand zwangsläufig leer. */
+  bothHands: string | null;
+  armor: string | null;
+}
+
 export interface ArmorCostBlock {
   /** Angelegte Rüstung und Schilde. Leer = nichts angelegt. */
   pieces: ArmorPieceCost[];
@@ -368,6 +423,8 @@ export interface DerivedSheet {
   encumbrance: EncumbranceBlock;
   /** Was die Rüstung kostet: DEX-Grenze, Malus, Bewegung, arkane Störung. */
   armorCost: ArmorCostBlock;
+  /** Hände und Rüstung auf einen Blick — siehe `EquippedBlock`. */
+  equipped: EquippedBlock;
   /**
    * Liegt in JEDER Hand eine Nahkampfwaffe? Nur dann ist der
    * Zweiwaffenkampf-Schalter im Kampf-Reiter sinnvoll.

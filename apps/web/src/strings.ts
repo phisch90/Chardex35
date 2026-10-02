@@ -147,6 +147,42 @@ export const S = {
     nextLevel: "nächste Stufe",
     attacks: "Angriffe",
     /*
+      Der Überblick über das Angelegte und das, was eine Waffe kann — sein Befund:
+      „Ich habe beim Kampf keinen Überblick was ich eigentlich equipped hab und was
+      meine waffe kann. Auch die Boni sind nicht übersichtlich."
+    */
+    equippedTitle: "Geführt",
+    equippedSlots: {
+      mainHand: "Haupthand",
+      offHand: "Schildhand",
+      bothHands: "Beide Hände",
+      armor: "Rüstung",
+    } as Record<string, string>,
+    /** Leer ist eine ANTWORT und kein fehlender Eintrag — am Tisch zählt die freie Hand. */
+    equippedEmpty: "frei",
+    equippedNoArmor: "keine",
+    /** Die Beschriftungen unter den zwei grossen Zahlen. */
+    attackValue: "Angriff",
+    damageValue: "Schaden",
+    /*
+      Die Reichweite lag seit dem ersten ETL-Lauf in den Packdaten und stand am Angriff
+      nie — gelesen hat sie nur die Gepäckliste.
+    */
+    attackRange: (ft: number) => `${ft} ft Reichweite`,
+    /*
+      Die Übung FEHLT — und die Marke nennt ausdrücklich keine Zahl.
+
+      Das Regelwerk kennt dafür −4 auf den Angriff; die Engine rechnet ihn nicht, und
+      ihn nebenbei einzubauen würde die Zahlen bestehender Bögen verschieben. Stünde
+      hier „−4", widerspräche der Satz der Zahl zwei Zentimeter daneben — genau der
+      Fehler, den der Erklärtext zu Power Attack diese App schon einmal gekostet hat.
+    */
+    attackUntrained: "nicht geübt",
+    attackUntrainedHint:
+      "Mit dieser Waffe bist du nicht geübt. Was das an deinem Tisch kostet, entscheidet der DM — der Angriffswert daneben rechnet es nicht mit.",
+    /** Der Regeltext der Waffe, aufklappbar. */
+    weaponTextToggle: "Was die Waffe kann",
+    /*
       „+8 / +3" sagt niemandem etwas, der es nicht schon weiß. Auf dem Handy
       steht der kurze Hinweis, auf breiten Schirmen (iPad) gleich der ganze Satz
       — sein Wunsch: „kann in der iPad-Version gerne schon danebenstehen".

@@ -3175,7 +3175,99 @@ den anderen Reiter.
 tut es NICHT — `main` steht im DOM früher, gewinnt also bei `.first()` immer, und die
 Prüfung las wieder beide Spalten. Gefragt wird jetzt ausdrücklich, ob überhaupt geteilt ist.
 
+### Nachtrag: „keinen Überblick, was ich equipped hab"
+
+Sein Befund eine Runde später, dreiteilig: **„Ich habe beim Kampf keinen Überblick was ich
+eigentlich equipped hab und was meine waffe kann. Auch die Boni sind nicht übersichtlich.
+Die sind super klein und nur klein gedruckt."**
+
+**Der Kern war nicht Gestaltung, sondern die dritte Fehlerfamilie.** Drei der vier Angaben
+lagen längst in den Daten und hatten am Angriff keinen Leser:
+
+| Was | lag wo | gelesen von |
+|---|---|---|
+| Was angelegt ist | auf DREI Stellen verstreut (`slot` an der Angriffszeile, `armorCost.pieces`, `twoWeaponPossible`) | nirgends im Ganzen |
+| Reichweite (`rangeIncrementFt`) | seit dem ersten ETL-Lauf in den Packs | allein der Gepäckliste |
+| Was die Waffe kann | `description` in den Packs, deutsche Erklärung in `itemGerman.ts` | nur dem Kompendium, zwei Schirme weit weg |
+| Übung | `proficiencyOf` | allein dem Ausrüstungs-Reiter |
+
+Gefragt und entschieden: **Angriff UND Schaden groß** · **Reichweite, Waffentext und
+Übungs-Warnung** (die Schadensart hat er ausdrücklich NICHT gewollt — sie bleibt draußen) ·
+**Übersichtskarte UND angelegte Waffen zuerst**.
+
+### Die Übungs-Warnung: gemeldet, nicht gerechnet — und warum das so bleibt
+
+Das Regelwerk kennt −4 auf den Angriff mit einer nicht geübten Waffe. **Die Engine hat ihn
+nie gerechnet**, und ihn bei dieser Gelegenheit einzubauen wäre eine Zahl auf einem
+BESTEHENDEN Bogen — Ausnahme 1 dieser Datei, also eine Regelentscheidung für seinen Tisch
+und keine Programmierentscheidung. Deshalb:
+
+- Die Marke sagt „nicht geübt" und nennt **keine Zahl**. Stünde dort „−4", widerspräche
+  der Satz der Zahl zwei Zentimeter daneben — genau der Fehler, den der Erklärtext zu
+  Power Attack diese App schon einmal gekostet hat.
+- Ein eigener Test hält die ABWESENHEIT fest: Langschwert (nicht geübt) und Streitkolben
+  (geübt) haben denselben Angriffswert. Ohne ihn fiele der Malus beim nächsten Umbau
+  unbemerkt hinein.
+
+**Das ist die offene Frage dieser Runde** und steht unten unter „Noch offen".
+
+### Vier Entscheidungen im Kleinen
+
+- **`equipped` steht in der ENGINE**, nicht in der Anzeige: dort wäre es der VIERTE Leser
+  derselben Frage. Ein `null` heißt ausdrücklich „dort liegt nichts" — und genau das ist
+  die Hälfte der Auskunft, die am Tisch zählt (die freie Hand). Die Karte zeigt sie
+  deshalb mit an, gedämpft. Liegt eine Waffe in beiden Händen, fallen Haupt- und
+  Schildhand ganz weg: sie sind dann zwangsläufig leer, und zwei Zeilen „frei" sähen aus
+  wie eine zweite Möglichkeit.
+- **Der Waffentext sind ZWEI Felder**, nicht ein zusammengesetzter Satz: `weaponSummary`
+  (deutsch, aus `itemGerman.ts`) und `weaponRules` (der SRD-Text, englisch, mit den
+  Einzelheiten). Deutsch zuerst, das Original klein darunter — die Regel dieser App für
+  Ausrüstung. Die Engine baut daraus keinen Satz, sonst stünden Regeltexte an zwei Orten.
+- **`warGrant` ist nach oben gewandert.** Beide Hälften desselben SRD-Satzes („Free
+  Martial Weapon Proficiency with deity's favored weapon … and Weapon Focus …") lesen
+  jetzt dieselbe Zeile: der Talentplatz und die neue Übungs-Marke. Stünde der Aufruf
+  zweimal, wäre irgendwann der Platz da und die Übung weg.
+- **Sortiert wird in der ANZEIGE** (`toSorted`), nicht in der Engine: die Reihenfolge dort
+  ist die seines Gepäcks, also eine Eingabe — und die Übersichtsseite liest dieselbe
+  Liste. Ein `sort` darauf hätte sie stillschweigend mit umgestellt.
+
+### Was der BLICK gefunden hat, und die Prüfungen nicht
+
+- **„Langsch…"** — die neue Marke „nicht geübt" verdrängte den Namen. Wörtlich derselbe
+  Fund wie bei den Behältern und beim Wirken-Knopf, diesmal mit einer MARKE statt einem
+  Knopf: eine Zeile, die schon voll ist, verträgt kein weiteres Stück. Behoben mit
+  `flex-wrap` statt `truncate` — umbrechen, nicht kürzen: der Name ist die Hauptsache.
+- **Viermal dieselbe Auskunft auf einem Schirm.** „2 Angriffe pro Runde (BAB +6)" stand an
+  jeder Angriffszeile, und darüber sagte die grüne Karte dasselbe schon einmal
+  ausdrücklich. Jetzt steht die Zeile nur noch, wo die Folge von der ALLGEMEINEN abweicht
+  — also bei der zweiten Hand, die den Zweiwaffen-Talenten folgt und nicht dem BAB. Das
+  allein hat 55 px gespart.
+
+### Die Schranke, die angeschlagen hat — und warum sie steigt statt zu fallen
+
+Die Höhenschranke der Runde davor (≤ 1450 px) wurde bei dieser Runde ROT. Genau dafür ist
+sie da: sie hat gefragt, ob der neue Inhalt den gewonnenen Platz wert ist. Die Antwort war
+ja (sein Auftrag), also steht sie jetzt auf **1550** — **angehoben mit Grund und nicht
+gesenkt, damit es grün wird.** Unter dem Ausgangswert (1640) bleibt sie in jedem Fall: wer
+dort wieder landet, hat beide Runden rückgängig gemacht.
+
+### Und die zwölfte Falle, diesmal von der neuen Karte ausgelöst
+
+`locator("li").filter({hasText:/Streitkolben/}).first()` traf die **Karte „Geführt"** — sie
+nennt dieselben Waffennamen und steht im DOM früher. Die Prüfung „der Aufklapper steht da"
+war rot an einem Kasten, der ihn gar nicht haben soll, und die Prüfung davor („ist zu, bis
+man tippt") war aus demselben Grund GRÜN am falschen Kasten.
+
+**Jede neue Karte, die vorhandene Namen wiederholt, erzeugt diese Falle neu.** Gesucht wird
+jetzt in der Angriffe-Karte (`angriffsZeile`), nicht im Dokument.
+
 ## Noch offen
+- **Zählt der −4 für eine nicht geübte Waffe an seinem Tisch?** Die App MELDET seit der
+  Kampf-Runde, dass die Übung fehlt, und rechnet den Malus ausdrücklich nicht — das wäre
+  eine Zahl auf einem bestehenden Bogen. Für Hike ändert es ohnehin nichts (Kämpfer 3
+  kann alle martialischen Waffen), für einen reinen Kleriker mit Langschwert sind es −4.
+  Ein Test hält die Abwesenheit fest; sagt er „gilt bei uns", wird daraus ein Beitrag in
+  `derive.ts` und der Test dreht sich um.
 - **Rund 103 Teststrecken sind verloren** (eigener Abschnitt darüber). Ungeprüft sind
   damit die Bereiche, die in dieser Datei beschrieben, aber nicht mehr abgedeckt sind:
   die vier Papiere und die elf Klassenfarben, das Ziehen im Gepäck, die Behälter, das
