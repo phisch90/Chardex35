@@ -51,6 +51,19 @@ async function karte(page, titel) {
     .first();
 }
 
+/**
+ * Eine ANGRIFFSZEILE — und zwar die in der Angriffe-Karte, nicht irgendein `li`.
+ *
+ * Die neue Karte `Gefuehrt` listet dieselben Waffennamen und steht im DOM FRUEHER:
+ * `locator("li").filter({hasText:/Streitkolben/}).first()` traf sie, und die Pruefung
+ * `der Aufklapper steht da` war rot an einem Kasten, der ihn gar nicht haben soll.
+ * Zwoelfte Falle dieses Projekts, und sie entsteht bei JEDER neuen Karte neu, die
+ * dieselben Namen nennt.
+ */
+async function angriffsZeile(page, muster) {
+  return (await karte(page, /angriffe/i)).locator("li").filter({ hasText: muster }).first();
+}
+
 /** Der Text der aktiven Spalte — nie der des ganzen Schirms. */
 const spaltenText = async (page) => (await aktiveSpalte(page)).innerText();
 
@@ -187,29 +200,143 @@ for (const [groesse, width, height] of GROESSEN) {
     /keine Option aktiv/i.test(await optionen.innerText()),
   );
 
+  /* ---------- Der Ueberblick ueber das Angelegte ---------- */
+  /*
+    Sein zweiter Befund: „Ich habe beim Kampf keinen Ueberblick was ich eigentlich
+    equipped hab und was meine waffe kann."
+
+    Geprueft wird an einem EIGENEN Bogen, auf dem wirklich etwas angelegt ist — der
+    Slotprobe traegt alles im Gepaeck, und eine Karte, die nur `frei` zeigt, beweist die
+    halbe Zusage.
+  */
+  await ctx.close();
+  const zweiter = await oeffneApp(width, height);
+  const page2 = zweiter.page;
+  await importiere(page2, "waffenprobe");
+  await oeffneBogen(page2, /Waffenprobe/i);
+  await openTab(page2, /Kampf/i);
+  await page2.waitForTimeout(800);
+
+  const gefuehrt = await karte(page2, /gef(ü|ue)hrt/i);
+  const gText = await gefuehrt.innerText();
+  bericht.check("die Karte Gefuehrt steht ganz oben", (await gefuehrt.count()) > 0);
+  bericht.check("sie nennt die Haupthand", /Haupthand[\s\S]*Streitkolben/i.test(gText), gText.replace(/\n/g, " | "));
+  bericht.check("die Schildhand", /Schildhand[\s\S]*Holzschild/i.test(gText));
+  bericht.check("und die Ruestung", /R(ü|ue)stung[\s\S]*Lederr(ü|ue)stung/i.test(gText));
+
+  /*
+    Und die Gegenprobe, die die halbe Auskunft traegt: eine LEERE Hand steht mit da.
+    Ohne sie waere die Karte eine Liste dessen, was zufaellig vorhanden ist — am Tisch
+    ist aber die Frage, ob noch eine Hand frei ist.
+  */
+  const slotprobeSeite = await oeffneApp(width, height);
+  await importiere(slotprobeSeite.page, "slotprobe");
+  await oeffneBogen(slotprobeSeite.page, /Slotprobe/i);
+  await openTab(slotprobeSeite.page, /Kampf/i);
+  await slotprobeSeite.page.waitForTimeout(800);
+  const leerText = await (await karte(slotprobeSeite.page, /gef(ü|ue)hrt/i)).innerText();
+  bericht.check(
+    "eine leere Hand steht ausdruecklich da",
+    /Haupthand[\s\S]*frei/i.test(leerText),
+    leerText.replace(/\n/g, " | "),
+  );
+  await slotprobeSeite.ctx.close();
+
+  /* ---------- Was die Waffe kann ---------- */
+  const bogenZeile = await angriffsZeile(page2, /Kurzbogen/i);
+  const bogenText = await bogenZeile.innerText();
+  bericht.check(
+    "die Reichweite steht am Angriff",
+    /60 ft Reichweite/i.test(bogenText),
+    bogenText.replace(/\n/g, " | "),
+  );
+  /*
+    Die Uebung: GEWARNT, nicht gerechnet. Der Kleriker ist mit dem Kurzbogen nicht
+    geuebt (martialisch), mit dem Streitkolben schon (einfach) — beide Richtungen, sonst
+    waere die Marke auch dann gruen, wenn sie an JEDER Waffe staende.
+  */
+  bericht.check("und die Warnung, dass die Uebung fehlt", /nicht ge(ü|ue)bt/i.test(bogenText));
+  const kolbenZeile = await angriffsZeile(page2, /Streitkolben/i);
+  bericht.check(
+    "beim Streitkolben steht sie NICHT",
+    !/nicht ge(ü|ue)bt/i.test(await kolbenZeile.innerText()),
+  );
+
+  /* Der Regeltext klappt auf — deutsch zuerst. */
+  const aufklapper = kolbenZeile.locator("button").filter({ hasText: /Was die Waffe kann/i });
+  bericht.check("der Aufklapper steht da", (await aufklapper.count()) > 0);
+  bericht.check(
+    "und ist zu, bis man tippt",
+    !/Kolben f(ü|ue)r eine Hand/i.test(await kolbenZeile.innerText()),
+  );
+  await aufklapper.first().click();
+  await page2.waitForTimeout(400);
+  bericht.check(
+    "aufgeklappt steht die deutsche Erklaerung da",
+    /Kolben f(ü|ue)r eine Hand/i.test(await kolbenZeile.innerText()),
+    (await kolbenZeile.innerText()).replace(/\n/g, " | "),
+  );
+
+  /* ---------- Die Boni sind gross ---------- */
+  /*
+    Gemessen wird die SCHRIFTGROESSE, nicht das Vorhandensein: „die Boni sind super
+    klein und nur klein gedruckt" war sein Befund, und eine Pruefung auf den Text waere
+    auch vorher gruen gewesen. Der Name der Waffe ist `text-sm` (14 px) — die Zahl muss
+    groesser sein als er, sonst liest man im Kampf das Falsche zuerst.
+  */
+  const zahl = kolbenZeile.locator("span.tabular-nums").first();
+  const groesse_px = await zahl.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  bericht.check("die Angriffszahl ist groesser als der Waffenname", groesse_px >= 17, `${groesse_px}px`);
+
+  /* Angelegtes zuerst: der Streitkolben steht vor dem Langschwert im Gepaeck. */
+  const reihenfolge = await (await karte(page2, /angriffe/i))
+    .locator("li")
+    .allInnerTexts();
+  const iKolben = reihenfolge.findIndex((x) => /Streitkolben/i.test(x));
+  const iSchwert = reihenfolge.findIndex((x) => /Langschwert/i.test(x));
+  bericht.check(
+    "die angelegte Waffe steht vor der aus dem Gepaeck",
+    iKolben >= 0 && iSchwert >= 0 && iKolben < iSchwert,
+    `Kolben ${iKolben} · Schwert ${iSchwert}`,
+  );
+
+  if (groesse === "iphone") await bild(page2, "kampf-waffen");
+  bericht.check("kein Seitenfehler auf dem zweiten Bogen", zweiter.seitenfehler.length === 0);
+  await zweiter.ctx.close();
+  const ctx2 = await oeffneApp(width, height);
+  const page3 = ctx2.page;
+  await importiere(page3, "slotprobe");
+  await oeffneBogen(page3, /Slotprobe/i);
+  await openTab(page3, /Kampf/i);
+  await page3.waitForTimeout(800);
+
   /* ---------- Und wie hoch der Reiter jetzt ist ---------- */
   if (groesse === "iphone") {
-    const mass = await scrollMain(page, 0);
+    const mass = await scrollMain(page3, 0);
     /*
-      Gemessen: 1640 px vor dieser Runde, 1245 danach. Die Schranke steht als ZAHL und
-      nicht als Absicht in einem Kommentar — eine Aufraeumrunde, die eine Karte wieder
-      einbaut, soll hier anschlagen und nicht erst an seinem Daumen. Grosszuegig genug,
-      dass ein neuer Zaehler sie nicht sprengt.
+      Gemessen: 1640 px vor der Aufraeum-Runde, 1245 danach — und 1477, seit die
+      Uebersichtskarte und die grossen Zahlen dazugekommen sind.
+
+      Die Schranke stand auf 1450 und hat bei dieser Runde ANGESCHLAGEN. Genau dafuer
+      ist sie da: sie hat gefragt, ob der neue Inhalt den gewonnenen Platz wert ist. Die
+      Antwort war ja (sein Auftrag), also steht sie jetzt auf 1550 — angehoben mit Grund
+      und nicht gesenkt, damit es gruen wird. Unter dem Ausgangswert bleibt sie in jedem
+      Fall: wer hier wieder bei 1640 landet, hat die Runde rueckgaengig gemacht.
     */
-    bericht.check("der Reiter ist deutlich kuerzer als vorher", mass.hoehe < 1450, `${mass.hoehe}px`);
+    bericht.check("der Reiter bleibt deutlich kuerzer als am Anfang", mass.hoehe < 1550, `${mass.hoehe}px`);
   }
 
   bericht.check("kein Browser-Dialog", dialoge.length === 0, dialoge.join(" | "));
   bericht.check("keine Seitenfehler", seitenfehler.length === 0, seitenfehler.slice(0, 2).join(" | "));
-  bericht.check("kein seitlicher Ueberlauf", (await ueberlauf(page)) <= 1);
+  bericht.check("kein seitlicher Ueberlauf", (await ueberlauf(page3)) <= 1);
 
-  await bild(page, `kampf-${groesse}`);
-  await ctx.close();
+  await bild(page3, `kampf-${groesse}`);
+  await ctx2.ctx.close();
 }
 
 /*
-  Gemessen, nicht geschaetzt: 26 Pruefungen je Groesse, am iPhone eine mehr (die Hoehe).
+  Gemessen, nicht geschaetzt: 40 Pruefungen je Groesse, am iPhone eine mehr (die Hoehe).
   Eine Mindestzahl, die nie erreicht wird, macht jede gruene Strecke rot; eine zu
   niedrige faengt den Abbruch nicht.
 */
-bericht.done(79);
+bericht.done(121);
