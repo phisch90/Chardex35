@@ -3195,21 +3195,16 @@ Gefragt und entschieden: **Angriff UND Schaden groß** · **Reichweite, Waffente
 Übungs-Warnung** (die Schadensart hat er ausdrücklich NICHT gewollt — sie bleibt draußen) ·
 **Übersichtskarte UND angelegte Waffen zuerst**.
 
-### Die Übungs-Warnung: gemeldet, nicht gerechnet — und warum das so bleibt
+### Die Übungs-Warnung: erst gemeldet, eine Runde später gerechnet
 
 Das Regelwerk kennt −4 auf den Angriff mit einer nicht geübten Waffe. **Die Engine hat ihn
 nie gerechnet**, und ihn bei dieser Gelegenheit einzubauen wäre eine Zahl auf einem
-BESTEHENDEN Bogen — Ausnahme 1 dieser Datei, also eine Regelentscheidung für seinen Tisch
-und keine Programmierentscheidung. Deshalb:
+BESTEHENDEN Bogen gewesen — Ausnahme 1 dieser Datei, also eine Regelentscheidung für seinen
+Tisch und keine Programmierentscheidung. Deshalb stand hier zunächst eine Marke ohne Zahl
+und ein Test, der die ABWESENHEIT festhielt.
 
-- Die Marke sagt „nicht geübt" und nennt **keine Zahl**. Stünde dort „−4", widerspräche
-  der Satz der Zahl zwei Zentimeter daneben — genau der Fehler, den der Erklärtext zu
-  Power Attack diese App schon einmal gekostet hat.
-- Ein eigener Test hält die ABWESENHEIT fest: Langschwert (nicht geübt) und Streitkolben
-  (geübt) haben denselben Angriffswert. Ohne ihn fiele der Malus beim nächsten Umbau
-  unbemerkt hinein.
-
-**Das ist die offene Frage dieser Runde** und steht unten unter „Noch offen".
+**Beantwortet, wörtlich: „Ja -4 zählt."** Gebaut im eigenen Abschnitt weiter unten; der Test
+hat sich umgedreht.
 
 ### Vier Entscheidungen im Kleinen
 
@@ -3320,13 +3315,76 @@ Kachel mit diesen Werten — ein Filter nähme dort die Auskunft weg statt eine 
 Schranke, die nach jeder Runde auf ihrem alten Wert stehen bleibt, merkt den Rückschritt
 irgendwann nicht mehr.
 
+### „Ja -4 zählt" — die Antwort auf die offene Frage, und was sie mitgebracht hat
+
+Seine Antwort auf die Frage, die zwei Runden lang unter „Noch offen" stand. **Damit wandert
+eine Zahl an bestehenden Bögen**, und das geht in diesem Projekt nur auf sein ausdrückliches
+Wort — die Frage vorher war Pflicht (Ausnahme 1), die Antwort ist die Deckung.
+
+**Die App wusste es seit der Ausrüstungs-Runde und tat es nicht.** Im Blätterer steht an
+jeder Waffe „ohne Übung: −4 Angriff" (`S.items.untrained.weapon`), die Engine rechnete nie
+damit, und seit der Kampf-Runde stand am Bogen sogar eine Marke, die ausdrücklich KEINE Zahl
+nannte. Ein Versprechen auf dem einen Schirm und Schweigen auf dem anderen — die dritte
+Fehlerfamilie, nur diesmal mit Vorsatz.
+
+Gerechnet wird in `derive.ts` als eigener Beitrag (`Nicht geübt`, untyped, −4), und zwar
+**nur auf den Angriff**: so steht es im Regelwerk, `damageText` wird nicht angefasst. Die
+Übung wird dabei EINMAL ausgewertet und zweimal gelesen — der Malus und die Marke an der
+Zeile. Stünde der Aufruf zweimal, wäre irgendwann die Marke da und die Zahl nicht.
+
+**Zwei Dinge hat erst der Lauf gefunden, und beide wären still falsch gewesen:**
+
+- **Munition ist keine Übungsfrage.** Pfeile, Bolzen, Schleuderkugeln und das Wurfnetz
+  tragen in den Packdaten `data.weapon` (mit `damage: —`) und bekommen damit eine
+  Angriffszeile. `proficiencyOf` sagt dazu `notApplicable`, aber die Zeile fragte
+  `kind === "ok"` — also stand an einem Bündel Pfeile „nicht geübt", und mit dem Malus
+  wären daraus still vier Punkte geworden. Das Feld fehlt jetzt ganz, wenn die Frage sich
+  nicht stellt.
+- **Eine unbekannte Klasse lässt die App SCHWEIGEN.** `proficiencyFor` kennt nur die elf
+  SRD-Klassen; bei einem Bogen, dessen Klassen alle aus seinen Büchern kommen, kam der leere
+  Stand heraus, in dem NICHTS geübt ist. Solange das nur eine Marke war, kostete die
+  vorsichtige Antwort nichts — mit dem Malus wären es −4 auf jede Waffe gewesen, für eine
+  Auskunft, die die App gar nicht hat. `ProficiencyVerdict` hat deshalb eine vierte Antwort
+  bekommen (`unknown`), dieselbe Entscheidung wie `unverifiable` bei den
+  Talent-Voraussetzungen und wie beim Klassenthema (eine falsche Farbe wäre schlimmer als
+  keine).
+  **Die Grenze ist ausdrücklich EINE bekannte Quelle und nicht alle:** ein Kämpfer mit einer
+  Prestigeklasse obendrauf wird weiter nach der Kämpfer-Tabelle beurteilt. Würde schon eine
+  unbekannte Klasse die Regel abschalten, wäre sie bei seinem Tisch beim ersten
+  Prestigestufen-Aufstieg weg. Die Frage steht in `proficiencyOf` ganz oben und nicht an den
+  drei Zweigen darunter — eine Bedingung, die dreimal dasteht, steht irgendwann in zweien.
+
+**Gemeldet haben beides die TESTS, nicht der Blick:** acht Prüfungen in `engine.test.ts`
+fielen sofort um, weil ihr Prüf-Kompendium `test:class:fighter` benutzt — eine Klasse, die
+die Handtabelle nicht kennt. Ohne sie wäre der Fehler erst auf einem Homebrew-Bogen am Tisch
+aufgefallen.
+
+**Und die Marke nennt jetzt die Zahl** („nicht geübt -4"). Sie tat es ausdrücklich nicht,
+solange die Engine schwieg: ein Text, der eine Zahl behauptet, die danebensteht und sie nicht
+enthält, ist schlimmer als keiner. Jetzt gilt das Umgekehrte — ohne die Zahl steht am Tisch
+ein Angriffswert, der vier zu niedrig aussieht, und man sucht den Fehler im eigenen
+Kopfrechnen.
+
+**Ein Fund vom BILD, und er ist eine aufgeschriebene Falle:** die Marke schrieb zuerst
+„nicht geübt −4" mit dem typografischen Minus der Gegenstandstexte — und stand damit einen
+Zentimeter über „-1 ANGRIFF" aus `fmtMod`. **Zwei verschiedene Minuszeichen auf EINER
+Karte**, dieselbe Falle, die die Rüstungskarte schon einmal gekostet hat. Es gilt dieselbe
+Regel wie dort: eine Zahl folgt ihrer NACHBARSCHAFT, weil sie über genau diese Zahl redet.
+Dass derselbe Malus im Blätterer `−4` heißt, ist kein Widerspruch — dort steht er zwischen
+Gegenstandstexten, die alle das typografische Zeichen tragen. Die Strecke prüft deshalb
+nicht das EINE Zeichen, sondern die GLEICHHEIT der beiden: so hält sie die Regel und nicht
+meine Wahl.
+
+Gemessen: `pnpm test` 1070 grün, `pnpm e2e` 8 von 8 Strecken mit 580 Prüfungen (`kampf` 154).
+
 ## Noch offen
-- **Zählt der −4 für eine nicht geübte Waffe an seinem Tisch?** Die App MELDET seit der
-  Kampf-Runde, dass die Übung fehlt, und rechnet den Malus ausdrücklich nicht — das wäre
-  eine Zahl auf einem bestehenden Bogen. Für Hike ändert es ohnehin nichts (Kämpfer 3
-  kann alle martialischen Waffen), für einen reinen Kleriker mit Langschwert sind es −4.
-  Ein Test hält die Abwesenheit fest; sagt er „gilt bei uns", wird daraus ein Beitrag in
-  `derive.ts` und der Test dreht sich um.
+- **Zählt der Rüstungsmalus auf den Angriff, wenn die Rüstung nicht geübt ist?** Die
+  Waffen-Hälfte ist beantwortet und gebaut („Ja -4 zählt", eigener Abschnitt weiter unten)
+  — die andere Hälfte desselben SRD-Satzes steht noch offen. Der Blätterer verspricht sie
+  schon heute („ohne Übung: Rüstungsmalus auch auf Angriff" / „Schildmalus auch auf
+  Angriff"), gerechnet wird sie nicht. Es ist KEINE −4, sondern der Malus des Stücks — ein
+  Magier im Kettenhemd verlöre also 5. Dieselbe Ausnahme 1 wie bei der Waffe: es verschiebt
+  Zahlen an bestehenden Bögen und braucht sein Wort.
 - **Eine schwache Prüfung in `e2e/strecken/uebersicht.mjs`, nicht von dieser Runde.** Sie
   heißt „die zwölf Werte-Kacheln" und misst vier Wörter (RK, Fortitude, BAB, Grapple) — bei
   zehn Kacheln bliebe sie still. Dieselbe Familie wie der Farbtest, der gegen einen

@@ -166,10 +166,32 @@ describe.skipIf(!packsAvailable)("Vertrautheit, Vorschläge, Startausrüstung", 
     }
   });
 
-  it("eine unbekannte Klasse macht alles zu „ohne Übung“, statt zu behaupten", () => {
+  it("eine unbekannte Klasse lässt die App SCHWEIGEN, statt sie zu beschuldigen", () => {
+    /*
+      Hier stand das Gegenteil, und der Grund war damals richtig: solange `untrained`
+      nur eine Marke im Blätterer war, kostete die vorsichtige Antwort nichts.
+
+      Seit der Malus rechnet, kostet sie −4 auf JEDE Waffe — für eine Auskunft, die die
+      App gar nicht hat. Ein Bogen, dessen Klassen alle aus seinen Büchern kommen, hätte
+      damit still vier Punkte verloren, und am Tisch hätte niemand gewusst, warum.
+      `unknown` ist die ehrliche dritte Antwort, dieselbe wie `unverifiable` bei den
+      Talent-Voraussetzungen.
+
+      Die Grenze ist ausdrücklich EINE bekannte Quelle und nicht alle: ein Kämpfer mit
+      einer Prestigeklasse obendrauf wird weiter nach der Kämpfer-Tabelle beurteilt.
+      Würde schon eine unbekannte Klasse die Regel abschalten, wäre sie bei seinem Tisch
+      beim ersten Prestigestufen-Aufstieg weg.
+    */
     const prof = proficiencyFor(["srd:class:assassin"], "srd:race:human");
     expect(prof.sources).toEqual([]);
-    expect(proficiencyOf(item("dagger"), prof)).toEqual({ kind: "untrained", reason: "weapon" });
+    expect(proficiencyOf(item("dagger"), prof)).toEqual({ kind: "unknown" });
+
+    // Und die Gegenprobe: eine bekannte Klasse daneben, und die Regel gilt wieder.
+    const gemischt = proficiencyFor(["srd:class:assassin", "srd:class:wizard"], "srd:race:human");
+    expect(proficiencyOf(item("greatsword"), gemischt)).toEqual({
+      kind: "untrained",
+      reason: "weapon",
+    });
   });
 
   it("ein Talent mit Waffenwahl schlägt genau diese Waffe vor", () => {
