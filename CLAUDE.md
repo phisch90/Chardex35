@@ -3086,6 +3086,95 @@ einen Weg, den sein Gerät nie geht.
 - Das Bild hat bestätigt, was die Zahlen sagen: „Action Points · max. 6 · füllt sich bei:
   Stufenaufstieg" neben „Schicksalspunkte · füllt sich bei: Lange Rast".
 
+## Der Kampf-Reiter: was man im Kampf zuerst sucht
+
+Seine Ansage war offen („Ich möchte den Kampf Bildschirm anpassen"), also kam zuerst ein
+BLICK: der Reiter in drei Größen fotografiert, die Höhe gemessen (1640 px am iPhone, also
+knapp zwei Bildschirme), und die drei auffälligsten Stellen als Frage vorgelegt. **Er hat
+alle drei angekreuzt:** Angriffe nach oben · doppelte Kacheln raus · Kampfoptionen kleiner.
+
+Dass die Frage überhaupt Vorschläge enthielt, ist der Unterschied zu „was stört dich?" —
+an einem Bild kann er zeigen, an einer leeren Frage muss er formulieren.
+
+### Die Reihenfolge, und der Satz, der dadurch erst stimmt
+
+Jetzt: **Angriffe → Kampfoptionen → RK → Zähler → Traglast.** Die Kampfoptionen stehen
+zwischen dem, was sie ÄNDERN — darüber die Angriffe, darunter die RK.
+
+**Und damit stimmt zum ersten Mal ihr eigener Hinweis.** Dort steht seit jeher „Gilt für
+diese Runde. Die Werte oben ändern sich mit." — und „oben" war bis zu dieser Runde die RK,
+die Power Attack gar nicht anfasst. Ein Satz, der auf die falsche Zahl zeigt, ist schlimmer
+als keiner; gefunden hat ihn nicht eine Prüfung, sondern das Umstellen selbst.
+
+### Die Kacheln: entdoppelt, nicht abgeschafft
+
+Weg ist die Karte mit Initiative · BAB · Grapple · Bewegung · Nahkampf · Fernkampf. Alle
+sechs stehen seit der „Auf einen Blick"-Runde oben auf der WERTE-Seite, jede mit derselben
+Aufschlüsselung beim Antippen. Nahkampf und Fernkampf standen sogar **zweimal auf demselben
+Schirm**: als Kachel und zwei Zentimeter darunter als Angriffszeile mit genau derselben
+Zahl.
+
+**Die wichtigste Prüfung dieser Runde ist deshalb nicht das Entfernen, sondern die
+Gegenprobe**: dieselben sechs Werte müssen auf der Werte-Seite weiter dastehen. Ohne sie
+wäre eine Doppelung beseitigt worden, indem die Auskunft beseitigt wurde — und das merkt
+niemand, bis er sie am Tisch sucht.
+
+**Die RK-Karte bleibt**, obwohl RK · Touch · Flat-Footed auch oben stehen: sie trägt die
+AUFSCHLÜSSELUNG (Basis +10 · DEX +1 · Dodge durchgestrichen · Kettenhemd +4), und die gibt
+es nur hier. Sein früherer Auftrag dazu war ausdrücklich „das sind ja zwei einzelne Sachen,
+ich kann ja das Schild ablegen". Die drei Zahlen darüber sind der Kopf dieser Liste, nicht
+eine zweite Kachelreihe.
+
+Gemessen: **1640 → 1245 px**, rund ein Viertel kürzer. Die Schranke steht als ZAHL in der
+Strecke (≤ 1450) und nicht als Absicht in einem Kommentar — eine Aufräumrunde, die eine
+Karte wieder einbaut, soll dort anschlagen und nicht erst an seinem Daumen.
+
+### Die Kampfoptionen klappen zu — und die Bedingung dafür
+
+Zugeklappt sind sie zwei Zeilen statt zwölf. **Die Bedingung dafür ist die Zustandszeile:**
+der Kopf nennt in Kurzform, was gerade an ist („Power Attack 2 · Defensiv kämpfen"), sonst
+„keine Option aktiv". Ein Regler, der einen Malus auf jeden Angriff legt und sich dabei
+versteckt, wäre die Fehlerfamilie dieses Projekts in ihrer teuersten Form.
+
+Vier Entscheidungen sind eine Notiz wert:
+
+- **`anyActive` und der Satz kommen aus EINER Quelle.** Vorher gab es nur ein Ja/Nein für
+  den amber Rahmen; jetzt baut dieselbe Liste (`activeLabels`) beides. Stünde die Bedingung
+  zweimal, wäre irgendwann der Rahmen amber und die Zeile sagte „keine Option aktiv".
+- **Kurzformen statt der Chip-Beschriftungen.** Auf dem Knopf steht „Defensiv kämpfen
+  (−4 / +2 RK)"; drei davon nebeneinander wären wieder die Zeile, die nicht mehr lesbar
+  ist — der Fund, den diese App schon dreimal bezahlt hat.
+- **Die Überschrift IST der Schalter**, mit ▸/▾ davor — kein zweites Bedienelement daneben,
+  dieselbe Entscheidung wie beim amber Streifen des Bearbeiten-Modus. Der Zurücksetzen-Knopf
+  steht als Geschwister daneben, nicht darin: ein Knopf in einem Knopf geht nicht.
+- **Der zugeklappte Zustand gehört dem GERÄT** (`sessionStorage`, wie der zugeklappte
+  Zaubergrad) und nicht der Figur. Offen steht die Zustandszeile nicht — dort sagen es die
+  Regler und die aktiven Chips selbst.
+
+### Zwei Funde, und beide hat nur der BLICK gebracht
+
+- **Das ▸ sass tiefer als das Wort.** `SectionTitle` trägt `mb-2`, das Zeichen daneben
+  nicht — und `items-center` zentriert dann zwei verschieden hohe Kästen gegeneinander.
+  Alle 79 Prüfungen waren dabei grün. Dasselbe `mb-2` am Zeichen richtet es aus.
+- **Das Ziel war zu klein für einen Daumen.** `text-xs` plus `mb-2` ergibt rund 28 px;
+  `-my-1 py-1` macht daraus ein echtes Ziel, ohne etwas zu verschieben.
+
+### Die Sondenfalle dieser Runde: im Querformat gibt es ZWEI Spalten
+
+Die Prüfung „keine Initiative-Kachel mehr im Kampf" war bei 1180×820 rot — **und die App
+hatte recht.** Dort stehen seit seiner Entscheidung zwei Ansichten nebeneinander, und
+rechts stand die Werte-Seite mit genau diesen Kacheln. Meine Sonde suchte im ganzen
+Dokument und meldete den NACHBARN als Fehler des Kampf-Reiters.
+
+Das ist die aufgeschriebene Regel „gelesen wird im Kasten, nicht im Body" — mit einer neuen
+Hälfte: **seit es zwei Spalten gibt, ist der Kasten die SPALTE und nicht der Schirm.** Jede
+Prüfung der Art „dieser Reiter zeigt X nicht" muss sie einengen, sonst prüft sie irgendwann
+den anderen Reiter.
+
+**Und die zweite Fassung desselben Fehlers kam gleich hinterher:** `locator(spalte).or(main)`
+tut es NICHT — `main` steht im DOM früher, gewinnt also bei `.first()` immer, und die
+Prüfung las wieder beide Spalten. Gefragt wird jetzt ausdrücklich, ob überhaupt geteilt ist.
+
 ## Noch offen
 - **Rund 103 Teststrecken sind verloren** (eigener Abschnitt darüber). Ungeprüft sind
   damit die Bereiche, die in dieser Datei beschrieben, aber nicht mehr abgedeckt sind:
