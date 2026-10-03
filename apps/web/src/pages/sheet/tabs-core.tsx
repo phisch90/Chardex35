@@ -10,6 +10,7 @@ import { SubtypePicker } from "../../ui/SubtypePicker.js";
 import { TrackersCard } from "./Trackers.js";
 import { CombatOptionsCard } from "./CombatOptions.js";
 import { combatAttackList } from "./attackList.js";
+import { GRUPPEN, KACHELN, MESSBAR, listeZweispaltig } from "../../ui/dense.js";
 import type { TabProps } from "./index.js";
 
 /**
@@ -63,7 +64,16 @@ function GlanceCard({ sheet, openBreakdown }: Pick<TabProps, "sheet" | "openBrea
   return (
     <Card>
       <SectionTitle>{S.sheet.glance}</SectionTitle>
-      <div className="space-y-2.5">
+      {/*
+        Der KASTEN wird messbar, und die Gruppen ruecken ab 42rem zu zweit nebeneinander —
+        aus drei Kacheln je Reihe werden sechs (seine Wahl). Gefragt ist die Breite DIESER
+        Karte und nicht die des Fensters: im Querformat traegt dasselbe iPad 494 px, wenn
+        zwei Ansichten stehen, und 1039 px, wenn eine steht. Einzelheiten in `ui/dense.ts`.
+      */}
+      <div className={MESSBAR}>
+      {/* `data-raster` ist der GRIFF fuer die Teststrecke: eine Sonde, die sich ihr Ziel
+          ueber ein Wort sucht, findet irgendwann das falsche. */}
+      <div className={GRUPPEN} data-raster="blick">
         <GlanceGroup title={S.sheet.glanceGroups.defense}>
         <StatButton
           big
@@ -189,6 +199,7 @@ function GlanceCard({ sheet, openBreakdown }: Pick<TabProps, "sheet" | "openBrea
         />
         </GlanceGroup>
       </div>
+      </div>
     </Card>
   );
 }
@@ -211,7 +222,13 @@ export function StatsTab(props: TabProps) {
           antippbar. Ein Knopf, der auf Tap nichts tut, verspricht etwas, das
           nicht kommt — und ein Bonus, den nichts anzeigt, fehlt am Tisch.
         */}
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+        {/*
+          Drei Kacheln, ab 28rem Kastenbreite sechs. Hier stand `sm:grid-cols-6` — also
+          eine Frage ans FENSTER fuer eine Entscheidung ueber eine Karte. Siehe
+          `ui/dense.ts`.
+        */}
+        <div className={MESSBAR}>
+        <div className={KACHELN} data-raster="attribute">
           {ABILITIES.map((ability) => {
             const block = sheet.abilities[ability];
             // Mehr als der Grundwert? Dann steckt etwas dahinter.
@@ -236,6 +253,7 @@ export function StatsTab(props: TabProps) {
               />
             );
           })}
+        </div>
         </div>
         {ABILITIES.some((a) => sheet.abilities[a].score.contributions.length > 1) && (
           <p className="mt-1 text-[10px] text-slate-500">{S.sheet.abilityDotHint}</p>
@@ -738,12 +756,21 @@ export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: T
           </Chip>
         ))}
       </div>
-      <ul className="divide-y divide-slate-800">
+      {/*
+        Zwei Spalten, sobald die Karte breit genug ist — und erst spaeter, wenn der
+        Bearbeiten-Modus jeder Zeile noch ✕, − und + anhaengt. Die Schwellen und der
+        Grund, warum hier kein `divide-y` mehr steht, stehen in `ui/dense.ts`.
+      */}
+      <div className={MESSBAR}>
+      <ul className={listeZweispaltig(editMode)} data-liste="fertigkeiten">
         {visible.map((skill) => {
           const overMax = skill.ranks > skill.maxRanks;
           const isSubtypeAnchor = skill.subtyped && skill.subtype === undefined;
           return (
-            <li key={skill.key} className="flex items-center gap-2 py-1.5 text-sm">
+            <li
+              key={skill.key}
+              className="flex items-center gap-2 border-b border-slate-800 py-1.5 text-sm"
+            >
               <span className="w-10 shrink-0 text-right font-mono font-semibold">
                 {skill.usable ? fmtMod(skill.total.total) : "—"}
               </span>
@@ -841,6 +868,7 @@ export function SkillsTab({ character, sheet, editMode, save, openBreakdown }: T
           );
         })}
       </ul>
+      </div>
       <p className="mt-2 text-xs text-slate-500">
         ✧ = {S.sheet.classSkill} · U = untrainiert benutzbar · (n) = Ränge · klassenfremde Ränge
         kosten 2 Punkte je Rang

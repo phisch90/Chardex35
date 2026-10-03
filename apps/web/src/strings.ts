@@ -67,6 +67,12 @@ export const S = {
       also sein iPad im Querformat). Seine Entscheidung: „Volle Breite evtl. dafür dann
       auch zwei Ansichten nebeneinander? Im Querformat. Im Hochformat anders."
     */
+    /*
+      Die Reiterzeile ist seit seinem Befund `Sieht kacke Aus` EINE Bauart: links die
+      Schiene mit den sieben Reitern, rechts die der zweiten Ansicht. Beide Schienen
+      brauchen einen Namen, sonst hoert ein Vorleseprogramm vierzehn Knoepfe am Stueck.
+    */
+    tabPick: "Reiter des Bogens",
     splitOpen: "Zweite Ansicht",
     splitClose: "Zweite Ansicht schließen",
     splitPick: "Was soll rechts stehen?",

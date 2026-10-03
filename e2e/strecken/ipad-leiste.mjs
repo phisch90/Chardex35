@@ -153,9 +153,16 @@ for (const [groesse, width, height] of GROESSEN) {
       "und nicht mehr in der Spalte selbst",
       (await spalten.nth(1).locator('[role="group"]').count()) === 0,
     );
+    /*
+      ACHT Knoepfe und nicht mehr sieben: seit der Dichte-Runde steht der Schliesser IN
+      der Schiene statt daneben. Er war dort der dritte Knopf-Begriff in einer Zeile, die
+      schon zwei hatte (seine Ruege: `die Knopfreihe oben`). Die Zahl steht hier als Zahl
+      und nicht als `mindestens sieben` — sonst merkt die Pruefung nicht, wenn ein Reiter
+      verschwindet, weil der Schliesser ihn aufwiegt.
+    */
     bericht.check(
-      "sie traegt alle sieben Reiter",
-      (await schiene.locator("button").count()) === 7,
+      "sie traegt alle sieben Reiter und den Schliesser",
+      (await schiene.locator("button").count()) === 8,
       `${await schiene.locator("button").count()}`,
     );
     /*
@@ -189,7 +196,7 @@ for (const [groesse, width, height] of GROESSEN) {
       await schiene.evaluate((el) => {
         const knoepfe = [...el.querySelectorAll("button")];
         const oben = new Set(knoepfe.map((b) => Math.round(b.getBoundingClientRect().y)));
-        return knoepfe.length === 7 && oben.size === 1;
+        return knoepfe.length === 8 && oben.size === 1;
       }),
     );
 

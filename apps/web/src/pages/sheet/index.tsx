@@ -16,7 +16,7 @@ import { reportSaveFailure } from "../../lib/saveError.js";
 import { useEditModeStore } from "../../lib/editMode.js";
 import { BreakdownSheet } from "../../ui/Breakdown.js";
 import { HpPad } from "../../ui/HpPad.js";
-import { Chip, GhostButton, OpenDot, d20Roll, fmtMod } from "../../ui/bits.js";
+import { GhostButton, OpenDot, d20Roll, fmtMod } from "../../ui/bits.js";
 import { SwipeTabs } from "../../ui/SwipeTabs.js";
 import { OrderBanner } from "../../group/OrderBanner.js";
 import { IdentityCard } from "./Identity.js";
@@ -575,105 +575,138 @@ export function CharacterSheetPage() {
         Reiter, in JEDER Breite (seine Wahl: „Rote Leiste TRÄGT die Reiter"). Stünden
         beide da, gäbe es zwei Reiterleisten für dieselbe Frage, und die obere wäre
         genau die „Kopfleiste", die verschwinden sollte.
+
+        Und sie ist EINE Bauart statt dreier.
+
+        Sein Befund zum iPad war `Sieht kacke Aus`, und auf die Frage, was daran, hat er
+        unter anderem `die Knopfreihe oben` angekreuzt. Er hatte recht, und es war an den
+        Zahlen abzulesen: hier standen drei Arten nebeneinander — die Reiter als runde
+        Pillen mit Rahmen (28 px hoch), die Schiene der zweiten Ansicht als nackte Zeichen
+        in einem leisen Kasten (44 px) und der Schließer als umrandeter Knopf (34 px).
+        Drei Höhen, drei Eckenradien, drei Rahmen-Begriffe in einer Zeile.
+
+        Geblieben ist die Bauart, die er selbst gewählt hat: auf sein `Mach das schöner`
+        hin bekam die rechte Schiene Zeichen OHNE Kästchen in einem gemeinsamen, sehr
+        leisen Kasten. Genau die trägt jetzt auch die linke Seite — mit Wort, weil die
+        sieben Reiter die Hauptnavigation des Bogens sind und nicht ihre Beigabe.
+
+        Damit sind es zwei Schienen derselben Art, gleich hoch (p-1 um 36-px-Ziele) und
+        mit demselben Radius. Zwei Gruppen sind kein Widerspruch zu `eine Bauart`: sie
+        beantworten zwei Fragen (was steht links, was steht rechts), und das sagt der
+        Abstand zwischen ihnen. Dem Ohr sagen es die zwei `aria-label`.
+
+        Das Ziel bleibt 36 px hoch — ein Zeichen, das man nicht trifft, ist kein
+        Bedienelement, und das gilt für ein Wort mit Zeichen genauso.
       */}
-      <div className={`relative flex-wrap gap-1 ${editMode ? "hidden" : "hidden md:flex"}`}>
-        {tabs.map((key) => (
-          <Chip key={key} active={active === key} onClick={() => goTab(key)}>
-            {/*
-              Dasselbe Zeichen wie unten am Handy, nur kleiner und vor dem ganzen Wort.
-              Hier stand vorher nichts: unten trugen die Reiter ein Emoji, oben nur Text —
-              und damit sahen dieselben sieben Reiter auf dem iPad anders aus als auf dem
-              iPhone. Seit die Zeichen aus dem Quelltext kommen, kostet die Angleichung
-              nichts.
-            */}
-            <IconInline name={TAB_ICONS[key]} size={14} />
-            {S.sheet.tabs[key]}
-            {/*
-              Der Punkt. Seine Wahl: „Ein Punkt am betroffenen Reiter" — man sieht,
-              WO etwas offen ist, ohne einen Text zu lesen. Die Zahl steht im
-              Vorlese-Text, damit sie nicht verloren ist.
-            */}
-            {issueTabs.has(key) && (
-              <OpenDot
-                label={S.open.tabDot(issueTabs.get(key) ?? 0)}
-                className="ml-1 align-middle"
-                ring={false}
-              />
-            )}
-          </Chip>
-        ))}
+      <nav
+        aria-label={S.sheet.tabPick}
+        className={`relative flex-wrap items-center gap-2 ${editMode ? "hidden" : "hidden md:flex"}`}
+      >
+        <span className="flex flex-wrap items-center gap-0.5 rounded-xl bg-slate-900/70 p-1">
+          {tabs.map((key) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={active === key}
+              onClick={() => goTab(key)}
+              className={`flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors ${
+                active === key
+                  ? "bg-amber-600/20 text-amber-300"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-300"
+              }`}
+            >
+              {/*
+                Dasselbe Zeichen wie unten am Handy, nur kleiner und vor dem ganzen Wort.
+                Hier stand vorher nichts: unten trugen die Reiter ein Emoji, oben nur Text —
+                und damit sahen dieselben sieben Reiter auf dem iPad anders aus als auf dem
+                iPhone. Seit die Zeichen aus dem Quelltext kommen, kostet die Angleichung
+                nichts.
+              */}
+              <IconInline name={TAB_ICONS[key]} size={14} />
+              {S.sheet.tabs[key]}
+              {/*
+                Der Punkt. Seine Wahl: `Ein Punkt am betroffenen Reiter` — man sieht,
+                WO etwas offen ist, ohne einen Text zu lesen. Die Zahl steht im
+                Vorlese-Text, damit sie nicht verloren ist.
+
+                Ohne Ring: hier liegt er auf der ruhigen Fläche der Schiene und nicht auf
+                einem Zeichen, dessen Farbe ihn schluckt — das war die elfte Falle, und
+                sie gilt unten am Handy weiter.
+              */}
+              {issueTabs.has(key) && (
+                <OpenDot label={S.open.tabDot(issueTabs.get(key) ?? 0)} ring={false} />
+              )}
+            </button>
+          ))}
+        </span>
         {/*
-          Nur dort, wo zwei Ansichten wirklich passen — `lg` ist dieselbe Grenze wie in
+          Die SCHIENE der rechten Spalte — hier und nicht in der Spalte selbst.
+
+          Sein Befund: `Mir gefällt der Versatz nicht.` Sie stand über der rechten
+          Karte und schob sie rund 40 px nach unten; die linke Karte fing damit höher
+          an. In dieser Zeile steht sie über BEIDEN Spalten und kann gar keinen Versatz
+          mehr machen — auch dann nicht, wenn die Zeile bei 1024 px umbricht, denn eine
+          zweite Zeile liegt wieder über beiden.
+
+          Nur dort, wo zwei Ansichten wirklich passen: `lg` ist dieselbe Grenze wie in
           `BLATT_BREITE` und in `useBreiterSchirm`. Ein Knopf, der im Hochformat nichts
           bewirkt, wäre ein Versprechen ohne Weg.
         */}
-        {/* `GhostButton` trägt sein `aria-label` selbst aus `title` — der Platz kommt
-            deshalb vom Kasten darum und nicht vom Knopf. */}
-        <span className="ml-auto hidden items-center gap-2 lg:flex">
+        <span
+          role="group"
+          aria-label={S.sheet.splitPick}
+          className="ml-auto hidden items-center gap-0.5 rounded-xl bg-slate-900/70 p-1 lg:flex"
+        >
+          {geteilt &&
+            tabs.map((key) => (
+              <button
+                key={key}
+                type="button"
+                title={S.sheet.tabs[key]}
+                aria-label={S.sheet.splitTab(S.sheet.tabs[key])}
+                aria-pressed={rechts === key}
+                onClick={() => goTab2(key)}
+                className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+                  rechts === key
+                    ? "bg-amber-600/20 text-amber-300"
+                    : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"
+                }`}
+              >
+                <IconInline name={TAB_ICONS[key]} size={18} />
+              </button>
+            ))}
           {/*
-            Die SCHIENE der rechten Spalte — hier und nicht mehr in der Spalte selbst.
+            Der Schließer gehört IN die Schiene und nicht daneben: daneben war er der
+            dritte Knopf-Begriff in dieser Zeile. Der Strich davor trennt die Wahl
+            (welcher Reiter) von der Schaltung (überhaupt zwei Ansichten) — ein Abstand
+            allein täte das in einer Reihe aus acht Zielen nicht.
 
-            Sein Befund: „Mir gefällt der Versatz nicht." Sie stand über der rechten
-            Karte und schob sie rund 40 px nach unten; die linke Karte fing höher an.
-            In dieser Zeile steht sie über BEIDEN Spalten und kann gar keinen Versatz
-            mehr machen — auch dann nicht, wenn die Zeile bei 1024 px umbricht, denn
-            eine zweite Zeile liegt wieder über beiden.
+            Steht die Schiene voll da, ist der Knopf nur noch sein Zeichen: der ganze
+            Satz `Zweite Ansicht schließen` neben sieben Reitern hätte die Zeile schon
+            bei 1024 px ohne Not umbrechen lassen. Der Name bleibt am `title` und am
+            `aria-label` — ein Zeichen ohne Namen ist ein leerer Knopf.
 
-            Dass sie rechts sitzt, sagt das Auge: sie steht über der Spalte, die sie
-            bedient. Dem Ohr sagt es `splitTab` — sonst käme zweimal „Kampf" ohne
-            Unterschied, einmal aus jeder Reiterreihe.
-
-            Die Zeichen bleiben ohne Kästchen (seine Wahl: „Mach das schöner"), der
-            gemeinsame leise Kasten bleibt ihre Schiene, und das Ziel bleibt 36 px groß
-            — ein Zeichen, das man nicht trifft, ist kein Bedienelement.
-          */}
-          {geteilt && (
-            <span
-              role="group"
-              aria-label={S.sheet.splitPick}
-              className="flex w-fit items-center gap-0.5 rounded-xl bg-slate-900/70 p-1"
-            >
-              {tabs.map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  title={S.sheet.tabs[key]}
-                  aria-label={S.sheet.splitTab(S.sheet.tabs[key])}
-                  aria-pressed={rechts === key}
-                  onClick={() => goTab2(key)}
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
-                    rechts === key
-                      ? "bg-amber-600/20 text-amber-300"
-                      : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"
-                  }`}
-                >
-                  <IconInline name={TAB_ICONS[key]} size={18} />
-                </button>
-              ))}
-            </span>
-          )}
-          {/*
-            Steht die Schiene daneben, ist der Knopf nur noch sein Zeichen: der ganze Satz
-            „Zweite Ansicht schließen" neben sieben Reitern hätte die Zeile schon bei
-            1024 px ohne Not umbrechen lassen. Der Name bleibt am `title`, und
-            `GhostButton` macht daraus sein `aria-label` — ein Zeichen ohne Namen ist ein
-            leerer Knopf.
-
-            Und es ist ein ✕ und kein ⧉: ⧉ heißt „zweite Ansicht" und sagt allein nicht,
+            Und es ist ein ✕ und kein ⧉: ⧉ heißt `zweite Ansicht` und sagt allein nicht,
             ob es sie aufschlägt oder zumacht — am iPad gibt es keinen Mauszeiger, der
-            den `title` zeigt. Ein ✕ ist in jeder App dasselbe. Dass es hier jetzt stehen
-            darf, liegt daran, dass es das EINZIGE Schließen auf dem Schirm ist: in der
-            Spalte stand früher eines und oben der Satz, und genau diese Doppelung war
-            sein Einwand („Mach das schöner").
+            den `title` zeigt. Ein ✕ ist in jeder App dasselbe. Dass es hier stehen darf,
+            liegt daran, dass es das EINZIGE Schließen auf dem Schirm ist: in der Spalte
+            stand früher eines und oben der Satz, und genau diese Doppelung war sein
+            Einwand (`Mach das schöner`).
           */}
-          <GhostButton
+          {geteilt && <span className="mx-1 h-5 w-px shrink-0 bg-slate-700" aria-hidden />}
+          <button
+            type="button"
             title={geteilt ? S.sheet.splitClose : S.sheet.splitOpen}
+            aria-label={geteilt ? S.sheet.splitClose : S.sheet.splitOpen}
             onClick={() => (geteilt ? merkeTab2(null) : oeffneZweite())}
+            className={`flex h-9 items-center justify-center gap-1.5 rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-300 ${
+              geteilt ? "w-9" : "px-2.5 text-xs font-medium"
+            }`}
           >
             {geteilt ? "✕" : `⧉ ${S.sheet.splitOpen}`}
-          </GhostButton>
+          </button>
         </span>
-      </div>
+      </nav>
 
       {/*
         Der Bearbeiten-Modus gilt für den ganzen Bogen und bleibt beim Reiterwechsel an,

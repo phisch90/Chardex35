@@ -24,6 +24,7 @@ import { useCompendium, useHouseRules } from "../../lib/hooks.js";
 import { Card, Chip, GhostButton, SearchInput, SectionTitle, fmtMod } from "../../ui/bits.js";
 import { TrackersCard } from "./Trackers.js";
 import type { TabProps } from "./index.js";
+import { MESSBAR, ZAUBERLISTE } from "../../ui/dense.js";
 
 export function SpellsTab(props: TabProps) {
   return (
@@ -705,7 +706,8 @@ function CasterBlock({
                 {S.spells.foldedHint(repertoire.length)}
               </p>
             ) : (
-            <ul className="divide-y divide-slate-800">
+            <div className={MESSBAR}>
+            <ul className={ZAUBERLISTE} data-liste="zauber">
               {repertoire.map((entry) => {
                 const count = isPrepared
                   ? state.prepared.filter((p) => p.spellId === entry.spellId && p.slotLevel === level)
@@ -747,7 +749,7 @@ function CasterBlock({
                     einem 390 px breiten Handy wäre „Vorbereiten" neben Name und
                     Untertitel nicht unterzubringen, ohne wieder abzukürzen.
                   */
-                  <li key={entry.spellId} className="py-1.5">
+                  <li key={entry.spellId} className="border-b border-slate-800 py-1.5">
                     <div className="flex items-baseline gap-2">
                       {/*
                         Der Stern steht VOR dem Namen: er ist eine Marke, kein Handgriff.
@@ -862,6 +864,7 @@ function CasterBlock({
                 </li>
               )}
             </ul>
+            </div>
             )}
 
             {/* Zauberbuch-Klassen: der Rest der Klassenliste, aufklappbar. */}
