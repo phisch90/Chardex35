@@ -3377,7 +3377,184 @@ meine Wahl.
 
 Gemessen: `pnpm test` 1070 grün, `pnpm e2e` 8 von 8 Strecken mit 580 Prüfungen (`kampf` 154).
 
+## Dichter statt auseinandergezogen — und die Dichte gehört dem KASTEN
+
+Sein Urteil über den fertigen iPad-Bogen war ein Satz: **„Sieht kacke Aus"**, dazu zwei
+Bilder im Querformat. Weil daran nichts zu erkennen war, als dass ihm etwas missfällt,
+kam zuerst die MESSUNG: derselbe Bogen in allen drei Größen fotografiert, die vier
+auffälligsten Stellen benannt und ihm als Frage vorgelegt. **Angekreuzt hat er zwei** —
+„Auseinandergezogene Zeilen" und „Die Knopfreihe oben" —, und für den Platz entschieden:
+**„Dichter: drei Kacheln je Reihe werden sechs."**
+
+Dass die Frage Vorschläge enthielt und nicht bloß „was stört dich?", ist der Unterschied:
+an einem Bild kann er zeigen, an einer leeren Frage müsste er formulieren.
+
+### Die Dichte hängt am KASTEN und nicht am Fenster
+
+Das ist die fünfte Falle dieses Projekts in ihrer schärfsten Gestalt. Bisher hieß sie:
+wer ein Maß der Hülle einrechnet, muss prüfen, ob die Hülle in dieser Breite dieselbe
+ist. Hier sagt das Fenster überhaupt nichts mehr:
+
+| Fenster | wie der Bogen steht | Karte innen |
+|---|---|---|
+| iPhone 390 | eine Spalte | 342 px |
+| iPad hoch 820 | eine Spalte | 707 px |
+| iPad quer 1180, zwei Ansichten | zwei Spalten | **494 px** |
+| iPad quer 1180, eine Ansicht | eine Spalte | **1039 px** |
+
+**Dasselbe quere iPad trägt 494 oder 1039 px**, je nachdem, ob die zweite Ansicht offen
+ist. Ein `lg:` am Fenster kann die beiden nicht auseinanderhalten und würde sechs Kacheln
+in 494 px pressen. Die Regeln fragen deshalb den Kasten (`@container`, in Tailwind 4
+eingebaut), und sie stehen an EINER Stelle: `ui/dense.ts`.
+
+Betroffen sind vier Stellen. „Auf einen Blick" (vier Gruppen à drei Kacheln: ab 28rem
+zwei Gruppen nebeneinander, ab 64rem alle vier) · die sechs Attribute (drei, ab 28rem
+sechs — dort stand `sm:grid-cols-6`, also eine Frage ans Fenster) · die Fertigkeiten
+(eine Spalte, ab 28rem zwei, ab 64rem drei) · die Zauber, mit eigener Schwelle (unten).
+
+Gemessen, in Höhe:
+
+| | iPhone | iPad hoch | iPad quer geteilt | iPad quer ganz |
+|---|---|---|---|---|
+| „Auf einen Blick" | 396 px | **221** | **232** | **145** (alle zwölf in EINER Reihe) |
+| Zauber-Reiter | 7590 px | **4245** | 7465 (unverändert, Absicht) | **4245** |
+
+### Drei Entscheidungen, die eine Notiz wert sind
+
+- **Die Zauberliste hat ihre EIGENE Schwelle (42rem statt 28).** Unter jedem Zauber steht
+  eine Knopfreihe mit bis zu drei Knöpfen („Wirken", „Vorbereiten", „Noch einen"), die
+  zusammen rund 230 px braucht. Bei 494 px Kastenbreite blieben je Spalte 239 px — zu
+  knapp, um es zu behaupten. Im geteilten Querformat bleibt sie deshalb EINSPALTIG,
+  während die Fertigkeiten daneben schon zwei Spalten haben. Die Strecke prüft genau
+  diesen Unterschied; ohne ihn wäre „zweispaltig" eine Regel ohne Grenze.
+- **Dieselbe Trennung im Bearbeiten-Modus.** Dort trägt jede Fertigkeitszeile zusätzlich
+  ✕, − und +, also rund 120 px mehr — die Schwelle liegt höher (48rem), und drei Spalten
+  gibt es dort gar nicht. Das ist dieselbe Messung und keine Vorsicht: eine Schwelle, die
+  den breiteren Zustand nicht kennt, erzeugt die Zeile, in der vom Namen „Fertigk…" übrig
+  bleibt. Dreimal bezahlt (Behälter, Wirken-Knopf, Angriffsmarke).
+- **Die Dreiergruppe bleibt.** Zwei GRUPPEN rücken nebeneinander, nicht sechs Kacheln in
+  ein Raster. Die Dreiergruppe ist seine Entscheidung aus der Kachel-Runde und der Grund,
+  warum Grapple bei der Bewegung steht; ein Raster über alle zwölf hätte die Reihen wieder
+  aus der Spaltenzahl gemacht statt aus der Bedeutung — genau sein alter Einwand.
+
+### Die Knopfreihe: aus drei Bauarten wird eine
+
+Er hatte recht, und es war an Zahlen abzulesen. In derselben Zeile standen **drei Arten
+mit drei Höhen und drei Eckenradien**: die Reiter als runde Pillen mit Rahmen (26 px), die
+Schiene der zweiten Ansicht als nackte Zeichen in einem leisen Kasten (44 px) und der
+Schließer als umrandeter Knopf (34 px).
+
+Geblieben ist die Bauart, **die er selbst gewählt hat**: auf sein „Mach das schöner" hin
+bekam die rechte Schiene Zeichen ohne Kästchen in einem gemeinsamen, sehr leisen Kasten.
+Genau die trägt jetzt auch die linke Seite — mit Wort, weil die sieben Reiter die
+Hauptnavigation des Bogens sind und nicht ihre Beigabe. Beide Schienen sind 44 px hoch,
+beide `rounded-xl`, die Ziele darin 36 px.
+
+Zwei Dinge daran sind eine Notiz wert:
+
+- **Der Schließer gehört IN die Schiene.** Daneben war er der dritte Begriff; darin ist er
+  der achte Knopf, mit einem Strich davor, der die Wahl (welcher Reiter) von der Schaltung
+  (überhaupt zwei Ansichten) trennt. `ipad-leiste.mjs` zählte sieben und musste
+  mitwandern — **wer ein Bedienelement verschiebt, muss die Sonden mitzählen**, und
+  gefunden hat das nicht mein Gedächtnis, sondern die Erkundung vorher.
+- **Die Reiterzeile ist jetzt ein `nav` mit Namen.** Damit findet `openTab` sie über die
+  LEISTE statt über ein Wort — und das Raten über ein Wort hat in der Talente-Runde sechs
+  Prüfungen auf die falsche Stelle zeigen lassen (`button:visible` mit `/Kampf/` traf die
+  Kachel „NAHKAMPF"). Die Prüfung misst dabei die GLEICHHEIT der zwei Schienenhöhen und
+  nicht eine bestimmte Zahl: so hält sie die Regel und nicht meine Wahl.
+
+### Was das BILD entschieden hat, gegen meine eigene Rechnung
+
+`FLAT-FOOTED` braucht bei `text-[10px]` rund 74 px, sechs Kacheln plus Lücken also rund
+580 px. Nach dieser Rechnung hätte die Schwelle bei 42rem gelegen — und **das quere iPad
+mit zwei Ansichten wäre bei drei Kacheln geblieben, also genau in dem Zustand, aus dem
+sein Befund kam.**
+
+Das Bild hat die Rechnung widerlegt. Bei 494 px sind die Kacheln 75 px breit, und von
+zwölf Beschriftungen bricht genau EINE in zwei Zeilen um; die Karte wird dabei von 396 auf
+232 px kürzer. **Ein Umbruch in einer von zwölf Kacheln ist besser als 161 px Leere in
+allen zwölf.** Die Schwelle liegt deshalb bei 28rem. Dieselbe Lehre wie bei den Zeichen und
+bei den Papieren: bei einem Aussehen ist das Bild der Test, nicht die Zahl.
+
+### Fünfzehnte Falle: eine Schwelle, die nie greift
+
+Der Bogen ist bei `lg:max-w-6xl` gedeckelt (1152 px), also wird die Karte innen **nie
+breiter als 1088 px** — nachgemessen bei 1180, 1440, 1920 und 2560 px Fensterbreite,
+dreimal dasselbe Ergebnis. Meine erste Fassung hatte zweimal `@6xl` (1152 px) stehen:
+**zwei Regeln, die unter keinem Umstand greifen können.** Sie sahen vernünftig aus, der
+Test war grün, und ohne sie sieht die App genauso aus — das ist die schlechteste Sorte
+Code, weil nichts je darauf hinweist.
+
+Gefunden hat sie eine GEGENPRÜFUNG, die ich parallel gegen meine eigene Arbeit habe laufen
+lassen, nicht das Nachdenken. Regel: **wer eine Schwelle setzt, muss ihr Maximum messen.**
+Die Tabelle oben hat deshalb eine fünfte Zeile („Fenster ab 1440: 1088 px — und mehr wird
+es nie"), und sie steht als Schranke in `ui/dense.ts`.
+
+### Und zwei Kommentare, die das Gegenteil des Wahren behaupteten
+
+Dieselbe Gegenprüfung hat zwei Sätze widerlegt, die ich selbst geschrieben hatte. Beide
+hätten nichts kaputtgemacht und wären genau deshalb stehengeblieben:
+
+- **„`@container` macht keinen Stapelkontext auf."** Falsch. `container-type: inline-size`
+  schaltet `contain: layout style inline-size` ein, und Layout-Containment erzeugt sehr
+  wohl einen Stapelkontext UND einen enthaltenden Block für alles, was darin `absolute`
+  oder `fixed` steht. Das ist WÖRTLICH die Falle, die diesem Projekt schon eine
+  Teststrecke gekostet hat (`isolation: isolate` am Wurzelkasten des Bogens legte jedes
+  Blatt hinter die Hauptnavigation). Heute fällt es nicht auf, weil der Griff nur um
+  Kacheln und Listen steht und die Blätter weiter oben gerendert werden — aber ein
+  Kommentar, der zur Entwarnung einlädt, ist schlimmer als keiner. Er sagt jetzt das
+  Richtige, samt der Bedingung, unter der es gilt.
+- **„`divide-y` setzt den Strich OBEN an alle Kinder außer dem ersten."** Falsch, und es
+  stand seit der Talente-Runde eigens gemessen weiter oben in dieser Datei: Tailwind 4
+  zeichnet `border-bottom` an alle außer dem LETZTEN. Der Grund für den Wechsel auf einen
+  Strich je Zeile bleibt trotzdem richtig, nur anders herum — in zwei Spalten ist der
+  letzte im DOM die Zelle unten RECHTS; ihr fehlte der Strich, der Zelle unten links
+  bliebe einer, und der untere Rand der Karte wäre halb gestrichen. Nebenbei trennt der
+  Strich am Ende der Fertigkeiten jetzt die Liste von ihrer Legende, was vorher niemand
+  tat.
+
+### Drei Sondenfallen dieser Runde, und die erste ist neu
+
+- **`ueberlauf` gibt eine ZAHL zurück, keinen Wahrheitswert.** Die anderen Strecken
+  schreiben `(await ueberlauf(page)) <= 1`; meine erste Fassung reichte die Zahl durch,
+  und `0` ist falsch — also meldete die Prüfung „seitlicher Überlauf" in ALLEN vier
+  Durchläufen, und zwar am lautesten dort, wo gar nichts überlief. Eine Hilfsfunktion, die
+  ein Maß liefert, aber wie eine Frage heißt, lädt dazu ein.
+- **`querySelectorAll('> div')` ist kein gültiger Selektor.** Innerhalb eines Elements
+  braucht ein Kind-Selektor `:scope`. Der Fehler kam als `SyntaxError` aus dem Browser und
+  sah zuerst nach einem kaputten Raster aus.
+- **Eine Gruppe hat ZWEI Kinder, nicht eines.** Die kleine Überschrift und das Raster.
+  Mein `:scope > div > div` zählte beide und meldete `0/3/0/3/0/3/0/3` — also einen Fehler
+  der App, die recht hatte. Gezählt wird jetzt das LETZTE Kind je Gruppe. Dieselbe Familie
+  wie jedes geratene `.last()`.
+
+### Was ABSICHTLICH nicht mitgeht
+
+- **Das Klassensymbol liegt im Querformat auf der Zeichenreihe** und sieht dort wie ein
+  grauer Schmierer aus. Stand in der Frage, er hat es NICHT angekreuzt — also bleibt es.
+- **Zweimal „ZÄHLER" nebeneinander** (links der Ausrüstungs-, rechts der Werte-Bereich,
+  beide leer, beide mit demselben Satz). Ebenfalls gefragt, ebenfalls nicht angekreuzt.
+- **Die Angriffszeilen und die kleinen Karten** („Geführt", „Was deine Rüstung kostet",
+  „RK") bleiben auseinandergezogen. Dort gibt es nichts zu verdichten: drei Werte sind drei
+  Werte. „Dichter" hat nur dort eine Antwort, wo etwas zu packen ist, und das ehrlich zu
+  sagen ist besser, als die Kacheln zu deckeln — das war die Antwortmöglichkeit, die er
+  gerade nicht gewählt hat.
+
+Gemessen: `pnpm test` 1070 grün, `pnpm e2e` **9 von 9 Strecken mit 664 Prüfungen**
+(`dichter` neu mit 84). `warfocus` fiel im Sammellauf einmal aus, weil die Vorschau
+abgestürzt war — allein nachgelaufen 45 von 45.
+
 ## Noch offen
+- **Die Dichte-Regel gilt für den BOGEN, nicht für die Übersichtsseite.**
+  `ui/dense.ts` ist die eine Stelle für den Bogen — `pages/CharacterOverview.tsx` trägt
+  aber weiter `grid-cols-3 sm:grid-cols-6` und `sm:grid-cols-4`, also eine Frage ans
+  FENSTER. Heute fällt das nicht auf, weil diese Seite eine eigene Adresse hat und nie
+  geteilt wird; damit ist der Viewport dort zufällig die ehrliche Frage. Trotzdem steht
+  dieselbe Entscheidung an zwei Orten, und ihre Kacheln sind obendrein eine ZWEITE
+  Fassung von `StatButton` (anderes Polster, andere Schriftgrößen, kein Rahmen) — wer
+  `StatButton` ändert, ändert diese Seite nicht mit. Wer die Übersichtsseite anfasst,
+  holt beides nach Hause. Nicht in dieser Runde gemacht, weil er den Bogen gemeldet hat
+  und nicht die Übersicht.
 - **Zählt der Rüstungsmalus auf den Angriff, wenn die Rüstung nicht geübt ist?** Die
   Waffen-Hälfte ist beantwortet und gebaut („Ja -4 zählt", eigener Abschnitt weiter unten)
   — die andere Hälfte desselben SRD-Satzes steht noch offen. Der Blätterer verspricht sie
